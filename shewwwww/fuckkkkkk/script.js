@@ -25,7 +25,18 @@ function checkGlobalPassword(input, event) {
 
 // Check persistent state on load
 document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('avatar_trainer_unlocked') === 'true') {
+    const isUnlocked = localStorage.getItem('avatar_trainer_unlocked') === 'true';
+    const currentPage = window.location.pathname;
+
+    // If trying to access step pages without unlocking, redirect to index
+    if (!isUnlocked && (currentPage.includes('step') || currentPage.includes('.html'))) {
+        if (!currentPage.includes('index.html')) {
+            window.location.href = 'index.html';
+            return;
+        }
+    }
+
+    if (isUnlocked) {
         document.body.classList.remove('locked');
         const overlay = document.getElementById('pw-overlay');
         if (overlay) overlay.style.display = 'none';
@@ -36,8 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Init confetti particles
-    initConfetti();
+    // Init confetti particles (only if overlay exists)
+    if (document.getElementById('bg-canvas')) {
+        initConfetti();
+    }
 });
 
 // ============================================
