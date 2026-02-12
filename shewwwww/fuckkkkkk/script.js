@@ -11,13 +11,8 @@ console.log('Avatar Trainer loaded');
 function checkGlobalPassword(input, event) {
     if (event.key === 'Enter') {
         if (input.value.toLowerCase() === 'fuckk') {
-            const overlay = document.getElementById('pw-overlay');
-            overlay.classList.add('revealed');
-            document.body.classList.remove('locked');
             localStorage.setItem('avatar_trainer_unlocked', 'true');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 600);
+            window.location.href = 'step3.html';
         } else {
             input.classList.add('error');
             setTimeout(() => {
