@@ -10,7 +10,7 @@ console.log('Avatar Trainer loaded');
 
 function checkGlobalPassword(input, event) {
     if (event.key === 'Enter') {
-        if (input.value.toLowerCase() === 'win') {
+        if (input.value.toLowerCase() === 'fuckk') {
             const overlay = document.getElementById('pw-overlay');
             overlay.classList.add('revealed');
             document.body.classList.remove('locked');
