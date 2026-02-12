@@ -4,6 +4,159 @@
 
 console.log('Avatar Trainer loaded');
 
+// ============================================
+// Password Protection System
+// ============================================
+
+function checkGlobalPassword(input, event) {
+    if (event.key === 'Enter') {
+        if (input.value.toLowerCase() === 'win') {
+            const overlay = document.getElementById('pw-overlay');
+            overlay.classList.add('revealed');
+            document.body.classList.remove('locked');
+            localStorage.setItem('avatar_trainer_unlocked', 'true');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 600);
+        } else {
+            input.classList.add('error');
+            setTimeout(() => {
+                input.classList.remove('error');
+                input.value = '';
+            }, 400);
+        }
+    }
+}
+
+// Check persistent state on load
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('avatar_trainer_unlocked') === 'true') {
+        document.body.classList.remove('locked');
+        const overlay = document.getElementById('pw-overlay');
+        if (overlay) overlay.style.display = 'none';
+    } else {
+        const pwInput = document.getElementById('global-pw');
+        if (pwInput) {
+            setTimeout(() => pwInput.focus(), 100);
+        }
+    }
+
+    // Init confetti particles
+    initConfetti();
+});
+
+// ============================================
+// Confetti Particle System
+// ============================================
+
+let particles = [];
+let mouse = { x: -1000, y: -1000 };
+const colors = ['#ff69b4', '#00bfff', '#ffd700', '#ff1493', '#00ff88', '#a855f7'];
+
+class Particle {
+    constructor(width, height) {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.radius = 0.8 + Math.random() * 1.5;
+        this.length = 4 + Math.random() * 6;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.opacity = 0.3 + Math.random() * 0.5;
+        this.angle = Math.random() * Math.PI * 2;
+        this.velocity = 0.2 + Math.random() * 0.4;
+        this.angleVel = (Math.random() - 0.5) * 0.02;
+        this.offsetX = 0;
+        this.offsetY = 0;
+    }
+
+    update(width, height, mouse) {
+        this.angle += this.angleVel;
+        let targetX = Math.cos(this.angle) * this.velocity;
+        let targetY = Math.sin(this.angle) * this.velocity;
+
+        const dx = this.x - mouse.x;
+        const dy = this.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const limit = 120;
+
+        if (dist < limit) {
+            const force = (limit - dist) / limit;
+            this.offsetX += (dx / dist) * force * 2.5;
+            this.offsetY += (dy / dist) * force * 2.5;
+        }
+
+        this.offsetX *= 0.92;
+        this.offsetY *= 0.92;
+
+        this.x += targetX + this.offsetX;
+        this.y += targetY + this.offsetY;
+
+        if (this.x < -20) this.x = width + 20;
+        if (this.x > width + 20) this.x = -20;
+        if (this.y < -20) this.y = height + 20;
+        if (this.y > height + 20) this.y = -20;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle + Math.PI / 2);
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        const r = this.radius;
+        const h = this.length;
+        ctx.moveTo(-r, -h / 2);
+        ctx.lineTo(-r, h / 2);
+        ctx.arc(0, h / 2, r, Math.PI, 0);
+        ctx.lineTo(r, -h / 2);
+        ctx.arc(0, -h / 2, r, 0, Math.PI);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+function initConfetti() {
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    let animFrameId;
+
+    // Create particles
+    const count = Math.min(80, (width * height) / 15000);
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle(width, height));
+    }
+
+    function drawFrame() {
+        ctx.clearRect(0, 0, width, height);
+        particles.forEach(p => {
+            p.update(width, height, mouse);
+            p.draw(ctx);
+        });
+        animFrameId = requestAnimationFrame(drawFrame);
+    }
+
+    window.addEventListener('mousemove', e => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+
+    window.addEventListener('mouseout', () => {
+        mouse.x = -1000;
+        mouse.y = -1000;
+    });
+
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+    drawFrame();
+}
+
 // Toggle sidebar visibility
 const toggleSidebarBtn = document.querySelector('.toggle-sidebar button');
 const body = document.body;
