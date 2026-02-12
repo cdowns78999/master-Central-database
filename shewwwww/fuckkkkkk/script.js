@@ -681,10 +681,7 @@ function applyTheme(theme) {
 }
 
 function toggleTheme() {
-    const isLight = document.body.classList.contains('theme-light');
-    const next = isLight ? 'dark' : 'light';
-    localStorage.setItem('avatar_trainer_theme', next);
-    applyTheme(next);
+    // Theme toggle disabled - light mode only
 }
 
 // ============================================
