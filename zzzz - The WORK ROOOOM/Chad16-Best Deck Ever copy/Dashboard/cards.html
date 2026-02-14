@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Cards</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Cards Page Specific Styles */
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            padding: 1rem 0;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            width: 100%;
+            text-align: center;
+        }
+
+        .empty-state h2 {
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .add-card-btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #000;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-card-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(76, 201, 240, 0.3);
+        }
+
+        .add-card-btn.small {
+            padding: 10px 20px;
+            font-size: 0.85rem;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .toolbar-btn {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .toolbar-btn.danger:hover {
+            border-color: #ff5f56;
+            color: #ff5f56;
+        }
+
+        .card-count {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: #14181e;
+            border-radius: 16px;
+            padding: 32px;
+            width: 480px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-subtitle {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .modal-textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .modal-textarea::placeholder {
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 1.5rem;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn.cancel {
+            background: #1a1f27;
+            color: var(--text-dim);
+        }
+
+        .modal-btn.cancel:hover {
+            background: #242b36;
+        }
+
+        .modal-btn.confirm {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .modal-btn.confirm:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Drive Path Modal */
+        .path-input-group {
+            margin-bottom: 1rem;
+        }
+
+        .path-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .path-input {
+            width: 100%;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .path-input:focus {
+            border-color: var(--primary);
+        }
+
+        .recent-paths {
+            margin-top: 1rem;
+        }
+
+        .recent-paths-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .recent-path-item {
+            padding: 10px 14px;
+            background: #1a1f27;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--text-mid);
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .recent-path-item:hover {
+            background: #242b36;
+            color: var(--primary);
+        }
+
+        /* Status Messages */
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-mid);
+            z-index: 1001;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .status-bar.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .status-bar.success {
+            border-color: #4aba70;
+            color: #4aba70;
+        }
+
+        .status-bar.error {
+            border-color: #ff5f56;
+            color: #ff5f56;
+        }
+
+        /* API Not Configured Warning */
+        .api-warning {
+            background: rgba(212, 165, 74, 0.1);
+            border: 1px solid rgba(212, 165, 74, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: #d4a54a;
+        }
+
+        /* Sidebar Actions */
+        .sidebar-actions {
+            margin-top: auto;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            padding-left: 4px;
+        }
+
+        .sidebar-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .sidebar-action-btn:hover {
+            background: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateX(3px);
+        }
+
+        .sidebar-action-btn .action-icon {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Bulk Add Modal */
+        .count-picker {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .count-picker label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .count-input {
+            width: 80px;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .count-input:focus {
+            border-color: var(--primary);
+        }
+
+        .count-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .count-btn {
+            width: 32px;
+            height: 32px;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .count-btn:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .preset-counts {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .preset-btn {
+            padding: 8px 16px;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Filter indicator */
+        .filter-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: rgba(76, 201, 240, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            font-size: 0.85rem;
+        }
+
+        .filter-indicator.active {
+            display: flex;
+        }
+
+        .clear-filter-btn {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        .clear-filter-btn:hover {
+            opacity: 1;
+        }
+
+        /* Primary Action Button */
+        .sidebar-action-btn.primary-action {
+            background: linear-gradient(135deg, rgba(76, 201, 240, 0.15), rgba(67, 97, 238, 0.15));
+            border: 1px solid rgba(76, 201, 240, 0.3);
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+            padding: 12px 14px;
+        }
+
+        .sidebar-action-btn.primary-action:hover {
+            background: linear-gradient(135deg, rgba(76, 201, 240, 0.25), rgba(67, 97, 238, 0.25));
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .action-hint {
+            font-size: 0.65rem;
+            opacity: 0.5;
+            font-weight: 400;
+        }
+
+        /* ========================================
+           QUICK FILL LAB - Full Screen Overlay
+           ======================================== */
+        .lab-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+        }
+
+        .lab-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .lab-container {
+            min-height: 100vh;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .lab-header {
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .lab-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #f3f4f6;
+            margin: 0;
+        }
+
+        .lab-subtitle {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-top: 6px;
+        }
+
+        .lab-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: #4ade80;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lab-status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #4ade80;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 12px #4ade80;
+            }
+
+            50% {
+                opacity: 0.6;
+                box-shadow: 0 0 20px #4ade80;
+            }
+        }
+
+        .close-lab-btn {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 2001;
+        }
+
+        .close-lab-btn:hover {
+            background: rgba(255, 95, 86, 0.2);
+            border-color: #ff5f56;
+            color: #ff5f56;
+        }
+
+        /* Selection Step */
+        .lab-selection {
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 2rem;
+        }
+
+        .selection-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .selection-btn {
+            flex: 1;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .selection-btn:hover {
+            background: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .selection-btn.active {
+            background: rgba(76, 201, 240, 0.15);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 30px rgba(76, 201, 240, 0.2);
+        }
+
+        .selection-btn-title {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .selection-btn-desc {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            font-weight: 400;
+        }
+
+        /* Grid Table */
+        .lab-grid-wrapper {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .lab-grid-header {
+            display: grid;
+            grid-template-columns: 40px 1.5fr 1fr 1fr 1.2fr;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+            gap: 15px;
+        }
+
+        .lab-grid-body {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .lab-grid-row {
+            display: grid;
+            grid-template-columns: 40px 1.5fr 1fr 1fr 1.2fr;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            gap: 15px;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .lab-grid-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .lab-row-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .lab-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .lab-input:focus {
+            border-color: var(--primary);
+            background: rgba(76, 201, 240, 0.05);
+            box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.1);
+        }
+
+        .lab-input::placeholder {
+            color: #4b5563;
+        }
+
+        .lab-select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .lab-select:focus {
+            border-color: var(--primary);
+        }
+
+        .lab-select option {
+            background: #1a1f27;
+            color: #fff;
+        }
+
+        /* Apply Button */
+        .lab-actions {
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .lab-btn {
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .lab-btn.secondary {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #9ca3af;
+        }
+
+        .lab-btn.secondary:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .lab-btn.primary {
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            border: none;
+            color: #000;
+            box-shadow: 0 4px 20px rgba(76, 201, 240, 0.3);
+        }
+
+        .lab-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(76, 201, 240, 0.4);
+        }
+
+        /* Empty State */
+        .lab-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+
+        .lab-empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span>OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="cards.html" class="nav-link active">Cards</a>
+            <a href="actions.html" class="nav-link">Actions</a>
+            <a href="contacts.html" class="nav-link">Contacts</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+            <a href="offboarding.html" class="nav-link">Offboarding</a>
+            <a href="social_sync.html" class="nav-link">Social Sync</a>
+            <a href="payments.html" class="nav-link">Payments</a>
+            <div
+                style="margin-top: 1rem; padding-left: 10px; font-size: 0.65rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7;">
+                Modules</div>
+            <a href="contact_manager.html" class="nav-link">Contact Manager</a>
+            <a href="seo_blog.html" class="nav-link">SEO Blog</a>
+            <a href="playlist_hunter.html" class="nav-link">Playlist Hunter</a>
+            <a href="press_hunter.html" class="nav-link">Press Hunter</a>
+            <div style="margin-top: 1rem;"></div>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <h1>Campaign Cards</h1>
+
+        <!-- Filter Indicator -->
+        <div class="filter-indicator" id="filter-indicator">
+            <span id="filter-text">Showing: All Cards</span>
+            <button class="clear-filter-btn" onclick="showAllCards()">✕</button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar" id="toolbar" style="display: none;">
+            <div class="toolbar-left">
+                <span class="card-count"><span id="card-count">0</span> cards</span>
+                <button class="add-card-btn small" onclick="openAddModal()">+ Add More</button>
+            </div>
+            <div class="toolbar-right">
+                <button class="toolbar-btn" onclick="openLoadModal()" id="load-btn">
+                    <span>📂</span> Load
+                </button>
+                <button class="toolbar-btn" onclick="openSaveModal()" id="save-btn">
+                    <span>💾</span> Save
+                </button>
+                <button class="toolbar-btn danger" onclick="clearAllCards()">
+                    <span>🗑️</span> Clear All
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+            <h2>No cards yet</h2>
+            <p style="color: var(--text-dim); margin-bottom: 2rem;">Paste a list of names to generate campaign cards</p>
+            <button class="add-card-btn" onclick="openAddModal()">
+                <span>+</span> Add Cards
+            </button>
+        </div>
+
+        <!-- Cards Container -->
+        <div class="cards-container" id="cards-container"></div>
+    </main>
+
+    <!-- Add Cards Modal -->
+    <div class="modal-overlay" id="add-modal-overlay" onclick="closeAddModal()"></div>
+    <div class="modal" id="add-modal">
+        <div class="modal-title">Add Cards</div>
+        <div class="modal-subtitle">Paste a list of names (one per line) to generate tiles</div>
+        <textarea class="modal-textarea" id="names-input" placeholder="Artist One
+Artist Two
+Artist Three
+..."></textarea>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeAddModal()">Cancel</button>
+            <button class="modal-btn confirm" onclick="generateTiles()">Generate</button>
+        </div>
+    </div>
+
+    <!-- Save Modal -->
+    <div class="modal-overlay" id="save-modal-overlay" onclick="closeSaveModal()"></div>
+    <div class="modal" id="save-modal">
+        <div class="modal-title">Save to Google Drive</div>
+        <div class="modal-subtitle">Specify a path to save your cards data</div>
+
+        <div class="api-warning" id="api-warning" style="display: none;">
+            Google Drive API not configured. Update credentials in google-drive.js to enable cloud sync.
+        </div>
+
+        <div class="path-input-group">
+            <label class="path-label">Drive Path</label>
+            <input type="text" class="path-input" id="save-path-input"
+                placeholder="/ReturnToGrace/Campaign1/cards.json">
+        </div>
+
+        <div class="recent-paths" id="save-recent-paths"></div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeSaveModal()">Cancel</button>
+            <button class="modal-btn confirm" onclick="saveCards()">Save</button>
+        </div>
+    </div>
+
+    <!-- Load Modal -->
+    <div class="modal-overlay" id="load-modal-overlay" onclick="closeLoadModal()"></div>
+    <div class="modal" id="load-modal">
+        <div class="modal-title">Load from Google Drive</div>
+        <div class="modal-subtitle">Select a path to load cards data</div>
+
+        <div class="api-warning" id="load-api-warning" style="display: none;">
+            Google Drive API not configured. Update credentials in google-drive.js to enable cloud sync.
+        </div>
+
+        <div class="path-input-group">
+            <label class="path-label">Drive Path</label>
+            <input type="text" class="path-input" id="load-path-input"
+                placeholder="/ReturnToGrace/Campaign1/cards.json">
+        </div>
+
+        <div class="recent-paths" id="load-recent-paths"></div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeLoadModal()">Cancel</button>
+            <button class="modal-btn confirm" onclick="loadCards()">Load</button>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" id="status-bar"></div>
+
+    <!-- Quick Fill Lab Overlay -->
+    <div class="lab-overlay" id="quickFillLab">
+        <button class="close-lab-btn" onclick="closeQuickFillLab()">✕ Close Lab</button>
+
+        <div class="lab-container">
+            <div class="lab-header">
+                <div>
+                    <h1 class="lab-title">Quick Fill Lab</h1>
+                    <p class="lab-subtitle">Batch populate your tiles in seconds</p>
+                </div>
+                <div class="lab-status">
+                    <div class="lab-status-dot"></div>
+                    <span id="labTileCount">0 Tiles Ready</span>
+                </div>
+            </div>
+
+            <!-- Selection Step -->
+            <div class="lab-selection">
+                <div class="selection-options">
+                    <button class="selection-btn active" id="selectNewBtn" onclick="selectNewTiles()">
+                        <div class="selection-btn-title">📦 Just Created</div>
+                        <div class="selection-btn-desc">Fill the tiles you just added</div>
+                    </button>
+                    <button class="selection-btn" id="selectAllBtn" onclick="selectAllTiles()">
+                        <div class="selection-btn-title">🗂️ All Tiles</div>
+                        <div class="selection-btn-desc">Fill all existing tiles</div>
+                    </button>
+                    <button class="selection-btn" id="selectUnfilledBtn" onclick="selectUnfilledTiles()">
+                        <div class="selection-btn-title">📋 Unfilled Only</div>
+                        <div class="selection-btn-desc">Fill tiles that are blank</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid Table -->
+            <div class="lab-grid-wrapper">
+                <div class="lab-grid-header">
+                    <span>#</span>
+                    <span>Artist / Card Name</span>
+                    <span>Song Name</span>
+                    <span>Campaign Type</span>
+                    <span>Contact</span>
+                </div>
+                <div class="lab-grid-body" id="labGridBody">
+                    <!-- Rows populated by JS -->
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="lab-empty" id="labEmpty" style="display: none;">
+                <div class="lab-empty-icon">📭</div>
+                <p>No tiles to fill. Create some tiles first!</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="lab-actions">
+                <button class="lab-btn secondary" onclick="clearLabInputs()">Clear All</button>
+                <button class="lab-btn primary" onclick="applyLabData()">⚡ Apply to Tiles</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Add Modal -->
+    <div class="modal-overlay" id="bulk-modal-overlay" onclick="closeBulkAddModal()"></div>
+    <div class="modal" id="bulk-modal">
+        <div class="modal-title">Add Multiple Tiles</div>
+        <div class="modal-subtitle">Choose how many blank tiles to create</div>
+
+        <div class="count-picker">
+            <label>Count:</label>
+            <div class="count-btns">
+                <button class="count-btn" onclick="adjustCount(-1)">−</button>
+            </div>
+            <input type="number" class="count-input" id="tile-count" value="5" min="1" max="100">
+            <div class="count-btns">
+                <button class="count-btn" onclick="adjustCount(1)">+</button>
+            </div>
+        </div>
+
+        <div class="preset-counts">
+            <button class="preset-btn" onclick="setCount(1)">1</button>
+            <button class="preset-btn" onclick="setCount(5)">5</button>
+            <button class="preset-btn" onclick="setCount(10)">10</button>
+            <button class="preset-btn" onclick="setCount(25)">25</button>
+            <button class="preset-btn" onclick="setCount(50)">50</button>
+        </div>
+
+        <div class="path-input-group">
+            <label class="path-label">Naming Prefix (optional)</label>
+            <input type="text" class="path-input" id="tile-prefix" placeholder="e.g. Artist, Campaign, Client...">
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeBulkAddModal()">Cancel</button>
+            <button class="modal-btn confirm" onclick="createBulkTiles()">Create Tiles</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="tile-component.js"></script>
+    <script src="google-drive.js"></script>
+    <script>
+        // State
+        let tiles = [];
+
+        // DOM References
+        const cardsContainer = document.getElementById('cards-container');
+        const emptyState = document.getElementById('empty-state');
+        const toolbar = document.getElementById('toolbar');
+        const cardCountEl = document.getElementById('card-count');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Google Drive
+            const configured = await googleDrive.init();
+
+            if (!googleDrive.isConfigured()) {
+                document.getElementById('api-warning').style.display = 'block';
+                document.getElementById('load-api-warning').style.display = 'block';
+            }
+
+            // Load from localStorage if available
+            loadFromLocalStorage();
+        });
+
+        // Add Modal
+        function openAddModal() {
+            document.getElementById('add-modal').classList.add('open');
+            document.getElementById('add-modal-overlay').classList.add('open');
+            document.getElementById('names-input').focus();
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.remove('open');
+            document.getElementById('add-modal-overlay').classList.remove('open');
+            document.getElementById('names-input').value = '';
+        }
+
+        // Generate Tiles
+        function generateTiles() {
+            const input = document.getElementById('names-input').value;
+            const names = input.split('\n').filter(n => n.trim());
+
+            if (names.length === 0) {
+                showStatus('Please enter at least one name', 'error');
+                return;
+            }
+
+            names.forEach(name => {
+                const tile = new StoneTile(name.trim(), cardsContainer, {
+                    superTitle: 'Campaign',
+                    onDelete: (deletedTile) => {
+                        tiles = tiles.filter(t => t.id !== deletedTile.id);
+                        updateUI();
+                        saveToLocalStorage();
+                    }
+                });
+                tiles.push(tile);
+            });
+
+            closeAddModal();
+            updateUI();
+            saveToLocalStorage();
+            showStatus(`Created ${names.length} card(s)`, 'success');
+        }
+
+        // Clear All Cards
+        function clearAllCards() {
+            if (tiles.length === 0) return;
+
+            if (confirm(`Are you sure you want to delete all ${tiles.length} cards?`)) {
+                tiles.forEach(tile => tile.destroy());
+                tiles = [];
+                updateUI();
+                saveToLocalStorage();
+                showStatus('All cards cleared', 'success');
+            }
+        }
+
+        // Update UI State
+        function updateUI() {
+            const hasCards = tiles.length > 0;
+            emptyState.style.display = hasCards ? 'none' : 'flex';
+            toolbar.style.display = hasCards ? 'flex' : 'none';
+            cardCountEl.textContent = tiles.length;
+        }
+
+        // Save Modal
+        function openSaveModal() {
+            document.getElementById('save-modal').classList.add('open');
+            document.getElementById('save-modal-overlay').classList.add('open');
+            renderRecentPaths('save');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('save-modal').classList.remove('open');
+            document.getElementById('save-modal-overlay').classList.remove('open');
+        }
+
+        // Load Modal
+        function openLoadModal() {
+            document.getElementById('load-modal').classList.add('open');
+            document.getElementById('load-modal-overlay').classList.add('open');
+            renderRecentPaths('load');
+        }
+
+        function closeLoadModal() {
+            document.getElementById('load-modal').classList.remove('open');
+            document.getElementById('load-modal-overlay').classList.remove('open');
+        }
+
+        // Render Recent Paths
+        function renderRecentPaths(type) {
+            const container = document.getElementById(`${type}-recent-paths`);
+            const paths = googleDrive.getRecentPaths();
+
+            if (paths.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="recent-paths-title">Recent Paths</div>
+                ${paths.map(path => `
+                    <div class="recent-path-item" onclick="selectPath('${type}', '${path}')">${path}</div>
+                `).join('')}
+            `;
+        }
+
+        function selectPath(type, path) {
+            document.getElementById(`${type}-path-input`).value = path;
+        }
+
+        // Save Cards to Google Drive
+        async function saveCards() {
+            const path = document.getElementById('save-path-input').value.trim();
+
+            if (!path) {
+                showStatus('Please enter a path', 'error');
+                return;
+            }
+
+            if (!path.endsWith('.json')) {
+                showStatus('Path should end with .json', 'error');
+                return;
+            }
+
+            // Collect all tile data
+            const data = {
+                version: 1,
+                savedAt: new Date().toISOString(),
+                cards: tiles.map(tile => tile.getData())
+            };
+
+            if (!googleDrive.isConfigured()) {
+                // Fallback: save to localStorage with path as key
+                localStorage.setItem(`cards_${path}`, JSON.stringify(data));
+                googleDrive.addRecentPath(path);
+                closeSaveModal();
+                showStatus(`Saved locally (API not configured)`, 'success');
+                return;
+            }
+
+            try {
+                showStatus('Saving to Google Drive...', '');
+                await googleDrive.saveToPath(path, data);
+                closeSaveModal();
+                showStatus('Saved to Google Drive', 'success');
+            } catch (error) {
+                console.error('Save error:', error);
+                showStatus(`Save failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Load Cards from Google Drive
+        async function loadCards() {
+            const path = document.getElementById('load-path-input').value.trim();
+
+            if (!path) {
+                showStatus('Please enter a path', 'error');
+                return;
+            }
+
+            let data;
+
+            if (!googleDrive.isConfigured()) {
+                // Fallback: load from localStorage
+                const stored = localStorage.getItem(`cards_${path}`);
+                if (!stored) {
+                    showStatus('No saved data found at this path', 'error');
+                    return;
+                }
+                data = JSON.parse(stored);
+                googleDrive.addRecentPath(path);
+            } else {
+                try {
+                    showStatus('Loading from Google Drive...', '');
+                    data = await googleDrive.loadFromPath(path);
+                } catch (error) {
+                    console.error('Load error:', error);
+                    showStatus(`Load failed: ${error.message}`, 'error');
+                    return;
+                }
+            }
+
+            // Clear existing cards
+            tiles.forEach(tile => tile.destroy());
+            tiles = [];
+
+            // Create new tiles from data
+            if (data.cards && Array.isArray(data.cards)) {
+                data.cards.forEach(cardData => {
+                    const tile = new StoneTile(cardData.name, cardsContainer, {
+                        superTitle: cardData.superTitle || 'Campaign',
+                        onDelete: (deletedTile) => {
+                            tiles = tiles.filter(t => t.id !== deletedTile.id);
+                            updateUI();
+                            saveToLocalStorage();
+                        }
+                    });
+                    tile.setData(cardData);
+                    tiles.push(tile);
+                });
+            }
+
+            closeLoadModal();
+            updateUI();
+            saveToLocalStorage();
+            showStatus(`Loaded ${tiles.length} card(s)`, 'success');
+        }
+
+        // Local Storage (for session persistence)
+        function saveToLocalStorage() {
+            const data = {
+                cards: tiles.map(tile => tile.getData())
+            };
+            localStorage.setItem('cards_session', JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem('cards_session');
+                if (!stored) return;
+
+                const data = JSON.parse(stored);
+                if (data.cards && Array.isArray(data.cards)) {
+                    data.cards.forEach(cardData => {
+                        const tile = new StoneTile(cardData.name, cardsContainer, {
+                            superTitle: cardData.superTitle || 'Campaign',
+                            onDelete: (deletedTile) => {
+                                tiles = tiles.filter(t => t.id !== deletedTile.id);
+                                updateUI();
+                                saveToLocalStorage();
+                            }
+                        });
+                        tile.setData(cardData);
+                        tiles.push(tile);
+                    });
+                    updateUI();
+                }
+            } catch (e) {
+                console.error('Error loading from localStorage:', e);
+            }
+        }
+
+        // Status Bar
+        function showStatus(message, type = '') {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar show';
+            if (type) statusBar.classList.add(type);
+
+            setTimeout(() => {
+                statusBar.classList.remove('show');
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeSaveModal();
+                closeLoadModal();
+                closeBulkAddModal();
+            }
+
+            // Ctrl+S to save
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                if (tiles.length > 0) {
+                    openSaveModal();
+                }
+            }
+
+            // Ctrl+O to load
+            if (e.ctrlKey && e.key === 'o') {
+                e.preventDefault();
+                openLoadModal();
+            }
+        });
+
+        // ========================================
+        // BULK ADD TILES
+        // ========================================
+        function openBulkAddModal() {
+            document.getElementById('bulk-modal').classList.add('open');
+            document.getElementById('bulk-modal-overlay').classList.add('open');
+            document.getElementById('tile-count').focus();
+        }
+
+        function closeBulkAddModal() {
+            document.getElementById('bulk-modal').classList.remove('open');
+            document.getElementById('bulk-modal-overlay').classList.remove('open');
+        }
+
+        function adjustCount(delta) {
+            const input = document.getElementById('tile-count');
+            let val = parseInt(input.value) || 1;
+            val = Math.max(1, Math.min(100, val + delta));
+            input.value = val;
+        }
+
+        function setCount(num) {
+            document.getElementById('tile-count').value = num;
+        }
+
+        function createBulkTiles() {
+            const count = parseInt(document.getElementById('tile-count').value) || 1;
+            const prefix = document.getElementById('tile-prefix').value.trim() || 'New Card';
+
+            for (let i = 1; i <= count; i++) {
+                const name = count === 1 ? prefix : `${prefix} ${i}`;
+                const tile = new StoneTile(name, cardsContainer, {
+                    superTitle: 'Campaign',
+                    onDelete: (deletedTile) => {
+                        tiles = tiles.filter(t => t.id !== deletedTile.id);
+                        updateUI();
+                        saveToLocalStorage();
+                    }
+                });
+                tiles.push(tile);
+            }
+
+            closeBulkAddModal();
+            updateUI();
+            saveToLocalStorage();
+            showStatus(`Created ${count} tile(s)`, 'success');
+
+            // Reset form
+            document.getElementById('tile-count').value = 5;
+            document.getElementById('tile-prefix').value = '';
+        }
+
+        // ========================================
+        // FILTER FUNCTIONS
+        // ========================================
+        let currentFilter = null;
+
+        function setFilter(name) {
+            currentFilter = name;
+            const indicator = document.getElementById('filter-indicator');
+            const filterText = document.getElementById('filter-text');
+
+            if (name) {
+                indicator.classList.add('active');
+                filterText.textContent = `Showing: ${name}`;
+            } else {
+                indicator.classList.remove('active');
+            }
+        }
+
+        function showAllCards() {
+            setFilter(null);
+            tiles.forEach(tile => {
+                tile.element.style.display = '';
+            });
+            showStatus('Showing all cards', 'success');
+        }
+
+        function filterTiles(predicate, filterName) {
+            let matchCount = 0;
+            tiles.forEach(tile => {
+                const data = tile.getData();
+                const matches = predicate(data);
+                tile.element.style.display = matches ? '' : 'none';
+                if (matches) matchCount++;
+            });
+            setFilter(filterName);
+            showStatus(`Found ${matchCount} matching card(s)`, 'success');
+        }
+
+        function showUnpopulatedCards() {
+            filterTiles(data => {
+                if (!data.name || data.name.trim() === '' || data.name.startsWith('New Card')) {
+                    return true;
+                }
+                return Object.values(data.projectData).every(cat =>
+                    cat.every(item => item.name === 'Song 1' || item.reachout === '—' || item.reachout === 'New Outreach')
+                );
+            }, 'Unpopulated Cards');
+        }
+
+        function showReadyForCampaigns() {
+            filterTiles(data => {
+                const hasValidName = data.name && !data.name.startsWith('New Card');
+                const hasContent = Object.values(data.projectData).some(cat =>
+                    cat.some(item => item.name !== 'Song 1' && item.name !== 'New Entry')
+                );
+                const noCampaigns = Object.values(data.projectData).every(cat =>
+                    cat.every(item => item.reachout === '—' || item.reachout === 'New Outreach')
+                );
+                return hasValidName && hasContent && noCampaigns;
+            }, 'Ready for Campaigns');
+        }
+
+        function showActiveCampaigns() {
+            filterTiles(data => {
+                return Object.values(data.projectData).some(cat =>
+                    cat.some(item => item.reachout !== '—' && item.reachout !== 'New Outreach' && !item.completed)
+                );
+            }, 'Active Campaigns');
+        }
+
+        function showHighPriority() {
+            filterTiles(data => {
+                const totalPending = Object.values(data.projectData).reduce((sum, cat) =>
+                    sum + cat.reduce((catSum, item) => {
+                        const match = item.followup?.match(/(\d+)/);
+                        return catSum + (match ? parseInt(match[1]) : 0);
+                    }, 0), 0);
+                return totalPending > 3;
+            }, 'High Priority');
+        }
+
+        function showPressFocus() {
+            filterTiles(data => {
+                return data.projectData.press?.some(item =>
+                    item.name !== 'Song 1' && item.reachout !== '—'
+                );
+            }, 'Press Focus');
+        }
+
+        function showSpotifyFocus() {
+            filterTiles(data => {
+                return data.projectData.spotify?.some(item =>
+                    item.name !== 'Song 1' && item.reachout !== '—'
+                );
+            }, 'Spotify Focus');
+        }
+
+        function showSocialFocus() {
+            filterTiles(data => {
+                return data.projectData.social?.some(item =>
+                    item.name !== 'Song 1' && item.reachout !== '—'
+                );
+            }, 'Social Focus');
+        }
+
+        // ========================================
+        // QUICK FILL LAB
+        // ========================================
+        let newlyCreatedTiles = [];
+        let labSelectedTiles = [];
+
+        // Override createBulkTiles to track new tiles
+        (function () {
+            const originalFunc = createBulkTiles;
+            createBulkTiles = function () {
+                const count = parseInt(document.getElementById('tile-count').value) || 1;
+                const prefix = document.getElementById('tile-prefix').value.trim() || 'New Card';
+
+                newlyCreatedTiles = [];
+
+                for (let i = 1; i <= count; i++) {
+                    const name = count === 1 ? prefix : `${prefix} ${i}`;
+                    const tile = new StoneTile(name, cardsContainer, {
+                        superTitle: 'Campaign',
+                        onDelete: (deletedTile) => {
+                            tiles = tiles.filter(t => t.id !== deletedTile.id);
+                            newlyCreatedTiles = newlyCreatedTiles.filter(t => t.id !== deletedTile.id);
+                            updateUI();
+                            saveToLocalStorage();
+                        }
+                    });
+                    tiles.push(tile);
+                    newlyCreatedTiles.push(tile);
+                }
+
+                closeBulkAddModal();
+                updateUI();
+                saveToLocalStorage();
+                showStatus(`Created ${count} tile(s) — Open Quick Fill Lab to populate!`, 'success');
+
+                document.getElementById('tile-count').value = 5;
+                document.getElementById('tile-prefix').value = '';
+            };
+        })();
+
+        function openQuickFillLab() {
+            if (tiles.length === 0) {
+                showStatus('Create some tiles first!', 'error');
+                return;
+            }
+            document.getElementById('quickFillLab').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            if (newlyCreatedTiles.length > 0) {
+                selectNewTiles();
+            } else {
+                selectAllTiles();
+            }
+        }
+
+        function closeQuickFillLab() {
+            document.getElementById('quickFillLab').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function selectNewTiles() {
+            setSelectionActive('selectNewBtn');
+            labSelectedTiles = newlyCreatedTiles.length > 0 ? [...newlyCreatedTiles] : [...tiles];
+            renderLabGrid();
+        }
+
+        function selectAllTiles() {
+            setSelectionActive('selectAllBtn');
+            labSelectedTiles = [...tiles];
+            renderLabGrid();
+        }
+
+        function selectUnfilledTiles() {
+            setSelectionActive('selectUnfilledBtn');
+            labSelectedTiles = tiles.filter(tile => {
+                const data = tile.getData();
+                return !data.name || data.name.startsWith('New Card');
+            });
+            renderLabGrid();
+        }
+
+        function setSelectionActive(btnId) {
+            document.querySelectorAll('.selection-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
+        }
+
+        function renderLabGrid() {
+            const body = document.getElementById('labGridBody');
+            const empty = document.getElementById('labEmpty');
+            const countDisplay = document.getElementById('labTileCount');
+
+            countDisplay.textContent = `${labSelectedTiles.length} Tiles Ready`;
+
+            if (labSelectedTiles.length === 0) {
+                body.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            body.style.display = 'flex';
+            empty.style.display = 'none';
+
+            body.innerHTML = labSelectedTiles.map((tile, index) => {
+                const data = tile.getData();
+                const currentName = data.name || '';
+                const currentSong = data.projectData?.press?.[0]?.name || '';
+
+                return `
+                    <div class="lab-grid-row" data-tile-id="${tile.id}">
+                        <div class="lab-row-num">${index + 1}</div>
+                        <input type="text" class="lab-input" data-field="name"
+                               placeholder="Artist / Card name..."
+                               value="${currentName.startsWith('New Card') ? '' : currentName}">
+                        <input type="text" class="lab-input" data-field="song"
+                               placeholder="Song name..."
+                               value="${currentSong === 'Song 1' ? '' : currentSong}">
+                        <select class="lab-select" data-field="campaign">
+                            <option value="press">📰 Press</option>
+                            <option value="spotify">🎵 Spotify</option>
+                            <option value="social">📱 Social</option>
+                            <option value="other">📦 Other</option>
+                        </select>
+                        <select class="lab-select" data-field="contact">
+                            <option value="">Select contact...</option>
+                            <option value="Email">📧 Email</option>
+                            <option value="DM">💬 DM</option>
+                            <option value="Portal">🌐 Portal</option>
+                            <option value="Phone">📞 Phone</option>
+                            <option value="Form">📝 Form</option>
+                        </select>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearLabInputs() {
+            document.querySelectorAll('.lab-grid-row .lab-input').forEach(input => input.value = '');
+            document.querySelectorAll('.lab-grid-row .lab-select[data-field="contact"]').forEach(sel => sel.selectedIndex = 0);
+            showStatus('Cleared all inputs', 'success');
+        }
+
+        function applyLabData() {
+            const rows = document.querySelectorAll('.lab-grid-row');
+            let filledCount = 0;
+
+            rows.forEach(row => {
+                const tileId = row.dataset.tileId;
+                const tile = labSelectedTiles.find(t => t.id === tileId);
+                if (!tile) return;
+
+                const nameVal = row.querySelector('[data-field="name"]').value.trim();
+                const songVal = row.querySelector('[data-field="song"]').value.trim();
+                const campaignVal = row.querySelector('[data-field="campaign"]').value;
+                const contactVal = row.querySelector('[data-field="contact"]').value;
+
+                if (nameVal || songVal) {
+                    const data = tile.getData();
+
+                    if (nameVal) {
+                        data.name = nameVal;
+                        tile.name = nameVal;
+                        tile.dom.title.innerText = nameVal;
+                    }
+
+                    if (songVal && data.projectData[campaignVal]) {
+                        data.projectData[campaignVal][0].name = songVal;
+                    }
+
+                    if (contactVal && data.projectData[campaignVal]) {
+                        data.projectData[campaignVal][0].method = contactVal;
+                    }
+
+                    tile.currentCat = campaignVal;
+                    tile.setData(data);
+                    filledCount++;
+                }
+            });
+
+            if (filledCount > 0) {
+                saveToLocalStorage();
+                closeQuickFillLab();
+                showStatus(`⚡ Applied data to ${filledCount} tile(s)!`, 'success');
+                newlyCreatedTiles = [];
+            } else {
+                showStatus('Fill in at least one row', 'error');
+            }
+        }
+
+        // ESC to close lab
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('quickFillLab').classList.contains('active')) {
+                closeQuickFillLab();
+            }
+        });
+    </script>
+</body>
+
+</html>

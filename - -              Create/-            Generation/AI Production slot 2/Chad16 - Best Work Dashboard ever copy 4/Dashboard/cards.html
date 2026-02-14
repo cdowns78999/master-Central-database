@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Cards</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Cards Page Specific Styles */
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            padding: 1rem 0;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            width: 100%;
+            text-align: center;
+        }
+
+        .empty-state h2 {
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .add-card-btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #000;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-card-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(76, 201, 240, 0.3);
+        }
+
+        .add-card-btn.small {
+            padding: 10px 20px;
+            font-size: 0.85rem;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .toolbar-btn {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .toolbar-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .toolbar-btn.danger:hover {
+            border-color: #ff5f56;
+            color: #ff5f56;
+        }
+
+        .card-count {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: #14181e;
+            border-radius: 16px;
+            padding: 32px;
+            width: 480px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-subtitle {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .modal-textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .modal-textarea::placeholder {
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 1.5rem;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn.cancel {
+            background: #1a1f27;
+            color: var(--text-dim);
+        }
+
+        .modal-btn.cancel:hover {
+            background: #242b36;
+        }
+
+        .modal-btn.confirm {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .modal-btn.confirm:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Drive Path Modal */
+        .path-input-group {
+            margin-bottom: 1rem;
+        }
+
+        .path-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .path-input {
+            width: 100%;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .path-input:focus {
+            border-color: var(--primary);
+        }
+
+        .recent-paths {
+            margin-top: 1rem;
+        }
+
+        .recent-paths-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .recent-path-item {
+            padding: 10px 14px;
+            background: #1a1f27;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--text-mid);
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: all 0.2s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .recent-path-item:hover {
+            background: #242b36;
+            color: var(--primary);
+        }
+
+        /* Status Messages */
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: #1a1f27;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-mid);
+            z-index: 1001;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .status-bar.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .status-bar.success {
+            border-color: #4aba70;
+            color: #4aba70;
+        }
+
+        .status-bar.error {
+            border-color: #ff5f56;
+            color: #ff5f56;
+        }
+
+        /* API Not Configured Warning */
+        .api-warning {
+            background: rgba(212, 165, 74, 0.1);
+            border: 1px solid rgba(212, 165, 74, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: #d4a54a;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span>OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="index.html" class="nav-link">Hub</a>
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="cards.html" class="nav-link active">Cards</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <h1>Campaign Cards</h1>
+
+        <!-- Toolbar -->
+        <div class="toolbar" id="toolbar" style="display: none;">
+            <div class="toolbar-left">
+                <span class="card-count"><span id="card-count">0</span> cards</span>
+                <button class="add-card-btn small" onclick="openAddModal()">+ Add More</button>
+            </div>
+            <div class="toolbar-right">
+                <button class="toolbar-btn" onclick="openLoadModal()" id="load-btn">
+                    <span>📂</span> Load
+                </button>
+                <button class="toolbar-btn" onclick="openSaveModal()" id="save-btn">
+                    <span>💾</span> Save
+                </button>
+                <button class="toolbar-btn danger" onclick="clearAllCards()">
+                    <span>🗑️</span> Clear All
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+            <h2>No cards yet</h2>
+            <p style="color: var(--text-dim); margin-bottom: 2rem;">Paste a list of names to generate campaign cards</p>
+            <button class="add-card-btn" onclick="openAddModal()">
+                <span>+</span> Add Cards
+            </button>
+        </div>
+
+        <!-- Cards Container -->
+        <div class="cards-container" id="cards-container"></div>
+    </main>
+
+    <!-- Add Cards Modal -->
+    <div class="modal-overlay" id="add-modal-overlay" onclick="closeAddModal()"></div>
+    <div class="modal" id="add-modal">
+        <div class="modal-title">Add Cards</div>
+        <div class="modal-subtitle">Paste a list of names (one per line) to generate tiles</div>
+        <textarea class="modal-textarea" id="names-input" placeholder="Artist One
+Artist Two
+Artist Three
+..."></textarea>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeAddModal()">Cancel</button>
+            <button class="modal-btn confirm" onclick="generateTiles()">Generate</button>
+        </div>
+    </div>
+
+    <!-- Save Modal -->
+    <div class="modal-overlay" id="save-modal-overlay" onclick="closeSaveModal()"></div>
+    <div class="modal" id="save-modal">
+        <div class="modal-title">Save to Google Drive</div>
+        <div class="modal-subtitle">Specify a path to save your cards data</div>
+
+        <div class="api-warning" id="api-warning" style="display: none;">
+            Google Drive API not configured. Update credentials in google-drive.js to enable cloud sync.
+        </div>
+
+        <div class="path-input-group">
+            <label class="path-label">Drive Path</label>
+            <input type="text" class="path-input" id="save-path-input"
+                placeholder="/ReturnToGrace/Campaign1/cards.json">
+        </div>
+
+        <div class="recent-paths" id="save-recent-paths"></div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeSaveModal()">Cancel</button>
+            <button class="modal-btn confirm" onclick="saveCards()">Save</button>
+        </div>
+    </div>
+
+    <!-- Load Modal -->
+    <div class="modal-overlay" id="load-modal-overlay" onclick="closeLoadModal()"></div>
+    <div class="modal" id="load-modal">
+        <div class="modal-title">Load from Google Drive</div>
+        <div class="modal-subtitle">Select a path to load cards data</div>
+
+        <div class="api-warning" id="load-api-warning" style="display: none;">
+            Google Drive API not configured. Update credentials in google-drive.js to enable cloud sync.
+        </div>
+
+        <div class="path-input-group">
+            <label class="path-label">Drive Path</label>
+            <input type="text" class="path-input" id="load-path-input"
+                placeholder="/ReturnToGrace/Campaign1/cards.json">
+        </div>
+
+        <div class="recent-paths" id="load-recent-paths"></div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeLoadModal()">Cancel</button>
+            <button class="modal-btn confirm" onclick="loadCards()">Load</button>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" id="status-bar"></div>
+
+    <!-- Scripts -->
+    <script src="tile-component.js"></script>
+    <script src="google-drive.js"></script>
+    <script>
+        // State
+        let tiles = [];
+
+        // DOM References
+        const cardsContainer = document.getElementById('cards-container');
+        const emptyState = document.getElementById('empty-state');
+        const toolbar = document.getElementById('toolbar');
+        const cardCountEl = document.getElementById('card-count');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Google Drive
+            const configured = await googleDrive.init();
+
+            if (!googleDrive.isConfigured()) {
+                document.getElementById('api-warning').style.display = 'block';
+                document.getElementById('load-api-warning').style.display = 'block';
+            }
+
+            // Load from localStorage if available
+            loadFromLocalStorage();
+        });
+
+        // Add Modal
+        function openAddModal() {
+            document.getElementById('add-modal').classList.add('open');
+            document.getElementById('add-modal-overlay').classList.add('open');
+            document.getElementById('names-input').focus();
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.remove('open');
+            document.getElementById('add-modal-overlay').classList.remove('open');
+            document.getElementById('names-input').value = '';
+        }
+
+        // Generate Tiles
+        function generateTiles() {
+            const input = document.getElementById('names-input').value;
+            const names = input.split('\n').filter(n => n.trim());
+
+            if (names.length === 0) {
+                showStatus('Please enter at least one name', 'error');
+                return;
+            }
+
+            names.forEach(name => {
+                const tile = new StoneTile(name.trim(), cardsContainer, {
+                    superTitle: 'Campaign',
+                    onDelete: (deletedTile) => {
+                        tiles = tiles.filter(t => t.id !== deletedTile.id);
+                        updateUI();
+                        saveToLocalStorage();
+                    }
+                });
+                tiles.push(tile);
+            });
+
+            closeAddModal();
+            updateUI();
+            saveToLocalStorage();
+            showStatus(`Created ${names.length} card(s)`, 'success');
+        }
+
+        // Clear All Cards
+        function clearAllCards() {
+            if (tiles.length === 0) return;
+
+            if (confirm(`Are you sure you want to delete all ${tiles.length} cards?`)) {
+                tiles.forEach(tile => tile.destroy());
+                tiles = [];
+                updateUI();
+                saveToLocalStorage();
+                showStatus('All cards cleared', 'success');
+            }
+        }
+
+        // Update UI State
+        function updateUI() {
+            const hasCards = tiles.length > 0;
+            emptyState.style.display = hasCards ? 'none' : 'flex';
+            toolbar.style.display = hasCards ? 'flex' : 'none';
+            cardCountEl.textContent = tiles.length;
+        }
+
+        // Save Modal
+        function openSaveModal() {
+            document.getElementById('save-modal').classList.add('open');
+            document.getElementById('save-modal-overlay').classList.add('open');
+            renderRecentPaths('save');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('save-modal').classList.remove('open');
+            document.getElementById('save-modal-overlay').classList.remove('open');
+        }
+
+        // Load Modal
+        function openLoadModal() {
+            document.getElementById('load-modal').classList.add('open');
+            document.getElementById('load-modal-overlay').classList.add('open');
+            renderRecentPaths('load');
+        }
+
+        function closeLoadModal() {
+            document.getElementById('load-modal').classList.remove('open');
+            document.getElementById('load-modal-overlay').classList.remove('open');
+        }
+
+        // Render Recent Paths
+        function renderRecentPaths(type) {
+            const container = document.getElementById(`${type}-recent-paths`);
+            const paths = googleDrive.getRecentPaths();
+
+            if (paths.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="recent-paths-title">Recent Paths</div>
+                ${paths.map(path => `
+                    <div class="recent-path-item" onclick="selectPath('${type}', '${path}')">${path}</div>
+                `).join('')}
+            `;
+        }
+
+        function selectPath(type, path) {
+            document.getElementById(`${type}-path-input`).value = path;
+        }
+
+        // Save Cards to Google Drive
+        async function saveCards() {
+            const path = document.getElementById('save-path-input').value.trim();
+
+            if (!path) {
+                showStatus('Please enter a path', 'error');
+                return;
+            }
+
+            if (!path.endsWith('.json')) {
+                showStatus('Path should end with .json', 'error');
+                return;
+            }
+
+            // Collect all tile data
+            const data = {
+                version: 1,
+                savedAt: new Date().toISOString(),
+                cards: tiles.map(tile => tile.getData())
+            };
+
+            if (!googleDrive.isConfigured()) {
+                // Fallback: save to localStorage with path as key
+                localStorage.setItem(`cards_${path}`, JSON.stringify(data));
+                googleDrive.addRecentPath(path);
+                closeSaveModal();
+                showStatus(`Saved locally (API not configured)`, 'success');
+                return;
+            }
+
+            try {
+                showStatus('Saving to Google Drive...', '');
+                await googleDrive.saveToPath(path, data);
+                closeSaveModal();
+                showStatus('Saved to Google Drive', 'success');
+            } catch (error) {
+                console.error('Save error:', error);
+                showStatus(`Save failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Load Cards from Google Drive
+        async function loadCards() {
+            const path = document.getElementById('load-path-input').value.trim();
+
+            if (!path) {
+                showStatus('Please enter a path', 'error');
+                return;
+            }
+
+            let data;
+
+            if (!googleDrive.isConfigured()) {
+                // Fallback: load from localStorage
+                const stored = localStorage.getItem(`cards_${path}`);
+                if (!stored) {
+                    showStatus('No saved data found at this path', 'error');
+                    return;
+                }
+                data = JSON.parse(stored);
+                googleDrive.addRecentPath(path);
+            } else {
+                try {
+                    showStatus('Loading from Google Drive...', '');
+                    data = await googleDrive.loadFromPath(path);
+                } catch (error) {
+                    console.error('Load error:', error);
+                    showStatus(`Load failed: ${error.message}`, 'error');
+                    return;
+                }
+            }
+
+            // Clear existing cards
+            tiles.forEach(tile => tile.destroy());
+            tiles = [];
+
+            // Create new tiles from data
+            if (data.cards && Array.isArray(data.cards)) {
+                data.cards.forEach(cardData => {
+                    const tile = new StoneTile(cardData.name, cardsContainer, {
+                        superTitle: cardData.superTitle || 'Campaign',
+                        onDelete: (deletedTile) => {
+                            tiles = tiles.filter(t => t.id !== deletedTile.id);
+                            updateUI();
+                            saveToLocalStorage();
+                        }
+                    });
+                    tile.setData(cardData);
+                    tiles.push(tile);
+                });
+            }
+
+            closeLoadModal();
+            updateUI();
+            saveToLocalStorage();
+            showStatus(`Loaded ${tiles.length} card(s)`, 'success');
+        }
+
+        // Local Storage (for session persistence)
+        function saveToLocalStorage() {
+            const data = {
+                cards: tiles.map(tile => tile.getData())
+            };
+            localStorage.setItem('cards_session', JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem('cards_session');
+                if (!stored) return;
+
+                const data = JSON.parse(stored);
+                if (data.cards && Array.isArray(data.cards)) {
+                    data.cards.forEach(cardData => {
+                        const tile = new StoneTile(cardData.name, cardsContainer, {
+                            superTitle: cardData.superTitle || 'Campaign',
+                            onDelete: (deletedTile) => {
+                                tiles = tiles.filter(t => t.id !== deletedTile.id);
+                                updateUI();
+                                saveToLocalStorage();
+                            }
+                        });
+                        tile.setData(cardData);
+                        tiles.push(tile);
+                    });
+                    updateUI();
+                }
+            } catch (e) {
+                console.error('Error loading from localStorage:', e);
+            }
+        }
+
+        // Status Bar
+        function showStatus(message, type = '') {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.textContent = message;
+            statusBar.className = 'status-bar show';
+            if (type) statusBar.classList.add(type);
+
+            setTimeout(() => {
+                statusBar.classList.remove('show');
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeSaveModal();
+                closeLoadModal();
+            }
+
+            // Ctrl+S to save
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                if (tiles.length > 0) {
+                    openSaveModal();
+                }
+            }
+
+            // Ctrl+O to load
+            if (e.ctrlKey && e.key === 'o') {
+                e.preventDefault();
+                openLoadModal();
+            }
+        });
+    </script>
+</body>
+
+</html>

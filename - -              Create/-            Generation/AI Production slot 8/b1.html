@@ -1,0 +1,3931 @@
+<html lang="en">
+
+<head>
+    <title></title>
+
+    <script defer="" data-domain="brown-janot-4.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script>
+    <style id="grabbit-visited-styles">
+        .grabbit-visited,
+        .grabbit-visited:link,
+        .grabbit-visited:visited {
+            color: #551A8B !important;
+            /* Standard visited link purple */
+        }
+    </style>
+</head>
+
+<body>
+
+    <title></title>
+
+
+
+
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Campaign Report</title>
+    <!-- html2pdf.js library for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #000;
+            padding: 40px 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated gradient background - Steve Jobs minimal greyscale */
+        body::before {
+            content: '';
+            background: linear-gradient(-60deg, rgba(0, 0, 0, 0.02) 50%, rgba(0, 0, 0, 0.04) 50%);
+            animation: slide 8s ease-in-out infinite alternate;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: -50%;
+            right: -50%;
+            z-index: -1;
+        }
+
+        @keyframes slide {
+            0% {
+                transform: translateX(-25%);
+            }
+
+            100% {
+                transform: translateX(25%);
+            }
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 100px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+        }
+
+        /* Timeline Navigation - Left Side */
+        .timeline-nav {
+            display: none;
+            /* Hidden for light iOS theme */
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            background: rgba(18, 18, 18, 0.95);
+            border: 2px solid #1ed760;
+            border-radius: 50px;
+            padding: 20px 8px;
+            box-shadow: 0 4px 30px rgba(30, 215, 96, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .timeline-nav.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .timeline-months {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .month-link {
+            display: block;
+            padding: 8px 12px;
+            font-size: 11px;
+            /* SMALL */
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #808080;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            border-radius: 20px;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .month-link:hover {
+            color: #1db954;
+            background: rgba(30, 215, 96, 0.15);
+            transform: translateX(3px);
+        }
+
+        .month-link.active {
+            color: #0a0a0a;
+            background: #1ed760;
+            transform: scale(1.15) translateX(5px);
+            box-shadow: 0 4px 20px rgba(30, 215, 96, 0.6);
+        }
+
+        .month-link.has-releases::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #1ed760;
+            box-shadow: 0 0 10px rgba(30, 215, 96, 0.8);
+        }
+
+        .month-link.has-releases.active::before {
+            background: #0a0a0a;
+        }
+
+        /* Month Sections */
+        .month-section {
+            margin-bottom: 60px;
+            scroll-margin-top: 100px;
+        }
+
+        .month-header {
+            font-size: 16px;
+            /* LARGE */
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #007aff;
+            display: inline-block;
+            text-shadow: none;
+        }
+
+        .month-subheader {
+            font-size: 11px;
+            /* SMALL */
+            color: #888;
+            font-weight: 400;
+            margin-left: 12px;
+        }
+
+        /* Download Section - Removed spinning box, using JSON buttons instead */
+
+        /* PDF Action Buttons */
+        .pdf-btn {
+            width: 140px;
+            height: 140px;
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .pdf-btn:hover {
+            opacity: 0.85;
+            border-color: #d0d0d0;
+        }
+
+        .pdf-btn:active {
+            transform: scale(0.98);
+        }
+
+        .pdf-btn-icon {
+            font-size: 40px;
+        }
+
+        .pdf-btn-text {
+            font-size: 14px;
+            /* MEDIUM */
+            font-weight: 700;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Card System */
+        .card {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
+            border: none;
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            page-break-inside: avoid;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transition: all 0.15s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: none;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 4px;
+        }
+
+        .card-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            /* SMALL */
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-type.spotify {
+            background: rgba(30, 215, 96, 0.2);
+            color: #1db954;
+            border: 1px solid #1ed760;
+        }
+
+        .card-type.press {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+            border: 1px solid #60a5fa;
+        }
+
+        .card-type.social {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+            border: 1px solid #fb923c;
+        }
+
+        .card-type.other {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+            border: 1px solid #9ca3af;
+        }
+
+        /* Spotify Card */
+        .metric-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: #888;
+            font-size: 14px;
+            /* MEDIUM */
+        }
+
+        .metric-value {
+            font-weight: 700;
+            color: #1db954;
+            font-size: 14px;
+            /* MEDIUM */
+        }
+
+        .metric-input {
+            width: 100px;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            /* MEDIUM */
+            text-align: right;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+            color: #000;
+        }
+
+        /* Date Inputs */
+        .date-input-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .date-input {
+            padding: 2px 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            /* MEDIUM */
+            font-weight: 600;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+            color: #000;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .date-input:hover {
+            background: #fff;
+            box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.15), inset 0 1px 2px rgba(29, 185, 84, 0.05);
+        }
+
+        .date-input:focus {
+            outline: none;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.08), inset 0 1px 2px rgba(29, 185, 84, 0.05);
+        }
+
+        /* Artist Name */
+        .artist-name {
+            font-size: 16px;
+            /* LARGE */
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .artist-name-input {
+            font-size: 16px;
+            /* LARGE */
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: transparent;
+            padding: 4px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .artist-name-input:hover {
+            border-bottom-color: #d0d0d0;
+        }
+
+        .artist-name-input:focus {
+            outline: none;
+            border-bottom-color: #007aff;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #1db954, #1ed760);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 8px rgba(29, 185, 84, 0.3);
+        }
+
+        /* Press/Other Card - Link Fields */
+        .link-list {
+            margin-top: 12px;
+        }
+
+        .link-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        /* Spotify Album Art Preview Items */
+        .spotify-preview-item {
+            display: flex !important;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .spotify-album-art {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .spotify-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: #000;
+            margin-bottom: 8px;
+        }
+
+        .spotify-type {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .link-input {
+            flex: 1;
+            padding: 0.625rem 0.875rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: all 0.15s ease;
+            color: #000;
+        }
+
+        .link-input:focus {
+            outline: none;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.08), inset 0 1px 2px rgba(29, 185, 84, 0.05);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            color: #000;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn-small:hover {
+            opacity: 0.85;
+        }
+
+        .btn-small:active {
+            transform: scale(0.98);
+        }
+
+        .btn-add {
+            background: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.75);
+            border: none;
+            margin-top: 8px;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-add:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .btn-add:active {
+            transform: scale(0.98);
+        }
+
+        /* Social Card */
+        .social-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .social-select {
+            width: 150px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            /* MEDIUM */
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+            color: #000;
+            transition: all 0.15s ease;
+        }
+
+        .social-select:focus {
+            outline: none;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.08), inset 0 1px 2px rgba(29, 185, 84, 0.05);
+        }
+
+        .social-icon {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Gradient Dots for Social Platforms */
+        .platform-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .dot-instagram {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+
+        .dot-tiktok {
+            background: linear-gradient(45deg, #00f2ea, #ff0050);
+        }
+
+        .dot-twitter {
+            background: linear-gradient(45deg, #1DA1F2, #0c85d0);
+        }
+
+        .dot-facebook {
+            background: linear-gradient(45deg, #4267B2, #3b5998);
+        }
+
+        .dot-youtube {
+            background: linear-gradient(45deg, #FF0000, #cc0000);
+        }
+
+        .dot-spotify {
+            background: linear-gradient(45deg, #1DB954, #1ed760);
+        }
+
+        .dot-soundcloud {
+            background: linear-gradient(45deg, #ff8800, #ff5500);
+        }
+
+        .dot-twitch {
+            background: linear-gradient(45deg, #9146FF, #6441a5);
+        }
+
+        .dot-discord {
+            background: linear-gradient(45deg, #5865F2, #7289da);
+        }
+
+        .dot-reddit {
+            background: linear-gradient(45deg, #FF4500, #ff5722);
+        }
+
+        /* Add Card Section - Cascading Dropdown System */
+        .add-card-section {
+            margin: 40px 0;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            background: transparent;
+        }
+
+        .add-card-section .card {
+            background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+            border: none;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transition: all 0.25s ease;
+        }
+
+        .add-card-section .card:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .add-card-title {
+            font-size: 14px;
+            /* MEDIUM */
+            font-weight: 600;
+            color: #888;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .layer-header {
+            font-size: 11px;
+            /* SMALL */
+            font-weight: 700;
+            color: #007aff;
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            background: rgba(0, 122, 255, 0.08);
+            border-left: 4px solid #007aff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-field {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            /* SMALL */
+            font-weight: 600;
+            color: #888;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            /* MEDIUM */
+            transition: all 0.15s ease;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+            color: #000;
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.08), inset 0 1px 2px rgba(29, 185, 84, 0.05);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .create-card-btn {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.75);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .create-card-btn:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .create-card-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Floating Copy Button - Top Right */
+        .floating-copy-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 12px 24px;
+            background: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.75);
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease, background 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .floating-copy-btn:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .floating-copy-btn:active {
+            transform: scale(0.98);
+        }
+
+        .floating-copy-btn.copied {
+            background: rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Copy Preview Flash */
+        .copy-preview-flash {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            background: rgba(255, 255, 255, 0.98);
+            color: #000;
+            padding: 30px 40px;
+            border-radius: 16px;
+            border: 3px solid #007aff;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            max-width: 80%;
+            max-height: 80%;
+            overflow: auto;
+            box-shadow: 0 10px 50px rgba(0, 122, 255, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-preview-flash.show {
+            opacity: 1;
+        }
+
+        /* Print Styles - Black & White Only - Ink Saver */
+        @media print {
+            * {
+                background: #ffffff !important;
+                color: #000000 !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+            }
+
+            body {
+                background: #ffffff !important;
+                padding: 20px;
+                margin: 0;
+            }
+
+            /* Hide all input sections, buttons, and code boxes */
+            .add-card-section,
+            .btn-small,
+            .btn-add,
+            .timeline-nav,
+            #input-artist-name,
+            #prompt-output,
+            .download-box-container,
+            .download-section,
+            .pdf-btn,
+            .floating-copy-btn,
+            button,
+            /* Hide all 3 HTML code boxes and their parent divs when printing */
+            #html-code-output,
+            #html-wrapper-output,
+            #html-complete-output,
+            #html-code-output+*,
+            #html-wrapper-output+*,
+            #html-complete-output+* {
+                display: none !important;
+            }
+
+            /* Hide parent divs containing the code outputs */
+            #preview-cards~div {
+                display: none !important;
+            }
+
+            /* But show the preview section */
+            #preview-section {
+                display: block !important;
+            }
+
+            /* Preserve display modes for preview cards and their children */
+            #preview-section .card,
+            #preview-section .link-item {
+                display: block !important;
+            }
+
+            #preview-section .spotify-preview-item {
+                display: flex !important;
+            }
+
+            /* Hide album art in print only */
+            .spotify-album-art {
+                display: none !important;
+            }
+
+            /* Show only preview section */
+            #preview-section {
+                margin-top: 0 !important;
+            }
+
+            .artist-name {
+                page-break-after: avoid;
+                color: #000000 !important;
+                background: #ffffff !important;
+            }
+
+            .card {
+                page-break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #000000 !important;
+                background: #ffffff !important;
+                margin-bottom: 20px;
+            }
+
+            .card-header {
+                background: #ffffff !important;
+                border-bottom: 1px solid #000000 !important;
+            }
+
+            .card-type {
+                border: 1px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            .metric-value,
+            .link-item span {
+                color: #000000 !important;
+            }
+
+            .metric-item {
+                border-bottom: 1px solid #cccccc !important;
+            }
+
+            .progress-bar-container {
+                background: #ffffff !important;
+                border: 1px solid #000000 !important;
+            }
+
+            .progress-bar {
+                background: #000000 !important;
+            }
+
+            .link-item span {
+                word-break: break-all;
+            }
+
+            /* Remove any colored backgrounds or gradients */
+            .card-type.spotify,
+            .card-type.press,
+            .card-type.social,
+            .card-type.other {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .metric-row {
+                grid-template-columns: 1fr;
+            }
+
+            .card-header {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+
+
+    <!-- Floating Copy Button - Top Right -->
+    <button onclick="copyCompleteHTML()" class="floating-copy-btn" id="floating-copy-btn">
+        📋 Copy Complete HTML
+    </button>
+
+    <div class="container">
+        <!-- ADD NEW CARD SECTION -->
+        <div class="add-card-section">
+            <!-- JSON Upload/Download & Test Data Section (Top of form) -->
+            <div
+                style="margin-bottom: 24px; display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                <input type="file" id="json-upload-input" accept=".json" style="display: none;"
+                    onchange="uploadJSON(event)">
+                <button onclick="document.getElementById('json-upload-input').click()" class="btn-add"
+                    style="margin: 0; padding: 8px 16px;">
+                    📂 Load Previous Report (JSON)
+                </button>
+                <button onclick="downloadJSON()" class="btn-add" style="margin: 0; padding: 8px 16px;">
+                    💾 Save Report (JSON)
+                </button>
+                <button onclick="fillTestData()" class="btn-add"
+                    style="margin: 0; padding: 8px 16px; background: linear-gradient(135deg, #1db954 0%, #1ed760 100%); color: white; border: none;">🎯
+                    Load Sample Data</button>
+            </div>
+
+            <!-- ARTIST NAME INPUT (At top, after JSON buttons) -->
+            <div style="text-align: center; margin-bottom: 40px;">
+                <input type="text" id="input-artist-name" class="artist-name-input" placeholder="Enter Artist Name"
+                    style="border: 2px solid #007aff; border-radius: 8px; padding: 12px 20px;">
+            </div>
+
+            <!-- Results Link Card (Artist-level) -->
+            <div id="results-link-container">
+                <div class="card results-link-card" style="margin-bottom: 24px;" data-artist-link="true">
+                    <div class="card-header">
+                        <div class="card-title" style="color: #000;"><img
+                                src="https://www.google.com/s2/favicons?domain=drive.google.com&amp;sz=16" alt="Drive"
+                                style="vertical-align: middle; margin-right: 6px;"> ↓</div>
+                    </div>
+                    <div class="form-field">
+                        <input type="text" class="form-input results-link-input" data-artist-link="true"
+                            placeholder="Paste Google Drive results link here...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Songs Container -->
+            <div id="songs-container">
+                <!-- Song 1 (Default) -->
+                <div class="song-block" data-song-num="1" style="margin-bottom: 40px;">
+                    <!-- Song Basic Info -->
+                    <div class="card" style="margin-bottom: 16px;">
+                        <div class="card-header">
+                            <div class="card-title" style="color: #000;">Song 1</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-field">
+                                <label class="form-label">Song/Release Name</label>
+                                <input type="text" class="form-input song-name-input" data-song-num="1"
+                                    placeholder="e.g., Summer Nights">
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label">Release Date</label>
+                                <input type="date" class="form-input song-date-input" data-song-num="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spotify Section (Auto-shows on 1 char in song/date) -->
+                    <div class="spotify-section" id="spotify-section-1"
+                        style="display: none; margin-bottom: 16px; padding: 20px; background: rgba(30, 215, 96, 0.04); border-radius: 12px; border: 1px solid rgba(30, 215, 96, 0.1);">
+                        <h4 style="font-size: 14px; font-weight: 700; color: #1db954; margin-bottom: 12px;">SPOTIFY</h4>
+
+                        <!-- Spotify Links Textarea -->
+                        <div class="form-field" style="margin-bottom: 16px;">
+                            <label class="form-label">Spotify Links (one per line)</label>
+                            <textarea class="form-input spotify-links-textarea" data-song-num="1" rows="3"
+                                style="resize: vertical;"
+                                placeholder="Paste Spotify links here, one per line..."></textarea>
+                        </div>
+
+                        <!-- Spotify Data Textarea -->
+                        <div class="form-field">
+                            <label class="form-label">Spotify Data (tab-separated from spreadsheet)</label>
+                            <textarea class="form-input spotify-data-input" data-song-num="1" rows="2"
+                                style="font-family: monospace; resize: vertical;"
+                                placeholder="Jun-20	5/23	FALSE	292	25,067	1,340	5.35%	20,733	-	72"></textarea>
+                            <div style="margin-top: 8px; font-size: 11px; color: #00cc6a;" class="parsed-preview">
+                                Waiting for data...</div>
+                        </div>
+                    </div>
+
+                    <!-- Add Links Button (Auto-shows on 1 char, hidden by default) -->
+                    <button class="btn-add" onclick="showLinksSection(1)" id="show-links-btn-1"
+                        style="width: 100%; margin-bottom: 16px; display: none;">+ Add Links</button>
+
+                    <!-- Links Section (Press/Social/Other - Initially Hidden) -->
+                    <div class="links-section" id="links-section-1" style="display: none;">
+                        <div class="card" style="margin-bottom: 16px;">
+                            <div class="card-header">
+                                <div class="card-title" style="color: #000;">Links - Song 1</div>
+                            </div>
+
+                            <!-- Press Links Textarea -->
+                            <div class="form-field" style="margin-bottom: 16px;">
+                                <label class="form-label">Press Links (one per line)</label>
+                                <textarea class="form-input press-links-textarea" data-song-num="1" rows="3"
+                                    style="resize: vertical;"
+                                    placeholder="Paste press links here, one per line..."></textarea>
+                            </div>
+
+                            <!-- Social Links Textarea -->
+                            <div class="form-field" style="margin-bottom: 16px;">
+                                <label class="form-label">Social Links (one per line)</label>
+                                <textarea class="form-input social-links-textarea" data-song-num="1" rows="3"
+                                    style="resize: vertical;"
+                                    placeholder="Paste social links here, one per line..."></textarea>
+                            </div>
+
+                            <!-- Other Links Textarea -->
+                            <div class="form-field" style="margin-bottom: 16px;">
+                                <label class="form-label">Other Links (one per line)</label>
+                                <textarea class="form-input other-links-textarea" data-song-num="1" rows="3"
+                                    style="resize: vertical;"
+                                    placeholder="Paste other links here, one per line..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add New Song Button -->
+            <button class="btn-add" onclick="addNewSong()" style="width: 100%; margin-bottom: 24px;">+ Add New
+                Song</button>
+        </div>
+
+        <!-- PROMPT OUTPUT SECTION -->
+        <div
+            style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%); border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+            <h3 style="font-size: 16px; font-weight: 700; color: #000; margin-bottom: 12px; cursor: pointer;"
+                onclick="togglePromptSection()">🟢🟢🟢</h3>
+
+            <div id="prompt-output"
+                style="background: #ffffff; border: none; border-radius: 12px; padding: 20px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 2; color: #000; white-space: pre-wrap; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); display: none;">
+                <strong>PROMPT:</strong> Now we are going to create some 'pass throughs' from top to bottom.
+
+                We are converting this report into an in-house internal thing to create the end report for the client.
+
+                <strong>Starting off:</strong>
+
+                The cycle will go:
+
+                You ask me if I am making a brand new report or updating a current one.
+
+                If current, the only additional difference is artist name and you create a new file with a new artist
+                report (since we are not updating an existing client).
+
+                <strong>Note:</strong> You will have a template to work off of every time.
+
+                Then based on that first stage answer, I can see a prompt outputting - we are creating 'wraps' here with
+                the prompts.
+
+                <strong>The outer 'wrap' for new and existing reports:</strong>
+
+                Use what is in 'template-1.html' file to then create a new file that will be the basis of the report.
+
+                The html has fields to be filled in, which we can notice. Here is the master field variable list
+                including 4 card types, title placements and more:
+
+                <strong>[FIELDS TO FILL LEGEND LIST]</strong>
+
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                <strong>ARTIST:</strong> <span id="out-artist" style="color: #00cc6a;">[enter name]</span>
+
+                <span id="songs-output"></span>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                <strong>With that established, the user generates report to his clients:</strong>
+
+                1. Now that you have context
+                2. Now that you know all possible fields to be filled in
+                3. And now you know your job is to simply fill in those spots and provide a clean html update with a
+                personal client filling in (in a new file)
+
+                <strong>Let's begin:</strong>
+
+                The user has used an html app of sorts he built where he:
+                - Inputs answers to questions he's presented
+                - A prompt spits out bit by bit below within this html app of his
+                - Once he's answered all the questions to help him get his prompt set up so he can quickly make an
+                effective client report, he will copy and paste that prompt to you here and now, use that data to fill
+                the fields and do that job
+
+                You simply match the new data list below with the '[FIELDS TO FILL LEGEND LIST]' 1 for 1 - that's it.
+
+                <strong>That's it, now begin the job quickly, methodically and smoothly - the user has other things to
+                    do today, but trusts you.</strong>
+            </div>
+        </div>
+
+        <!-- 3-COLUMN NAVIGATION (BELOW LIVE OUTPUT) -->
+        <div class="three-col-nav"
+            style="display: flex; gap: 0; margin: 30px 0; background: rgba(0, 0, 0, 0.04); border-radius: 10px; padding: 4px;">
+            <button class="nav-btn" onclick="toggleBox(1)" id="nav-btn-1"
+                style="flex: 1; padding: 10px 16px; background: transparent; color: rgba(0,0,0,0.6); border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease;">1</button>
+            <button class="nav-btn" onclick="toggleBox(2)" id="nav-btn-2"
+                style="flex: 1; padding: 10px 16px; background: transparent; color: rgba(0,0,0,0.6); border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease;">2</button>
+            <button class="nav-btn" onclick="toggleBox(3)" id="nav-btn-3"
+                style="flex: 1; padding: 10px 16px; background: transparent; color: rgba(0,0,0,0.6); border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease;">3</button>
+        </div>
+
+        <!-- LIVE PREVIEW SECTION -->
+        <div id="preview-section">
+
+            <!-- DYNAMIC PREVIEW CARDS -->
+            <div id="preview-cards"></div>
+
+            <!-- BOX 1: LIVE HTML CODE VIEWER (Hidden by default) -->
+            <div id="box-1" class="collapsible-box" style="display: none;">
+                <div
+                    style="margin-top: 30px; padding: 30px; background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%); border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                    <h3 style="font-size: 16px; font-weight: 700; color: #000; margin-bottom: 12px;">Box 1: Live HTML
+                        Code (Cards Only)</h3>
+                    <p style="font-size: 14px; color: #888; margin-bottom: 20px;">This shows the actual HTML being
+                        generated as you fill in the form above.</p>
+                    <pre id="html-code-output"
+                        style="background: #f5f5f5; border: none; border-radius: 12px; padding: 20px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.6; color: #000; overflow-x: auto; max-height: 600px; overflow-y: auto; white-space: pre-wrap; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);"></pre>
+                </div>
+            </div>
+
+            <!-- BOX 2: HTML WRAPPER CODE (Hidden by default) -->
+            <div id="box-2" class="collapsible-box" style="display: none;">
+                <div
+                    style="margin-top: 30px; padding: 30px; background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%); border: 2px solid #ff9500; border-radius: 16px; box-shadow: 0 2px 12px rgba(255, 149, 0, 0.1);">
+                    <h3 style="font-size: 16px; font-weight: 700; color: #000; margin-bottom: 12px;">Box 2: HTML Wrapper
+                        (Structure Needed)</h3>
+                    <p style="font-size: 14px; color: #888; margin-bottom: 20px;">This is the wrapper code that Box 1
+                        needs to work as a standalone HTML file.</p>
+                    <pre id="html-wrapper-output"
+                        style="background: #f5f5f5; border: none; border-radius: 12px; padding: 20px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.6; color: #000; overflow-x: auto; max-height: 600px; overflow-y: auto; white-space: pre-wrap; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);"></pre>
+                </div>
+            </div>
+
+            <!-- BOX 3: COMPLETE COMBINED HTML (Hidden by default) -->
+            <div id="box-3" class="collapsible-box" style="display: none;">
+                <div
+                    style="margin-top: 30px; padding: 30px; background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%); border: 3px solid #30d158; border-radius: 16px; box-shadow: 0 2px 20px rgba(48, 209, 88, 0.15);">
+                    <h3 style="font-size: 16px; font-weight: 700; color: #000; margin-bottom: 12px;">Box 3: Complete
+                        HTML (Ready to Use)</h3>
+                    <p style="font-size: 14px; color: #888; margin-bottom: 20px;">Box 1 + Box 2 combined. Copy this
+                        complete code to create a standalone report file.</p>
+                    <pre id="html-complete-output"
+                        style="background: #f5f5f5; border: none; border-radius: 12px; padding: 20px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.6; color: #000; overflow-x: auto; max-height: 600px; overflow-y: auto; white-space: pre-wrap; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);"></pre>
+                </div>
+            </div>
+
+            <!-- OLD STATIC EXAMPLES (HIDDEN) -->
+            <div style="display: none;">
+                <!-- APRIL 2025 -->
+                <section id="apr" class="month-section">
+                    <h2 class="month-header">
+                        April 2025
+                        <span class="month-subheader">1 Release</span>
+                    </h2>
+
+                    <!-- For You My Love - Spotify Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">
+                                    <input type="text" value="For You My Love" placeholder="Song name"
+                                        style="border: none; border-bottom: 1px solid #e0e0e0; font-size: 18px; font-weight: 700; padding: 2px 4px; width: 250px;">
+                                    <span style="margin: 0 8px;">/</span>
+                                    <input type="date" class="date-input" value="2025-04-18">
+                                </div>
+                            </div>
+                            <span class="card-type spotify">Spotify</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Stream Goal</span>
+                                <input type="text" class="metric-input" value="10,000">
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Daily Streams</span>
+                                <input type="text" class="metric-input" value="1,250">
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Total Indie Playlist Streams</span>
+                                <input type="text" class="metric-input" value="11,444">
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Algorithm Streams</span>
+                                <input type="text" class="metric-input" value="4,344">
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Algorithmic Ratio</span>
+                                <input type="text" class="metric-input" value="37.96%">
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Streams Left</span>
+                                <input type="text" class="metric-input" value="0">
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Total Playlist Count</span>
+                                <input type="text" class="metric-input" value="25">
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Days Left</span>
+                                <input type="text" class="metric-input" value="15">
+                            </div>
+                        </div>
+
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- PRESS CARD EXAMPLE -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">
+                                    <input type="text" value="For You My Love" placeholder="Song name"
+                                        style="border: none; border-bottom: 1px solid #e0e0e0; font-size: 18px; font-weight: 700; padding: 2px 4px; width: 250px;">
+                                    <span style="margin: 0 8px;">/</span>
+                                    <input type="date" class="date-input" value="2025-04-18">
+                                </div>
+                            </div>
+                            <span class="card-type press">Press</span>
+                        </div>
+
+                        <div class="link-list">
+                            <div class="link-item">
+                                <span style="font-weight: 600; color: #666; margin-right: 8px;">[dailybeat.com]</span>
+                                <input type="text" class="link-input" value="https://dailybeat.com/article-name-here"
+                                    placeholder="Add link...">
+                            </div>
+                            <div class="link-item">
+                                <span style="font-weight: 600; color: #666; margin-right: 8px;">[wedm.com]</span>
+                                <input type="text" class="link-input" value="https://wedm.com/feature-article"
+                                    placeholder="Add link...">
+                            </div>
+                            <div class="link-item">
+                                <input type="text" class="link-input" value="" placeholder="Add link...">
+                            </div>
+                        </div>
+
+                        <button class="btn-small btn-add">+ Add Link</button>
+                    </div>
+
+                </section>
+                <!-- END APRIL 2025 -->
+
+                <!-- MAY 2025 -->
+                <section id="may" class="month-section">
+                    <h2 class="month-header">
+                        May 2025
+                        <span class="month-subheader">1 Release</span>
+                    </h2>
+
+                    <!-- Like A Ghost - Social Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">
+                                    <input type="text" value="Like A Ghost" placeholder="Song name"
+                                        style="border: none; border-bottom: 1px solid #e0e0e0; font-size: 18px; font-weight: 700; padding: 2px 4px; width: 250px;">
+                                    <span style="margin: 0 8px;">/</span>
+                                    <input type="date" class="date-input" value="2025-05-16">
+                                </div>
+                            </div>
+                            <span class="card-type social">Social</span>
+                        </div>
+
+                        <div class="link-list">
+                            <div class="link-item">
+                                <span style="font-weight: 600; color: #666; margin-right: 8px;">[instagram.com]</span>
+                                <input type="text" class="link-input" value="https://instagram.com/p/xyz123"
+                                    placeholder="Add link...">
+                            </div>
+                            <div class="link-item">
+                                <span style="font-weight: 600; color: #666; margin-right: 8px;">[tiktok.com]</span>
+                                <input type="text" class="link-input" value="https://tiktok.com/@artist/video/123"
+                                    placeholder="Add link...">
+                            </div>
+                            <div class="link-item">
+                                <input type="text" class="link-input" value="" placeholder="Add link...">
+                            </div>
+                        </div>
+
+                        <button class="btn-small btn-add">+ Add Link</button>
+                    </div>
+
+                </section>
+                <!-- END MAY 2025 -->
+
+                <!-- JUNE 2025 -->
+                <section id="jun" class="month-section">
+                    <h2 class="month-header">
+                        June 2025
+                        <span class="month-subheader">1 Release</span>
+                    </h2>
+
+                    <!-- I Believe In Us - Other Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">
+                                    <input type="text" value="I Believe In Us" placeholder="Song name"
+                                        style="border: none; border-bottom: 1px solid #e0e0e0; font-size: 18px; font-weight: 700; padding: 2px 4px; width: 250px;">
+                                    <span style="margin: 0 8px;">/</span>
+                                    <input type="date" class="date-input" value="2025-06-27">
+                                </div>
+                            </div>
+                            <span class="card-type other">Other</span>
+                        </div>
+
+                        <div class="link-list">
+                            <div class="link-item">
+                                <span style="font-weight: 600; color: #666; margin-right: 8px;">[example.com]</span>
+                                <input type="text" class="link-input" value="https://example.com/resource-1"
+                                    placeholder="Add link...">
+                            </div>
+                            <div class="link-item">
+                                <input type="text" class="link-input" value="" placeholder="Add link...">
+                            </div>
+                        </div>
+
+                        <button class="btn-small btn-add">+ Add Link</button>
+                    </div>
+
+                </section>
+                <!-- END JUNE 2025 -->
+
+                <!-- JULY 2025 -->
+                <section id="jul" class="month-section">
+                    <h2 class="month-header">
+                        July 2025
+                        <span class="month-subheader">1 Release</span>
+                    </h2>
+
+                    <!-- Where Love Never Ends - Spotify Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">
+                                    <input type="text" value="Where Love Never Ends" placeholder="Song name"
+                                        style="border: none; border-bottom: 1px solid #e0e0e0; font-size: 18px; font-weight: 700; padding: 2px 4px; width: 250px;">
+                                    <span style="margin: 0 8px;">/</span>
+                                    <input type="date" class="date-input" value="2025-07-18">
+                                </div>
+                            </div>
+                            <span class="card-type spotify">Spotify</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Stream Goal</span>
+                                <input type="text" class="metric-input" value="15,000">
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Daily Streams</span>
+                                <input type="text" class="metric-input" value="890">
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Total Indie Playlist Streams</span>
+                                <input type="text" class="metric-input" value="7,200">
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Algorithm Streams</span>
+                                <input type="text" class="metric-input" value="2,100">
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Algorithmic Ratio</span>
+                                <input type="text" class="metric-input" value="29.17%">
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Streams Left</span>
+                                <input type="text" class="metric-input" value="5,700">
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Total Playlist Count</span>
+                                <input type="text" class="metric-input" value="18">
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Days Left</span>
+                                <input type="text" class="metric-input" value="30">
+                            </div>
+                        </div>
+
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 62%;"></div>
+                        </div>
+                    </div>
+
+                </section>
+                <!-- END JULY 2025 -->
+
+            </div>
+            <!-- END 2025 CAMPAIGNS -->
+
+        </div>
+
+        <script>
+            // ============================================
+            // PDF GENERATION FUNCTIONS
+            // ============================================
+
+            function downloadPDF() {
+                // Open ChatGPT link in new tab
+                window.open('https://chatgpt.com/g/g-p-68ea7e5971b08191a7477fd3f51fa0a0-work/c/68eab995-5928-8331-9a4b-9b832bae91de', '_blank');
+            }
+
+            function emailPDF() {
+                // Get artist name
+                const artistName = document.getElementById('input-artist-name').value || 'Artist';
+                const fileName = `${artistName.replace(/[^a-z0-9]/gi, '_')}_Campaign_Report.pdf`;
+
+                // Create email subject and body
+                const subject = encodeURIComponent(`Campaign Report - ${artistName}`);
+                const body = encodeURIComponent(
+                    `Hi,\n\n` +
+                    `Please find attached the campaign report for ${artistName}.\n\n` +
+                    `Campaign Report Summary:\n` +
+                    `- Artist: ${artistName}\n` +
+                    `- Report File: ${fileName}\n\n` +
+                    `Best regards`
+                );
+
+                // Open email client using mailto: - Chrome's native feature
+                window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            }
+
+            function copyPromptToClipboard(event) {
+                // Get the dynamic data section only
+                const artistElement = document.getElementById('out-artist');
+                const songsElement = document.getElementById('songs-output');
+
+                if (!artistElement || !songsElement) {
+                    alert('Error: Could not find data to copy');
+                    return;
+                }
+
+                // Build the text to copy - only the dynamic data section
+                const artistText = artistElement.innerText || artistElement.textContent;
+                const songsText = songsElement.innerHTML
+                    .replace(/<strong>/g, '')
+                    .replace(/<\/strong>/g, '')
+                    .replace(/<span[^>]*>/g, '')
+                    .replace(/<\/span>/g, '')
+                    .replace(/&nbsp;/g, ' ')
+                    .trim();
+
+                const textToCopy = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ARTIST: ${artistText}
+${songsText}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+                if (!textToCopy || textToCopy.includes('[enter name]')) {
+                    alert('Please fill in artist name and song data first.');
+                    return;
+                }
+
+                // Show flash preview
+                showCopyPreview(textToCopy);
+
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const button = event.currentTarget;
+
+                    if (!button) {
+                        console.error('Button not found');
+                        return;
+                    }
+
+                    const originalText = button.innerHTML;
+
+                    // Update button state
+                    button.innerHTML = '✓ COPIED!';
+                    button.classList.add('copied');
+
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    alert('Copy failed: ' + err.message);
+                });
+            }
+
+            function showCopyPreview(text) {
+                // Remove any existing preview
+                const existingPreview = document.querySelector('.copy-preview-flash');
+                if (existingPreview) {
+                    existingPreview.remove();
+                }
+
+                // Create flash preview
+                const preview = document.createElement('div');
+                preview.className = 'copy-preview-flash';
+                preview.textContent = text;
+                document.body.appendChild(preview);
+
+                // Show with slight delay for animation
+                setTimeout(() => {
+                    preview.classList.add('show');
+                }, 10);
+
+                // Fade out and remove
+                setTimeout(() => {
+                    preview.classList.remove('show');
+                    setTimeout(() => {
+                        preview.remove();
+                    }, 300);
+                }, 2000);
+            }
+
+            // ============================================
+            // LIVE PROMPT OUTPUT - MULTIPLE SONGS
+            // ============================================
+
+            let songCounter = 1;
+
+            // Artist Name - MASTER FINAL TRIGGER that renders EVERYTHING including album art
+            // This is the LAST thing the user fills in, so it does a complete parse
+            document.getElementById('input-artist-name').addEventListener('input', function () {
+                console.log('🎯 ARTIST NAME ENTERED - Triggering full render with album art...');
+                updateAllOutputs();
+            });
+
+            // Toggle Box function for 3-column navigation
+            function toggleBox(boxNum) {
+                // Get all boxes and nav buttons
+                const boxes = [
+                    document.getElementById('box-1'),
+                    document.getElementById('box-2'),
+                    document.getElementById('box-3')
+                ];
+                const navBtns = [
+                    document.getElementById('nav-btn-1'),
+                    document.getElementById('nav-btn-2'),
+                    document.getElementById('nav-btn-3')
+                ];
+
+                // Toggle the clicked box
+                const targetBox = boxes[boxNum - 1];
+                const targetBtn = navBtns[boxNum - 1];
+
+                const isCurrentlyHidden = targetBox.style.display === 'none';
+
+                if (isCurrentlyHidden) {
+                    // Show the box
+                    targetBox.style.display = 'block';
+                    targetBtn.classList.add('active');
+                    targetBtn.style.background = '#007aff';
+                    targetBtn.style.color = 'white';
+                } else {
+                    // Hide the box
+                    targetBox.style.display = 'none';
+                    targetBtn.classList.remove('active');
+                    targetBtn.style.background = 'transparent';
+                    targetBtn.style.color = '#007aff';
+                }
+            }
+
+            // Toggle Prompt Section for 🟢🟢🟢
+            function togglePromptSection() {
+                const promptOutput = document.getElementById('prompt-output');
+
+                if (promptOutput.style.display === 'none') {
+                    promptOutput.style.display = 'block';
+                } else {
+                    promptOutput.style.display = 'none';
+                }
+            }
+
+            // Download JSON function - exports all form data
+            function downloadJSON() {
+                const artistName = document.getElementById('input-artist-name').value.trim() || 'Artist';
+                const resultsLinkInput = document.querySelector('.results-link-input[data-artist-link="true"]');
+                const resultsLink = resultsLinkInput ? resultsLinkInput.value.trim() : '';
+
+                // Collect all song data
+                const songs = [];
+                const songBlocks = document.querySelectorAll('.song-block');
+
+                songBlocks.forEach((block) => {
+                    const songNum = block.getAttribute('data-song-num');
+
+                    const songNameInput = document.querySelector(`.song-name-input[data-song-num="${songNum}"]`);
+                    const songDateInput = document.querySelector(`.song-date-input[data-song-num="${songNum}"]`);
+                    const spotifyLinksTextarea = document.querySelector(`.spotify-links-textarea[data-song-num="${songNum}"]`);
+                    const spotifyDataInput = document.querySelector(`.spotify-data-input[data-song-num="${songNum}"]`);
+
+                    // Collect all link types for this song
+                    const pressLinks = [];
+                    const socialLinks = [];
+                    const otherLinks = [];
+
+                    document.querySelectorAll(`.link-input[data-song-num="${songNum}"][data-link-type="press"]`).forEach(input => {
+                        if (input.value.trim()) pressLinks.push(input.value.trim());
+                    });
+
+                    document.querySelectorAll(`.link-input[data-song-num="${songNum}"][data-link-type="social"]`).forEach(input => {
+                        if (input.value.trim()) socialLinks.push(input.value.trim());
+                    });
+
+                    document.querySelectorAll(`.link-input[data-song-num="${songNum}"][data-link-type="other"]`).forEach(input => {
+                        if (input.value.trim()) otherLinks.push(input.value.trim());
+                    });
+
+                    songs.push({
+                        songNum: songNum,
+                        songName: songNameInput ? songNameInput.value.trim() : '',
+                        releaseDate: songDateInput ? songDateInput.value : '',
+                        spotifyLinks: spotifyLinksTextarea ? spotifyLinksTextarea.value.trim() : '',
+                        spotifyData: spotifyDataInput ? spotifyDataInput.value.trim() : '',
+                        pressLinks: pressLinks,
+                        socialLinks: socialLinks,
+                        otherLinks: otherLinks
+                    });
+                });
+
+                const reportData = {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    artistName: artistName,
+                    resultsLink: resultsLink,
+                    songs: songs
+                };
+
+                // Create blob and download
+                const dataStr = JSON.stringify(reportData, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Use same filename format as PDF
+                const safeArtistName = artistName.replace(/[^a-z0-9]/gi, '_');
+                a.download = `${safeArtistName}_Campaign_Report.json`;
+
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // Upload JSON function - loads previous report data
+            function uploadJSON(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const reportData = JSON.parse(e.target.result);
+
+                        // Populate artist name
+                        if (reportData.artistName) {
+                            document.getElementById('input-artist-name').value = reportData.artistName;
+                        }
+
+                        // Populate results link
+                        if (reportData.resultsLink) {
+                            const resultsLinkInput = document.querySelector('.results-link-input[data-artist-link="true"]');
+                            if (resultsLinkInput) {
+                                resultsLinkInput.value = reportData.resultsLink;
+                            }
+                        }
+
+                        // Clear existing songs except the first one
+                        const songsContainer = document.getElementById('songs-container');
+                        const existingSongBlocks = songsContainer.querySelectorAll('.song-block');
+                        existingSongBlocks.forEach((block, index) => {
+                            if (index > 0) block.remove();
+                        });
+
+                        // Reset songCounter to match loaded data
+                        songCounter = 0;
+
+                        // Load all songs from JSON
+                        if (reportData.songs && reportData.songs.length > 0) {
+                            reportData.songs.forEach((songData, index) => {
+                                // Create new song if needed (after first song)
+                                if (index > 0) {
+                                    addNewSong();
+                                } else {
+                                    songCounter = 1;
+                                }
+
+                                const songNum = songCounter;
+
+                                // Populate basic song info
+                                const songNameInput = document.querySelector(`.song-name-input[data-song-num="${songNum}"]`);
+                                const songDateInput = document.querySelector(`.song-date-input[data-song-num="${songNum}"]`);
+
+                                if (songNameInput && songData.songName) {
+                                    songNameInput.value = songData.songName;
+                                }
+                                if (songDateInput && songData.releaseDate) {
+                                    songDateInput.value = songData.releaseDate;
+                                }
+
+                                // Show Spotify section if there's data
+                                if (songData.songName || songData.releaseDate) {
+                                    checkAndShowSpotifyButton(songNum);
+                                }
+
+                                // Populate Spotify data
+                                const spotifyLinksTextarea = document.querySelector(`.spotify-links-textarea[data-song-num="${songNum}"]`);
+                                const spotifyDataInput = document.querySelector(`.spotify-data-input[data-song-num="${songNum}"]`);
+
+                                if (spotifyLinksTextarea && songData.spotifyLinks) {
+                                    spotifyLinksTextarea.value = songData.spotifyLinks;
+                                }
+                                if (spotifyDataInput && songData.spotifyData) {
+                                    spotifyDataInput.value = songData.spotifyData;
+                                }
+
+                                // Load links if any exist
+                                if ((songData.pressLinks && songData.pressLinks.length > 0) ||
+                                    (songData.socialLinks && songData.socialLinks.length > 0) ||
+                                    (songData.otherLinks && songData.otherLinks.length > 0)) {
+
+                                    // Show links section
+                                    const linksSection = document.getElementById(`links-section-${songNum}`);
+                                    const showLinksBtn = document.getElementById(`show-links-btn-${songNum}`);
+                                    if (linksSection && showLinksBtn) {
+                                        linksSection.style.display = 'block';
+                                        showLinksBtn.textContent = '- Hide Links';
+                                    }
+
+                                    // Add press links
+                                    if (songData.pressLinks && songData.pressLinks.length > 0) {
+                                        songData.pressLinks.forEach((link, linkIndex) => {
+                                            if (linkIndex > 0) addLink(songNum, 'press');
+                                            const inputs = document.querySelectorAll(`.link-input[data-song-num="${songNum}"][data-link-type="press"]`);
+                                            if (inputs[linkIndex]) inputs[linkIndex].value = link;
+                                        });
+                                    }
+
+                                    // Add social links
+                                    if (songData.socialLinks && songData.socialLinks.length > 0) {
+                                        songData.socialLinks.forEach((link, linkIndex) => {
+                                            if (linkIndex > 0) addLink(songNum, 'social');
+                                            const inputs = document.querySelectorAll(`.link-input[data-song-num="${songNum}"][data-link-type="social"]`);
+                                            if (inputs[linkIndex]) inputs[linkIndex].value = link;
+                                        });
+                                    }
+
+                                    // Add other links
+                                    if (songData.otherLinks && songData.otherLinks.length > 0) {
+                                        songData.otherLinks.forEach((link, linkIndex) => {
+                                            if (linkIndex > 0) addLink(songNum, 'other');
+                                            const inputs = document.querySelectorAll(`.link-input[data-song-num="${songNum}"][data-link-type="other"]`);
+                                            if (inputs[linkIndex]) inputs[linkIndex].value = link;
+                                        });
+                                    }
+                                }
+                            });
+                        }
+
+                        // Re-attach listeners and update preview
+                        attachInputListeners();
+                        updatePreview();
+
+                        alert('Report loaded successfully!');
+
+                    } catch (err) {
+                        alert('Error loading JSON file: ' + err.message);
+                    }
+                };
+
+                reader.readAsText(file);
+
+                // Reset file input so same file can be loaded again if needed
+                event.target.value = '';
+            }
+
+            // Show/Hide Links Section for a song
+            function showLinksSection(songNum) {
+                const linksSection = document.getElementById(`links-section-${songNum}`);
+                const showLinksBtn = document.getElementById(`show-links-btn-${songNum}`);
+
+                if (linksSection.style.display === 'none') {
+                    linksSection.style.display = 'block';
+                    showLinksBtn.textContent = '- Hide Links';
+                } else {
+                    linksSection.style.display = 'none';
+                    showLinksBtn.textContent = '+ Add Links';
+                }
+
+                attachInputListeners();
+            }
+
+            // Auto-show Spotify section and Add Links button when 1 character typed in EITHER field
+            function checkAndShowSpotifyButton(songNum) {
+                const songNameInput = document.querySelector(`.song-name-input[data-song-num="${songNum}"]`);
+                const songDateInput = document.querySelector(`.song-date-input[data-song-num="${songNum}"]`);
+                const spotifySection = document.getElementById(`spotify-section-${songNum}`);
+                const showLinksBtn = document.getElementById(`show-links-btn-${songNum}`);
+
+                if (!songNameInput || !songDateInput || !spotifySection || !showLinksBtn) return;
+
+                const songName = songNameInput.value.trim();
+                const songDate = songDateInput.value.trim();
+
+                // NEW BEHAVIOR: If 1 char in EITHER field, show Spotify section + Add Links button
+                if (songName || songDate) {
+                    // Show the Spotify section immediately
+                    spotifySection.style.display = 'block';
+
+                    // Show the "+ Add Links" button (but links section stays hidden)
+                    showLinksBtn.style.display = 'block';
+                } else {
+                    // Both fields are empty - hide everything
+                    spotifySection.style.display = 'none';
+                    showLinksBtn.style.display = 'none';
+                }
+            }
+
+            // Fill Test Data with 2 complete sample songs
+            function fillTestData() {
+                // Set artist name
+                document.getElementById('input-artist-name').value = 'Test Artist';
+
+                // Set artist-level results link
+                document.querySelector('.results-link-input').value = 'https://drive.google.com/file/d/1example/view';
+
+                // ===== SONG 1: SPOTIFY WITH METRICS =====
+                document.querySelector('[data-song-num="1"].song-name-input').value = 'Summer Nights';
+                document.querySelector('[data-song-num="1"].song-date-input').value = '2025-06-15';
+
+                // Spotify data for Song 1
+                const spotifyData1 = `Jun-20	5/23	FALSE	292	25,067	1,340	5.35%	20,733	-	72`;
+                document.querySelector('[data-song-num="1"].spotify-data-input').value = spotifyData1;
+
+                // Spotify links for Song 1
+                const spotifyLinks1 = `https://open.spotify.com/track/2uFaJJtFpPDc5Pa95XzTvg?si=1977f82c096c4739
+https://open.spotify.com/track/77khP2fIVhSW23NwxrRluh?si=891e92ee933f405f`;
+                document.querySelector('[data-song-num="1"].spotify-links-textarea').value = spotifyLinks1;
+
+                // Show the links section for Song 1
+                document.getElementById('links-section-1').style.display = 'block';
+                document.getElementById('show-links-btn-1').style.display = 'none';
+
+                // Press links for Song 1
+                const pressLinks1 = `https://www.pitchfork.com/news/summer-nights-review
+https://www.stereogum.com/artist/summer-nights`;
+                document.querySelector('[data-song-num="1"].press-links-textarea').value = pressLinks1;
+
+                // Social links for Song 1
+                const socialLinks1 = `https://www.instagram.com/p/ABC123/
+https://www.tiktok.com/@testartist/video/123456`;
+                document.querySelector('[data-song-num="1"].social-links-textarea').value = socialLinks1;
+
+                // Other links for Song 1
+                const otherLinks1 = `https://www.youtube.com/watch?v=ABC123
+https://genius.com/Song-summer-nights-lyrics`;
+                document.querySelector('[data-song-num="1"].other-links-textarea').value = otherLinks1;
+
+                // Trigger update to show Spotify section
+                document.querySelector('[data-song-num="1"].song-name-input').dispatchEvent(new Event('input', { bubbles: true }));
+
+                // ===== SONG 2: ADD NEW SONG AND FILL IT =====
+                addNewSong();
+
+                // Wait for Song 2 to be added, then fill it
+                setTimeout(() => {
+                    document.querySelector('[data-song-num="2"].song-name-input').value = 'Midnight Dreams';
+                    document.querySelector('[data-song-num="2"].song-date-input').value = '2025-08-22';
+
+                    // Spotify data for Song 2
+                    const spotifyData2 = `Aug-22	4/18	TRUE	156	18,945	2,340	12.35%	16,605	-	45`;
+                    document.querySelector('[data-song-num="2"].spotify-data-input').value = spotifyData2;
+
+                    // Spotify links for Song 2
+                    const spotifyLinks2 = `https://open.spotify.com/track/2uFaJJtFpPDc5Pa95XzTvg?si=1977f82c096c4739
+https://open.spotify.com/track/77khP2fIVhSW23NwxrRluh?si=891e92ee933f405f`;
+                    document.querySelector('[data-song-num="2"].spotify-links-textarea').value = spotifyLinks2;
+
+                    // Show the links section for Song 2
+                    document.getElementById('links-section-2').style.display = 'block';
+                    document.getElementById('show-links-btn-2').style.display = 'none';
+
+                    // Press links for Song 2
+                    const pressLinks2 = `https://www.nytimes.com/reviews/midnight-dreams
+https://www.rollingstone.com/midnight-dreams-review`;
+                    document.querySelector('[data-song-num="2"].press-links-textarea').value = pressLinks2;
+
+                    // Social links for Song 2
+                    const socialLinks2 = `https://www.instagram.com/p/XYZ789/
+https://www.tiktok.com/@testartist/video/789012
+https://twitter.com/testartist/status/123456`;
+                    document.querySelector('[data-song-num="2"].social-links-textarea').value = socialLinks2;
+
+                    // Other links for Song 2
+                    const otherLinks2 = `https://www.youtube.com/watch?v=XYZ789
+https://www.apple.com/music/midnight-dreams
+https://genius.com/Song-midnight-dreams-lyrics`;
+                    document.querySelector('[data-song-num="2"].other-links-textarea').value = otherLinks2;
+
+                    // Trigger update to show Spotify section
+                    document.querySelector('[data-song-num="2"].song-name-input').dispatchEvent(new Event('input', { bubbles: true }));
+
+                    // Trigger full render
+                    updateAllOutputs();
+                }, 100);
+            }
+
+            // Add New Song
+            function addNewSong() {
+                songCounter++;
+                const container = document.getElementById('songs-container');
+
+                const newSongBlock = `
+        <div class="song-block" data-song-num="${songCounter}" style="margin-bottom: 40px;">
+            <!-- Song Basic Info -->
+            <div class="card" style="margin-bottom: 16px;">
+                <div class="card-header">
+                    <div class="card-title" style="color: #000;">Song ${songCounter}</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-field">
+                        <label class="form-label">Song/Release Name</label>
+                        <input type="text" class="form-input song-name-input" data-song-num="${songCounter}" placeholder="e.g., Summer Nights">
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">Release Date</label>
+                        <input type="date" class="form-input song-date-input" data-song-num="${songCounter}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spotify Section (Auto-shows on 1 char in song/date) -->
+            <div class="spotify-section" id="spotify-section-${songCounter}" style="display: none; margin-bottom: 16px; padding: 20px; background: rgba(30, 215, 96, 0.04); border-radius: 12px; border: 1px solid rgba(30, 215, 96, 0.1);">
+                <h4 style="font-size: 14px; font-weight: 700; color: #1db954; margin-bottom: 12px;">SPOTIFY</h4>
+
+                <!-- Spotify Links Textarea -->
+                <div class="form-field" style="margin-bottom: 16px;">
+                    <label class="form-label">Spotify Links (one per line)</label>
+                    <textarea class="form-input spotify-links-textarea" data-song-num="${songCounter}" rows="3" style="resize: vertical;" placeholder="Paste Spotify links here, one per line..."></textarea>
+                </div>
+
+                <!-- Spotify Data Textarea -->
+                <div class="form-field">
+                    <label class="form-label">Spotify Data (tab-separated from spreadsheet)</label>
+                    <textarea class="form-input spotify-data-input" data-song-num="${songCounter}" rows="2" style="font-family: monospace; resize: vertical;" placeholder="Jun-20	5/23	FALSE	292	25,067	1,340	5.35%	20,733	-	72"></textarea>
+                    <div style="margin-top: 8px; font-size: 11px; color: #00cc6a;" class="parsed-preview">Waiting for data...</div>
+                </div>
+            </div>
+
+            <!-- Add Links Button (Auto-shows on 1 char, hidden by default) -->
+            <button class="btn-add" onclick="showLinksSection(${songCounter})" id="show-links-btn-${songCounter}" style="width: 100%; margin-bottom: 16px; display: none;">+ Add Links</button>
+
+            <!-- Links Section (Press/Social/Other - Initially Hidden) -->
+            <div class="links-section" id="links-section-${songCounter}" style="display: none;">
+                <div class="card" style="margin-bottom: 16px;">
+                    <div class="card-header">
+                        <div class="card-title" style="color: #000;">Links - Song ${songCounter}</div>
+                    </div>
+
+                    <!-- Press Links Textarea -->
+                    <div class="form-field" style="margin-bottom: 16px;">
+                        <label class="form-label">Press Links (one per line)</label>
+                        <textarea class="form-input press-links-textarea" data-song-num="${songCounter}" rows="3" style="resize: vertical;" placeholder="Paste press links here, one per line..."></textarea>
+                    </div>
+
+                    <!-- Social Links Textarea -->
+                    <div class="form-field" style="margin-bottom: 16px;">
+                        <label class="form-label">Social Links (one per line)</label>
+                        <textarea class="form-input social-links-textarea" data-song-num="${songCounter}" rows="3" style="resize: vertical;" placeholder="Paste social links here, one per line..."></textarea>
+                    </div>
+
+                    <!-- Other Links Textarea -->
+                    <div class="form-field" style="margin-bottom: 16px;">
+                        <label class="form-label">Other Links (one per line)</label>
+                        <textarea class="form-input other-links-textarea" data-song-num="${songCounter}" rows="3" style="resize: vertical;" placeholder="Paste other links here, one per line..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+                container.insertAdjacentHTML('beforeend', newSongBlock);
+                attachInputListeners();
+            }
+
+            // Extract domain from URL
+            function extractDomain(url) {
+                try {
+                    if (!url || url.trim() === '') return '[website]';
+                    const urlObj = new URL(url.startsWith('http') ? url : 'https://' + url);
+                    const hostname = urlObj.hostname.replace('www.', '');
+                    return `[${hostname}]`;
+                } catch {
+                    return '[website]';
+                }
+            }
+
+            // Helper function to parse textarea links (one per line)
+            // Handles ANY amount of blank lines, spaces, tabs, and whitespace
+            // Works with links pasted with random spacing - just plop them in!
+            function parseTextareaLinks(textarea) {
+                if (!textarea || !textarea.value.trim()) return [];
+
+                return textarea.value
+                    .split('\n')                     // Split by newlines (each line)
+                    .map(link => link.trim())        // Remove ALL leading/trailing whitespace (spaces, tabs, etc)
+                    .filter(link => link.length > 0) // Remove completely empty lines
+                    .filter(link => {
+                        // Only keep valid URLs starting with http:// or https://
+                        // This catches any valid link format
+                        return link.startsWith('http://') || link.startsWith('https://');
+                    })
+                    .map(link => {
+                        // Final cleanup: remove any remaining weird characters at start/end
+                        return link.replace(/^[\s\u200B-\u200D\uFEFF]+|[\s\u200B-\u200D\uFEFF]+$/g, '');
+                    });
+            }
+
+            // ============================================
+            // SPOTIFY METADATA EXTRACTION - STEP BY STEP
+            // ============================================
+
+            // STEP 1: Parse Spotify URL and extract ID + type (playlist/album/track)
+            function parseSpotifyUrl(url) {
+                // Regex pattern to match Spotify URLs
+                // Matches: https://open.spotify.com/{type}/{id}
+                const spotifyPattern = /https?:\/\/open\.spotify\.com\/(playlist|album|track)\/([a-zA-Z0-9]+)/;
+                const match = url.match(spotifyPattern);
+
+                if (match) {
+                    return {
+                        type: match[1],        // 'playlist', 'album', or 'track'
+                        id: match[2],          // The unique ID
+                        fullUrl: url           // Original URL for API call
+                    };
+                }
+                return null;
+            }
+
+            // STEP 2: Fetch metadata from Spotify oEmbed API
+            async function fetchSpotifyMetadata(spotifyUrl) {
+                try {
+                    // Spotify oEmbed endpoint
+                    const oEmbedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`;
+
+                    const response = await fetch(oEmbedUrl);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('Error fetching Spotify metadata:', error);
+                    return null;
+                }
+            }
+
+            // STEP 3: Extract thumbnail/album art URL from oEmbed response
+            function extractAlbumArt(oEmbedData) {
+                if (!oEmbedData) return null;
+
+                // oEmbed response contains thumbnail_url with album art
+                return oEmbedData.thumbnail_url || null;
+            }
+
+            // STEP 4: Extract title from oEmbed response
+            function extractSpotifyTitle(oEmbedData) {
+                if (!oEmbedData) return null;
+
+                // oEmbed response contains title field
+                return oEmbedData.title || null;
+            }
+
+            // STEP 5: Process Spotify link and return display data
+            async function processSpotifyLink(url) {
+                // Step 1: Parse URL to extract ID and type
+                const parsed = parseSpotifyUrl(url);
+                if (!parsed) {
+                    return {
+                        url: url,
+                        isValid: false,
+                        title: null,
+                        albumArt: null,
+                        type: null
+                    };
+                }
+
+                // Step 2: Fetch metadata from API
+                const metadata = await fetchSpotifyMetadata(parsed.fullUrl);
+
+                // Step 3 & 4: Extract album art and title
+                const albumArt = extractAlbumArt(metadata);
+                const title = extractSpotifyTitle(metadata);
+
+                return {
+                    url: url,
+                    isValid: true,
+                    title: title,
+                    albumArt: albumArt,
+                    type: parsed.type,
+                    id: parsed.id
+                };
+            }
+
+            // Update output function
+            function updateOutput() {
+                const artistName = document.getElementById('input-artist-name').value || '[enter name]';
+                document.getElementById('out-artist').textContent = artistName;
+
+                let output = '';
+                const allSongNums = new Set();
+
+                // Collect all song numbers from all card types
+                document.querySelectorAll('[data-song-num]').forEach(el => {
+                    allSongNums.add(parseInt(el.dataset.songNum));
+                });
+
+                const sortedSongNums = Array.from(allSongNums).sort((a, b) => a - b);
+
+                sortedSongNums.forEach(songNum => {
+                    const songName = document.querySelector(`.song-name-input[data-song-num="${songNum}"]`)?.value || `[Song ${songNum}]`;
+                    const songDate = document.querySelector(`.song-date-input[data-song-num="${songNum}"]`)?.value || '[date]';
+
+                    output += `\n<strong>━━━ SONG ${songNum} ━━━</strong>\n`;
+                    output += `<strong>SONG:</strong> <span style="color: #00cc6a;">${songName}</span>\n`;
+                    output += `<strong>DATE:</strong> <span style="color: #00cc6a;">${songDate}</span>\n`;
+
+                    // Results Link - only show for first song (artist-level)
+                    if (songNum === 1) {
+                        const resultsLinkInput = document.querySelector(`.results-link-input[data-artist-link="true"]`);
+                        if (resultsLinkInput && resultsLinkInput.value.trim()) {
+                            output += `<strong>RESULTS LINK:</strong> <span style="color: #00cc6a;">${resultsLinkInput.value.trim()}</span>\n`;
+                        }
+                    }
+
+                    // Spotify Links (NEW - from textarea)
+                    const spotifyLinksTextarea = document.querySelector(`.spotify-links-textarea[data-song-num="${songNum}"]`);
+                    const spotifyLinks = parseTextareaLinks(spotifyLinksTextarea);
+                    if (spotifyLinks.length > 0) {
+                        output += `\n<strong>SPOTIFY LINKS:</strong>\n`;
+                        spotifyLinks.forEach(link => {
+                            output += `  → <span style="color: #00cc6a;">${link}</span>\n`;
+                        });
+                    }
+
+                    // Spotify Data (existing tab-separated format)
+                    const spotifyInput = document.querySelector(`.spotify-data-input[data-song-num="${songNum}"]`);
+                    if (spotifyInput && spotifyInput.value.trim()) {
+                        const data = spotifyInput.value.trim();
+                        const parts = data.split(/\t/).map(s => s.trim());
+
+                        if (parts.length >= 10) {
+                            output += `\n<strong>SPOTIFY DATA:</strong>\n`;
+                            output += `  Stream Goal: <span style="color: #00cc6a;">${parts[1]}</span>\n`;
+                            output += `  Daily Streams: <span style="color: #00cc6a;">${parts[3]}</span>\n`;
+                            output += `  Indie Playlist Streams: <span style="color: #00cc6a;">${parts[4]}</span>\n`;
+                            output += `  Algorithm Streams: <span style="color: #00cc6a;">${parts[5]}</span>\n`;
+                            output += `  Algorithmic Ratio: <span style="color: #00cc6a;">${parts[6]}</span>\n`;
+                            output += `  Streams Left: <span style="color: #00cc6a;">${parts[7]}</span>\n`;
+                            output += `  Playlist Count: <span style="color: #00cc6a;">${parts[8]}</span>\n`;
+                            output += `  Days Left: <span style="color: #00cc6a;">${parts[9].split(' ')[0]}</span>\n`;
+                        }
+                    }
+
+                    // Press links - from textarea (line by line)
+                    const pressLinksTextarea = document.querySelector(`.press-links-textarea[data-song-num="${songNum}"]`);
+                    const pressLinks = parseTextareaLinks(pressLinksTextarea);
+                    if (pressLinks.length > 0) {
+                        output += `\n<strong>PRESS:</strong>\n`;
+                        pressLinks.forEach(link => {
+                            output += `  → <span style="color: #00cc6a;">${link}</span>\n`;
+                        });
+                    }
+
+                    // Social links - from textarea (line by line)
+                    const socialLinksTextarea = document.querySelector(`.social-links-textarea[data-song-num="${songNum}"]`);
+                    const socialLinks = parseTextareaLinks(socialLinksTextarea);
+                    if (socialLinks.length > 0) {
+                        output += `\n<strong>SOCIAL:</strong>\n`;
+                        socialLinks.forEach(link => {
+                            output += `  → <span style="color: #00cc6a;">${link}</span>\n`;
+                        });
+                    }
+
+                    // Other links - from textarea (line by line)
+                    const otherLinksTextarea = document.querySelector(`.other-links-textarea[data-song-num="${songNum}"]`);
+                    const otherLinks = parseTextareaLinks(otherLinksTextarea);
+                    if (otherLinks.length > 0) {
+                        output += `\n<strong>OTHER:</strong>\n`;
+                        otherLinks.forEach(link => {
+                            output += `  → <span style="color: #00cc6a;">${link}</span>\n`;
+                        });
+                    }
+
+                    output += '\n';
+                });
+
+                document.getElementById('songs-output').innerHTML = output;
+            }
+
+            // Master update function - updates everything at once
+            function updateAllOutputs() {
+                updateOutput();
+                updatePreview();
+                updateHTMLCodeViewer();
+                updateHTMLWrapper();
+                updateCompleteHTML();
+            }
+
+            // Attach input listeners
+            function attachInputListeners() {
+                // ONLY listen to song name/date for auto-showing sections (NOT full render)
+                document.querySelectorAll('.song-name-input, .song-date-input').forEach(input => {
+                    // Store the handler function so we can remove it properly
+                    const handler = function () {
+                        const songNum = this.getAttribute('data-song-num');
+                        checkAndShowSpotifyButton(songNum);
+                        // Only update the prompt output text, NOT the visual preview
+                        updateOutput();
+                    };
+
+                    // Remove any existing handler (using a data attribute to track)
+                    if (input._spotifyCheckHandler) {
+                        input.removeEventListener('input', input._spotifyCheckHandler);
+                    }
+
+                    // Add the new handler and store reference
+                    input._spotifyCheckHandler = handler;
+                    input.addEventListener('input', handler);
+                });
+
+                // Listen to results link for prompt output only
+                document.querySelectorAll('.results-link-input').forEach(input => {
+                    input.removeEventListener('input', updateOutput);
+                    input.addEventListener('input', updateOutput);
+                });
+
+                // Listen to all textarea link inputs - only update prompt output
+                document.querySelectorAll('.spotify-links-textarea, .press-links-textarea, .social-links-textarea, .other-links-textarea').forEach(textarea => {
+                    textarea.removeEventListener('input', updateOutput);
+                    textarea.addEventListener('input', updateOutput);
+
+                    // Auto-add blank line for Spotify links when user pastes
+                    if (textarea.classList.contains('spotify-links-textarea')) {
+                        textarea.addEventListener('input', function () {
+                            const lines = this.value.trim().split('\n').filter(line => line.trim());
+                            // If there are links and last line isn't empty, add blank line
+                            if (lines.length > 0 && this.value.trim().length > 0) {
+                                if (!this.value.endsWith('\n')) {
+                                    this.value = this.value + '\n';
+                                }
+                            }
+                        });
+                    }
+                });
+
+                // Listen to Spotify Data inputs - only update prompt output and show preview
+                document.querySelectorAll('.spotify-data-input').forEach(textarea => {
+                    textarea.removeEventListener('input', updateOutput);
+                    textarea.addEventListener('input', updateOutput);
+
+                    // Update parsed preview for Spotify data
+                    textarea.addEventListener('input', function () {
+                        const preview = this.parentElement.querySelector('.parsed-preview');
+                        const data = this.value.trim();
+
+                        if (!data) {
+                            preview.textContent = 'Waiting for data...';
+                            return;
+                        }
+
+                        const parts = data.split(/\t/).map(s => s.trim());
+                        if (parts.length >= 10) {
+                            preview.innerHTML = `✓ Parsed 8 fields`;
+                            preview.style.color = '#00cc6a';
+                        } else {
+                            preview.innerHTML = `⚠ Expected 10 columns, found ${parts.length}`;
+                            preview.style.color = '#ff6b35';
+                        }
+                    });
+                });
+
+                // NO initial update here - wait for artist name
+            }
+
+            // Initial attachment
+            attachInputListeners();
+
+            // Check all existing songs on page load
+            const checkedSongs = new Set();
+            document.querySelectorAll('[data-song-num]').forEach(el => {
+                const songNum = el.getAttribute('data-song-num');
+                if (songNum && !checkedSongs.has(songNum)) {
+                    checkedSongs.add(songNum);
+                    checkAndShowSpotifyButton(songNum);
+                }
+            });
+
+
+            // ============================================
+            // LIVE PREVIEW - UPDATE CARDS IN REAL TIME
+            // ============================================
+            //
+            // ⚠️ IMPORTANT: NO EMOJIS ALLOWED IN OUTPUT
+            // This preview system strips all emojis from data fields.
+            // Emojis are removed from Spotify metrics, link labels,
+            // and all other display text to maintain professional
+            // client-ready report formatting.
+            // ============================================
+
+            // Cache for Spotify album art data to persist across re-renders
+            const spotifyAlbumArtCache = new Map();
+
+            function updatePreview() {
+                // Update artist name
+                const artistName = document.getElementById('input-artist-name').value || '[Artist Name]';
+                const previewArtistName = document.getElementById('preview-artist-name');
+                if (previewArtistName) {
+                    previewArtistName.textContent = artistName;
+                }
+
+                // Get preview container
+                const previewCards = document.getElementById('preview-cards');
+                if (!previewCards) return;
+
+                previewCards.innerHTML = '';
+
+                // Collect all song numbers
+                const allSongNums = new Set();
+                document.querySelectorAll('[data-song-num]').forEach(el => {
+                    allSongNums.add(parseInt(el.dataset.songNum));
+                });
+
+                const sortedSongNums = Array.from(allSongNums).sort((a, b) => a - b);
+
+                // For each song, create preview cards wrapped in song-page divs
+                sortedSongNums.forEach(songNum => {
+                    const songName = document.querySelector(`.song-name-input[data-song-num="${songNum}"]`)?.value;
+                    const songDate = document.querySelector(`.song-date-input[data-song-num="${songNum}"]`)?.value;
+
+                    // Check if this song has ANY data at all - don't skip unless completely empty
+                    const hasSpotify = document.querySelector(`.spotify-data-input[data-song-num="${songNum}"]`)?.value?.trim();
+                    const hasPress = document.querySelectorAll(`.press-link-field[data-song-num="${songNum}"]`).length > 0;
+                    const hasSocial = document.querySelectorAll(`.social-link-field[data-song-num="${songNum}"]`).length > 0;
+                    const hasOther = document.querySelectorAll(`.other-link-field[data-song-num="${songNum}"]`).length > 0;
+
+                    // Skip ONLY if there's absolutely no data for this song
+                    if (!songName && !songDate && !hasSpotify && !hasPress && !hasSocial && !hasOther) {
+                        return;
+                    }
+
+                    // Format date nicely
+                    let formattedDate = songDate || '';
+                    if (songDate) {
+                        const dateObj = new Date(songDate + 'T00:00:00');
+                        formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+
+                    // START SONG PAGE WRAPPER - One song per page in PDF
+                    previewCards.insertAdjacentHTML('beforeend', `<div class="song-page" data-song-num="${songNum}">`);
+
+                    // Track if we've created any cards for this song
+                    let hasCreatedCard = false;
+
+                    // === RESULTS LINK CARD (Artist-level, only show once for Song 1) - SHOW FIRST ===
+                    if (songNum === 1) {
+                        const resultsLinkInput = document.querySelector(`.results-link-input[data-artist-link="true"]`);
+                        console.log('DEBUG Results Link - Artist level, Input found:', !!resultsLinkInput, 'Value:', resultsLinkInput?.value);
+                        if (resultsLinkInput && resultsLinkInput.value.trim()) {
+                            const resultsLink = resultsLinkInput.value.trim();
+                            console.log('✓ Creating Results Link card for Artist');
+                            const resultsCard = `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">
+                                    <span style="font-size: 20px; font-weight: 700; color: #000;">Results Link</span>
+                                </div>
+                            </div>
+                            <span class="card-type" style="background: rgba(96, 165, 250, 0.2); color: #60a5fa; border: 1px solid #60a5fa;">Results</span>
+                        </div>
+                        <div class="link-list">
+                            <div class="link-item">
+                                <span style="font-weight: 600; color: #888; margin-right: 8px;"><img src="https://www.google.com/s2/favicons?domain=drive.google.com&sz=16" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;" alt="">Results Link (from GDrive Storage Folder)</span>
+                                <a href="${resultsLink}" target="_blank" style="color: #60a5fa; text-decoration: none; word-break: break-all;">${resultsLink}</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                            previewCards.insertAdjacentHTML('beforeend', resultsCard);
+                            hasCreatedCard = true;
+                        }
+                    }
+
+                    // === SPOTIFY CARD ===
+                    const spotifyInput = document.querySelector(`.spotify-data-input[data-song-num="${songNum}"]`);
+                    if (spotifyInput && spotifyInput.value.trim()) {
+                        const data = spotifyInput.value.trim();
+                        const parts = data.split(/\t/).map(s => s.trim());
+
+                        if (parts.length >= 10) {
+                            // Clean emoji from fields
+                            const cleanText = (text) => text.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+
+                            // Calculate progress percentage
+                            const goal = parseInt(parts[1].replace(/,/g, '')) || 10000;
+                            const streamsLeft = parseInt(parts[7].replace(/,/g, '')) || 0;
+                            const progress = Math.round(((goal - streamsLeft) / goal) * 100);
+
+                            const spotifyCard = `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">
+                                    <span style="color: #808080; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Song ${songNum}</span>
+                                    <span style="font-size: 20px; font-weight: 700; color: #000;">${songName || 'Untitled'}</span>
+                                    <span style="margin: 0 12px; color: #404040; font-size: 18px;">/</span>
+                                    <span style="font-size: 16px; font-weight: 600; color: #888;">${formattedDate}</span>
+                                </div>
+                            </div>
+                            <span class="card-type spotify">Spotify</span>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Stream Goal</span>
+                                <span class="metric-value">${cleanText(parts[1])}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Daily Streams</span>
+                                <span class="metric-value">${cleanText(parts[3])}</span>
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Total Indie Playlist Streams</span>
+                                <span class="metric-value">${cleanText(parts[4])}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Algorithm Streams</span>
+                                <span class="metric-value">${cleanText(parts[5])}</span>
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Algorithmic Ratio</span>
+                                <span class="metric-value">${cleanText(parts[6])}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Streams Left</span>
+                                <span class="metric-value">${cleanText(parts[7])}</span>
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-item">
+                                <span class="metric-label">Total Playlist Count</span>
+                                <span class="metric-value">${cleanText(parts[8])}</span>
+                            </div>
+                            <div class="metric-item">
+                                <span class="metric-label">Days Left</span>
+                                <span class="metric-value">${cleanText(parts[9])}</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: ${progress}%;"></div>
+                        </div>
+                    </div>
+                `;
+                            previewCards.insertAdjacentHTML('beforeend', spotifyCard);
+                            hasCreatedCard = true;
+                        }
+                    }
+
+                    // === SPOTIFY LINKS CARD (NEW) - WITH ALBUM ART ===
+                    const spotifyLinksTextarea = document.querySelector(`.spotify-links-textarea[data-song-num="${songNum}"]`);
+                    const spotifyLinks = parseTextareaLinks(spotifyLinksTextarea);
+
+                    if (spotifyLinks.length > 0) {
+                        // Create placeholder card immediately
+                        const cardId = `spotify-card-${songNum}`;
+                        const cacheKey = `song-${songNum}-links`;
+
+                        // Check if we have cached data for these exact links
+                        const cachedData = spotifyAlbumArtCache.get(cacheKey);
+                        const linksChanged = !cachedData || cachedData.links !== spotifyLinks.join('|');
+
+                        const spotifyLinksCard = `
+                <div class="card" id="${cardId}">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span style="color: #808080; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Song ${songNum}</span>
+                                <span style="font-size: 20px; font-weight: 700; color: #000;">${songName || 'Untitled'}</span>
+                                <span style="margin: 0 12px; color: #404040; font-size: 18px;">/</span>
+                                <span style="font-size: 16px; font-weight: 600; color: #888;">${formattedDate}</span>
+                            </div>
+                        </div>
+                        <span class="card-type spotify">Spotify Links</span>
+                    </div>
+                    <div class="link-list" id="${cardId}-content">
+                        <div style="color: #888; padding: 12px;">Loading Spotify previews...</div>
+                    </div>
+                </div>
+            `;
+                        previewCards.insertAdjacentHTML('beforeend', spotifyLinksCard);
+                        hasCreatedCard = true;
+
+                        // If we have cached data and links haven't changed, use it immediately
+                        if (!linksChanged && cachedData.html) {
+                            const contentDiv = document.getElementById(`${cardId}-content`);
+                            if (contentDiv) {
+                                contentDiv.innerHTML = cachedData.html;
+                            }
+                        } else {
+                            // STEP 6: Async processing to fetch and display album art
+                            (async () => {
+                                const processedLinks = [];
+
+                                // Process each Spotify link (check cache first)
+                                for (const link of spotifyLinks) {
+                                    // Check if this specific link is cached
+                                    if (cachedData && cachedData.processedData) {
+                                        const cached = cachedData.processedData.find(d => d.url === link);
+                                        if (cached) {
+                                            processedLinks.push(cached);
+                                            continue;
+                                        }
+                                    }
+
+                                    const spotifyData = await processSpotifyLink(link);
+                                    processedLinks.push(spotifyData);
+                                }
+
+                                // STEP 5: Build HTML with album art images - SINGLE SOURCE OF TRUTH
+                                const spotifyLinkItems = processedLinks.map(data => {
+                                    if (data.isValid && data.albumArt && data.title) {
+                                        // ✅ SUCCESS: Show album art card
+                                        return `
+                                <div class="link-item spotify-preview-item" style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f8f8f8; border-radius: 8px; margin-bottom: 12px;">
+                                    <img src="${data.albumArt}" alt="${data.title}" class="spotify-album-art" style="width: 120px; height: 120px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    <div style="flex: 1;">
+                                        <div class="spotify-title" style="font-weight: 700; font-size: 16px; color: #000; margin-bottom: 8px;">${data.title}</div>
+                                        <div class="spotify-type" style="font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 8px;">Spotify ${data.type}</div>
+                                        <a href="${data.url}" target="_blank" style="color: #1db954; text-decoration: none; font-size: 14px; word-break: break-all;">${data.url}</a>
+                                    </div>
+                                </div>
+                            `;
+                                    } else {
+                                        // ❌ ERROR: Show error box with same card format
+                                        return `
+                                <div class="link-item spotify-preview-item" style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #fff3f3; border: 2px solid #ff6b6b; border-radius: 8px; margin-bottom: 12px;">
+                                    <div style="width: 120px; height: 120px; border-radius: 8px; background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <span style="font-size: 48px; color: white;">⚠</span>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div class="spotify-title" style="font-weight: 700; font-size: 16px; color: #ff6b6b; margin-bottom: 8px;">Failed to Load Album Art</div>
+                                        <div class="spotify-type" style="font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 8px;">Spotify API Error</div>
+                                        <a href="${data.url}" target="_blank" style="color: #1db954; text-decoration: none; font-size: 14px; word-break: break-all;">${data.url}</a>
+                                    </div>
+                                </div>
+                            `;
+                                    }
+                                }).join('');
+
+                                // Cache the results
+                                spotifyAlbumArtCache.set(cacheKey, {
+                                    links: spotifyLinks.join('|'),
+                                    html: spotifyLinkItems,
+                                    processedData: processedLinks
+                                });
+
+                                // Update the card content with processed data
+                                const contentDiv = document.getElementById(`${cardId}-content`);
+                                if (contentDiv) {
+                                    contentDiv.innerHTML = spotifyLinkItems;
+                                }
+                            })();
+                        }
+                    }
+
+                    // === PRESS CARD ===
+                    const pressLinksTextarea = document.querySelector(`.press-links-textarea[data-song-num="${songNum}"]`);
+                    const pressLinks = parseTextareaLinks(pressLinksTextarea);
+
+                    if (pressLinks.length > 0) {
+                        const pressLinkItems = pressLinks.map(link => {
+                            const domain = extractDomain(link);
+                            return `
+                    <div class="link-item">
+                        <span style="font-weight: 600; color: #888; margin-right: 8px;">${domain}</span>
+                        <a href="${link}" target="_blank" style="color: #60a5fa; text-decoration: none; word-break: break-all;">${link}</a>
+                    </div>
+                `;
+                        }).join('');
+
+                        const pressCard = `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span style="color: #808080; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Song ${songNum}</span>
+                                <span style="font-size: 20px; font-weight: 700; color: #000;">${songName || 'Untitled'}</span>
+                                <span style="margin: 0 12px; color: #404040; font-size: 18px;">/</span>
+                                <span style="font-size: 16px; font-weight: 600; color: #888;">${formattedDate}</span>
+                            </div>
+                        </div>
+                        <span class="card-type press">Press</span>
+                    </div>
+                    <div class="link-list">
+                        ${pressLinkItems}
+                    </div>
+                </div>
+            `;
+                        previewCards.insertAdjacentHTML('beforeend', pressCard);
+                        hasCreatedCard = true;
+                    }
+
+                    // === SOCIAL CARD ===
+                    const socialLinksTextarea = document.querySelector(`.social-links-textarea[data-song-num="${songNum}"]`);
+                    const socialLinks = parseTextareaLinks(socialLinksTextarea);
+
+                    if (socialLinks.length > 0) {
+                        const socialLinkItems = socialLinks.map(link => {
+                            const domain = extractDomain(link);
+                            return `
+                    <div class="link-item">
+                        <span style="font-weight: 600; color: #888; margin-right: 8px;">${domain}</span>
+                        <a href="${link}" target="_blank" style="color: #fb923c; text-decoration: none; word-break: break-all;">${link}</a>
+                    </div>
+                `;
+                        }).join('');
+
+                        const socialCard = `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span style="color: #808080; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Song ${songNum}</span>
+                                <span style="font-size: 20px; font-weight: 700; color: #000;">${songName || 'Untitled'}</span>
+                                <span style="margin: 0 12px; color: #404040; font-size: 18px;">/</span>
+                                <span style="font-size: 16px; font-weight: 600; color: #888;">${formattedDate}</span>
+                            </div>
+                        </div>
+                        <span class="card-type social">Social</span>
+                    </div>
+                    <div class="link-list">
+                        ${socialLinkItems}
+                    </div>
+                </div>
+            `;
+                        previewCards.insertAdjacentHTML('beforeend', socialCard);
+                        hasCreatedCard = true;
+                    }
+
+                    // === OTHER CARD ===
+                    const otherLinksTextarea = document.querySelector(`.other-links-textarea[data-song-num="${songNum}"]`);
+                    const otherLinks = parseTextareaLinks(otherLinksTextarea);
+
+                    if (otherLinks.length > 0) {
+                        const otherLinkItems = otherLinks.map(link => {
+                            const domain = extractDomain(link);
+                            return `
+                    <div class="link-item">
+                        <span style="font-weight: 600; color: #888; margin-right: 8px;">${domain}</span>
+                        <a href="${link}" target="_blank" style="color: #9ca3af; text-decoration: none; word-break: break-all;">${link}</a>
+                    </div>
+                `;
+                        }).join('');
+
+                        const otherCard = `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span style="color: #808080; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Song ${songNum}</span>
+                                <span style="font-size: 20px; font-weight: 700; color: #000;">${songName || 'Untitled'}</span>
+                                <span style="margin: 0 12px; color: #404040; font-size: 18px;">/</span>
+                                <span style="font-size: 16px; font-weight: 600; color: #888;">${formattedDate}</span>
+                            </div>
+                        </div>
+                        <span class="card-type other">Other</span>
+                    </div>
+                    <div class="link-list">
+                        ${otherLinkItems}
+                    </div>
+                </div>
+            `;
+                        previewCards.insertAdjacentHTML('beforeend', otherCard);
+                        hasCreatedCard = true;
+                    }
+
+                    // === PLACEHOLDER CARD - Show basic info if no specific cards were created ===
+                    if (!hasCreatedCard && (songName || songDate)) {
+                        const placeholderCard = `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <span style="color: #808080; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Song ${songNum}</span>
+                                <span style="font-size: 20px; font-weight: 700; color: #000;">${songName || 'Untitled'}</span>
+                                <span style="margin: 0 12px; color: #404040; font-size: 18px;">/</span>
+                                <span style="font-size: 16px; font-weight: 600; color: #888;">${formattedDate || 'No date'}</span>
+                            </div>
+                        </div>
+                        <span class="card-type" style="background: rgba(156, 163, 175, 0.2); color: #9ca3af; border: 1px solid #9ca3af;">Pending Data</span>
+                    </div>
+                    <div style="padding: 20px; text-align: center; color: #808080; font-style: italic;">
+                        Add Spotify data or links to see full report cards
+                    </div>
+                </div>
+            `;
+                        previewCards.insertAdjacentHTML('beforeend', placeholderCard);
+                    }
+
+                    // CLOSE SONG PAGE WRAPPER - End of this song's cards
+                    previewCards.insertAdjacentHTML('beforeend', `</div>`);
+                });
+            }
+
+            // Update HTML code viewer
+            function updateHTMLCodeViewer() {
+                const previewCards = document.getElementById('preview-cards');
+                const codeOutput = document.getElementById('html-code-output');
+
+                if (!previewCards || !codeOutput) return;
+
+                // Get the HTML
+                let htmlContent = previewCards.innerHTML;
+
+                if (!htmlContent || htmlContent.trim() === '') {
+                    codeOutput.textContent = '<!-- No cards generated yet. Fill in the form above to see HTML code. -->';
+                    return;
+                }
+
+                // Format the HTML nicely with basic indentation
+                const formatted = htmlContent
+                    .replace(/></g, '>\n<')
+                    .replace(/\n\s+\n/g, '\n');
+
+                // Escape HTML for display
+                const escaped = formatted
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+
+                codeOutput.textContent = escaped;
+            }
+
+            // BOX 2: Update HTML Wrapper
+            function updateHTMLWrapper() {
+                const artistName = document.getElementById('input-artist-name').value || 'Artist Name';
+                const wrapperOutput = document.getElementById('html-wrapper-output');
+                if (!wrapperOutput) return;
+
+                const wrapperHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${artistName} - Campaign Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></` + `script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 34px 17px; max-width: 765px; margin: 0 auto; background: #f8f9fa; color: #000; font-size: 11.9px; }
+.artist-name { font-size: 27.2px; font-weight: 700; text-align: center; margin-bottom: 34px; color: #000; }
+.download-pdf-btn { display: block; margin: 0 auto 25.5px; padding: 10.2px 25.5px; background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.75); border: none; border-radius: 17px; font-weight: 600; cursor: pointer; font-size: 11.9px; transition: opacity 0.2s ease, transform 0.1s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+.download-pdf-btn:hover { background: rgba(0,0,0,0.12); }
+.download-pdf-btn:active { transform: scale(0.98); }
+
+/* Song Page Container - Force page breaks between songs */
+.song-page { page-break-after: always; margin-bottom: 34px; }
+.song-page:last-child { page-break-after: auto; }
+
+.card { background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%); border: none; border-radius: 13.6px; padding: 20.4px; margin-bottom: 20.4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.card-header { display: flex; justify-content: space-between; margin-bottom: 17px; padding-bottom: 13.6px; border-bottom: 2px solid #e0e0e0; }
+.card-title { font-size: 15.3px; font-weight: 700; color: #000; }
+.card-type { padding: 3.4px 10.2px; border-radius: 10.2px; font-size: 9.35px; font-weight: 600; text-transform: uppercase; }
+.card-type.spotify { background: rgba(30, 215, 96, 0.2); color: #1db954; border: 1px solid #1db954; }
+.card-type.press { background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid #007aff; }
+.card-type.social { background: rgba(255, 149, 0, 0.1); color: #ff9500; border: 1px solid #ff9500; }
+.card-type.other { background: rgba(142, 142, 147, 0.1); color: #8e8e93; border: 1px solid #8e8e93; }
+.metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px; margin-bottom: 10.2px; }
+.metric-item { display: flex; justify-content: space-between; padding: 6.8px 0; border-bottom: 1px solid #e0e0e0; }
+.metric-label { font-weight: 600; color: #888; font-size: 11.9px; }
+.metric-value { font-weight: 700; color: #1db954; font-size: 11.9px; }
+.progress-bar-container { width: 100%; height: 5.1px; background: #e0e0e0; border-radius: 8.5px; margin-top: 10.2px; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, #1db954, #1ed760); border-radius: 8.5px; box-shadow: 0 0 8px rgba(29, 185, 84, 0.3); }
+.link-list { margin-top: 10.2px; }
+.link-item { display: flex; gap: 6.8px; margin-bottom: 6.8px; color: #000; font-size: 11.05px; }
+.spotify-preview-item { display: flex; align-items: center; gap: 13.6px; padding: 13.6px; background: #f8f8f8; border-radius: 6.8px; margin-bottom: 10.2px; }
+.spotify-album-art { width: 102px; height: 102px; border-radius: 6.8px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex-shrink: 0; }
+.spotify-title { font-weight: 700; font-size: 13.6px; color: #000; margin-bottom: 6.8px; }
+.spotify-type { font-size: 10.2px; color: #888; text-transform: uppercase; margin-bottom: 6.8px; }
+
+/* PRINT STYLES - INK SAVER */
+@media print {
+    .download-pdf-btn { display: none !important; }
+    .spotify-album-art { display: none !important; }
+    * { background: #fff !important; color: #000 !important; box-shadow: none !important; }
+    body { background: #fff !important; padding: 17px; }
+    .song-page { page-break-after: always !important; }
+    .song-page:last-child { page-break-after: auto !important; }
+    .card { border: 1px solid #000 !important; background: #fff !important; page-break-inside: avoid; }
+    .card-type { background: #fff !important; color: #000 !important; border: 1px solid #000 !important; }
+    .metric-value { color: #000 !important; }
+    .progress-bar-container { background: #fff !important; border: 1px solid #000 !important; }
+    .progress-bar { background: #000 !important; }
+}
+</style>
+</head>
+<body>
+<div class="artist-name">${artistName}</div>
+<button class="download-pdf-btn" onclick="downloadPDF()">📄 Download as PDF</button>
+
+<div id="content">
+<!-- CARDS GO HERE -->
+</div>
+
+<script>
+function downloadTXT() {
+    const artistName = '${artistName}';
+    const content = document.getElementById('content');
+
+    // MULTI-COMPLEX FIELD PARSING SYSTEM
+    let txtContent = '';
+    txtContent += '=' + '='.repeat(70) + '\\n';
+    txtContent += '  ' + artistName.toUpperCase() + ' - CAMPAIGN REPORT\\n';
+    txtContent += '=' + '='.repeat(70) + '\\n\\n';
+
+    // Get all song pages
+    const songPages = content.querySelectorAll('.song-page');
+
+    songPages.forEach((songPage, songIndex) => {
+        const cards = songPage.querySelectorAll('.card');
+
+        // SONG HEADER
+        txtContent += '\\n' + '▓'.repeat(72) + '\\n';
+        txtContent += '▓  SONG ' + (songIndex + 1) + '\\n';
+        txtContent += '▓'.repeat(72) + '\\n\\n';
+
+        cards.forEach(card => {
+            const cardType = card.querySelector('.card-type')?.textContent.trim().toUpperCase() || 'UNKNOWN';
+
+            // CARD TYPE HEADER
+            txtContent += '┌' + '─'.repeat(70) + '┐\\n';
+            txtContent += '│ [' + cardType + ']\\n';
+            txtContent += '└' + '─'.repeat(70) + '┘\\n';
+
+            // === SCENARIO 1: RESULTS LINK CARD ===
+            if (cardType === 'RESULTS') {
+                const linkItems = card.querySelectorAll('.link-item');
+                linkItems.forEach(item => {
+                    const label = item.querySelector('span')?.textContent.trim() || '';
+                    const link = item.querySelector('a')?.href || item.querySelector('a')?.textContent.trim() || '';
+
+                    if (label && link) {
+                        txtContent += '\\n  ' + label + ':\\n';
+                        txtContent += '  → ' + link + '\\n';
+                    } else if (link) {
+                        txtContent += '\\n  → ' + link + '\\n';
+                    }
+                });
+                txtContent += '\\n';
+            }
+
+            // === SCENARIO 2: SPOTIFY METRICS CARD (with data) ===
+            else if (cardType === 'SPOTIFY' || cardType === 'SPOTIFY LINKS') {
+                // Extract song name and date from card title
+                const titleSpans = card.querySelectorAll('.card-title span');
+                let songName = '';
+                let songDate = '';
+
+                titleSpans.forEach(span => {
+                    const text = span.textContent.trim();
+                    // Skip "Song X" label
+                    if (text.startsWith('Song ')) return;
+                    // Check if it's a date (contains month abbreviation)
+                    if (text.match(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/)) {
+                        songDate = text;
+                    } else if (text !== '/' && text.length > 0) {
+                        songName = text;
+                    }
+                });
+
+                if (songName) {
+                    txtContent += '\\n  Song: ' + songName + '\\n';
+                }
+                if (songDate) {
+                    txtContent += '  Date: ' + songDate + '\\n';
+                }
+                if (songName || songDate) {
+                    txtContent += '\\n';
+                }
+
+                // Extract Spotify metrics (Stream Goal, Daily Streams, etc.)
+                const metrics = card.querySelectorAll('.metric-item');
+                if (metrics.length > 0) {
+                    txtContent += '  METRICS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    metrics.forEach(metric => {
+                        const label = metric.querySelector('.metric-label')?.textContent.trim();
+                        const value = metric.querySelector('.metric-value')?.textContent.trim();
+
+                        if (label && value) {
+                            const paddedLabel = (label + ':').padEnd(35, ' ');
+                            txtContent += '    ' + paddedLabel + value + '\\n';
+                        }
+                    });
+                    txtContent += '\\n';
+                }
+
+                // Extract Spotify preview items (album art cards)
+                const spotifyPreviews = card.querySelectorAll('.spotify-preview-item');
+                if (spotifyPreviews.length > 0) {
+                    txtContent += '  SPOTIFY LINKS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    spotifyPreviews.forEach(preview => {
+                        const title = preview.querySelector('.spotify-title')?.textContent.trim();
+                        const type = preview.querySelector('.spotify-type')?.textContent.trim();
+                        const link = preview.querySelector('a')?.href || '';
+
+                        if (title && type && link) {
+                            txtContent += '    ♪ ' + title + '\\n';
+                            txtContent += '      Type: ' + type + '\\n';
+                            txtContent += '      URL:  ' + link + '\\n\\n';
+                        } else if (link) {
+                            // Fallback for error cards
+                            const errorTitle = preview.querySelector('.spotify-title')?.textContent.trim();
+                            if (errorTitle && errorTitle.includes('Failed')) {
+                                txtContent += '    ⚠ ' + errorTitle + '\\n';
+                                txtContent += '      URL:  ' + link + '\\n\\n';
+                            } else {
+                                txtContent += '    → ' + link + '\\n';
+                            }
+                        }
+                    });
+                }
+
+                // Extract regular link items (if no spotify-preview-item)
+                if (spotifyPreviews.length === 0) {
+                    const regularLinks = card.querySelectorAll('.link-item:not(.spotify-preview-item) a');
+                    if (regularLinks.length > 0) {
+                        txtContent += '  LINKS:\\n';
+                        txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                        regularLinks.forEach(link => {
+                            txtContent += '    → ' + link.href + '\\n';
+                        });
+                        txtContent += '\\n';
+                    }
+                }
+            }
+
+            // === SCENARIO 3: PRESS CARD ===
+            else if (cardType === 'PRESS') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  PRESS COVERAGE:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 4: SOCIAL CARD ===
+            else if (cardType === 'SOCIAL') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  SOCIAL MEDIA:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 5: OTHER CARD ===
+            else if (cardType === 'OTHER') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  OTHER LINKS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 6: PENDING DATA CARD ===
+            else if (cardType === 'PENDING DATA') {
+                txtContent += '\\n  ⚠ No data available yet\\n';
+                txtContent += '  Add Spotify data or links to populate this card.\\n\\n';
+            }
+
+            // === SCENARIO 7: UNKNOWN/GENERIC CARD ===
+            else {
+                const cardTitle = card.querySelector('.card-title')?.textContent.trim().replace(/\\s+/g, ' ') || '';
+                if (cardTitle) {
+                    txtContent += '\\n  ' + cardTitle + '\\n\\n';
+                }
+
+                // Try to extract any links
+                const allLinks = card.querySelectorAll('a');
+                if (allLinks.length > 0) {
+                    allLinks.forEach(link => {
+                        txtContent += '    → ' + link.href + '\\n';
+                    });
+                    txtContent += '\\n';
+                }
+            }
+
+            txtContent += '\\n';
+        });
+    });
+
+    txtContent += '\\n' + '=' + '='.repeat(70) + '\\n';
+    txtContent += '  END OF REPORT\\n';
+    txtContent += '=' + '='.repeat(70) + '\\n';
+
+    // Download TXT file
+    const blob = new Blob([txtContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = artistName.replace(/[^a-z0-9]/gi, '_') + '_Campaign_Report.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function downloadPDF() {
+    const element = document.getElementById('content');
+    const artistName = '${artistName}';
+
+    // DOUBLE DOWNLOAD: First download TXT, then PDF
+    downloadTXT();
+
+    // Small delay to allow TXT download to start
+    setTimeout(() => {
+        const opt = {
+            margin: 0.4,
+            filename: artistName.replace(/[^a-z0-9]/gi, '_') + '_Campaign_Report.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 1.7 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        html2pdf().set(opt).from(element).save();
+    }, 300);
+}
+</` + `script>
+</body>
+</html>`;
+
+                const escaped = wrapperHTML
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                wrapperOutput.textContent = escaped;
+            }
+
+            // BOX 3: Update Complete HTML (Box 1 + Box 2 combined)
+            function updateCompleteHTML() {
+                const previewCards = document.getElementById('preview-cards');
+                const wrapperOutput = document.getElementById('html-wrapper-output');
+                const completeOutput = document.getElementById('html-complete-output');
+
+                if (!previewCards || !wrapperOutput || !completeOutput) return;
+
+                // Get Box 1 cards HTML
+                let cardsHTML = previewCards.innerHTML;
+                if (!cardsHTML || cardsHTML.trim() === '') {
+                    cardsHTML = '<!-- No cards generated yet -->';
+                }
+
+                // Get Box 2 wrapper HTML (it's currently escaped for display, so we need the raw version)
+                // We'll generate it fresh to get the unescaped version
+                const artistName = document.getElementById('input-artist-name').value || 'Artist Name';
+
+                // Generate today's date for static HTML
+                const today = new Date();
+                const staticDate = today.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                const wrapperHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${artistName} - Campaign Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></` + `script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 34px 17px; max-width: 765px; margin: 0 auto; background: #f8f9fa; color: #000; font-size: 11.9px; }
+.artist-name { font-size: 27.2px; font-weight: 700; text-align: center; margin-bottom: 34px; color: #000; }
+.download-pdf-btn { display: block; margin: 0 auto 25.5px; padding: 10.2px 25.5px; background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.75); border: none; border-radius: 17px; font-weight: 600; cursor: pointer; font-size: 11.9px; transition: opacity 0.2s ease, transform 0.1s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+.download-pdf-btn:hover { background: rgba(0,0,0,0.12); }
+.download-pdf-btn:active { transform: scale(0.98); }
+
+/* Song Page Container - Force page breaks between songs */
+.song-page { page-break-after: always; margin-bottom: 34px; }
+.song-page:last-child { page-break-after: auto; }
+
+.card { background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%); border: none; border-radius: 13.6px; padding: 20.4px; margin-bottom: 20.4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.card-header { display: flex; justify-content: space-between; margin-bottom: 17px; padding-bottom: 13.6px; border-bottom: 2px solid #e0e0e0; }
+.card-title { font-size: 15.3px; font-weight: 700; color: #000; }
+.card-type { padding: 3.4px 10.2px; border-radius: 10.2px; font-size: 9.35px; font-weight: 600; text-transform: uppercase; }
+.card-type.spotify { background: rgba(30, 215, 96, 0.2); color: #1db954; border: 1px solid #1db954; }
+.card-type.press { background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid #007aff; }
+.card-type.social { background: rgba(255, 149, 0, 0.1); color: #ff9500; border: 1px solid #ff9500; }
+.card-type.other { background: rgba(142, 142, 147, 0.1); color: #8e8e93; border: 1px solid #8e8e93; }
+.metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px; margin-bottom: 10.2px; }
+.metric-item { display: flex; justify-content: space-between; padding: 6.8px 0; border-bottom: 1px solid #e0e0e0; }
+.metric-label { font-weight: 600; color: #888; font-size: 11.9px; }
+.metric-value { font-weight: 700; color: #1db954; font-size: 11.9px; }
+.progress-bar-container { width: 100%; height: 5.1px; background: #e0e0e0; border-radius: 8.5px; margin-top: 10.2px; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, #1db954, #1ed760); border-radius: 8.5px; box-shadow: 0 0 8px rgba(29, 185, 84, 0.3); }
+.link-list { margin-top: 10.2px; }
+.link-item { display: flex; gap: 6.8px; margin-bottom: 6.8px; color: #000; font-size: 11.05px; }
+.spotify-preview-item { display: flex; align-items: center; gap: 13.6px; padding: 13.6px; background: #f8f8f8; border-radius: 6.8px; margin-bottom: 10.2px; }
+.spotify-album-art { width: 102px; height: 102px; border-radius: 6.8px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex-shrink: 0; }
+.spotify-title { font-weight: 700; font-size: 13.6px; color: #000; margin-bottom: 6.8px; }
+.spotify-type { font-size: 10.2px; color: #888; text-transform: uppercase; margin-bottom: 6.8px; }
+
+/* PRINT STYLES - INK SAVER */
+@media print {
+    .download-pdf-btn { display: none !important; }
+    .spotify-album-art { display: none !important; }
+    * { background: #fff !important; color: #000 !important; box-shadow: none !important; }
+    body { background: #fff !important; padding: 17px; }
+    .song-page { page-break-after: always !important; }
+    .song-page:last-child { page-break-after: auto !important; }
+    .card { border: 1px solid #000 !important; background: #fff !important; page-break-inside: avoid; }
+    .card-type { background: #fff !important; color: #000 !important; border: 1px solid #000 !important; }
+    .metric-value { color: #000 !important; }
+    .progress-bar-container { background: #fff !important; border: 1px solid #000 !important; }
+    .progress-bar { background: #000 !important; }
+}
+</style>
+</head>
+<body>
+<div class="artist-name">${artistName}</div>
+<button class="download-pdf-btn" onclick="downloadPDF()">📄 Download as PDF</button>
+
+<div id="content">
+<!-- CARDS GO HERE -->
+</div>
+
+<script>
+function downloadTXT() {
+    const artistName = '${artistName}';
+    const content = document.getElementById('content');
+
+    // MULTI-COMPLEX FIELD PARSING SYSTEM
+    let txtContent = '';
+    txtContent += '=' + '='.repeat(70) + '\\n';
+    txtContent += '  ' + artistName.toUpperCase() + ' - CAMPAIGN REPORT\\n';
+    txtContent += '=' + '='.repeat(70) + '\\n\\n';
+
+    // Get all song pages
+    const songPages = content.querySelectorAll('.song-page');
+
+    songPages.forEach((songPage, songIndex) => {
+        const cards = songPage.querySelectorAll('.card');
+
+        // SONG HEADER
+        txtContent += '\\n' + '▓'.repeat(72) + '\\n';
+        txtContent += '▓  SONG ' + (songIndex + 1) + '\\n';
+        txtContent += '▓'.repeat(72) + '\\n\\n';
+
+        cards.forEach(card => {
+            const cardType = card.querySelector('.card-type')?.textContent.trim().toUpperCase() || 'UNKNOWN';
+
+            // CARD TYPE HEADER
+            txtContent += '┌' + '─'.repeat(70) + '┐\\n';
+            txtContent += '│ [' + cardType + ']\\n';
+            txtContent += '└' + '─'.repeat(70) + '┘\\n';
+
+            // === SCENARIO 1: RESULTS LINK CARD ===
+            if (cardType === 'RESULTS') {
+                const linkItems = card.querySelectorAll('.link-item');
+                linkItems.forEach(item => {
+                    const label = item.querySelector('span')?.textContent.trim() || '';
+                    const link = item.querySelector('a')?.href || item.querySelector('a')?.textContent.trim() || '';
+
+                    if (label && link) {
+                        txtContent += '\\n  ' + label + ':\\n';
+                        txtContent += '  → ' + link + '\\n';
+                    } else if (link) {
+                        txtContent += '\\n  → ' + link + '\\n';
+                    }
+                });
+                txtContent += '\\n';
+            }
+
+            // === SCENARIO 2: SPOTIFY METRICS CARD (with data) ===
+            else if (cardType === 'SPOTIFY' || cardType === 'SPOTIFY LINKS') {
+                // Extract song name and date from card title
+                const titleSpans = card.querySelectorAll('.card-title span');
+                let songName = '';
+                let songDate = '';
+
+                titleSpans.forEach(span => {
+                    const text = span.textContent.trim();
+                    // Skip "Song X" label
+                    if (text.startsWith('Song ')) return;
+                    // Check if it's a date (contains month abbreviation)
+                    if (text.match(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/)) {
+                        songDate = text;
+                    } else if (text !== '/' && text.length > 0) {
+                        songName = text;
+                    }
+                });
+
+                if (songName) {
+                    txtContent += '\\n  Song: ' + songName + '\\n';
+                }
+                if (songDate) {
+                    txtContent += '  Date: ' + songDate + '\\n';
+                }
+                if (songName || songDate) {
+                    txtContent += '\\n';
+                }
+
+                // Extract Spotify metrics (Stream Goal, Daily Streams, etc.)
+                const metrics = card.querySelectorAll('.metric-item');
+                if (metrics.length > 0) {
+                    txtContent += '  METRICS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    metrics.forEach(metric => {
+                        const label = metric.querySelector('.metric-label')?.textContent.trim();
+                        const value = metric.querySelector('.metric-value')?.textContent.trim();
+
+                        if (label && value) {
+                            const paddedLabel = (label + ':').padEnd(35, ' ');
+                            txtContent += '    ' + paddedLabel + value + '\\n';
+                        }
+                    });
+                    txtContent += '\\n';
+                }
+
+                // Extract Spotify preview items (album art cards)
+                const spotifyPreviews = card.querySelectorAll('.spotify-preview-item');
+                if (spotifyPreviews.length > 0) {
+                    txtContent += '  SPOTIFY LINKS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    spotifyPreviews.forEach(preview => {
+                        const title = preview.querySelector('.spotify-title')?.textContent.trim();
+                        const type = preview.querySelector('.spotify-type')?.textContent.trim();
+                        const link = preview.querySelector('a')?.href || '';
+
+                        if (title && type && link) {
+                            txtContent += '    ♪ ' + title + '\\n';
+                            txtContent += '      Type: ' + type + '\\n';
+                            txtContent += '      URL:  ' + link + '\\n\\n';
+                        } else if (link) {
+                            // Fallback for error cards
+                            const errorTitle = preview.querySelector('.spotify-title')?.textContent.trim();
+                            if (errorTitle && errorTitle.includes('Failed')) {
+                                txtContent += '    ⚠ ' + errorTitle + '\\n';
+                                txtContent += '      URL:  ' + link + '\\n\\n';
+                            } else {
+                                txtContent += '    → ' + link + '\\n';
+                            }
+                        }
+                    });
+                }
+
+                // Extract regular link items (if no spotify-preview-item)
+                if (spotifyPreviews.length === 0) {
+                    const regularLinks = card.querySelectorAll('.link-item:not(.spotify-preview-item) a');
+                    if (regularLinks.length > 0) {
+                        txtContent += '  LINKS:\\n';
+                        txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                        regularLinks.forEach(link => {
+                            txtContent += '    → ' + link.href + '\\n';
+                        });
+                        txtContent += '\\n';
+                    }
+                }
+            }
+
+            // === SCENARIO 3: PRESS CARD ===
+            else if (cardType === 'PRESS') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  PRESS COVERAGE:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 4: SOCIAL CARD ===
+            else if (cardType === 'SOCIAL') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  SOCIAL MEDIA:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 5: OTHER CARD ===
+            else if (cardType === 'OTHER') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  OTHER LINKS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 6: PENDING DATA CARD ===
+            else if (cardType === 'PENDING DATA') {
+                txtContent += '\\n  ⚠ No data available yet\\n';
+                txtContent += '  Add Spotify data or links to populate this card.\\n\\n';
+            }
+
+            // === SCENARIO 7: UNKNOWN/GENERIC CARD ===
+            else {
+                const cardTitle = card.querySelector('.card-title')?.textContent.trim().replace(/\\s+/g, ' ') || '';
+                if (cardTitle) {
+                    txtContent += '\\n  ' + cardTitle + '\\n\\n';
+                }
+
+                // Try to extract any links
+                const allLinks = card.querySelectorAll('a');
+                if (allLinks.length > 0) {
+                    allLinks.forEach(link => {
+                        txtContent += '    → ' + link.href + '\\n';
+                    });
+                    txtContent += '\\n';
+                }
+            }
+
+            txtContent += '\\n';
+        });
+    });
+
+    txtContent += '\\n' + '=' + '='.repeat(70) + '\\n';
+    txtContent += '  END OF REPORT\\n';
+    txtContent += '=' + '='.repeat(70) + '\\n';
+
+    // Download TXT file
+    const blob = new Blob([txtContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = artistName.replace(/[^a-z0-9]/gi, '_') + '_Campaign_Report.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function downloadPDF() {
+    const element = document.getElementById('content');
+    const artistName = '${artistName}';
+
+    // DOUBLE DOWNLOAD: First download TXT, then PDF
+    downloadTXT();
+
+    // Small delay to allow TXT download to start
+    setTimeout(() => {
+        const opt = {
+            margin: 0.4,
+            filename: artistName.replace(/[^a-z0-9]/gi, '_') + '_Campaign_Report.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 1.7 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        html2pdf().set(opt).from(element).save();
+    }, 300);
+}
+</` + `script>
+</body>
+</html>`;
+
+                // Combine Box 2 wrapper with Box 1 cards by replacing the placeholder
+                const completeHTML = wrapperHTML.replace('<!-- CARDS GO HERE -->', cardsHTML);
+
+                // Display the complete HTML (escaped for viewing in <pre>)
+                const escaped = completeHTML
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+
+                completeOutput.textContent = escaped;
+            }
+
+            // Copy complete HTML to clipboard
+            function copyCompleteHTML() {
+                const previewCards = document.getElementById('preview-cards');
+                const artistName = document.getElementById('input-artist-name').value || 'Artist Name';
+                if (!previewCards) return;
+
+                // Get Box 1 cards HTML
+                let cardsHTML = previewCards.innerHTML;
+
+                // Get Box 2 wrapper HTML template (same as Box 2 generates)
+                const wrapperHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${artistName} - Campaign Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></` + `script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 34px 17px; max-width: 765px; margin: 0 auto; background: #f8f9fa; color: #000; font-size: 11.9px; }
+.artist-name { font-size: 27.2px; font-weight: 700; text-align: center; margin-bottom: 34px; color: #000; }
+.download-pdf-btn { display: block; margin: 0 auto 25.5px; padding: 10.2px 25.5px; background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.75); border: none; border-radius: 17px; font-weight: 600; cursor: pointer; font-size: 11.9px; transition: opacity 0.2s ease, transform 0.1s ease; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
+.download-pdf-btn:hover { background: rgba(0,0,0,0.12); }
+.download-pdf-btn:active { transform: scale(0.98); }
+
+/* Song Page Container - Force page breaks between songs */
+.song-page { page-break-after: always; margin-bottom: 34px; }
+.song-page:last-child { page-break-after: auto; }
+
+.card { background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%); border: none; border-radius: 13.6px; padding: 20.4px; margin-bottom: 20.4px; box-shadow: 0 2px 12px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+.card-header { display: flex; justify-content: space-between; margin-bottom: 17px; padding-bottom: 13.6px; border-bottom: 2px solid #e0e0e0; }
+.card-title { font-size: 15.3px; font-weight: 700; color: #000; }
+.card-type { padding: 3.4px 10.2px; border-radius: 10.2px; font-size: 9.35px; font-weight: 600; text-transform: uppercase; }
+.card-type.spotify { background: rgba(30, 215, 96, 0.2); color: #1db954; border: 1px solid #1db954; }
+.card-type.press { background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid #007aff; }
+.card-type.social { background: rgba(255, 149, 0, 0.1); color: #ff9500; border: 1px solid #ff9500; }
+.card-type.other { background: rgba(142, 142, 147, 0.1); color: #8e8e93; border: 1px solid #8e8e93; }
+.metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px; margin-bottom: 10.2px; }
+.metric-item { display: flex; justify-content: space-between; padding: 6.8px 0; border-bottom: 1px solid #e0e0e0; }
+.metric-label { font-weight: 600; color: #888; font-size: 11.9px; }
+.metric-value { font-weight: 700; color: #1db954; font-size: 11.9px; }
+.progress-bar-container { width: 100%; height: 5.1px; background: #e0e0e0; border-radius: 8.5px; margin-top: 10.2px; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, #1db954, #1ed760); border-radius: 8.5px; box-shadow: 0 0 8px rgba(29, 185, 84, 0.3); }
+.link-list { margin-top: 10.2px; }
+.link-item { display: flex; gap: 6.8px; margin-bottom: 6.8px; color: #000; font-size: 11.05px; }
+.spotify-preview-item { display: flex; align-items: center; gap: 13.6px; padding: 13.6px; background: #f8f8f8; border-radius: 6.8px; margin-bottom: 10.2px; }
+.spotify-album-art { width: 102px; height: 102px; border-radius: 6.8px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.1); flex-shrink: 0; }
+.spotify-title { font-weight: 700; font-size: 13.6px; color: #000; margin-bottom: 6.8px; }
+.spotify-type { font-size: 10.2px; color: #888; text-transform: uppercase; margin-bottom: 6.8px; }
+
+/* PRINT STYLES - INK SAVER */
+@media print {
+    .download-pdf-btn { display: none !important; }
+    .spotify-album-art { display: none !important; }
+    * { background: #fff !important; color: #000 !important; box-shadow: none !important; }
+    body { background: #fff !important; padding: 17px; }
+    .song-page { page-break-after: always !important; }
+    .song-page:last-child { page-break-after: auto !important; }
+    .card { border: 1px solid #000 !important; background: #fff !important; page-break-inside: avoid; }
+    .card-type { background: #fff !important; color: #000 !important; border: 1px solid #000 !important; }
+    .metric-value { color: #000 !important; }
+    .progress-bar-container { background: #fff !important; border: 1px solid #000 !important; }
+    .progress-bar { background: #000 !important; }
+}
+</style>
+</head>
+<body>
+<div class="artist-name">${artistName}</div>
+<button class="download-pdf-btn" onclick="downloadPDF()">📄 Download as PDF</button>
+
+<div id="content">
+<!-- CARDS GO HERE -->
+</div>
+
+<script>
+function downloadTXT() {
+    const artistName = '${artistName}';
+    const content = document.getElementById('content');
+
+    // MULTI-COMPLEX FIELD PARSING SYSTEM
+    let txtContent = '';
+    txtContent += '=' + '='.repeat(70) + '\\n';
+    txtContent += '  ' + artistName.toUpperCase() + ' - CAMPAIGN REPORT\\n';
+    txtContent += '=' + '='.repeat(70) + '\\n\\n';
+
+    // Get all song pages
+    const songPages = content.querySelectorAll('.song-page');
+
+    songPages.forEach((songPage, songIndex) => {
+        const cards = songPage.querySelectorAll('.card');
+
+        // SONG HEADER
+        txtContent += '\\n' + '▓'.repeat(72) + '\\n';
+        txtContent += '▓  SONG ' + (songIndex + 1) + '\\n';
+        txtContent += '▓'.repeat(72) + '\\n\\n';
+
+        cards.forEach(card => {
+            const cardType = card.querySelector('.card-type')?.textContent.trim().toUpperCase() || 'UNKNOWN';
+
+            // CARD TYPE HEADER
+            txtContent += '┌' + '─'.repeat(70) + '┐\\n';
+            txtContent += '│ [' + cardType + ']\\n';
+            txtContent += '└' + '─'.repeat(70) + '┘\\n';
+
+            // === SCENARIO 1: RESULTS LINK CARD ===
+            if (cardType === 'RESULTS') {
+                const linkItems = card.querySelectorAll('.link-item');
+                linkItems.forEach(item => {
+                    const label = item.querySelector('span')?.textContent.trim() || '';
+                    const link = item.querySelector('a')?.href || item.querySelector('a')?.textContent.trim() || '';
+
+                    if (label && link) {
+                        txtContent += '\\n  ' + label + ':\\n';
+                        txtContent += '  → ' + link + '\\n';
+                    } else if (link) {
+                        txtContent += '\\n  → ' + link + '\\n';
+                    }
+                });
+                txtContent += '\\n';
+            }
+
+            // === SCENARIO 2: SPOTIFY METRICS CARD (with data) ===
+            else if (cardType === 'SPOTIFY' || cardType === 'SPOTIFY LINKS') {
+                // Extract song name and date from card title
+                const titleSpans = card.querySelectorAll('.card-title span');
+                let songName = '';
+                let songDate = '';
+
+                titleSpans.forEach(span => {
+                    const text = span.textContent.trim();
+                    // Skip "Song X" label
+                    if (text.startsWith('Song ')) return;
+                    // Check if it's a date (contains month abbreviation)
+                    if (text.match(/Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/)) {
+                        songDate = text;
+                    } else if (text !== '/' && text.length > 0) {
+                        songName = text;
+                    }
+                });
+
+                if (songName) {
+                    txtContent += '\\n  Song: ' + songName + '\\n';
+                }
+                if (songDate) {
+                    txtContent += '  Date: ' + songDate + '\\n';
+                }
+                if (songName || songDate) {
+                    txtContent += '\\n';
+                }
+
+                // Extract Spotify metrics (Stream Goal, Daily Streams, etc.)
+                const metrics = card.querySelectorAll('.metric-item');
+                if (metrics.length > 0) {
+                    txtContent += '  METRICS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    metrics.forEach(metric => {
+                        const label = metric.querySelector('.metric-label')?.textContent.trim();
+                        const value = metric.querySelector('.metric-value')?.textContent.trim();
+
+                        if (label && value) {
+                            const paddedLabel = (label + ':').padEnd(35, ' ');
+                            txtContent += '    ' + paddedLabel + value + '\\n';
+                        }
+                    });
+                    txtContent += '\\n';
+                }
+
+                // Extract Spotify preview items (album art cards)
+                const spotifyPreviews = card.querySelectorAll('.spotify-preview-item');
+                if (spotifyPreviews.length > 0) {
+                    txtContent += '  SPOTIFY LINKS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    spotifyPreviews.forEach(preview => {
+                        const title = preview.querySelector('.spotify-title')?.textContent.trim();
+                        const type = preview.querySelector('.spotify-type')?.textContent.trim();
+                        const link = preview.querySelector('a')?.href || '';
+
+                        if (title && type && link) {
+                            txtContent += '    ♪ ' + title + '\\n';
+                            txtContent += '      Type: ' + type + '\\n';
+                            txtContent += '      URL:  ' + link + '\\n\\n';
+                        } else if (link) {
+                            // Fallback for error cards
+                            const errorTitle = preview.querySelector('.spotify-title')?.textContent.trim();
+                            if (errorTitle && errorTitle.includes('Failed')) {
+                                txtContent += '    ⚠ ' + errorTitle + '\\n';
+                                txtContent += '      URL:  ' + link + '\\n\\n';
+                            } else {
+                                txtContent += '    → ' + link + '\\n';
+                            }
+                        }
+                    });
+                }
+
+                // Extract regular link items (if no spotify-preview-item)
+                if (spotifyPreviews.length === 0) {
+                    const regularLinks = card.querySelectorAll('.link-item:not(.spotify-preview-item) a');
+                    if (regularLinks.length > 0) {
+                        txtContent += '  LINKS:\\n';
+                        txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                        regularLinks.forEach(link => {
+                            txtContent += '    → ' + link.href + '\\n';
+                        });
+                        txtContent += '\\n';
+                    }
+                }
+            }
+
+            // === SCENARIO 3: PRESS CARD ===
+            else if (cardType === 'PRESS') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  PRESS COVERAGE:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 4: SOCIAL CARD ===
+            else if (cardType === 'SOCIAL') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  SOCIAL MEDIA:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 5: OTHER CARD ===
+            else if (cardType === 'OTHER') {
+                const linkItems = card.querySelectorAll('.link-item');
+
+                if (linkItems.length > 0) {
+                    txtContent += '\\n  OTHER LINKS:\\n';
+                    txtContent += '  ' + '-'.repeat(68) + '\\n';
+
+                    linkItems.forEach(item => {
+                        const domain = item.querySelector('span')?.textContent.trim() || '';
+                        const link = item.querySelector('a')?.href || '';
+
+                        if (domain && link) {
+                            txtContent += '    ' + domain + '\\n';
+                            txtContent += '      → ' + link + '\\n\\n';
+                        } else if (link) {
+                            txtContent += '    → ' + link + '\\n';
+                        }
+                    });
+                }
+            }
+
+            // === SCENARIO 6: PENDING DATA CARD ===
+            else if (cardType === 'PENDING DATA') {
+                txtContent += '\\n  ⚠ No data available yet\\n';
+                txtContent += '  Add Spotify data or links to populate this card.\\n\\n';
+            }
+
+            // === SCENARIO 7: UNKNOWN/GENERIC CARD ===
+            else {
+                const cardTitle = card.querySelector('.card-title')?.textContent.trim().replace(/\\s+/g, ' ') || '';
+                if (cardTitle) {
+                    txtContent += '\\n  ' + cardTitle + '\\n\\n';
+                }
+
+                // Try to extract any links
+                const allLinks = card.querySelectorAll('a');
+                if (allLinks.length > 0) {
+                    allLinks.forEach(link => {
+                        txtContent += '    → ' + link.href + '\\n';
+                    });
+                    txtContent += '\\n';
+                }
+            }
+
+            txtContent += '\\n';
+        });
+    });
+
+    txtContent += '\\n' + '=' + '='.repeat(70) + '\\n';
+    txtContent += '  END OF REPORT\\n';
+    txtContent += '=' + '='.repeat(70) + '\\n';
+
+    // Download TXT file
+    const blob = new Blob([txtContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = artistName.replace(/[^a-z0-9]/gi, '_') + '_Campaign_Report.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function downloadPDF() {
+    const element = document.getElementById('content');
+    const artistName = '${artistName}';
+
+    // DOUBLE DOWNLOAD: First download TXT, then PDF
+    downloadTXT();
+
+    // Small delay to allow TXT download to start
+    setTimeout(() => {
+        const opt = {
+            margin: 0.4,
+            filename: artistName.replace(/[^a-z0-9]/gi, '_') + '_Campaign_Report.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 1.7 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        html2pdf().set(opt).from(element).save();
+    }, 300);
+}
+</` + `script>
+</body>
+</html>`;
+
+                // Combine Box 2 wrapper with Box 1 cards (same as Box 3)
+                const completeHTML = wrapperHTML.replace('<!-- CARDS GO HERE -->', cardsHTML);
+
+                navigator.clipboard.writeText(completeHTML).then(() => {
+                    // Show big checkmark flash
+                    showCheckmarkFlash();
+
+                    // Auto-download JSON after copying HTML
+                    downloadJSON();
+                }).catch(err => {
+                    alert('Copy failed: ' + err.message);
+                });
+            }
+
+            // Show big checkmark visual feedback
+            function showCheckmarkFlash() {
+                // Create checkmark overlay
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.2s ease;
+    `;
+
+                const checkmark = document.createElement('div');
+                checkmark.textContent = '✓';
+                checkmark.style.cssText = `
+        font-size: 200px;
+        color: #00ff88;
+        text-shadow: 0 0 50px rgba(0, 255, 136, 0.8);
+        animation: scaleIn 0.3s ease;
+    `;
+
+                overlay.appendChild(checkmark);
+                document.body.appendChild(overlay);
+
+                // Add animations
+                const style = document.createElement('style');
+                style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+    `;
+                document.head.appendChild(style);
+
+                // Remove after 800ms
+                setTimeout(() => {
+                    overlay.style.animation = 'fadeOut 0.3s ease';
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        document.body.removeChild(overlay);
+                        document.head.removeChild(style);
+                    }, 300);
+                }, 800);
+            }
+
+            // NO initial render - wait for user to enter artist name
+            // Artist name field is the FINAL trigger that renders everything
+        </script>
+
+
+    </div>
+</body>
+
+</html>

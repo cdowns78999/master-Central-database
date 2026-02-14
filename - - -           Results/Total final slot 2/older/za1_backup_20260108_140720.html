@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sims 4 - Advanced Network Matrix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root {
+            --s4-white: #ffffff;
+            --s4-gray: #f2f2f2;
+            --s4-blue: #35C6EB;
+            --s4-dark-blue: #2594a4;
+            --s4-green: #4EC300;
+            --s4-shadow: rgba(0, 0, 0, 0.12);
+            --node-dia: 100px;
+            --sub-dia: 70px;
+            --ter-dia: 30px;
+            --curve-offset: -45px;
+            --transition: 0.4s cubic-bezier(0.17, 0.67, 0.43, 1.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #06070a;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(53, 198, 235, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(78, 195, 0, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(177, 157, 255, 0.05) 0px, transparent 100%);
+            background-size: 200% 200%;
+            animation: backgroundShimmer 20s ease infinite;
+            color: #eee;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px 150px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        e @keyframes backgroundShimmer {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            50% {
+                background-position: 100% 100%;
+            }
+
+            100% {
+                background-position: 0% 0%;
+            }
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M40 40c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm-20 0c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm40 0c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zM40 20c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm0 40c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* --- UI Elements --- */
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            width: 100%;
+            max-width: 900px;
+            position: sticky;
+            top: 20px;
+            z-index: 2000;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        .header>* {
+            pointer-events: auto;
+        }
+
+        h1 {
+            display: none;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            margin-bottom: 15px;
+        }
+
+        .search-bar:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--s4-blue);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.3);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-header {
+            padding: 12px 28px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px) scale(1.02);
+            border-color: var(--s4-blue);
+            box-shadow: 0 15px 40px rgba(53, 198, 235, 0.2);
+        }
+
+        .btn-add-top {
+            background: rgba(53, 198, 235, 0.15);
+            border: 1px solid rgba(53, 198, 235, 0.4);
+        }
+
+        /* --- Node Container --- */
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            gap: 120px;
+            /* Increased by ~20px for more breathing room */
+            width: 100%;
+            max-width: 1100px;
+            align-items: center;
+            margin-top: 80px;
+        }
+
+        .node-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 70px;
+            position: relative;
+        }
+
+        .node-wrapper {
+            position: relative;
+            width: var(--node-dia);
+            height: var(--node-dia);
+        }
+
+        /* Curved Logic: Outer nodes */
+        .node-row .node-wrapper:nth-child(1),
+        .node-row .node-wrapper:nth-child(5) {
+            transform: translateY(var(--curve-offset));
+        }
+
+        .node {
+            width: 100%;
+            height: 100%;
+            background: var(--s4-white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px var(--s4-shadow);
+            position: relative;
+            z-index: 100;
+        }
+
+        .node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(53, 198, 235, 0.3);
+        }
+
+        .node.active-primary {
+            box-shadow: 0 0 0 4px var(--s4-blue);
+        }
+
+        .plumbob {
+            width: 25px;
+            height: 40px;
+            background: var(--s4-green);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            animation: pulse 2s infinite ease-in-out;
+            transition: 0.3s;
+        }
+
+        .node.done {
+            background: var(--s4-green) !important;
+            box-shadow: 0 0 30px rgba(78, 195, 0, 0.6);
+        }
+
+        .node.done::after {
+            content: '✓';
+            color: #fff;
+            font-weight: 900;
+            font-size: 50px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .node.done .plumbob,
+        .node.done .node-label {
+            opacity: 0.3;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+                filter: brightness(1.2);
+            }
+        }
+
+        .node-label {
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+            outline: none;
+            border: 2px dashed transparent;
+            transition: all 0.3s;
+            min-width: 90px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .node-label.editable-main {
+            pointer-events: auto;
+            cursor: text;
+            background: #fff;
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.3);
+            border-color: rgba(53, 198, 235, 0.4);
+            animation: glowPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px rgba(53, 198, 235, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(53, 198, 235, 0.6);
+            }
+        }
+
+        .node-label.editable-main:hover {
+            border-color: var(--s4-blue);
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 0 25px rgba(53, 198, 235, 0.6);
+            animation: none;
+        }
+
+        .node-label.editable-main:focus {
+            border-color: var(--s4-dark-blue);
+            border-style: solid;
+            box-shadow: 0 0 40px rgba(53, 198, 235, 0.8);
+            transform: translateX(-50%) scale(1.1);
+            z-index: 1000;
+        }
+
+        /* --- Level 2: Pie Menu (4 Sub-nodes) --- */
+        .pie-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+            transform: translate(-50%, -50%) scale(0.4) rotate(-45deg);
+            z-index: 50;
+        }
+
+        .pie-menu.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            pointer-events: auto;
+        }
+
+        .sub-node {
+            position: absolute;
+            width: var(--sub-dia);
+            height: var(--sub-dia);
+            background: var(--s4-white);
+            border: 3px solid var(--s4-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px var(--s4-shadow);
+            padding: 5px;
+            text-align: center;
+        }
+
+        .sub-node span {
+            outline: none;
+            cursor: text;
+            display: block;
+            width: 100%;
+            border-bottom: 1px dashed transparent;
+            transition: 0.3s;
+        }
+
+        .sub-node:hover {
+            border-color: var(--s4-dark-blue);
+            transform: translate(-50%, -50%) scale(1.15);
+        }
+
+        .sub-node span:hover,
+        .sub-node span:focus {
+            border-bottom-color: var(--s4-dark-blue);
+        }
+
+        /* Blossom Style Symmetrical Distribution (All Above) */
+        .sub-node:nth-child(1) {
+            transform: translate(-50%, -50%) translate(-100px, -50px);
+        }
+
+        .sub-node:nth-child(2) {
+            transform: translate(-50%, -50%) translate(-45px, -110px);
+        }
+
+        .sub-node:nth-child(3) {
+            transform: translate(-50%, -50%) translate(45px, -110px);
+        }
+
+        .sub-node:nth-child(4) {
+            transform: translate(-50%, -50%) translate(100px, -50px);
+        }
+
+        /* --- Footer Actions --- */
+        .btn-add {
+            margin-top: 50px;
+            padding: 15px 50px;
+            background: var(--s4-blue);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(53, 198, 235, 0.4);
+        }
+
+        .btn-add:hover {
+            background: var(--s4-dark-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(53, 198, 235, 0.5);
+        }
+
+        .action-log {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+            max-height: 200px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 15px var(--s4-shadow);
+            overflow-y: auto;
+            font-size: 0.8rem;
+            z-index: 3000;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2px;
+        }
+
+        /* --- Red Carpet Workflow --- */
+        .config-tile {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 1000px;
+            height: 700px;
+            background: rgba(10, 15, 25, 0.98);
+            backdrop-filter: blur(80px);
+            padding: 30px;
+            border-radius: 40px;
+            box-shadow: 0 50px 150px rgba(0, 0, 0, 1), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .config-tile.active {
+            transform: translate(-50%, -25%) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .workflow-note {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 30px;
+            transition: 0.3s;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .workflow-note:focus {
+            border-color: var(--s4-blue);
+            background: rgba(53, 198, 235, 0.05);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.2);
+        }
+
+        .workflow-workspace {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            flex: 0 0 150px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tile-title {
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            font-size: 14px;
+            color: var(--s4-blue);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .main-area {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 40px 1fr 40px 1fr 40px 1fr;
+            gap: 20px 0;
+            padding: 40px;
+            overflow-y: auto;
+            align-content: start;
+        }
+
+        .connector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: var(--s4-blue);
+            opacity: 0;
+            pointer-events: none;
+            font-weight: 900;
+        }
+
+        .station.selected {
+            border-color: var(--s4-blue);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.5);
+        }
+
+
+        .station {
+            width: 140px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.2;
+            transform: translateY(10px);
+            cursor: pointer;
+            position: relative;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 0 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .station .plumbob {
+            display: none;
+            /* Quieter look inside tile */
+        }
+
+        .station span {
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .station.revealed {
+            opacity: 1;
+            transform: translateY(0);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .station:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--s4-blue);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .station.done {
+            background: rgba(78, 195, 0, 0.2) !important;
+            border-color: var(--s4-green) !important;
+            color: var(--s4-green);
+            box-shadow: 0 0 20px rgba(78, 195, 0, 0.2);
+            opacity: 1 !important;
+        }
+
+        .station.done::after {
+            content: '✓';
+            color: var(--s4-green);
+            font-weight: 900;
+            font-size: 18px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+
+        .station.selected {
+            background: rgba(53, 198, 235, 0.15);
+            border-color: var(--s4-blue);
+            box-shadow: 0 0 15px rgba(53, 198, 235, 0.3);
+        }
+
+        .btn-add-station {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 32px;
+            height: 32px;
+            background: rgba(53, 198, 235, 0.1);
+            border: 1px solid var(--s4-blue);
+            color: var(--s4-blue);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            transition: 0.3s;
+            z-index: 600;
+        }
+
+        .btn-add-station:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.2) rotate(90deg);
+            box-shadow: 0 0 20px var(--s4-blue);
+        }
+
+        .tile-title {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            color: #555;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .hover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 220px;
+            background: rgba(16, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--s4-blue);
+            border-radius: 12px;
+            padding: 15px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(15px, -50%) scale(0.95);
+            transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 10000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            color: #fff;
+        }
+
+        .hover-overlay.visible {
+            opacity: 1;
+            transform: translate(15px, -50%) scale(1);
+        }
+
+        .hover-overlay h3 {
+            font-size: 14px;
+            color: var(--s4-blue);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 5px;
+        }
+
+        .hover-overlay .meta-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .hover-overlay .meta-val {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- Phase Shortcut Menu --- */
+        .phase-menu {
+            position: absolute;
+            right: -120px;
+            top: 0;
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .phase-menu.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .phase-shortcut-btn {
+            padding: 5px 10px;
+            background: rgba(53, 198, 235, 0.1);
+            border: 1px solid var(--s4-blue);
+            color: var(--s4-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .phase-shortcut-btn:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        /* --- Shortcut Center Styles --- */
+        .shortcut-center {
+            width: 100%;
+            max-width: 1400px;
+            background: rgba(10, 15, 25, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .shortcut-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .category-section {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+
+        .category-section:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--s4-blue);
+            transform: translateY(-2px);
+        }
+
+        .category-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--s4-blue);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .shortcut-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .shortcut-btn {
+            padding: 12px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shortcut-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(53, 198, 235, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .shortcut-btn:hover::before {
+            left: 100%;
+        }
+
+        .shortcut-btn:hover {
+            background: rgba(53, 198, 235, 0.15);
+            border-color: var(--s4-blue);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(53, 198, 235, 0.3);
+        }
+
+        .center-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            flex-wrap: wrap;
+        }
+
+        .center-actions .search-bar {
+            margin-bottom: 0;
+            min-width: 250px;
+        }
+
+        /* --- Shortcut Preview Styles --- */
+        .shortcut-preview-overlay {
+            position: fixed;
+            width: 320px;
+            background: rgba(16, 20, 30, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--s4-blue);
+            border-radius: 15px;
+            padding: 20px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 10000;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+            color: #fff;
+        }
+
+        .shortcut-preview-overlay.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .preview-description {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .preview-meta {
+            margin-bottom: 15px;
+        }
+
+        .preview-phases {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .phase-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .phase-number {
+            width: 20px;
+            height: 20px;
+            background: var(--s4-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .phase-name {
+            font-size: 11px;
+            color: #fff;
+        }
+
+        /* --- Quick Actions Styles --- */
+        .quick-actions {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 2500;
+        }
+
+        .quick-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            width: 60px;
+            height: 60px;
+            background: rgba(53, 198, 235, 0.1);
+            border: 1px solid var(--s4-blue);
+            border-radius: 15px;
+            color: var(--s4-blue);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .quick-action-btn:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(53, 198, 235, 0.4);
+        }
+
+        .quick-icon {
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="shortcut-center">
+        <div class="shortcut-categories">
+            <div class="category-section" data-category="marketing">
+                <h3 class="category-title">Marketing</h3>
+                <div class="shortcut-grid" id="marketing-shortcuts"></div>
+            </div>
+            <div class="category-section" data-category="development">
+                <h3 class="category-title">Development</h3>
+                <div class="shortcut-grid" id="development-shortcuts"></div>
+            </div>
+            <div class="category-section" data-category="operations">
+                <h3 class="category-title">Operations</h3>
+                <div class="shortcut-grid" id="operations-shortcuts"></div>
+            </div>
+            <div class="category-section" data-category="creative">
+                <h3 class="category-title">Creative</h3>
+                <div class="shortcut-grid" id="creative-shortcuts"></div>
+            </div>
+        </div>
+        <div class="center-actions">
+            <input type="text" class="search-bar" placeholder="Search workflows..." oninput="filter(this.value)">
+            <button class="btn-header btn-add-top" onclick="addRow()">+ Add New +</button>
+            <button class="btn-header" onclick="exportNetwork()">Export JSON</button>
+            <button class="btn-header" onclick="document.getElementById('file-input').click()">Import JSON</button>
+            <input type="file" id="file-input" class="hidden" accept=".json" onchange="importNetwork(event)">
+        </div>
+    </header>
+
+    <div class="node-container" id="matrix">
+        <!-- Rows injected here -->
+    </div>
+
+    <div class="action-log" id="log">
+        <div class="log-entry"><strong>System:</strong> Ready</div>
+    </div>
+
+    <!-- Quick Actions Menu -->
+    <div class="quick-actions">
+        <button class="quick-action-btn" onclick="showRecentWorkflows()">
+            <span class="quick-icon">🕐</span>
+            <span>Recent</span>
+        </button>
+        <button class="quick-action-btn" onclick="showFavorites()">
+            <span class="quick-icon">⭐</span>
+            <span>Favorites</span>
+        </button>
+        <button class="quick-action-btn" onclick="showTemplates()">
+            <span class="quick-icon">📋</span>
+            <span>Templates</span>
+        </button>
+    </div>
+
+    <!-- Hover Overlay Element -->
+    <div id="hover-overlay" class="hover-overlay">
+        <h3>Phase Details</h3>
+        <div class="meta-row"><span>Status:</span> <span class="meta-val" id="ov-status">Pending</span></div>
+        <div class="meta-row"><span>Tasks:</span> <span class="meta-val" id="ov-tasks">0</span></div>
+        <div class="meta-row"><span>Est. Time:</span> <span class="meta-val">45m</span></div>
+    </div>
+
+    <script>
+        const matrix = document.getElementById('matrix');
+        const logEl = document.getElementById('log');
+        const overlay = document.getElementById('hover-overlay');
+        let rowCount = 0;
+        let activeTile = null;
+        let activeKey = null;
+
+        let networkDataStore = {};
+
+        const SHORTCUT_REGISTRY = {
+            // Marketing Shortcuts
+            'Press Release': {
+                category: 'marketing',
+                icon: '📰',
+                phases: ['Draft', 'Review', 'Distribution', 'Tracking'],
+                tasks: [
+                    ['Write headline', 'Create content', 'Add quotes', 'Finalize copy'],
+                    ['Legal review', 'Brand check', 'AP style', 'Approval'],
+                    ['Media list', 'Email blast', 'Social posting', 'Wire service'],
+                    ['Opens', 'Clicks', 'Coverage', 'Metrics analysis']
+                ],
+                description: 'Complete press release workflow',
+                estimatedTime: '2-3 hours'
+            },
+            'Social Campaign': {
+                category: 'marketing',
+                icon: '📱',
+                phases: ['Strategy', 'Content', 'Schedule', 'Engage'],
+                tasks: [
+                    ['Target audience', 'Platform selection', 'Goals', 'KPIs'],
+                    ['Visual design', 'Copy writing', 'Asset creation', 'Brand compliance'],
+                    ['Content calendar', 'Scheduling tool', 'Time zones', 'Automation'],
+                    ['Comments', 'DMs', 'Monitoring', 'Reporting']
+                ],
+                description: 'Multi-platform social media campaign',
+                estimatedTime: '1-2 days'
+            },
+            'Email Newsletter': {
+                category: 'marketing',
+                icon: '📧',
+                phases: ['Planning', 'Design', 'Send', 'Analyze'],
+                tasks: [
+                    ['Audience segment', 'Subject lines', 'Content outline', 'CTA strategy'],
+                    ['Template design', 'Mobile optimization', ' branding', 'Preview testing'],
+                    ['List cleaning', 'A/B testing', 'Send timing', 'Delivery check'],
+                    ['Open rates', 'Click rates', 'Conversions', 'Unsubscribe analysis']
+                ],
+                description: 'Email newsletter campaign workflow',
+                estimatedTime: '4-6 hours'
+            },
+            
+            // Development Shortcuts
+            'Feature Development': {
+                category: 'development',
+                icon: '⚙️',
+                phases: ['Spec', 'Code', 'Test', 'Deploy'],
+                tasks: [
+                    ['Requirements', 'Technical specs', 'Architecture', 'API design'],
+                    ['Setup environment', 'Write code', 'Unit tests', 'Code review'],
+                    ['Integration test', 'QA testing', 'UAT', 'Bug fixes'],
+                    ['CI/CD pipeline', 'Production deploy', 'Monitoring', 'Rollback plan']
+                ],
+                description: 'Complete feature development lifecycle',
+                estimatedTime: '1-2 weeks'
+            },
+            'Bug Fix': {
+                category: 'development',
+                icon: '🐛',
+                phases: ['Identify', 'Diagnose', 'Fix', 'Verify'],
+                tasks: [
+                    ['Bug report', 'Reproduction steps', 'Impact assessment', 'Priority'],
+                    ['Root cause analysis', 'Debug session', 'Code investigation', 'Solution design'],
+                    ['Code changes', 'Test cases', 'Documentation', 'PR creation'],
+                    ['Testing', 'Regression test', 'Production verification', 'Close ticket']
+                ],
+                description: 'Bug resolution workflow',
+                estimatedTime: '2-6 hours'
+            },
+            
+            // Operations Shortcuts
+            'Team Meeting': {
+                category: 'operations',
+                icon: '👥',
+                phases: ['Prepare', 'Conduct', 'Document', 'Follow'],
+                tasks: [
+                    ['Agenda', 'Materials', 'Invitations', 'Room setup'],
+                    ['Welcome', 'Topics', 'Discussion', 'Decisions'],
+                    ['Minutes', 'Action items', 'Recordings', 'Distribution'],
+                    ['Task assignment', 'Deadline setting', 'Progress tracking', 'Next meeting']
+                ],
+                description: 'Structured team meeting process',
+                estimatedTime: '1-2 hours'
+            },
+            'Project Review': {
+                category: 'operations',
+                icon: '📊',
+                phases: ['Collect', 'Analyze', 'Report', 'Improve'],
+                tasks: [
+                    ['Metrics data', 'Team feedback', 'Stakeholder input', 'Documentation'],
+                    ['Performance analysis', 'Gap identification', 'Success factors', 'Lessons learned'],
+                    ['Executive summary', 'Detailed report', 'Visualizations', 'Recommendations'],
+                    ['Action plan', 'Process updates', 'Training needs', 'Implementation']
+                ],
+                description: 'Comprehensive project review workflow',
+                estimatedTime: '1-3 days'
+            },
+            
+            // Creative Shortcuts
+            'Content Creation': {
+                category: 'creative',
+                icon: '🎨',
+                phases: ['Concept', 'Create', 'Refine', 'Publish'],
+                tasks: [
+                    ['Brief review', 'Research', 'Ideation', 'Mood board'],
+                    ['Draft creation', 'Design work', 'Content writing', 'Asset development'],
+                    ['Review cycle', 'Feedback incorporation', 'Editing', 'Final polish'],
+                    ['Platform setup', 'Scheduling', 'Distribution', 'Promotion']
+                ],
+                description: 'End-to-end content creation process',
+                estimatedTime: '1-3 days'
+            },
+            'Brand Guidelines': {
+                category: 'creative',
+                icon: '🎯',
+                phases: ['Research', 'Define', 'Design', 'Document'],
+                tasks: [
+                    ['Market analysis', 'Competitor research', 'Brand audit', 'Stakeholder interviews'],
+                    ['Brand positioning', 'Voice/tone', 'Values', 'Messaging framework'],
+                    ['Logo design', 'Color palette', 'Typography', 'Visual elements'],
+                    ['Guidelines book', 'Asset library', 'Training materials', 'Distribution']
+                ],
+                description: 'Complete brand identity development',
+                estimatedTime: '2-4 weeks'
+            }
+        };
+
+        function showOverlay(e, nodeData) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            // Position to the right of the element
+            overlay.style.top = (rect.top + rect.height / 2) + 'px';
+            overlay.style.left = rect.right + 'px';
+
+            // Populate Data
+            overlay.querySelector('h3').innerText = nodeData.label;
+            document.getElementById('ov-status').innerText = nodeData.done ? 'Completed' : 'In Progress';
+            document.getElementById('ov-status').style.color = nodeData.done ? 'var(--s4-green)' : '#fff';
+            document.getElementById('ov-tasks').innerText = nodeData.subs.length + ' Steps';
+
+            overlay.classList.add('visible');
+        }
+
+        function hideOverlay() {
+            overlay.classList.remove('visible');
+        }
+
+        function log(msg) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<strong>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}:</strong> ${msg}`;
+            logEl.prepend(entry);
+        }
+
+        function filter(val) {
+            const q = val.toLowerCase();
+            const shortcutBtns = document.querySelectorAll('.shortcut-btn');
+            const nodeWrappers = document.querySelectorAll('.node-wrapper');
+            const categorySections = document.querySelectorAll('.category-section');
+            
+            // Filter shortcuts
+            shortcutBtns.forEach(btn => {
+                const text = btn.textContent.toLowerCase();
+                const categorySection = btn.closest('.category-section');
+                const sectionMatches = categorySection.querySelector('.category-title').textContent.toLowerCase().includes(q);
+                
+                if (text.includes(q) || sectionMatches || q === '') {
+                    btn.style.display = '';
+                    btn.style.opacity = '1';
+                } else {
+                    btn.style.opacity = '0.3';
+                }
+            });
+            
+            // Filter categories
+            categorySections.forEach(section => {
+                const visibleBtns = section.querySelectorAll('.shortcut-btn[style*="opacity: 1"], .shortcut-btn:not([style*="opacity"])');
+                if (visibleBtns.length === 0 && q !== '') {
+                    section.style.opacity = '0.5';
+                    section.style.transform = 'scale(0.98)';
+                } else {
+                    section.style.opacity = '1';
+                    section.style.transform = 'scale(1)';
+                }
+            });
+            
+            // Filter nodes (original logic)
+            nodeWrappers.forEach(w => {
+                const label = w.getAttribute('data-label').toLowerCase();
+                if (label.includes(q) || q === '') {
+                    w.classList.remove('hidden');
+                } else {
+                    w.classList.add('hidden');
+                }
+            });
+        }
+
+        function openTile(tile, key) {
+            closeAll();
+            activeTile = tile;
+            activeKey = key;
+
+            tile.classList.add('active');
+
+            if (!networkDataStore[key]) {
+                const isShortcut = key.includes('Quick:');
+                networkDataStore[key] = {
+                    nodes: [],
+                    notes: isShortcut ? "Shortcut activated: Fields pre-filled." : "Standard Workflow Initialized."
+                };
+                for (let i = 0; i < 4; i++) {
+                    networkDataStore[key].nodes.push({
+                        label: isShortcut ? `Phase ${i + 1}` : 'Step ' + (i + 1),
+                        done: false,
+                        subs: [
+                            { label: isShortcut ? `Task ${(i + 1)}.1` : `Workflow ${(i + 1)}.1`, done: isShortcut },
+                            { label: isShortcut ? `Task ${(i + 1)}.2` : `Workflow ${(i + 1)}.2`, done: false },
+                            { label: isShortcut ? `Task ${(i + 1)}.3` : `Workflow ${(i + 1)}.3`, done: false },
+                            { label: isShortcut ? `Task ${(i + 1)}.4` : `Workflow ${(i + 1)}.4`, done: false }
+                        ]
+                    });
+                }
+            }
+
+            renderWorkflow(tile, key);
+        }
+
+        function toggleRow(stepNode, items) {
+            const isSelected = stepNode.classList.contains('selected');
+            if (isSelected) {
+                stepNode.classList.remove('selected');
+                gsap.to(items, { opacity: 0, scale: 0.7, duration: 0.4, stagger: 0.05, ease: "power2.inOut", pointerEvents: 'none' });
+            } else {
+                stepNode.classList.add('selected');
+                gsap.to(items, { opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: "back.out(1.7)", pointerEvents: 'auto' });
+            }
+        }
+
+        function addStation(btn) {
+            if (!activeKey || !activeTile) return;
+            const data = networkDataStore[activeKey];
+            const newIndex = data.nodes.length;
+            data.nodes.push({
+                label: 'Step ' + (newIndex + 1),
+                done: false,
+                subs: [
+                    { label: `Workflow ${(newIndex + 1)}.1`, done: false },
+                    { label: `Workflow ${(newIndex + 1)}.2`, done: false },
+                    { label: `Workflow ${(newIndex + 1)}.3`, done: false },
+                    { label: `Workflow ${(newIndex + 1)}.4`, done: false }
+                ]
+            });
+            renderWorkflow(activeTile, activeKey);
+            const leftPanel = activeTile.querySelector('.left-panel');
+            const newNode = leftPanel.lastElementChild;
+            gsap.fromTo(newNode, { x: -100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" });
+            log("Added new workflow step");
+        }
+
+
+        function renderWorkflow(tile, key) {
+            const data = networkDataStore[key];
+            const workspace = tile.querySelector('.workflow-workspace');
+            workspace.innerHTML = `
+                <div class="left-panel"></div>
+                <div class="main-area"></div>
+            `;
+
+            const leftPanel = workspace.querySelector('.left-panel');
+            const mainArea = workspace.querySelector('.main-area');
+
+            data.nodes.forEach((n, i) => {
+                const node = document.createElement('div');
+                node.className = 'station revealed' + (n.done ? ' done' : '');
+                node.innerHTML = `
+                    <div class="plumbob"></div>
+                    <span contenteditable="true">${n.label}</span>
+                `;
+
+                // Pre-render workflow items for this step
+                const rowItems = [];
+                n.subs.forEach((s, j) => {
+                    const sub = document.createElement('div');
+                    sub.className = 'station' + (s.done ? ' done' : '');
+                    sub.style.opacity = '0';
+                    sub.style.transform = 'scale(0.7)';
+                    sub.style.pointerEvents = 'none';
+                    sub.innerHTML = `
+                        <div class="plumbob"></div>
+                        <span contenteditable="true">${s.label}</span>
+                    `;
+                    sub.onclick = (e) => {
+                        e.stopPropagation();
+                        openTile(activeTile, `${activeKey}.${s.label}`);
+                    };
+                    sub.ondblclick = (e) => {
+                        e.stopPropagation();
+                        toggleDone(sub);
+                        s.done = sub.classList.contains('done');
+                    };
+                    sub.querySelector('span').oninput = () => s.label = sub.querySelector('span').innerText;
+                    mainArea.appendChild(sub);
+                    rowItems.push(sub);
+
+                    if (j < n.subs.length - 1) {
+                        const connector = document.createElement('div');
+                        connector.className = 'connector';
+                        connector.innerHTML = '→';
+                        Object.assign(connector.style, {
+                            fontSize: '16px',
+                            color: 'var(--s4-blue)',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            opacity: '0',
+                            pointerEvents: 'none'
+                        });
+                        mainArea.appendChild(connector);
+                        rowItems.push(connector);
+                    }
+                });
+
+                node.onclick = () => toggleRow(node, rowItems);
+
+                // Overlay Events
+                node.onmouseenter = (e) => showOverlay(e, n);
+                node.onmouseleave = () => hideOverlay();
+
+                node.ondblclick = (e) => {
+                    e.stopPropagation();
+                    toggleDone(node);
+                    n.done = node.classList.contains('done');
+                };
+                node.querySelector('span').oninput = () => n.label = node.querySelector('span').innerText;
+
+                const menu = document.createElement('div');
+                menu.className = 'phase-menu';
+                ['Press', 'Social', 'Spotify', 'Other'].forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'phase-shortcut-btn';
+                    btn.innerText = cat;
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        fillPhaseSubs(n, cat);
+                    };
+                    menu.appendChild(btn);
+                });
+                node.appendChild(menu);
+
+                node.onmouseenter = (e) => {
+                    menu.classList.add('active');
+                    showOverlay(e, n);
+                };
+                node.onmouseleave = () => {
+                    menu.classList.remove('active');
+                    hideOverlay();
+                };
+
+                leftPanel.appendChild(node);
+            });
+
+            gsap.fromTo(Array.from(leftPanel.children), { x: -100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "back.out(1.7)" });
+
+            tile.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                leftPanel.scrollTop += e.deltaY;
+            });
+        }
+
+        function toggleDone(el) {
+            el.classList.toggle('done');
+        }
+
+        function fillPhaseSubs(phaseData, category) {
+            // First try to find matching shortcut category
+            const matchingShortcut = Object.entries(SHORTCUT_REGISTRY).find(([name, config]) => 
+                config.category === category
+            );
+            
+            if (matchingShortcut) {
+                const [, config] = matchingShortcut;
+                const phaseIndex = config.phases.findIndex(phase => 
+                    phase.toLowerCase() === phaseData.label.toLowerCase()
+                );
+                
+                if (phaseIndex !== -1 && config.tasks[phaseIndex]) {
+                    phaseData.subs.forEach((s, i) => {
+                        if (config.tasks[phaseIndex][i]) {
+                            s.label = config.tasks[phaseIndex][i];
+                        }
+                    });
+                    log(`Enhanced phase "${phaseData.label}" with ${category} template tasks`);
+                } else {
+                    // Fallback to original logic with default tasks
+                    const defaultTasks = ['Task 1', 'Task 2', 'Task 3', 'Task 4'];
+                    phaseData.subs.forEach((s, i) => {
+                        s.label = defaultTasks[i];
+                    });
+                }
+            } else {
+                // Fallback to default tasks
+                const defaultTasks = ['Task 1', 'Task 2', 'Task 3', 'Task 4'];
+                phaseData.subs.forEach((s, i) => {
+                    s.label = defaultTasks[i];
+                });
+            }
+            
+            renderWorkflow(activeTile, activeKey);
+        }
+
+        function exportNetwork() {
+            const nodes = [];
+            document.querySelectorAll('.node-wrapper').forEach(w => {
+                nodes.push({
+                    label: w.getAttribute('data-label'),
+                    id: w.getAttribute('data-id')
+                });
+            });
+
+            const data = {
+                rowCount,
+                nodes,
+                store: networkDataStore
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `network_state_${Date.now()}.json`;
+            a.click();
+            log("Network exported to JSON");
+        }
+
+        function importNetwork(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    renderImported(data);
+                    log("Network imported successfully");
+                } catch (err) {
+                    log("Error importing JSON: Invalid format");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function renderImported(data) {
+            matrix.innerHTML = '';
+            rowCount = 0;
+            networkDataStore = data.store || {};
+
+            // Group nodes by row
+            const rows = {};
+            data.nodes.forEach(n => {
+                const parts = n.id ? n.id.split('.') : ["1", "0"];
+                const rId = parts[0];
+                if (!rows[rId]) rows[rId] = [];
+                rows[rId].push(n);
+            });
+
+            Object.entries(rows).forEach(([rId, nodeList]) => {
+                rowCount++;
+                const row = document.createElement('div');
+                row.className = 'node-row';
+                nodeList.forEach((n, i) => {
+                    row.appendChild(createNode(rowCount, i, n.label));
+                });
+                matrix.appendChild(row);
+            });
+        }
+
+        function createNode(rowId, colId, customLabel) {
+            const label = customLabel || (colId === 2 ? 'Main' : 'Node');
+            const nodeId = `${rowId}.${colId}`;
+            const wrap = document.createElement('div');
+            wrap.className = 'node-wrapper';
+            wrap.setAttribute('data-label', label);
+            wrap.setAttribute('data-id', nodeId);
+
+            const isMain = colId === 2;
+            const node = document.createElement('div');
+            node.className = 'node';
+            node.innerHTML = `<div class="plumbob"></div>
+                             <div class="node-label ${isMain ? 'editable-main' : ''}" 
+                                  ${isMain ? 'contenteditable="true"' : ''}
+                                  oninput="this.closest('.node-wrapper').setAttribute('data-label', this.innerText)"
+                                  onclick="if(${isMain}) event.stopPropagation()">${label}</div>`;
+            node.onclick = (e) => {
+                e.stopPropagation();
+                togglePrimary(node);
+            };
+            node.ondblclick = (e) => {
+                e.stopPropagation();
+                node.classList.toggle('done');
+                log(`${node.classList.contains('done') ? 'Completed' : 'Reset'}: ${label}`);
+            };
+
+            const menu = document.createElement('div');
+            menu.className = 'pie-menu';
+
+            const tile = document.createElement('div');
+            tile.className = 'config-tile';
+            tile.innerHTML = `
+                <div class="tile-title"><span contenteditable="true">${label.toUpperCase()}</span> <button class="btn-add-station" onclick="addStation(this)" style="position: relative; margin-left: 10px; background: rgba(53, 198, 235, 0.2); border: 1px solid var(--s4-blue); color: var(--s4-blue); padding: 2px 8px; font-size: 12px;">+</button></div>
+                <div class="workflow-workspace"></div>
+            `;
+            tile.onclick = (e) => e.stopPropagation();
+
+            const shortcuts = ['Quick: Setup', 'Quick: Review', 'Quick: Deploy', 'Quick: Finish'];
+            shortcuts.forEach(txt => {
+                const sub = document.createElement('div');
+                sub.className = 'sub-node';
+                sub.innerHTML = `<span contenteditable="true" onclick="event.stopPropagation()">${txt}</span>`;
+                sub.onclick = (e) => {
+                    e.stopPropagation();
+                    const currentTxt = sub.querySelector('span').innerText;
+                    openTile(tile, `${nodeId}.${currentTxt}`);
+                };
+                menu.appendChild(sub);
+            });
+
+            wrap.appendChild(node);
+            wrap.appendChild(menu);
+            wrap.appendChild(tile);
+            return wrap;
+        }
+
+        function addRow() {
+            rowCount++;
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(30px)';
+
+            for (let i = 0; i < 5; i++) {
+                const label = i === 2 ? 'Main' : 'Node';
+                row.appendChild(createNode(rowCount, i, label));
+            }
+
+            matrix.appendChild(row);
+            setTimeout(() => {
+                row.style.transition = '0.6s ease-out';
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+            }, 50);
+            log(`Added cluster set ${rowCount}`);
+        }
+
+        function togglePrimary(node) {
+            const menu = node.nextElementSibling;
+            const active = menu.classList.contains('active');
+            closeAll();
+            if (!active) {
+                menu.classList.add('active');
+                node.classList.add('active-primary');
+                log(`Interaction: ${node.querySelector('.node-label').innerText.trim()}`);
+            }
+        }
+
+        function closeAll() {
+            document.querySelectorAll('.pie-menu').forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('active-primary'));
+            document.querySelectorAll('.config-tile').forEach(t => t.classList.remove('active'));
+        }
+
+        // NEW: Initialize Shortcut Center
+        function initializeShortcutCenter() {
+            Object.entries(SHORTCUT_REGISTRY).forEach(([name, config], index) => {
+                const categoryGrid = document.getElementById(`${config.category}-shortcuts`);
+                if (!categoryGrid) return;
+                
+                const btn = document.createElement('button');
+                btn.className = 'shortcut-btn';
+                btn.style.opacity = '0';
+                btn.style.transform = 'translateY(20px)';
+                btn.innerHTML = `
+                    <div style="font-size: 18px; margin-bottom: 4px;">${config.icon}</div>
+                    <div style="font-weight: 700;">${name}</div>
+                    <div style="font-size: 9px; opacity: 0.7; margin-top: 2px;">${config.estimatedTime}</div>
+                `;
+                btn.onclick = () => createShortcutWorkflow(name, config);
+                btn.title = config.description;
+                
+                // Add hover effect for preview
+                btn.onmouseenter = (e) => showShortcutPreview(e, config);
+                btn.onmouseleave = hideShortcutPreview;
+                
+                categoryGrid.appendChild(btn);
+                
+                // Staggered animation
+                setTimeout(() => {
+                    btn.style.transition = 'all 0.5s ease-out';
+                    btn.style.opacity = '1';
+                    btn.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+            log("Shortcut center initialized with " + Object.keys(SHORTCUT_REGISTRY).length + " workflows");
+        }
+
+        // NEW: Create Workflow from Shortcut
+        function createShortcutWorkflow(shortcutName, config) {
+            const rowId = ++rowCount;
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(30px)';
+            
+            // Create main node with shortcut
+            const mainNode = createNode(rowId, 2, shortcutName);
+            const nodeLabel = mainNode.querySelector('.node-label');
+            nodeLabel.innerHTML = `${config.icon} ${shortcutName}`;
+            
+            // Pre-populate workflow data
+            const key = `${rowId}.2`;
+            networkDataStore[key] = {
+                nodes: config.phases.map((phase, i) => ({
+                    label: phase,
+                    done: false,
+                    subs: config.tasks[i].map(task => ({
+                        label: task,
+                        done: false
+                    }))
+                })),
+                notes: `${config.description} - Estimated: ${config.estimatedTime}`
+            };
+            
+            // Add supporting nodes
+            for (let i = 0; i < 5; i++) {
+                if (i === 2) {
+                    row.appendChild(mainNode);
+                } else {
+                    const label = i === 0 ? 'Research' : i === 4 ? 'Review' : 'Support';
+                    row.appendChild(createNode(rowId, i, label));
+                }
+            }
+            
+            matrix.appendChild(row);
+            
+            // Animate entry
+            setTimeout(() => {
+                row.style.transition = '0.6s ease-out';
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+            }, 50);
+            
+            // Auto-open the workflow tile
+            setTimeout(() => {
+                const tile = mainNode.querySelector('.config-tile');
+                openTile(tile, key);
+            }, 700);
+            
+            log(`Created ${shortcutName} workflow (Category: ${config.category})`);
+        }
+
+        // NEW: Enhanced Shortcut Preview
+        function showShortcutPreview(e, config) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const preview = document.getElementById('shortcut-preview') || createShortcutPreview();
+            
+            preview.innerHTML = `
+                <h3>${config.icon} ${e.currentTarget.querySelector('div:nth-child(2)').innerText}</h3>
+                <div class="preview-description">${config.description}</div>
+                <div class="preview-meta">
+                    <div class="meta-row"><span>Category:</span> <span class="meta-val">${config.category}</span></div>
+                    <div class="meta-row"><span>Phases:</span> <span class="meta-val">${config.phases.length}</span></div>
+                    <div class="meta-row"><span>Time:</span> <span class="meta-val">${config.estimatedTime}</span></div>
+                </div>
+                <div class="preview-phases">
+                    ${config.phases.map((phase, i) => `
+                        <div class="phase-item">
+                            <span class="phase-number">${i + 1}</span>
+                            <span class="phase-name">${phase}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            preview.style.top = (rect.bottom + 10) + 'px';
+            preview.style.left = rect.left + 'px';
+            preview.classList.add('visible');
+        }
+
+        function hideShortcutPreview() {
+            const preview = document.getElementById('shortcut-preview');
+            if (preview) preview.classList.remove('visible');
+        }
+
+        function createShortcutPreview() {
+            const preview = document.createElement('div');
+            preview.id = 'shortcut-preview';
+            preview.className = 'shortcut-preview-overlay';
+            document.body.appendChild(preview);
+            return preview;
+        }
+
+        // NEW: Quick Actions Functions
+        function showRecentWorkflows() {
+            const recentKeys = Object.keys(networkDataStore).slice(-5);
+            if (recentKeys.length === 0) {
+                log("No recent workflows found");
+                return;
+            }
+            
+            log(`Recent workflows: ${recentKeys.join(', ')}`);
+            // Could create a modal or overlay here to show recent workflows
+        }
+
+        function showFavorites() {
+            const favorites = Object.entries(SHORTCUT_REGISTRY)
+                .filter(([name]) => name.includes('Release') || name.includes('Campaign'))
+                .map(([name]) => name);
+            
+            if (favorites.length === 0) {
+                log("No favorite workflows set");
+                return;
+            }
+            
+            log(`Favorite workflows: ${favorites.join(', ')}`);
+            // Could create a modal or overlay here to show favorites
+        }
+
+        function showTemplates() {
+            const categories = [...new Set(Object.values(SHORTCUT_REGISTRY).map(config => config.category))];
+            log(`Available template categories: ${categories.join(', ')}`);
+            
+            // Highlight all categories briefly
+            document.querySelectorAll('.category-section').forEach(section => {
+                section.style.transform = 'scale(1.02)';
+                section.style.boxShadow = '0 0 20px rgba(53, 198, 235, 0.5)';
+                setTimeout(() => {
+                    section.style.transform = '';
+                    section.style.boxShadow = '';
+                }, 1000);
+            });
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize shortcut center first
+            initializeShortcutCenter();
+            
+            // Create initial row for compatibility
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            rowCount = 1;
+            const labels = ['Research', 'Plan', 'Main', 'Execute', 'Review'];
+            labels.forEach((l, i) => row.appendChild(createNode(1, i, l)));
+            matrix.appendChild(row);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.node-wrapper')) {
+                closeAll();
+            }
+        });
+    </script>
+</body>
+
+</html>

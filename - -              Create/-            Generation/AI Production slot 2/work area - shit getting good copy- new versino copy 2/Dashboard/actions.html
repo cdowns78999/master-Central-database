@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Actions</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn.active {
+            background: rgba(76, 201, 240, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .action-btn .badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--primary);
+            color: #000;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 2rem 0;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: #14181e;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            width: 400px;
+            max-width: 90vw;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .tiles-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .tiles-result-header h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .clear-filter-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .clear-filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span>OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="tiles.html" class="nav-link">Tiles</a>
+            <a href="actions.html" class="nav-link active">Actions</a>
+            <a href="schedule.html" class="nav-link">Schedule</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <h1>Action Center</h1>
+
+        <!-- Create Actions -->
+        <div class="section-label">Create</div>
+        <div class="action-grid">
+            <button class="action-btn" id="btn-add-tile">+ Add Tile</button>
+            <button class="action-btn" id="btn-quick-fill">Quick Fill Lab</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Filter Actions -->
+        <div class="section-label">Filter by Status</div>
+        <div class="action-grid">
+            <button class="action-btn" data-filter="high-priority">
+                High Priority
+                <span class="badge" id="badge-high-priority">0</span>
+            </button>
+            <button class="action-btn" data-filter="completed">
+                Completed
+                <span class="badge" id="badge-completed">0</span>
+            </button>
+            <button class="action-btn" data-filter="unpopulated">
+                Unpopulated
+                <span class="badge" id="badge-unpopulated">0</span>
+            </button>
+        </div>
+
+        <div class="section-label">Filter by Type</div>
+        <div class="action-grid">
+            <button class="action-btn" data-filter="press">Press</button>
+            <button class="action-btn" data-filter="spotify">Spotify</button>
+            <button class="action-btn" data-filter="social">Social</button>
+            <button class="action-btn" data-filter="all">Show All</button>
+        </div>
+
+        <!-- Tiles Results Area -->
+        <div id="tiles-result-area" style="display: none; margin-top: 2rem;">
+            <div class="tiles-result-header">
+                <h2 id="result-label">Filtered Results</h2>
+                <button class="clear-filter-btn" id="clear-filter">Clear Filter</button>
+            </div>
+            <div id="tiles-container" class="tiles-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 2rem;">
+            </div>
+            <p id="no-results" style="display: none; text-align: center; color: var(--text-dim); padding: 2rem;">
+                No tiles match this filter.
+            </p>
+        </div>
+    </main>
+
+    <!-- Add Tile Modal -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal" id="add-tile-modal">
+        <h2>Add New Tile</h2>
+        <input type="text" id="tile-name-input" placeholder="Artist / Project Name">
+        <div class="modal-actions">
+            <button class="btn-secondary" id="modal-cancel">Cancel</button>
+            <button class="btn-primary" id="modal-create">Create Tile</button>
+        </div>
+    </div>
+
+    <script src="tile-component.js"></script>
+    <script>
+        // State
+        let allTiles = [];
+        let displayedTileInstances = [];
+        let currentFilter = null;
+
+        // Load tiles from localStorage
+        function loadFromStorage() {
+            const savedData = localStorage.getItem('cards_session');
+            allTiles = savedData ? JSON.parse(savedData) : [];
+            updateBadges();
+        }
+
+        // Save to localStorage
+        function saveToStorage() {
+            localStorage.setItem('cards_session', JSON.stringify(allTiles));
+        }
+
+        // Update badge counts
+        function updateBadges() {
+            const highPriority = allTiles.filter(tile => isHighPriority(tile)).length;
+            const completed = allTiles.filter(tile => isCompleted(tile)).length;
+            const unpopulated = allTiles.filter(tile => isUnpopulated(tile)).length;
+
+            document.getElementById('badge-high-priority').textContent = highPriority;
+            document.getElementById('badge-completed').textContent = completed;
+            document.getElementById('badge-unpopulated').textContent = unpopulated;
+        }
+
+        // Filter functions
+        function isHighPriority(tile) {
+            if (!tile.projectData) return false;
+            const totalPending = Object.values(tile.projectData).reduce((sum, cat) =>
+                sum + cat.reduce((catSum, item) => {
+                    const match = item.followup?.match(/(\d+)/);
+                    return catSum + (match && item.reachout !== '—' && !item.completed ? parseInt(match[1]) : 0);
+                }, 0), 0);
+            return totalPending > 3;
+        }
+
+        function isCompleted(tile) {
+            if (!tile.projectData) return false;
+            const hasAnyWork = Object.values(tile.projectData).some(cat =>
+                cat.some(item => item.reachout !== '—')
+            );
+            if (!hasAnyWork) return false;
+            return Object.values(tile.projectData).every(cat =>
+                cat.every(item => item.completed || item.reachout === '—')
+            );
+        }
+
+        function isUnpopulated(tile) {
+            if (!tile.name || tile.name.trim() === '' || tile.name === 'New Artist') return true;
+            if (!tile.projectData) return true;
+            return Object.values(tile.projectData).every(cat =>
+                cat.length === 0 || cat.every(item =>
+                    item.name === 'New Project' || item.name === 'Song 1' || item.name === 'Item 1'
+                )
+            );
+        }
+
+        function hasCategory(tile, category) {
+            if (!tile.projectData || !tile.projectData[category]) return false;
+            return tile.projectData[category].some(item =>
+                item.name !== 'New Project' && item.name !== 'Song 1' && item.name !== 'Item 1'
+            );
+        }
+
+        // Display filtered tiles
+        function displayTiles(filteredTiles, label) {
+            const resultArea = document.getElementById('tiles-result-area');
+            const container = document.getElementById('tiles-container');
+            const noResults = document.getElementById('no-results');
+            const resultLabel = document.getElementById('result-label');
+
+            resultArea.style.display = 'block';
+            container.innerHTML = '';
+            displayedTileInstances = [];
+
+            resultLabel.textContent = label;
+
+            if (filteredTiles.length === 0) {
+                container.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            noResults.style.display = 'none';
+
+            filteredTiles.forEach((tileData, displayIndex) => {
+                const originalIndex = allTiles.indexOf(tileData);
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${displayIndex}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name || 'New Artist', tileContainer, {
+                    data: tileData.projectData,
+                    onDelete: () => {
+                        allTiles.splice(originalIndex, 1);
+                        saveToStorage();
+                        applyFilter(currentFilter);
+                    }
+                });
+
+                // Restore saved data
+                if (tileData.projectData) tile.projectData = tileData.projectData;
+                if (tileData.contactDB) tile.contactDB = tileData.contactDB;
+                if (tileData.currentCat) tile.currentCat = tileData.currentCat;
+                if (tileData.currentSongIndices) tile.currentSongIndices = tileData.currentSongIndices;
+                tile.updateCardDisplay();
+
+                displayedTileInstances.push({ tile, originalIndex });
+            });
+        }
+
+        // Apply filter
+        function applyFilter(filterType) {
+            currentFilter = filterType;
+            let filtered = [];
+            let label = '';
+
+            // Update active button
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === filterType);
+            });
+
+            switch (filterType) {
+                case 'high-priority':
+                    filtered = allTiles.filter(isHighPriority);
+                    label = `High Priority (${filtered.length})`;
+                    break;
+                case 'completed':
+                    filtered = allTiles.filter(isCompleted);
+                    label = `Completed (${filtered.length})`;
+                    break;
+                case 'unpopulated':
+                    filtered = allTiles.filter(isUnpopulated);
+                    label = `Unpopulated (${filtered.length})`;
+                    break;
+                case 'press':
+                    filtered = allTiles.filter(t => hasCategory(t, 'press'));
+                    label = `Press Campaigns (${filtered.length})`;
+                    break;
+                case 'spotify':
+                    filtered = allTiles.filter(t => hasCategory(t, 'spotify'));
+                    label = `Spotify Campaigns (${filtered.length})`;
+                    break;
+                case 'social':
+                    filtered = allTiles.filter(t => hasCategory(t, 'social'));
+                    label = `Social Campaigns (${filtered.length})`;
+                    break;
+                case 'all':
+                    filtered = allTiles;
+                    label = `All Tiles (${filtered.length})`;
+                    break;
+            }
+
+            displayTiles(filtered, label);
+            updateBadges();
+        }
+
+        // Clear filter
+        function clearFilter() {
+            currentFilter = null;
+            document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tiles-result-area').style.display = 'none';
+            displayedTileInstances = [];
+        }
+
+        // Modal handling
+        function openModal() {
+            document.getElementById('modal-overlay').classList.add('open');
+            document.getElementById('add-tile-modal').classList.add('open');
+            document.getElementById('tile-name-input').value = '';
+            document.getElementById('tile-name-input').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('open');
+            document.getElementById('add-tile-modal').classList.remove('open');
+        }
+
+        function createTile() {
+            const name = document.getElementById('tile-name-input').value.trim() || 'New Artist';
+
+            const newTile = {
+                id: 'tile-' + Math.random().toString(36).substr(2, 9),
+                name: name,
+                superTitle: 'Campaign',
+                projectData: {
+                    press: [{ name: 'New Project', reachout: '—', first: 'MM.DD', last: 'MM.DD', method: '—', followup: '0 Pending', completed: false, contacts: [] }],
+                    spotify: [{ name: 'New Project', reachout: '—', first: 'MM.DD', last: 'MM.DD', method: '—', followup: '0 Pending', completed: false, contacts: [] }],
+                    social: [{ name: 'New Project', reachout: '—', first: 'MM.DD', last: 'MM.DD', method: '—', followup: '0 Pending', completed: false, contacts: [] }],
+                    other: [{ name: 'New Project', reachout: '—', first: 'MM.DD', last: 'MM.DD', method: '—', followup: '0 Pending', completed: false, contacts: [] }]
+                }
+            };
+
+            allTiles.push(newTile);
+            saveToStorage();
+            updateBadges();
+            closeModal();
+
+            // Show the new tile
+            applyFilter('all');
+        }
+
+        // Quick Fill Lab (placeholder - opens all unpopulated)
+        function openQuickFillLab() {
+            applyFilter('unpopulated');
+        }
+
+        // Event Listeners
+        document.getElementById('btn-add-tile').addEventListener('click', openModal);
+        document.getElementById('btn-quick-fill').addEventListener('click', openQuickFillLab);
+        document.getElementById('modal-overlay').addEventListener('click', closeModal);
+        document.getElementById('modal-cancel').addEventListener('click', closeModal);
+        document.getElementById('modal-create').addEventListener('click', createTile);
+        document.getElementById('clear-filter').addEventListener('click', clearFilter);
+
+        document.getElementById('tile-name-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') createTile();
+            if (e.key === 'Escape') closeModal();
+        });
+
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.addEventListener('click', () => applyFilter(btn.dataset.filter));
+        });
+
+        // Auto-save displayed tiles
+        setInterval(() => {
+            displayedTileInstances.forEach(({ tile, originalIndex }) => {
+                allTiles[originalIndex] = tile.getData();
+            });
+            if (displayedTileInstances.length > 0) {
+                saveToStorage();
+            }
+        }, 5000);
+
+        // Listen for storage changes
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'cards_session') {
+                loadFromStorage();
+                if (currentFilter) {
+                    applyFilter(currentFilter);
+                }
+            }
+        });
+
+        // Initial load
+        loadFromStorage();
+    </script>
+</body>
+
+</html>

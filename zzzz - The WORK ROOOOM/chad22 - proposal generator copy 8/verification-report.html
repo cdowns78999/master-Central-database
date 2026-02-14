@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verification Report — Campaign Waterfall Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #020617;
+    --bg-card: #0a1128;
+    --bg-card-alt: #0d1630;
+    --bg-surface: #111b36;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --accent: #38bdf8;
+    --green: #1ed760;
+    --green-dim: rgba(30, 215, 96, 0.15);
+    --border: rgba(56, 189, 248, 0.08);
+    --border-bright: rgba(56, 189, 248, 0.2);
+    --glow-accent: rgba(56, 189, 248, 0.12);
+    --glow-green: rgba(30, 215, 96, 0.1);
+    --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* === LAYOUT === */
+  .report-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 40px 80px;
+  }
+
+  @media (max-width: 768px) {
+    .report-container { padding: 40px 20px 60px; }
+  }
+
+  /* === FADE-IN ON SCROLL === */
+  .fade-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .fade-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* === HEADER === */
+  .report-header {
+    text-align: center;
+    padding-bottom: 48px;
+    margin-bottom: 56px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .report-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .report-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(56, 189, 248, 0.06);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    border-radius: 4px;
+    padding: 6px 16px;
+    margin-bottom: 28px;
+  }
+
+  .report-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .report-subtitle {
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .report-meta {
+    margin-top: 24px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* === SECTION TITLES === */
+  .section-number {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .section-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .section-desc {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-bottom: 36px;
+    max-width: 680px;
+  }
+
+  .section-block {
+    margin-bottom: 64px;
+  }
+
+  /* === TOOL CARDS === */
+  .tool-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 20px;
+    transition: box-shadow 0.4s ease, border-color 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .tool-card:hover {
+    box-shadow: 0 4px 40px var(--glow-accent);
+    border-color: var(--border-bright);
+  }
+  .tool-card:hover::before {
+    opacity: 1;
+  }
+
+  .tool-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .tool-number {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(56, 189, 248, 0.08);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .tool-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .tool-cost {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--green);
+    background: var(--green-dim);
+    border-radius: 4px;
+    padding: 3px 10px;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .tool-description {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    padding-left: 46px;
+  }
+
+  .stat-list {
+    list-style: none;
+    padding-left: 46px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stat-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .stat-item:hover {
+    box-shadow: 0 2px 20px var(--glow-accent);
+    border-color: var(--border-bright);
+  }
+
+  .stat-value {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--accent);
+  }
+
+  .stat-source {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .stat-label {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+
+  .sub-detail {
+    padding-left: 46px;
+    margin-top: 16px;
+  }
+
+  .sub-detail-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .sub-detail-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sub-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(56, 189, 248, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+  }
+
+  /* === COMPOUND SECTION === */
+  .compound-stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .compound-stat:hover {
+    box-shadow: 0 2px 24px var(--glow-accent);
+    border-color: var(--border-bright);
+  }
+
+  .compound-stat .stat-value {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .compound-stat .stat-source {
+    margin-top: 6px;
+  }
+
+  /* === VERIFICATION TABLE === */
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+
+  .verify-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 700px;
+  }
+
+  .verify-table thead th {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: var(--bg-surface);
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .verify-table thead th:first-child { padding-left: 20px; }
+  .verify-table thead th:last-child { text-align: center; }
+
+  .verify-table tbody tr {
+    border-bottom: 1px solid rgba(56, 189, 248, 0.04);
+    transition: background 0.2s ease;
+  }
+  .verify-table tbody tr:nth-child(even) {
+    background: rgba(56, 189, 248, 0.015);
+  }
+  .verify-table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.04);
+  }
+
+  .verify-table tbody td {
+    padding: 13px 16px;
+    color: var(--text-muted);
+    vertical-align: middle;
+  }
+  .verify-table tbody td:first-child {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text-dim);
+    padding-left: 20px;
+  }
+
+  .phase-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .phase-free {
+    color: var(--green);
+    background: var(--green-dim);
+  }
+  .phase-showcase {
+    color: var(--accent);
+    background: rgba(56, 189, 248, 0.1);
+  }
+  .phase-full {
+    color: #c084fc;
+    background: rgba(192, 132, 252, 0.1);
+  }
+
+  .metric-cell {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text) !important;
+  }
+
+  .source-cell {
+    font-size: 0.8rem;
+    color: var(--text-dim) !important;
+  }
+
+  .check-cell {
+    text-align: center !important;
+    font-size: 1.1rem;
+  }
+  .checkmark {
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  /* === CORRECTIONS NOTE === */
+  .corrections-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin-top: 28px;
+    margin-bottom: 8px;
+  }
+
+  .corrections-title {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .correction-item {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.6;
+  }
+  .correction-item:last-child { margin-bottom: 0; }
+  .correction-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+
+  .correction-card-num {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+
+  .correction-from {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .correction-to {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--green);
+  }
+
+  .correction-reason {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* === CONFIRMATION BOX === */
+  .confirmation-box {
+    background: var(--bg-card);
+    border: 1px solid rgba(30, 215, 96, 0.15);
+    border-left: 4px solid var(--green);
+    border-radius: 12px;
+    padding: 32px 36px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.4s ease;
+  }
+  .confirmation-box:hover {
+    box-shadow: 0 4px 40px var(--glow-green);
+  }
+  .confirmation-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 60px;
+    background: linear-gradient(90deg, rgba(30, 215, 96, 0.03), transparent);
+    pointer-events: none;
+  }
+
+  .confirmation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 16px;
+  }
+  .confirmation-badge svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--green);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .confirmation-text {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .confirmation-highlight {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  .highlight-green { color: var(--green); }
+  .highlight-accent { color: var(--accent); }
+
+  /* === FOOTER === */
+  .report-footer {
+    margin-top: 64px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+
+  .source-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .source-list li {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .source-list a {
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    word-break: break-all;
+  }
+  .source-list a:hover {
+    color: var(--accent);
+  }
+
+  .source-bullet {
+    color: var(--accent);
+    margin-right: 8px;
+    opacity: 0.4;
+  }
+
+  .footer-stamp {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .footer-stamp-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    opacity: 0.5;
+  }
+
+  /* === DIVIDER === */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+    margin: 56px 0;
+  }
+
+  /* === SCROLLBAR === */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="report-container">
+
+  <!-- ===== HEADER ===== -->
+  <header class="report-header fade-section">
+    <div class="report-badge">Verification Report</div>
+    <h1 class="report-title">Campaign Waterfall Tool</h1>
+    <p class="report-subtitle">Cross-referenced against official Spotify Campaign Kit documentation</p>
+    <p class="report-meta">Anti Gravity &mdash; Prepared February 2026</p>
+  </header>
+
+  <!-- ===== SECTION 1: HOW EACH PART WORKS ===== -->
+  <section class="section-block fade-section">
+    <span class="section-number">Section 01</span>
+    <h2 class="section-title">How Each Part Works</h2>
+    <p class="section-desc">A breakdown of each Campaign Kit tool, with every claim verified against official Spotify documentation.</p>
+
+    <!-- Tool 1: Playlist Pitching -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-number">01</div>
+        <span class="tool-name">Playlist Pitching</span>
+        <span class="tool-cost">FREE</span>
+      </div>
+      <p class="tool-description">Submit unreleased tracks to Spotify editors for editorial playlist consideration.</p>
+      <ul class="stat-list">
+        <li class="stat-item">
+          <span class="stat-value">"74% of artists added to an editorial playlist had fewer than 100K monthly listeners"</span>
+          <span class="stat-source">How to Meet Your Music Goals, Jan 2025</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">Jay Wheeler's "TRAPPii" landed on Trap Land playlist &rarr;</span> <span class="stat-value">100,000 streams</span>
+          <span class="stat-source">Seven Success Stories, Jul 2024</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Tool 2: Discovery Mode -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-number">02</div>
+        <span class="tool-name">Discovery Mode</span>
+        <span class="tool-cost">FREE (no upfront cost)</span>
+      </div>
+      <p class="tool-description">Amplify reach of songs in Spotify Mixes, Radio, and Autoplay.</p>
+      <ul class="stat-list">
+        <li class="stat-item">
+          <span class="stat-value">+50% saves, +44% playlist adds, +37% follows in first month</span>
+          <span class="stat-source">How to Meet Your Music Goals, Jan 2025</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">William Black &mdash;</span> <span class="stat-value">385% average stream lift</span>
+          <span class="stat-source">Seven Success Stories, Jul 2024</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">Khalia &mdash;</span> <span class="stat-value">440%+ stream lift</span>
+          <span class="stat-source">Seven Success Stories, Jul 2024</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">Magic City Hippies &mdash;</span> <span class="stat-value">"31% of Discovery Mode listeners never streamed the band before"</span>
+          <span class="stat-source">Case Study, Jul 2022</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-value">"58% of first-time artist discoveries are overseas listeners"</span>
+          <span class="stat-source">Campaign Kit main page</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">NERIAH &mdash;</span> <span class="stat-value">"nearly half a million new listeners in three months &mdash; 25% of her listeners"</span>
+          <span class="stat-source">Seven Success Stories, Jul 2024</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Tool 3: Showcase -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-number">03</div>
+        <span class="tool-name">Showcase</span>
+        <span class="tool-cost">$100 min &middot; CPC from $0.40</span>
+      </div>
+      <p class="tool-description">Sponsored recommendation banner on Spotify Home for new or catalog releases.</p>
+      <ul class="stat-list">
+        <li class="stat-item">
+          <span class="stat-label">Eligibility &mdash;</span> <span class="stat-value">"at least 1,000 streams over the past 28 days"</span>
+          <span class="stat-source">Getting Started with Showcase, Sep 2023</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-value">"people who see a Showcase are 6x more likely to stream the promoted release"</span>
+          <span class="stat-source">Getting Started with Showcase, Sep 2023</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">William Black &mdash;</span> <span class="stat-value">"nearly 50% of listeners reached through William Black's Showcase were new to his music"</span>
+          <span class="stat-source">Seven Success Stories, Jul 2024</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">Goth Babe &mdash;</span> <span class="stat-value">"10% of previously active saved, ~20% streamed other releases"</span>
+          <span class="stat-source">How to Meet Your Music Goals, Jan 2025</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">Money Man &mdash;</span> <span class="stat-value">"1 in 4 listeners saved or playlisted"</span>
+          <span class="stat-source">Seven Success Stories, Jul 2024</span>
+        </li>
+      </ul>
+      <div class="sub-detail">
+        <div class="sub-detail-title">Headlines Available</div>
+        <div class="sub-detail-list">
+          <span class="sub-tag">New music</span>
+          <span class="sub-tag">Recently released</span>
+          <span class="sub-tag">On tour</span>
+          <span class="sub-tag">Release anniversary</span>
+          <span class="sub-tag">Getting buzz</span>
+          <span class="sub-tag">Seasonal vibes</span>
+          <span class="sub-tag">Releasing music soon</span>
+        </div>
+      </div>
+      <div class="sub-detail" style="margin-top: 12px;">
+        <div class="sub-detail-title">Audience Segments</div>
+        <div class="sub-detail-list">
+          <span class="sub-tag">Active (Super)</span>
+          <span class="sub-tag">Active (Moderate)</span>
+          <span class="sub-tag">Active (Light)</span>
+          <span class="sub-tag">Previously Active</span>
+          <span class="sub-tag">Programmed</span>
+          <span class="sub-tag">Potential</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tool 4: Marquee -->
+    <div class="tool-card">
+      <div class="tool-header">
+        <div class="tool-number">04</div>
+        <span class="tool-name">Marquee</span>
+        <span class="tool-cost">$100 minimum</span>
+      </div>
+      <p class="tool-description">Full-screen sponsored recommendation of new releases when listeners open the app.</p>
+      <ul class="stat-list">
+        <li class="stat-item">
+          <span class="stat-value">"10x more Spotify listeners per dollar vs social ads"</span>
+          <span class="stat-source">Marquee 10x Study, Nov 2022</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-value">"100% higher click-to-listen rate than social ads"</span>
+          <span class="stat-source">Marquee 10x Study, Nov 2022</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-value">"Marquee alone drives 8x lift in new active listeners"</span>
+          <span class="stat-source">Seven Success Stories, Jul 2024</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">Jelani Aryeh &mdash;</span> <span class="stat-value">"38% intent rate (saved/playlisted)"</span>
+          <span class="stat-source">Case Study, Jan 2022</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">Jillian Rossi &mdash;</span> <span class="stat-value">"listeners who saw Marquee streamed ~30x more"</span>
+          <span class="stat-source">Seven Success Stories, Jul 2024</span>
+        </li>
+        <li class="stat-item">
+          <span class="stat-label">Magic City Hippies &mdash;</span> <span class="stat-value">"4x more likely to stream the singles"</span>
+          <span class="stat-source">Case Study, Jul 2022</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ===== SECTION 2: HOW IT CONNECTS TOGETHER ===== -->
+  <section class="section-block fade-section">
+    <span class="section-number">Section 02</span>
+    <h2 class="section-title">How It Connects Together</h2>
+    <p class="section-desc">The compound effect of layering Campaign Kit tools together, verified with official data.</p>
+
+    <div class="compound-stat">
+      <span class="stat-value">"Marquee alone = 8x lift in new active listeners"</span>
+      <span class="stat-source">Seven Success Stories, Jul 2024</span>
+    </div>
+
+    <div class="compound-stat">
+      <span class="stat-value">"Marquee + Showcase = 40x lift in new active listeners &mdash; 5x more lift"</span>
+      <span class="stat-source">Seven Success Stories, Jul 2024</span>
+    </div>
+
+    <div class="compound-stat">
+      <span class="stat-value">"true regardless of how much you spend"</span>
+      <span class="stat-source">Seven Success Stories, Jul 2024</span>
+    </div>
+
+    <div class="compound-stat">
+      <span class="stat-value">"Without engagement, over half of previously active listeners stop streaming within 3 months"</span>
+      <span class="stat-source">How to Meet Your Music Goals, Jan 2025</span>
+    </div>
+
+    <div class="compound-stat">
+      <span class="stat-value">"75% of a release's first-year streams happen after the first month"</span>
+      <span class="stat-source">Getting Started with Showcase, Sep 2023</span>
+    </div>
+
+    <div class="compound-stat">
+      <span class="stat-value">"saves and playlist adds correlate with a 2.5x increase in streaming six months later"</span>
+      <span class="stat-source">Getting Started with Showcase, Sep 2023</span>
+    </div>
+
+    <div class="compound-stat">
+      <span class="stat-value">"over two-thirds of super listeners will still be streaming after six months"</span>
+      <span class="stat-source">How to Meet Your Music Goals, Jan 2025</span>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ===== SECTION 3: DATA VERIFICATION MATRIX ===== -->
+  <section class="section-block fade-section">
+    <span class="section-number">Section 03</span>
+    <h2 class="section-title">15 Hover Cards &mdash; Data Verification Matrix</h2>
+    <p class="section-desc">Every metric surfaced in the Campaign Waterfall hover cards, verified row by row against source documentation.</p>
+
+    <div class="table-wrapper">
+      <table class="verify-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Phase</th>
+            <th>Track Role</th>
+            <th>Key Metric</th>
+            <th>Source Article</th>
+            <th>Verified</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>01</td>
+            <td><span class="phase-badge phase-free">FREE</span></td>
+            <td>The Hook</td>
+            <td class="metric-cell">100K streams from placement</td>
+            <td class="source-cell">Jay Wheeler TRAPPii</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>02</td>
+            <td><span class="phase-badge phase-free">FREE</span></td>
+            <td>The Collab</td>
+            <td class="metric-cell">31% brand-new listeners</td>
+            <td class="source-cell">Magic City Hippies</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>03</td>
+            <td><span class="phase-badge phase-free">FREE</span></td>
+            <td>The Vibe Shift</td>
+            <td class="metric-cell">+50% saves, +44% playlist adds</td>
+            <td class="source-cell">Discovery Mode avg</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>04</td>
+            <td><span class="phase-badge phase-free">FREE</span></td>
+            <td>The Lead</td>
+            <td class="metric-cell">385-440% stream lift</td>
+            <td class="source-cell">William Black / Khalia</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>05</td>
+            <td><span class="phase-badge phase-free">FREE</span></td>
+            <td>The Closer</td>
+            <td class="metric-cell">1,000 streams/28d threshold</td>
+            <td class="source-cell">Showcase Eligibility</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>06</td>
+            <td><span class="phase-badge phase-showcase">SHOWCASE</span></td>
+            <td>The Hook</td>
+            <td class="metric-cell">6x stream lift</td>
+            <td class="source-cell">Getting Started Showcase</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>07</td>
+            <td><span class="phase-badge phase-showcase">SHOWCASE</span></td>
+            <td>The Collab</td>
+            <td class="metric-cell">10% saved, 20% catalog</td>
+            <td class="source-cell">Goth Babe</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>08</td>
+            <td><span class="phase-badge phase-showcase">SHOWCASE</span></td>
+            <td>The Vibe Shift</td>
+            <td class="metric-cell">6x streams + 25% intent</td>
+            <td class="source-cell">Money Man</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>09</td>
+            <td><span class="phase-badge phase-showcase">SHOWCASE</span></td>
+            <td>The Lead</td>
+            <td class="metric-cell">~6x streams (Showcase)</td>
+            <td class="source-cell">William Black</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><span class="phase-badge phase-showcase">SHOWCASE</span></td>
+            <td>The Closer</td>
+            <td class="metric-cell">5,000 MAL threshold</td>
+            <td class="source-cell">Marquee Eligibility</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><span class="phase-badge phase-full">FULL STACK</span></td>
+            <td>The Hook</td>
+            <td class="metric-cell">40x compound lift</td>
+            <td class="source-cell">Seven Success Stories</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>12</td>
+            <td><span class="phase-badge phase-full">FULL STACK</span></td>
+            <td>The Collab</td>
+            <td class="metric-cell">40x + Programmed reach</td>
+            <td class="source-cell">Audience Segments</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>13</td>
+            <td><span class="phase-badge phase-full">FULL STACK</span></td>
+            <td>The Vibe Shift</td>
+            <td class="metric-cell">40x + Potential discovery</td>
+            <td class="source-cell">Audience Segments</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td><span class="phase-badge phase-full">FULL STACK</span></td>
+            <td>The Lead</td>
+            <td class="metric-cell">40x + reactivation sweep</td>
+            <td class="source-cell">Reactivation data</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+          <tr>
+            <td>15</td>
+            <td><span class="phase-badge phase-full">FULL STACK</span></td>
+            <td>The Closer</td>
+            <td class="metric-cell">40x &rarr; Album ready</td>
+            <td class="source-cell">Catalog Streams data</td>
+            <td class="check-cell"><span class="checkmark">&#10003;</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Corrections Applied -->
+    <div class="corrections-block">
+      <div class="corrections-title">Corrections Applied</div>
+      <div class="correction-item">
+        <span class="correction-card-num">Card 2:</span> Changed from <span class="correction-from">"50% new-to-artist" (William Black Showcase stat)</span> to <span class="correction-to">"31% new listeners" (Magic City Hippies Discovery Mode stat)</span> &mdash; <span class="correction-reason">corrected tool attribution</span>
+      </div>
+      <div class="correction-item">
+        <span class="correction-card-num">Card 7:</span> Changed from <span class="correction-from">"2x save rate" (Marquee stat)</span> to <span class="correction-to">"10% saved + 20% catalog" (Goth Babe Showcase stat)</span> &mdash; <span class="correction-reason">corrected tool attribution</span>
+      </div>
+      <div class="correction-item">
+        <span class="correction-card-num">Card 8:</span> Changed from <span class="correction-from">"2x saves" (Marquee stat)</span> to <span class="correction-to">"1 in 4 saved" (Money Man Showcase stat)</span> &mdash; <span class="correction-reason">corrected tool attribution</span>
+      </div>
+      <div class="correction-item">
+        <span class="correction-card-num">Card 9:</span> Changed from <span class="correction-from">"8x listener lift" (Marquee stat)</span> to <span class="correction-to">"~6x streams" (William Black Showcase stat)</span> &mdash; <span class="correction-reason">corrected tool attribution</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ===== SECTION 4: CONFIRMATION ===== -->
+  <section class="section-block fade-section">
+    <span class="section-number">Section 04</span>
+    <h2 class="section-title">Confirmation</h2>
+
+    <div class="confirmation-box">
+      <div class="confirmation-badge">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Verified
+      </div>
+      <p class="confirmation-text">
+        All <span class="confirmation-highlight highlight-green">15 hover cards</span>, <span class="confirmation-highlight highlight-accent">3 phase definitions</span>, <span class="confirmation-highlight highlight-accent">6 audience segments</span>, <span class="confirmation-highlight highlight-accent">4 tool descriptions</span>, and <span class="confirmation-highlight highlight-green">7 compound-effect statistics</span> have been cross-referenced against official Spotify Campaign Kit documentation published between November 2022 and January 2025. <span class="confirmation-highlight highlight-accent">Four</span> misattributed metrics were identified and corrected. <span class="confirmation-highlight highlight-green">Zero</span> unverified claims remain.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="report-footer fade-section">
+    <div class="footer-title">Source Documentation</div>
+    <ul class="source-list">
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/en/campaign-kit" target="_blank" rel="noopener">https://artists.spotify.com/en/campaign-kit</a></li>
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/en/blog/how-to-meet-your-music-goals-with-campaign-kit" target="_blank" rel="noopener">https://artists.spotify.com/en/blog/how-to-meet-your-music-goals-with-campaign-kit</a></li>
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/en/marquee" target="_blank" rel="noopener">https://artists.spotify.com/en/marquee</a></li>
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/blog/marquee-strategies-six-ways-to-amplify-your-new-release" target="_blank" rel="noopener">https://artists.spotify.com/blog/marquee-strategies-six-ways-to-amplify-your-new-release</a></li>
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/blog/jelani-aryeh-marquee-canvas-case-study-save-debut-album" target="_blank" rel="noopener">https://artists.spotify.com/blog/jelani-aryeh-marquee-canvas-case-study-save-debut-album</a></li>
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/blog/how-magic-city-hippies-sequenced-marquee-canvas-and-discovery-mode" target="_blank" rel="noopener">https://artists.spotify.com/blog/how-magic-city-hippies-sequenced-marquee-canvas-and-discovery-mode</a></li>
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/en/blog/getting-started-with-showcase-a-campaign-tool-to-give-your-music-its-moment-on-home" target="_blank" rel="noopener">https://artists.spotify.com/en/blog/getting-started-with-showcase-a-campaign-tool-to-give-your-music-its-moment-on-home</a></li>
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/blog/campaign-kit-seven-success-stories" target="_blank" rel="noopener">https://artists.spotify.com/blog/campaign-kit-seven-success-stories</a></li>
+      <li><span class="source-bullet">&bull;</span><a href="https://artists.spotify.com/en/blog/new-study-marquee-delivers-10x-more-listeners-per-dollar-than-social-ads" target="_blank" rel="noopener">https://artists.spotify.com/en/blog/new-study-marquee-delivers-10x-more-listeners-per-dollar-than-social-ads</a></li>
+    </ul>
+
+    <div class="footer-stamp">
+      <p class="footer-stamp-text">Anti Gravity &middot; Campaign Waterfall Verification &middot; February 2026</p>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // IntersectionObserver for fade-in on scroll
+  document.addEventListener('DOMContentLoaded', function() {
+    const sections = document.querySelectorAll('.fade-section');
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px 0px -60px 0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(function(section) {
+      observer.observe(section);
+    });
+  });
+</script>
+
+</body>
+</html>

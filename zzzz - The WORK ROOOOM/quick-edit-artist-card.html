@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Strategy Card | Premium Edition</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0077be;
+            --secondary-bg: #004d7a;
+            --accent-glow: #4fc3f7;
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --card-surface: linear-gradient(135deg, rgba(79, 195, 247, 0.15) 0%, rgba(79, 195, 247, 0.05) 100%);
+            --point-bg: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%);
+            --point-border: rgba(14, 165, 233, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+
+        /* 3D Asset Card */
+        .asset-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(79, 195, 247, 0.4);
+            border-radius: 24px;
+            padding: 40px;
+            transform-style: preserve-3d;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            min-height: 550px;
+            cursor: pointer;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+            will-change: transform;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .asset-card:hover {
+            box-shadow: 0 45px 90px rgba(0, 53, 102, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .card-inner {
+            transform: translateZ(20px);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Header Layout */
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+            width: 100%;
+            margin-bottom: 35px;
+        }
+
+        .profile-pic-container {
+            flex-shrink: 0;
+            padding-top: 5px;
+        }
+
+        .profile-pic {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(79, 195, 247, 0.6);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #4FC3F7 0%, #0077BE 100%);
+            padding: 3px;
+        }
+
+        .header-text {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            gap: 18px;
+            flex: 1;
+        }
+
+        .field-label {
+            color: rgba(79, 195, 247, 0.7);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .artist-name {
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .song-name {
+            color: #ffffff;
+            font-size: 1.3rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Data Stack */
+        .data-stack {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .data-point {
+            background: var(--point-bg);
+            border: 1px solid var(--point-border);
+            border-radius: 4px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s ease;
+        }
+
+        .data-point:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .point-value {
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 0.02rem;
+        }
+
+        /* Footer */
+        .price-footer {
+            margin-top: 35px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            transform: translateZ(30px);
+        }
+
+        .footer-capsule {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1.5px solid rgba(14, 165, 233, 0.4);
+            border-radius: 4px;
+            padding: 12px 40px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+        }
+
+        .cost-value {
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 1.2rem;
+            letter-spacing: 0.05rem;
+            cursor: default;
+        }
+
+        .divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .pay-button {
+            background: transparent;
+            border: none;
+            color: var(--accent-glow);
+            font-weight: 800;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .pay-button:hover {
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+            transform: translateX(3px);
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px) perspective(1000px) rotateX(15deg) scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) perspective(1000px) rotateX(0deg) scale(1);
+            }
+        }
+
+        .asset-card {
+            animation: cardIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particles-canvas"></canvas>
+
+    <div class="container">
+        <div class="asset-card" id="main-card">
+            <div class="card-inner">
+                <div class="card-header">
+                    <div class="profile-pic-container">
+                        <img id="artist-image" src="" alt="Profile" class="profile-pic">
+                    </div>
+                    <div class="header-text">
+                        <div>
+                            <span class="field-label">Artist Name</span>
+                            <div id="artist-name-display" class="artist-name">Artist</div>
+                        </div>
+                        <div>
+                            <span class="field-label">Song Name</span>
+                            <div id="song-name-display" class="song-name">Song Name</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-stack" id="data-stack">
+                    <!-- Points will be injected here -->
+                </div>
+
+                <div class="price-footer">
+                    <div class="footer-capsule">
+                        <div id="cost-display" class="cost-value">$0.00</div>
+                        <div class="divider"></div>
+                        <button id="pay-button" class="pay-button">Pay Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * QUICK EDIT CONFIGURATION
+         * Directly edit these values to update your card
+         */
+        const config = {
+            artistName: "Billie Eilish",
+            songName: "Birds of a Feather",
+            imageUrl: "https://i.scdn.co/image/ab6761610000e5eb3e8b4e40263629e46950882e",
+            cost: "$490.00",
+            paymentLink: "https://example.com/payment",
+            // Up to 4 items for the center stack
+            services: [
+                "20K Spotify Campaign",
+                "Advanced Press Package",
+                "Radio Promotion (Top 40)",
+                "Social Media Blast"
+            ]
+        };
+
+        // Initialize UI from Config
+        function initCard() {
+            document.getElementById('artist-name-display').textContent = config.artistName;
+            document.getElementById('song-name-display').textContent = config.songName;
+            document.getElementById('artist-image').src = config.imageUrl;
+            document.getElementById('cost-display').textContent = config.cost;
+
+            const pointsContainer = document.getElementById('data-stack');
+            pointsContainer.innerHTML = '';
+
+            config.services.forEach(service => {
+                const point = document.createElement('div');
+                point.className = 'data-point';
+                point.innerHTML = `<span class="point-value">${service}</span>`;
+                pointsContainer.appendChild(point);
+            });
+
+            document.getElementById('pay-button').onclick = () => {
+                if (config.paymentLink && config.paymentLink !== '#') {
+                    window.open(config.paymentLink, '_blank');
+                } else {
+                    alert('No payment link provided');
+                }
+            };
+        }
+
+        // Particle Animation System
+        class ParticleSystem {
+            constructor() {
+                this.canvas = document.getElementById('particles-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.particleCount = 60;
+                this.init();
+            }
+
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                for (let i = 0; i < this.particleCount; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 2 + 0.5,
+                        speedX: (Math.random() - 0.5) * 0.4,
+                        speedY: (Math.random() - 0.5) * 0.4,
+                        opacity: Math.random() * 0.5 + 0.1
+                    });
+                }
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.particles.forEach(p => {
+                    p.x += p.speedX; p.y += p.speedY;
+                    if (p.x < 0 || p.x > this.canvas.width) p.speedX *= -1;
+                    if (p.y < 0 || p.y > this.canvas.height) p.speedY *= -1;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
+                    this.ctx.fill();
+                });
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // 3D Physics
+        function setup3D() {
+            const card = document.getElementById('main-card');
+
+            card.addEventListener('mousemove', (e) => {
+                card.style.transition = 'none';
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const xc = rect.width / 2;
+                const yc = rect.height / 2;
+                const dx = x - xc;
+                const dy = y - yc;
+
+                card.style.transform = `perspective(1000px) rotateX(${-dy / 20}deg) rotateY(${dx / 20}deg) scale(1.03)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease';
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)`;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new ParticleSystem();
+            initCard();
+            setup3D();
+        });
+    </script>
+</body>
+
+</html>

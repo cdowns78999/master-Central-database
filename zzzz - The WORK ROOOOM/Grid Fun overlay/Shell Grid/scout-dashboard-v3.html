@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scout Dashboard V3 | Unified Architecture</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0e0d0b;
+            --accent: #d87d4a;
+            /* Terracotta */
+            --accent-soft: #e2a07d;
+            --sage: #8a9a5b;
+            --clay: #b87333;
+            --oak: #4a3728;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.5);
+            --border: rgba(255, 255, 255, 0.1);
+            --glass: rgba(20, 20, 20, 0.6);
+            --glass-bright: rgba(255, 255, 255, 0.05);
+            --ios-blur: blur(30px) saturate(180%);
+            --radius-lg: 32px;
+            --radius-md: 20px;
+            --radius-sm: 12px;
+            --transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+
+            --troop-accent: #007AFF;
+            --troop-accent-sec: #5856D6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(74, 55, 40, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(138, 154, 91, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(216, 125, 74, 0.1) 0%, transparent 80%);
+            background-attachment: fixed;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1600px;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            z-index: 10;
+        }
+
+        /* --- TIER 1: SCANNER HEADER --- */
+        .scan-header {
+            width: 100%;
+            background: var(--glass);
+            backdrop-filter: var(--ios-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .scanner-input-wrap {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .scanner-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 1rem 2rem;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .scanner-input:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-deploy {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 100px;
+            padding: 1rem 2.5rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-deploy:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(216, 125, 74, 0.4);
+        }
+
+        /* --- TIER 2: CROWN SYMMETRY --- */
+        .crown-tier {
+            display: grid;
+            grid-template-columns: 380px 1fr 380px;
+            gap: 2.5rem;
+            align-items: start;
+            min-height: 700px;
+        }
+
+        .pod {
+            background: var(--glass);
+            backdrop-filter: var(--ios-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.8rem;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pod-label {
+            font-family: 'JetBrains Mono';
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--accent-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .pod-label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        /* --- LEFT WING: HIERARCHY ORGANIZER --- */
+        .hierarchy-box {
+            height: 600px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .hierarchy-viewer {
+            display: flex;
+            width: 500%;
+            /* 5 levels */
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hierarchy-level {
+            width: 20%;
+            height: 100%;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .hierarchy-level::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hierarchy-item {
+            padding: 12px 15px;
+            background: var(--glass-bright);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hierarchy-item:hover {
+            background: var(--accent);
+            border-color: #fff;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--accent-soft);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin-bottom: 15px;
+            width: fit-content;
+        }
+
+        /* --- RIGHT WING: DOC OCK TROOP HUB --- */
+        .hub-anchor {
+            position: relative;
+            height: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .mechanical-arm {
+            position: absolute;
+            right: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--troop-accent), transparent);
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 40;
+            pointer-events: none;
+        }
+
+        .mechanical-arm::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: -10px;
+            width: 24px;
+            height: 24px;
+            background: var(--bg-deep);
+            border: 2px solid var(--troop-accent);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--troop-accent);
+        }
+
+        .floating-hub-panel {
+            width: 100%;
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            color: #1d1d1f;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            transform: scale(0.9) translateX(50px);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .active .floating-hub-panel {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+            pointer-events: auto;
+        }
+
+        .active .mechanical-arm {
+            width: 50px;
+        }
+
+        .arm-top {
+            top: 60px;
+            transform: rotate(15deg);
+        }
+
+        .arm-mid {
+            top: 300px;
+            transform: rotate(0deg);
+        }
+
+        .arm-bot {
+            bottom: 60px;
+            transform: rotate(-15deg);
+        }
+
+        .hub-unfold-trigger {
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 45px;
+            height: 120px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-soft);
+            writing-mode: vertical-lr;
+            font-size: 0.65rem;
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            border: 1px solid var(--border);
+            z-index: 100;
+            transition: 0.3s;
+        }
+
+        .hub-unfold-trigger:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .applet-header {
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            padding: 1.5rem;
+            color: #fff;
+        }
+
+        /* Racing Dot Meeting Card */
+        .meeting-card {
+            background: #fff;
+            border: 1px solid #E8E8ED;
+            padding: 1.2rem;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            margin: 1rem;
+        }
+
+        .meeting-card::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #000;
+            border-radius: 50%;
+            animation: dot-v3 8s linear infinite;
+        }
+
+        @keyframes dot-v3 {
+            0% {
+                top: 0;
+                left: 0;
+            }
+
+            25% {
+                top: 0;
+                left: calc(100% - 6px);
+            }
+
+            50% {
+                top: calc(100% - 6px);
+                left: calc(100% - 6px);
+            }
+
+            75% {
+                top: calc(100% - 6px);
+                left: 0;
+            }
+
+            100% {
+                top: 0;
+                left: 0;
+            }
+        }
+
+        .applet-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #30D158;
+            background: #F8F8F8;
+            color: #1d1d1f;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            transition: 0.2s;
+        }
+
+        .applet-btn:hover {
+            background: #eee;
+            transform: translateX(4px);
+        }
+
+        /* --- CENTER: DISCOVERY LEDGER --- */
+        .ledger-pillar {
+            background: var(--glass);
+            backdrop-filter: var(--ios-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5);
+            min-height: 700px;
+        }
+
+        .ledger-view {
+            flex-grow: 1;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--sage);
+            padding: 1.5rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* --- TIER 3: QUAD TILES --- */
+        .quad-tiles {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+
+        .flip-tile {
+            perspective: 1000px;
+            height: 180px;
+            cursor: pointer;
+        }
+
+        .tile-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .flip-tile.flipped .tile-inner {
+            transform: rotateY(180deg);
+        }
+
+        .tile-front,
+        .tile-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 1rem;
+        }
+
+        .tile-front {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+        }
+
+        .tile-back {
+            background: var(--oak);
+            color: #fff;
+            transform: rotateY(180deg);
+        }
+
+        /* --- TIER 4: SNAPPY SLIDER --- */
+        .bottom-reveal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: rgba(14, 13, 11, 0.98);
+            backdrop-filter: blur(30px);
+            border-top: 1px solid var(--border);
+            transform: translateY(115px);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .bottom-reveal:hover {
+            transform: translateY(0);
+        }
+
+        .snap-container {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            padding: 0 2rem;
+            width: 100%;
+            max-width: 1500px;
+            scrollbar-width: none;
+            scroll-snap-type: x mandatory;
+        }
+
+        .snap-item {
+            flex: 0 0 320px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 1.8rem;
+            border: 1px solid var(--border);
+            scroll-snap-align: center;
+        }
+
+        .snap-item h4 {
+            color: var(--accent-soft);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .snap-item p {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" style="margin-top: 2rem;">
+
+        <!-- TIER 1 -->
+        <header class="scan-header">
+            <div class="pod-label" style="position: absolute; top: -35px; left: 0;">System Scanner v3.0</div>
+            <div class="scanner-input-wrap">
+                <input type="text" id="artistInput" class="scanner-input"
+                    placeholder="Initiate Scout Scan (URL or Label name)..." spellcheck="false">
+            </div>
+            <button class="btn-deploy" onclick="triggerScan()">DEPLOY PARSER</button>
+        </header>
+
+        <!-- TIER 2 -->
+        <div class="crown-tier">
+
+            <!-- LEFT WING: HIERARCHY ORGANIZER -->
+            <aside class="pod">
+                <div class="pod-label">Hierarchy Organizer</div>
+                <div class="hierarchy-box">
+                    <div class="hierarchy-viewer" id="hViewer">
+                        <!-- Level 1: Categories -->
+                        <div class="hierarchy-level" id="level-1">
+                            <div class="hierarchy-item" onclick="drillDown(1, 'Eagle Required')"><span>Eagle
+                                    Badges</span> <span>→</span></div>
+                            <div class="hierarchy-item" onclick="drillDown(1, 'Outdoor')"><span>Outdoor Skills</span>
+                                <span>→</span></div>
+                            <div class="hierarchy-item" onclick="drillDown(1, 'Science')"><span>Science & Tech</span>
+                                <span>→</span></div>
+                            <div class="hierarchy-item" onclick="drillDown(1, 'Arts')"><span>Arts & Crafts</span>
+                                <span>→</span></div>
+                        </div>
+                        <!-- Level 2: Badges -->
+                        <div class="hierarchy-level" id="level-2">
+                            <button class="back-btn" onclick="goBack(1)">← BACK</button>
+                            <div id="l2-content"></div>
+                        </div>
+                        <!-- Level 3: Details -->
+                        <div class="hierarchy-level" id="level-3">
+                            <button class="back-btn" onclick="goBack(2)">← BACK</button>
+                            <div id="l3-content"></div>
+                        </div>
+                        <!-- Level 4: Sub-fields -->
+                        <div class="hierarchy-level" id="level-4">
+                            <button class="back-btn" onclick="goBack(3)">← BACK</button>
+                            <div id="l4-content"></div>
+                        </div>
+                        <!-- Level 5: Sub-sub -->
+                        <div class="hierarchy-level" id="level-5">
+                            <button class="back-btn" onclick="goBack(4)">← BACK</button>
+                            <div id="l5-content"></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER PILLAR: DISCOVERY LEDGER -->
+            <main class="ledger-pillar">
+                <div class="pod-label" style="align-self: center;">Discovery Intelligence Ledger</div>
+                <div class="ledger-view" id="ledgerLog">
+                    <div>> [SYSTEM_READY] Listening for metadata signals...</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div
+                        style="font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.15em;">
+                        Auto-Sync: ACTIVE</div>
+                    <button class="btn-deploy"
+                        style="padding: 10px 20px; font-size: 0.75rem; background: var(--sage);">EXPORT REPORT</button>
+                </div>
+            </main>
+
+            <!-- RIGHT WING: DOC OCK TROOP HUB -->
+            <aside class="hub-anchor" id="hubMaster">
+                <div class="hub-unfold-trigger" onclick="toggleDocOck()">DEPLOY HUB</div>
+
+                <div class="mechanical-arm arm-top"></div>
+                <div class="mechanical-arm arm-mid"></div>
+                <div class="mechanical-arm arm-bot"></div>
+
+                <div class="floating-hub-panel">
+                    <header class="applet-header">
+                        <h2 style="font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px;">Troop 553B Hub</h2>
+                        <p style="font-size: 0.65rem; opacity: 0.8; font-weight: 400;">Universal Scout Extension</p>
+                    </header>
+
+                    <div style="padding: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div class="meeting-card">
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <div
+                                    style="width: 44px; height: 44px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.5rem; font-weight: 800;">
+                                    553B</div>
+                                <div>
+                                    <h3 style="font-size: 0.85rem; color: #1d1d1f;">Weekly Meeting</h3>
+                                    <p style="font-size: 0.65rem; color: #007AFF; font-weight: 600;">Mon @ 6:30PM - 8PM
+                                    </p>
+                                </div>
+                            </div>
+                            <button class="btn-deploy"
+                                style="width: 100%; padding: 8px; font-size: 0.7rem; margin-top: 12px; background: #007AFF;">COPY
+                                MEETING INFO</button>
+                        </div>
+
+                        <div style="padding: 0 1rem; display: flex; flex-direction: column; gap: 6px;">
+                            <a href="#" class="applet-btn">📱 GroupMe: Adults Only</a>
+                            <a href="#" class="applet-btn">🤝 GroupMe: Merit Badge Sync</a>
+                            <a href="#" class="applet-btn" style="border-color: #5856D6;">📈 ScoutBook: My Dashboard</a>
+                        </div>
+
+                        <div
+                            style="margin-top: 1.5rem; padding: 1rem; background: #F8F8F8; border-radius: 12px; font-size: 0.65rem;">
+                            <b style="color: #FF3B30;">ADMIN LOCK:</b> Credentials required for payment deport
+                            modification.
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+
+        <!-- TIER 3 -->
+        <div class="quad-tiles">
+            <div class="flip-tile" onclick="this.classList.toggle('flipped')">
+                <div class="tile-inner">
+                    <div class="tile-front">
+                        <span style="font-size: 2rem;">📡</span>
+                        <div class="pod-label" style="margin:0">Signals</div>
+                        <div style="font-size: 1.4rem; font-weight: 800;">148.2k</div>
+                    </div>
+                    <div class="tile-back">
+                        <p style="font-size: 0.8rem; text-align: center;">Raw data streams currently parsing through the
+                            Scout Pipeline.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flip-tile" onclick="this.classList.toggle('flipped')">
+                <div class="tile-inner">
+                    <div class="tile-front">
+                        <span style="font-size: 2rem;">🔥</span>
+                        <div class="pod-label" style="margin:0">Hotness</div>
+                        <div style="font-size: 1.4rem; font-weight: 800;">CRITICAL</div>
+                    </div>
+                    <div class="tile-back">
+                        <p style="font-size: 0.8rem; text-align: center;">Engagement velocity exceeding standard
+                            benchmark thresholds.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flip-tile" onclick="this.classList.toggle('flipped')">
+                <div class="tile-inner">
+                    <div class="tile-front">
+                        <span style="font-size: 2rem;">🧩</span>
+                        <div class="pod-label" style="margin:0">Matrix</div>
+                        <div style="font-size: 1.4rem; font-weight: 800;">8x8</div>
+                    </div>
+                    <div class="tile-back">
+                        <p style="font-size: 0.8rem; text-align: center;">Grid orientation optimized for tactical
+                            overhead visualization.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flip-tile" onclick="this.classList.toggle('flipped')">
+                <div class="tile-inner">
+                    <div class="tile-front">
+                        <span style="font-size: 2rem;">🛸</span>
+                        <div class="pod-label" style="margin:0">State</div>
+                        <div style="font-size: 1.4rem; font-weight: 800;">REMOTE</div>
+                    </div>
+                    <div class="tile-back">
+                        <p style="font-size: 0.8rem; text-align: center;">System maintaining secure uplink to
+                            cloud-based archive.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TIER 4 -->
+    <footer class="bottom-reveal">
+        <div
+            style="position: absolute; top: -15px; background: var(--oak); padding: 5px 25px; border-radius: 100px; font-size: 0.55rem; font-weight: 900; letter-spacing: 0.3rem; border: 1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
+            SNAPPY REVEAL PANEL</div>
+        <div class="snap-container">
+            <div class="snap-item">
+                <h4>System Diagnostic</h4>
+                <p>All subsystems operational. Latency normalized at 14ms across global nodes.</p>
+            </div>
+            <div class="snap-item">
+                <h4>Discovery Matrix</h4>
+                <p>Analyzing 4,202 data points for potential label synchronization matches.</p>
+            </div>
+            <div class="snap-item">
+                <h4>Encrypted Archive</h4>
+                <p>38 Previous sessions stored. Snapshot logic: DIFF-BLOCK-64 active.</p>
+            </div>
+            <div class="snap-item">
+                <h4>Admin Protocol</h4>
+                <p>Root access granted. Observing user interaction for pattern optimization.</p>
+            </div>
+            <div class="snap-item">
+                <h4>Node Scout</h4>
+                <p>Scanning local frequency for nearby artist/identity beacons.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATABASE SPINE (Hierarchy Structure) ---
+        const hierarchyData = {
+            "Eagle Required": {
+                "Camping": {
+                    "Requirement 1": { "Trip Plan": "Detailed itinerary for a 3-night expedition." },
+                    "Requirement 2": { "Safety Protocol": "Fire safety and first aid kit certification." }
+                },
+                "Cooking": {
+                    "Requirement 1": { "Meal Prep": "Planning balanced diet for a group of 8." },
+                    "Requirement 2": { "Safe Prep": "Kitchen hygiene and utensil handling." }
+                },
+                "First Aid": {
+                    "Basics": { "Triage": "Assessment of emergency situations." }
+                }
+            },
+            "Outdoor": {
+                "Hiking": { "Pathfinding": { "Compass": "Navigating via magnetic orientation." } },
+                "Fishing": { "Equipment": { "Knot Tying": "Clinch, Palomar, and Blood knots." } }
+            },
+            "Science": {
+                "Astronomy": { "Deep Sky": { "Nebulae": "Locating Orion and Crab nebulae." } },
+                "Cybersecurity": { "Encryption": { "Brave": "Understanding end-to-end sync." } }
+            }
+        };
+
+        const hViewer = document.getElementById('hViewer');
+
+        function drillDown(level, key) {
+            let nextData = null;
+
+            // Logic to find data based on level and key
+            if (level === 1) nextData = hierarchyData[key];
+            else if (level === 2) {
+                for (let cat in hierarchyData) {
+                    if (hierarchyData[cat][key]) { nextData = hierarchyData[cat][key]; break; }
+                }
+            } else if (level === 3) {
+                for (let cat in hierarchyData) {
+                    for (let badge in hierarchyData[cat]) {
+                        if (hierarchyData[cat][badge][key]) { nextData = hierarchyData[cat][badge][key]; break; }
+                    }
+                }
+            } else if (level === 4) {
+                // Deepest detail
+                for (let cat in hierarchyData) {
+                    for (let badge in hierarchyData[cat]) {
+                        for (let req in hierarchyData[cat][badge]) {
+                            if (hierarchyData[cat][badge][req][key]) {
+                                alert("DEPTH REACHED:\n" + key + " - " + hierarchyData[cat][badge][req][key]);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (nextData) {
+                const targetId = `l${level + 1}-content`;
+                const target = document.getElementById(targetId);
+                target.innerHTML = '';
+                for (let item in nextData) {
+                    const div = document.createElement('div');
+                    div.className = 'hierarchy-item';
+                    div.innerHTML = `<span>${item}</span> <span>→</span>`;
+                    div.onclick = (e) => {
+                        e.stopPropagation();
+                        drillDown(level + 1, item);
+                    };
+                    target.appendChild(div);
+                }
+                hViewer.style.transform = `translateX(-${level * 20}%)`;
+                logIntel(`Navigated to: ${key}`);
+            }
+        }
+
+        function goBack(targetLevel) {
+            hViewer.style.transform = `translateX(-${(targetLevel - 1) * 20}%)`;
+            logIntel(`Retreated to Level ${targetLevel}`);
+        }
+
+        // --- DOC OCK TOGGLE ---
+        function toggleDocOck() {
+            const master = document.getElementById('hubMaster');
+            master.classList.toggle('active');
+            logIntel(master.classList.contains('active') ? "Doc Ock Extension DEPLOYED" : "Mechanical Hub COLLAPSED");
+        }
+
+        // --- SCAN LOGIC ---
+        function triggerScan() {
+            const val = document.getElementById('artistInput').value.trim();
+            if (!val) return;
+            logIntel(`Deploying Scanner for: [${val.toUpperCase()}]`);
+            document.getElementById('artistInput').value = '';
+
+            // Mock entry
+            const log = document.getElementById('ledgerLog');
+            const entry = document.createElement('div');
+            entry.style.color = 'var(--accent-soft)';
+            entry.innerHTML = `> Found match: ${val} (Sync Score: 98%)`;
+            log.prepend(entry);
+        }
+
+        function logIntel(msg) {
+            const log = document.getElementById('ledgerLog');
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.innerHTML = `> [${time}] ${msg}`;
+            log.prepend(div);
+            if (log.children.length > 30) log.lastChild.remove();
+        }
+
+    </script>
+</body>
+
+</html>

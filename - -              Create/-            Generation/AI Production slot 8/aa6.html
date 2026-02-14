@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gilded Rose: Victorian Node Logic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --gold-bright: #FFD700;
+            --velvet: #2d0a31;
+            --deep-purple: #1a051d;
+            --vine-green: #2d5a27;
+            --node-size-small: 140px;
+            --node-size-large: 240px;
+            --transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            background: radial-gradient(circle at center, var(--velvet) 0%, var(--deep-purple) 100%);
+            color: #fff;
+            font-family: 'Playfair Display', serif;
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-image:
+                linear-gradient(rgba(45, 10, 49, 0.8), rgba(26, 5, 29, 0.9)),
+                url('https://www.transparenttextures.com/patterns/black-linen.png');
+        }
+
+        .header {
+            position: absolute;
+            top: 40px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 4.5rem;
+            color: var(--gold);
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-style: italic;
+            letter-spacing: 3px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            color: var(--gold);
+        }
+
+        /* --- STAGE --- */
+        .stage {
+            position: relative;
+            width: 1200px;
+            height: 700px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 80px;
+        }
+
+        /* --- VINES (SVG) --- */
+        .vines-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .vine-path {
+            fill: none;
+            stroke: var(--vine-green);
+            stroke-width: 4;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 8px rgba(45, 90, 39, 0.6));
+            transition: stroke-dashoffset 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+            stroke-dasharray: 1200;
+            stroke-dashoffset: 1200;
+        }
+
+        .vine-glow {
+            stroke: var(--gold);
+            stroke-width: 1;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .gilded .vine-glow {
+            opacity: 0.5;
+        }
+
+        /* --- NODES --- */
+        .node-container {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .node {
+            width: var(--node-size-small);
+            height: var(--node-size-small);
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            background: rgba(212, 175, 55, 0.05);
+            backdrop-filter: blur(15px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: var(--transition);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 30px rgba(212, 175, 55, 0.1);
+        }
+
+        .node::before {
+            content: '';
+            position: absolute;
+            inset: -15px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-top-color: var(--gold);
+            animation: rotate 15s linear infinite;
+        }
+
+        .node::after {
+            content: '';
+            position: absolute;
+            inset: 5px;
+            border-radius: 50%;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .node.center {
+            width: var(--node-size-large);
+            height: var(--node-size-large);
+            border-width: 4px;
+            background: rgba(212, 175, 55, 0.08);
+        }
+
+        .node.center.gilded {
+            background: rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 120px rgba(212, 175, 55, 0.5), inset 0 0 60px rgba(212, 175, 55, 0.3);
+            border-color: var(--gold-bright);
+            transform: scale(1.05) !important;
+        }
+
+        .node-content {
+            text-align: center;
+            z-index: 2;
+        }
+
+        .node-label {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: var(--transition);
+        }
+
+        .node.center .node-label {
+            font-size: 2.2rem;
+            font-family: 'Great Vibes', cursive;
+            letter-spacing: 1px;
+        }
+
+        .gilded .node-label {
+            color: var(--gold-bright);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        /* --- CHECKBOX TILE --- */
+        .node-action {
+            background: rgba(45, 10, 49, 0.6);
+            padding: 15px 25px;
+            border-radius: 50px;
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .node-action:hover {
+            background: rgba(212, 175, 55, 0.15);
+            border-color: var(--gold);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .checkbox.checked {
+            background: var(--gold);
+            box-shadow: 0 0 15px var(--gold);
+        }
+
+        .checkbox.checked::after {
+            content: 'L';
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg) scaleX(-1);
+            color: var(--deep-purple);
+            font-weight: 900;
+            font-size: 14px;
+        }
+
+        .action-text {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        /* --- MAGNETIC CURSOR --- */
+        #cursor-follower {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            border: 1px solid var(--gold);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.1s linear, width 0.3s, height 0.3s, border-color 0.3s;
+            mix-blend-mode: overlay;
+            background: rgba(212, 175, 55, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="cursor-follower"></div>
+
+    <header class="header">
+        <h1>Gilded Flourish</h1>
+        <p>The Organizational Mandate of Marie Antoinette</p>
+    </header>
+
+    <div class="stage">
+        <svg class="vines-container" viewBox="0 0 1200 700">
+            <!-- Left Vine Group -->
+            <g id="vines-left">
+                <path id="vine-left-main" class="vine-path" d="M 150,350 C 300,350 450,250 600,350" />
+                <path id="vine-left-sub" class="vine-path" d="M 150,350 C 300,450 450,450 600,350"
+                    style="stroke-width: 2; opacity: 0.6;" />
+            </g>
+
+            <!-- Right Vine Group -->
+            <g id="vines-right">
+                <path id="vine-right-main" class="vine-path" d="M 1050,350 C 900,350 750,250 600,350" />
+                <path id="vine-right-sub" class="vine-path" d="M 1050,350 C 900,450 750,450 600,350"
+                    style="stroke-width: 2; opacity: 0.6;" />
+            </g>
+
+            <!-- Thorns are added via CSS/SVG if needed, but for now paths handle it -->
+        </svg>
+
+        <!-- Left Node -->
+        <div class="node-container">
+            <div class="node" id="node-left">
+                <div class="node-content">
+                    <div class="node-label">The Prime</div>
+                </div>
+            </div>
+            <div class="node-action" onclick="toggleNode('left')">
+                <div class="checkbox" id="check-left"></div>
+                <div class="action-text">Authorize Left</div>
+            </div>
+        </div>
+
+        <!-- Center Node -->
+        <div class="node-container">
+            <div class="node center" id="node-center">
+                <div class="node-content">
+                    <div class="node-label">Sovereign Focus</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Node -->
+        <div class="node-container">
+            <div class="node" id="node-right">
+                <div class="node-content">
+                    <div class="node-label">The Finale</div>
+                </div>
+            </div>
+            <div class="node-action" onclick="toggleNode('right')">
+                <div class="checkbox" id="check-right"></div>
+                <div class="action-text">Authorize Right</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const follower = document.getElementById('cursor-follower');
+        const nodes = document.querySelectorAll('.node');
+        const vinePaths = {
+            left: [document.getElementById('vine-left-main'), document.getElementById('vine-left-sub')],
+            right: [document.getElementById('vine-right-main'), document.getElementById('vine-right-sub')]
+        };
+        const states = {
+            left: false,
+            right: false
+        };
+
+        // Smooth Mouse Follower
+        let mouseX = 0, mouseY = 0;
+        let followX = 0, followY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateCursor() {
+            followX += (mouseX - followX) * 0.1;
+            followY += (mouseY - followY) * 0.1;
+            follower.style.transform = `translate(${followX - 30}px, ${followY - 30}px)`;
+
+            // Magnetic interaction with nodes
+            nodes.forEach(node => {
+                const rect = node.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const dx = mouseX - centerX;
+                const dy = mouseY - centerY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 300) {
+                    const power = (300 - dist) / 300;
+                    node.style.transform = `translate(${dx * 0.15 * power}px, ${dy * 0.15 * power}px) scale(${1 + 0.08 * power})`;
+                    node.style.borderColor = `rgba(212, 175, 55, ${0.4 + 0.6 * power})`;
+
+                    if (node.classList.contains('center')) {
+                        follower.style.borderColor = 'var(--gold-bright)';
+                        follower.style.width = '80px';
+                        follower.style.height = '80px';
+                    }
+                } else {
+                    node.style.transform = `translate(0,0) scale(1)`;
+                    node.style.borderColor = `rgba(212, 175, 55, 0.4)`;
+                    follower.style.borderColor = 'var(--gold)';
+                    follower.style.width = '60px';
+                    follower.style.height = '60px';
+                }
+            });
+
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Node Toggle Logic
+        function toggleNode(side) {
+            states[side] = !states[side];
+            const check = document.getElementById(`check-${side}`);
+            const paths = vinePaths[side];
+
+            if (states[side]) {
+                check.classList.add('checked');
+                paths.forEach(p => p.style.strokeDashoffset = '0');
+            } else {
+                check.classList.remove('checked');
+                paths.forEach(p => p.style.strokeDashoffset = '1200');
+            }
+
+            updateCenterNode();
+        }
+
+        function updateCenterNode() {
+            const center = document.getElementById('node-center');
+            if (states.left && states.right) {
+                center.classList.add('gilded');
+                center.querySelector('.node-label').innerHTML = 'Total Majesty';
+            } else {
+                center.classList.remove('gilded');
+                center.querySelector('.node-label').textContent = 'Sovereign Focus';
+            }
+        }
+
+        // Initialize vines
+        window.addEventListener('load', () => {
+            Object.values(vinePaths).flat().forEach(p => {
+                const len = p.getTotalLength();
+                p.style.strokeDasharray = len;
+                p.style.strokeDashoffset = len;
+            });
+        });
+
+    </script>
+</body>
+
+</html>

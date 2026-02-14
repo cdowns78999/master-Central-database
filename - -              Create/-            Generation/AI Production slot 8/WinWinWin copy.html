@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatic Blog Poster Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            min-height: 100vh;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header Title */
+        .dashboard-header {
+            width: 100%;
+            text-align: center;
+            padding: 40px 20px 20px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .dashboard-title {
+            font-size: 42px;
+            font-weight: 200;
+            background: linear-gradient(135deg, #ffffff 0%, #0a84ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .canvas {
+            position: relative;
+            width: 100%;
+            min-height: calc(100vh - 140px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 60px 40px 40px;
+        }
+
+        .tile-container {
+            position: absolute;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tile-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Diamond frame */
+        .diamond-container {
+            width: 280px;
+            height: 280px;
+            background: rgba(28, 28, 30, 0.75);
+            border: none;
+            transform: rotate(45deg);
+            border-radius: 32px;
+            box-shadow:
+                0 10px 35px rgba(0, 0, 0, 0.6),
+                inset 0 1px 2px rgba(255, 255, 255, 0.02);
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .diamond-container:hover {
+            transform: rotate(45deg) scale(1.02);
+            box-shadow:
+                0 12px 40px rgba(0, 0, 0, 0.7),
+                inset 0 1px 3px rgba(255, 255, 255, 0.04);
+        }
+
+        /* Tile with sophisticated gradient border */
+        .tile {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            border-radius: 50px;
+            cursor: move;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+            padding: 24px;
+
+            /* Advanced gradient border technique with grey tones */
+            background:
+                linear-gradient(rgba(28, 28, 30, 0.85), rgba(28, 28, 30, 0.85)) padding-box,
+                linear-gradient(135deg,
+                    rgba(80, 80, 85, 0.4) 0%,
+                    rgba(120, 120, 125, 0.25) 25%,
+                    rgba(90, 90, 95, 0.3) 50%,
+                    rgba(110, 110, 115, 0.2) 75%,
+                    rgba(85, 85, 90, 0.35) 100%
+                ) border-box;
+            border: 4px solid transparent;
+
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.04),
+                0 0 30px rgba(10, 132, 255, 0.1);
+        }
+
+
+        /* Content inside tile - Clean and minimal */
+        .tile-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-weight: 300;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .tile:hover {
+            transform: translate(-50%, -50%) rotate(-45deg) scale(1.02);
+            box-shadow:
+                0 12px 35px rgba(0, 0, 0, 0.6),
+                inset 0 2px 4px rgba(255, 255, 255, 0.12);
+        }
+
+        /* Plus button - no border, increases on hover */
+        .plus-button {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 200;
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 10;
+        }
+
+        .plus-button:hover {
+            transform: translateX(-50%) rotate(90deg) scale(1.5);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .plus-button:active {
+            transform: translateX(-50%) rotate(90deg) scale(1.3);
+        }
+
+
+        /* Action buttons - positioned below diamond */
+        .button-group {
+            position: absolute;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .action-button {
+            padding: 10px 18px;
+            background: rgba(28, 28, 30, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            font-weight: 600;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-button:hover {
+            background: rgba(10, 132, 255, 0.3);
+            border-color: rgba(10, 132, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(10, 132, 255, 0.3);
+        }
+
+        .action-button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+            z-index: 99;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Action Overlay for Webhook Execution */
+        .action-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .action-overlay.active {
+            display: flex;
+        }
+
+        .action-message {
+            background: linear-gradient(135deg, rgba(10, 132, 255, 0.2) 0%, rgba(10, 132, 255, 0.1) 100%);
+            border: 2px solid rgba(10, 132, 255, 0.5);
+            border-radius: 24px;
+            padding: 40px 60px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(10, 132, 255, 0.3);
+        }
+
+        .action-message h2 {
+            font-size: 32px;
+            font-weight: 200;
+            color: #0a84ff;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .action-message p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .action-message::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(10, 132, 255, 0.5);
+            border-radius: 24px;
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        /* Split-screen door animation with grey blending */
+        @keyframes door-left {
+            0% {
+                clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+                opacity: 1;
+            }
+            70% {
+                opacity: 0.8;
+            }
+            100% {
+                clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes door-right {
+            0% {
+                clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
+                opacity: 1;
+            }
+            70% {
+                opacity: 0.8;
+            }
+            100% {
+                clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes modal-reveal {
+            0% {
+                opacity: 0;
+                transform: scale(0.85);
+                filter: blur(8px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes door-edge-glow {
+            0% {
+                box-shadow: inset 2px 0 8px rgba(10, 132, 255, 0);
+            }
+            50% {
+                box-shadow: inset 2px 0 8px rgba(10, 132, 255, 0.4);
+            }
+            100% {
+                box-shadow: inset 2px 0 8px rgba(10, 132, 255, 0);
+            }
+        }
+
+        .tile.door-opening .tile-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                rgba(28, 28, 30, 0.95) 0%,
+                rgba(36, 36, 38, 0.9) 50%,
+                rgba(44, 44, 46, 0.85) 100%);
+            border-right: 1px solid rgba(10, 132, 255, 0.3);
+            box-shadow: inset -2px 0 8px rgba(10, 132, 255, 0.2);
+            animation: door-left 0.7s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+            z-index: 50;
+            border-radius: 50px 0 0 50px;
+        }
+
+        .tile.door-opening .tile-content::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                rgba(44, 44, 46, 0.85) 0%,
+                rgba(36, 36, 38, 0.9) 50%,
+                rgba(28, 28, 30, 0.95) 100%);
+            border-left: 1px solid rgba(10, 132, 255, 0.3);
+            box-shadow: inset 2px 0 8px rgba(10, 132, 255, 0.2);
+            animation: door-right 0.7s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+            z-index: 50;
+            border-radius: 0 50px 50px 0;
+        }
+
+        /* In-tile modal panel with grey blending */
+        .tile-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg,
+                rgba(20, 20, 22, 0.98) 0%,
+                rgba(28, 28, 30, 0.96) 50%,
+                rgba(36, 36, 38, 0.98) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 50px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+            box-shadow:
+                inset 0 1px 2px rgba(255, 255, 255, 0.08),
+                inset 0 0 20px rgba(10, 132, 255, 0.05);
+        }
+
+        .tile-modal.active {
+            display: flex;
+            animation: modal-reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+        }
+
+        .tile-modal h3 {
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .tile-modal input,
+        .tile-modal textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0;
+            padding: 6px 0;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 11px;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 8px;
+            outline: none;
+        }
+
+        .tile-modal textarea {
+            min-height: 60px;
+            resize: none;
+        }
+
+        .tile-modal input:focus,
+        .tile-modal textarea:focus {
+            border-bottom-color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 1);
+        }
+
+        .tile-modal input::placeholder,
+        .tile-modal textarea::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .tile-modal-buttons {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .tile-modal-btn {
+            flex: 1;
+            padding: 8px 6px;
+            border: none;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .tile-modal-btn.primary {
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: #fff;
+        }
+
+        .tile-modal-btn.primary:hover {
+            transform: scale(1.05);
+        }
+
+        .tile-modal-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .tile-modal-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .tile-modal-btn.danger {
+            background: rgba(255, 69, 58, 0.25);
+            color: #ff453a;
+            border: 1px solid rgba(255, 69, 58, 0.4);
+        }
+
+        .tile-modal-btn.danger:hover {
+            background: rgba(255, 69, 58, 0.35);
+        }
+
+        .tile-action-message {
+            text-align: center;
+        }
+
+        .tile-action-message h2 {
+            font-size: 18px;
+            font-weight: 300;
+            color: #0a84ff;
+            margin-bottom: 6px;
+        }
+
+        .tile-action-message p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 300;
+        }
+
+        .action-button.has-data {
+            background: rgba(10, 132, 255, 0.15);
+            border-color: rgba(10, 132, 255, 0.3);
+        }
+
+        /* Spawn animation */
+        @keyframes spawn-in {
+            0% {
+                transform: rotate(45deg) scale(0.3);
+                opacity: 0;
+                filter: blur(10px);
+            }
+            60% {
+                transform: rotate(45deg) scale(1.08);
+                opacity: 1;
+                filter: blur(0);
+            }
+            100% {
+                transform: rotate(45deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .spawning .diamond-container {
+            animation: spawn-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">Automatic Blog Poster</h1>
+        <p class="dashboard-subtitle">Workflow Dashboard</p>
+    </div>
+
+    <!-- Action Overlay for Webhook Execution -->
+    <div class="action-overlay" id="actionOverlay">
+        <div class="action-message">
+            <h2>Running Webhook...</h2>
+            <p>Please wait</p>
+        </div>
+    </div>
+
+    <!-- Modal for Input -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Enter URL</h3>
+            <input type="text" id="modalInput" placeholder="Enter value...">
+            <div class="modal-buttons" id="modalButtons">
+                <button class="modal-btn secondary" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="saveModalData()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="canvas" id="canvas">
+        <div class="tile-container" style="left: 50%; top: 80px; transform: translateX(-50%);" data-tile-id="1">
+            <div class="tile-wrapper">
+                <div class="plus-button">+</div>
+                <div class="diamond-container">
+                    <div class="tile">
+                        <div class="tile-content">Tile 1</div>
+                        <div class="tile-modal">
+                            <h3 id="tileModalTitle-1">Enter URL</h3>
+                            <input type="text" id="tileModalName-1" placeholder="Link name..." style="display:none;">
+                            <input type="text" id="tileModalInput-1" placeholder="Enter value...">
+                            <div class="tile-modal-buttons" id="tileModalButtons-1" style="display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="action-button open-link">Link</button>
+                    <button class="action-button webhook">Webhook</button>
+                    <button class="action-button copy-script">Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tileCounter = 1;
+        let tileData = {}; // Store data for each tile: { tileId: { link: '', webhook: '', script: '' } }
+        let currentModalContext = null; // { tileId, type }
+
+        const canvas = document.getElementById('canvas');
+        const actionOverlay = document.getElementById('actionOverlay');
+
+        // Simple tile counter for positioning
+        let lastLeft = 50; // percentage
+        let lastTop = 80; // pixels
+
+        // Handle plus button clicks - simple spawning
+        canvas.addEventListener('click', (e) => {
+            if (e.target.classList.contains('plus-button')) {
+                e.stopPropagation();
+
+                // Calculate new position (spawn to the right, wrapping down)
+                lastLeft += 30;
+                if (lastLeft > 80) {
+                    lastLeft = 20;
+                    lastTop += 400;
+                }
+
+                createTile(lastLeft + '%', lastTop);
+            }
+        });
+
+        function createTile(left, top) {
+            tileCounter++;
+
+            const tileContainer = document.createElement('div');
+            tileContainer.className = 'tile-container spawning';
+            tileContainer.style.left = left;
+            tileContainer.style.top = top + 'px';
+
+            // Remove translateX if not centered
+            if (left !== '50%') {
+                tileContainer.style.transform = 'none';
+            } else {
+                tileContainer.style.transform = 'translateX(-50%)';
+            }
+
+            tileContainer.dataset.tileId = tileCounter;
+
+            // Initialize tile data
+            tileData[tileCounter] = { link: '', linkName: '', webhook: '', script: '' };
+
+            tileContainer.innerHTML = `
+                <div class="tile-wrapper">
+                    <div class="plus-button">+</div>
+                    <div class="diamond-container">
+                        <div class="tile">
+                            <div class="tile-content">Tile ${tileCounter}</div>
+                            <div class="tile-modal">
+                                <h3 id="tileModalTitle-${tileCounter}">Enter URL</h3>
+                                <input type="text" id="tileModalName-${tileCounter}" placeholder="Link name..." style="display:none;">
+                                <input type="text" id="tileModalInput-${tileCounter}" placeholder="Enter value...">
+                                <div class="tile-modal-buttons" id="tileModalButtons-${tileCounter}" style="display:none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="action-button open-link">Link</button>
+                        <button class="action-button webhook">Webhook</button>
+                        <button class="action-button copy-script">Copy</button>
+                    </div>
+                </div>
+            `;
+
+            canvas.appendChild(tileContainer);
+
+            // Remove spawning class after animation
+            setTimeout(() => {
+                tileContainer.classList.remove('spawning');
+            }, 800);
+
+            // Add drag functionality
+            makeDraggable(tileContainer);
+        }
+
+        function makeDraggable(element) {
+            let isDragging = false;
+            let hasMoved = false;
+            let startX;
+            let startY;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+
+            const tile = element.querySelector('.tile');
+            const dragThreshold = 5; // pixels before considering it a drag
+
+            tile.addEventListener('mousedown', (e) => {
+                // Don't drag if clicking on modal content or buttons
+                if (e.target.closest('.tile-modal') || e.target.closest('.button-group')) {
+                    return;
+                }
+
+                isDragging = true;
+                hasMoved = false;
+                const rect = element.getBoundingClientRect();
+                initialX = e.clientX - rect.left;
+                initialY = e.clientY - rect.top;
+                startX = e.clientX;
+                startY = e.clientY;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = Math.abs(e.clientX - startX);
+                    const deltaY = Math.abs(e.clientY - startY);
+
+                    // Only start dragging if moved beyond threshold
+                    if (deltaX > dragThreshold || deltaY > dragThreshold) {
+                        hasMoved = true;
+                        e.preventDefault();
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                        element.style.left = currentX + 'px';
+                        element.style.top = currentY + 'px';
+                        element.style.transform = 'none'; // Remove any transform
+                    }
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                hasMoved = false;
+            });
+        }
+
+        // Make initial tile draggable
+        const initialTile = document.querySelector('.tile-container');
+        makeDraggable(initialTile);
+
+        // Initialize tile data for tile 1
+        tileData['1'] = { link: '', linkName: '', webhook: '', script: '' };
+
+        // ===== TILE MODAL FUNCTIONS =====
+        function openTileModal(tileId, type) {
+            currentModalContext = { tileId, type };
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const tile = tileContainer.querySelector('.tile');
+            const tileModal = tileContainer.querySelector('.tile-modal');
+            const modalTitle = tileContainer.querySelector(`#tileModalTitle-${tileId}`);
+            const modalName = tileContainer.querySelector(`#tileModalName-${tileId}`);
+            const modalInput = tileContainer.querySelector(`#tileModalInput-${tileId}`);
+            const modalButtons = tileContainer.querySelector(`#tileModalButtons-${tileId}`);
+
+            // Trigger door opening animation
+            tile.classList.add('door-opening');
+
+            // Get existing data
+            const data = tileData[tileId] || { link: '', linkName: '', webhook: '', script: '' };
+            const hasData = data[type] && data[type].length > 0;
+
+            // Configure modal based on type
+            if (type === 'link') {
+                modalTitle.style.display = 'none'; // Hide title for minimal look
+                modalName.style.display = 'block';
+                modalName.type = 'text';
+                modalName.placeholder = 'Link name...';
+                modalName.value = data.linkName || '';
+                modalInput.type = 'text';
+                modalInput.placeholder = 'https://example.com';
+                modalInput.value = data.link || '';
+            } else if (type === 'webhook') {
+                modalTitle.style.display = 'block';
+                if (modalName) modalName.style.display = 'none';
+                modalTitle.textContent = hasData ? 'Webhook' : 'Enter Webhook';
+                modalInput.type = 'text';
+                modalInput.placeholder = 'https://hook.make.com/...';
+                modalInput.value = data.webhook || '';
+            } else if (type === 'script') {
+                modalTitle.style.display = 'block';
+                if (modalName) modalName.style.display = 'none';
+                modalTitle.textContent = hasData ? 'Script' : 'Enter Script';
+                // Replace input with textarea for scripts
+                if (modalInput.tagName !== 'TEXTAREA') {
+                    const textarea = document.createElement('textarea');
+                    textarea.id = `tileModalInput-${tileId}`;
+                    textarea.placeholder = 'Enter your script...';
+                    textarea.value = data.script || '';
+                    modalInput.parentNode.replaceChild(textarea, modalInput);
+                } else {
+                    modalInput.value = data.script || '';
+                }
+            }
+
+            // Show appropriate buttons
+            if (hasData) {
+                if (type === 'webhook') {
+                    modalButtons.innerHTML = `
+                        <button class="tile-modal-btn danger" onclick="deleteTileData('${tileId}')">Del</button>
+                        <button class="tile-modal-btn secondary" onclick="editTileData('${tileId}')">Edit</button>
+                        <button class="tile-modal-btn primary" onclick="executeTileAction('${tileId}')">Run</button>
+                    `;
+                } else if (type === 'script') {
+                    modalButtons.innerHTML = `
+                        <button class="tile-modal-btn danger" onclick="deleteTileData('${tileId}')">Del</button>
+                        <button class="tile-modal-btn secondary" onclick="editTileData('${tileId}')">Edit</button>
+                        <button class="tile-modal-btn primary" onclick="copyTileScript('${tileId}')">Copy</button>
+                    `;
+                } else { // link
+                    modalButtons.innerHTML = `
+                        <button class="tile-modal-btn danger" onclick="deleteTileData('${tileId}')">Del</button>
+                        <button class="tile-modal-btn secondary" onclick="editTileData('${tileId}')">Edit</button>
+                        <button class="tile-modal-btn primary" onclick="openTileLink('${tileId}')">Open</button>
+                    `;
+                }
+                // Make input readonly when showing saved data
+                const input = tileContainer.querySelector(`#tileModalInput-${tileId}`);
+                input.readOnly = true;
+            } else {
+                modalButtons.innerHTML = `
+                    <button class="tile-modal-btn secondary" onclick="closeTileModal('${tileId}')">Cancel</button>
+                    <button class="tile-modal-btn primary" onclick="saveTileModalData('${tileId}')">Save</button>
+                `;
+                const input = tileContainer.querySelector(`#tileModalInput-${tileId}`);
+                input.readOnly = false;
+            }
+
+            tileModal.classList.add('active');
+
+            // Add Enter key handler
+            const handleEnter = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveTileModalData(tileId);
+                }
+            };
+            modalInput.addEventListener('keypress', handleEnter);
+            if (modalName && type === 'link') {
+                modalName.addEventListener('keypress', handleEnter);
+            }
+
+            // Add click outside to close
+            setTimeout(() => {
+                const handleClickOutside = (e) => {
+                    if (!tileModal.contains(e.target) && tileModal.classList.contains('active')) {
+                        closeTileModal(tileId);
+                        document.removeEventListener('click', handleClickOutside);
+                    }
+                };
+                document.addEventListener('click', handleClickOutside);
+            }, 100);
+        }
+
+        function closeTileModal(tileId) {
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const tile = tileContainer.querySelector('.tile');
+            const tileModal = tileContainer.querySelector('.tile-modal');
+
+            // Remove door opening class
+            tile.classList.remove('door-opening');
+
+            tileModal.classList.remove('active');
+            currentModalContext = null;
+
+            // Reset to input if it was changed to textarea
+            const modalInput = tileContainer.querySelector(`#tileModalInput-${tileId}`);
+            if (modalInput && modalInput.tagName === 'TEXTAREA') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `tileModalInput-${tileId}`;
+                modalInput.parentNode.replaceChild(input, modalInput);
+            }
+        }
+
+        function saveTileModalData(tileId) {
+            if (!currentModalContext) return;
+
+            const { type } = currentModalContext;
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const value = tileContainer.querySelector(`#tileModalInput-${tileId}`).value.trim();
+
+            if (!value) {
+                return;
+            }
+
+            // Initialize tile data if needed
+            if (!tileData[tileId]) {
+                tileData[tileId] = { link: '', linkName: '', webhook: '', script: '' };
+            }
+
+            // Save the data
+            if (type === 'link') {
+                const nameInput = tileContainer.querySelector(`#tileModalName-${tileId}`);
+                const linkName = nameInput ? nameInput.value.trim() : '';
+                tileData[tileId].linkName = linkName;
+                tileData[tileId].link = value;
+            } else {
+                tileData[tileId][type] = value;
+            }
+
+            // Update button appearance
+            const button = tileContainer.querySelector(`.${type === 'link' ? 'open-link' : type === 'webhook' ? 'webhook' : 'copy-script'}`);
+            if (button) {
+                button.classList.add('has-data');
+            }
+
+            closeTileModal(tileId);
+        }
+
+        function editTileData(tileId) {
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const modalInput = tileContainer.querySelector(`#tileModalInput-${tileId}`);
+            const modalButtons = tileContainer.querySelector(`#tileModalButtons-${tileId}`);
+
+            modalInput.readOnly = false;
+            modalButtons.innerHTML = `
+                <button class="tile-modal-btn secondary" onclick="closeTileModal('${tileId}')">Cancel</button>
+                <button class="tile-modal-btn primary" onclick="saveTileModalData('${tileId}')">Save</button>
+            `;
+            modalInput.focus();
+        }
+
+        function deleteTileData(tileId) {
+            if (!currentModalContext) return;
+
+            const { type } = currentModalContext;
+
+            if (tileData[tileId]) {
+                tileData[tileId][type] = '';
+            }
+
+            // Update button appearance
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const button = tileContainer.querySelector(`.${type === 'link' ? 'open-link' : type === 'webhook' ? 'webhook' : 'copy-script'}`);
+            if (button) {
+                button.classList.remove('has-data');
+            }
+
+            closeTileModal(tileId);
+        }
+
+        // ===== TILE ACTION FUNCTIONS =====
+        function openTileLink(tileId) {
+            if (!currentModalContext) return;
+
+            const url = tileData[tileId]?.link;
+
+            if (url) {
+                window.open(url.startsWith('http') ? url : 'https://' + url, '_blank');
+                closeTileModal(tileId);
+            }
+        }
+
+        function executeTileAction(tileId) {
+            if (!currentModalContext) return;
+
+            const webhookUrl = tileData[tileId]?.webhook;
+            if (!webhookUrl) return;
+
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const tileModal = tileContainer.querySelector('.tile-modal');
+            const modalButtons = tileContainer.querySelector(`#tileModalButtons-${tileId}`);
+
+            // Show running state in tile modal
+            tileModal.innerHTML = `
+                <div class="tile-action-message">
+                    <h2>Running...</h2>
+                    <p>Please wait</p>
+                </div>
+            `;
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    source: 'Automatic Blog Poster Dashboard',
+                    timestamp: new Date().toISOString(),
+                    tileId: tileId
+                })
+            }).then(() => {
+                // Update to success
+                tileModal.innerHTML = `
+                    <div class="tile-action-message">
+                        <h2>Success!</h2>
+                        <p>Webhook triggered</p>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    closeTileModal(tileId);
+                    // Restore modal structure
+                    tileModal.innerHTML = `
+                        <h3 id="tileModalTitle-${tileId}">Webhook</h3>
+                        <input type="text" id="tileModalInput-${tileId}" placeholder="Enter value...">
+                        <div class="tile-modal-buttons" id="tileModalButtons-${tileId}"></div>
+                    `;
+                }, 1500);
+            }).catch(() => {
+                tileModal.innerHTML = `
+                    <div class="tile-action-message">
+                        <h2 style="color: #ff453a;">Error!</h2>
+                        <p>Failed to trigger</p>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    closeTileModal(tileId);
+                    tileModal.innerHTML = `
+                        <h3 id="tileModalTitle-${tileId}">Webhook</h3>
+                        <input type="text" id="tileModalInput-${tileId}" placeholder="Enter value...">
+                        <div class="tile-modal-buttons" id="tileModalButtons-${tileId}"></div>
+                    `;
+                }, 1500);
+            });
+        }
+
+        function copyTileScript(tileId) {
+            if (!currentModalContext) return;
+
+            const script = tileData[tileId]?.script;
+
+            if (script) {
+                const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+                const tileModal = tileContainer.querySelector('.tile-modal');
+
+                navigator.clipboard.writeText(script).then(() => {
+                    tileModal.innerHTML = `
+                        <div class="tile-action-message">
+                            <h2>Copied!</h2>
+                            <p>Script in clipboard</p>
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        closeTileModal(tileId);
+                        tileModal.innerHTML = `
+                            <h3 id="tileModalTitle-${tileId}">Script</h3>
+                            <textarea id="tileModalInput-${tileId}" placeholder="Enter script..."></textarea>
+                            <div class="tile-modal-buttons" id="tileModalButtons-${tileId}"></div>
+                        `;
+                    }, 1200);
+                });
+            }
+        }
+
+        // ===== BUTTON CLICK HANDLERS =====
+        canvas.addEventListener('click', (e) => {
+            if (e.target.classList.contains('open-link')) {
+                const tileContainer = e.target.closest('.tile-container');
+                const tileId = tileContainer.dataset.tileId;
+                openTileModal(tileId, 'link');
+            } else if (e.target.classList.contains('webhook')) {
+                const tileContainer = e.target.closest('.tile-container');
+                const tileId = tileContainer.dataset.tileId;
+                openTileModal(tileId, 'webhook');
+            } else if (e.target.classList.contains('copy-script')) {
+                const tileContainer = e.target.closest('.tile-container');
+                const tileId = tileContainer.dataset.tileId;
+                openTileModal(tileId, 'script');
+            }
+        });
+    </script>
+</body>
+</html>

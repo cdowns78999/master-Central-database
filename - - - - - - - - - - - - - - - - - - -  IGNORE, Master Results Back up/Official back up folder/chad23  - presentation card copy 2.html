@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentation Cards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 25%, #0f0f23 50%, #1a0a2e 75%, #16213e 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 40px;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 300;
+            background: linear-gradient(90deg, #a855f7, #ec4899, #a855f7);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .drop-zone {
+            border: 3px dashed rgba(168, 85, 247, 0.5);
+            border-radius: 24px;
+            padding: 60px;
+            text-align: center;
+            margin-bottom: 50px;
+            transition: all 0.3s ease;
+            background: rgba(168, 85, 247, 0.05);
+            cursor: pointer;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: #ec4899;
+            background: rgba(236, 72, 153, 0.1);
+            box-shadow: 0 0 40px rgba(236, 72, 153, 0.3);
+            transform: scale(1.01);
+        }
+
+        .drop-zone p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.4rem;
+            font-weight: 300;
+        }
+
+        .drop-zone .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 40px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 6px solid white;
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow:
+                0 0 20px rgba(168, 85, 247, 0.4),
+                0 0 40px rgba(236, 72, 153, 0.2),
+                0 0 60px rgba(168, 85, 247, 0.1),
+                inset 0 0 30px rgba(168, 85, 247, 0.05);
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow:
+                0 0 30px rgba(168, 85, 247, 0.6),
+                0 0 60px rgba(236, 72, 153, 0.4),
+                0 0 90px rgba(168, 85, 247, 0.2),
+                inset 0 0 40px rgba(236, 72, 153, 0.1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 23px;
+            background: linear-gradient(135deg, #a855f7, #ec4899, #8b5cf6, #d946ef);
+            background-size: 300% 300%;
+            animation: borderGlow 4s ease infinite;
+            z-index: -1;
+            opacity: 0.7;
+        }
+
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .image-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            position: relative;
+        }
+
+        .image-container:active {
+            cursor: grabbing;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.1s ease-out;
+            pointer-events: none;
+        }
+
+        .card-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .zoom-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .zoom-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .zoom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
+            transition: transform 0.2s;
+        }
+
+        .zoom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .zoom-value {
+            color: white;
+            font-size: 0.9rem;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.4);
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .reset-btn {
+            background: rgba(168, 85, 247, 0.2);
+            border: 2px solid rgba(168, 85, 247, 0.5);
+            color: #a855f7;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: rgba(168, 85, 247, 0.4);
+            border-color: #a855f7;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 100px 40px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .empty-state p {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 600px) {
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .drop-zone {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>PRESENTATION CARDS</h1>
+
+    <div class="drop-zone" id="dropZone">
+        <div class="icon">+</div>
+        <p>Drop your screenshots here or click to upload</p>
+        <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+    </div>
+
+    <div class="cards-container" id="cardsContainer">
+        <div class="empty-state">
+            <p>Your cards will appear here</p>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const cardsContainer = document.getElementById('cardsContainer');
+        let cardCount = 0;
+
+        // Click to upload
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop events
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            // Remove empty state
+            const emptyState = cardsContainer.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    createCard(file);
+                }
+            });
+        }
+
+        function createCard(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                cardCount++;
+                const cardId = `card-${cardCount}`;
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.id = cardId;
+
+                card.innerHTML = `
+                    <div class="image-container" data-zoom="1" data-pan-x="0" data-pan-y="0">
+                        <img src="${e.target.result}" alt="Screenshot" draggable="false">
+                    </div>
+                    <div class="card-controls">
+                        <span class="zoom-label">Zoom:</span>
+                        <input type="range" class="zoom-slider" min="1" max="5" step="0.1" value="1">
+                        <span class="zoom-value">100%</span>
+                        <button class="reset-btn">Reset</button>
+                        <button class="delete-btn">Remove</button>
+                    </div>
+                `;
+
+                cardsContainer.appendChild(card);
+
+                // Setup zoom functionality
+                const slider = card.querySelector('.zoom-slider');
+                const zoomValue = card.querySelector('.zoom-value');
+                const img = card.querySelector('img');
+                const container = card.querySelector('.image-container');
+                const deleteBtn = card.querySelector('.delete-btn');
+                const resetBtn = card.querySelector('.reset-btn');
+
+                let isDragging = false;
+                let startX, startY, startPanX, startPanY;
+
+                slider.addEventListener('input', () => {
+                    const zoom = parseFloat(slider.value);
+                    container.dataset.zoom = zoom;
+                    updateImageTransform(container, img);
+                    zoomValue.textContent = Math.round(zoom * 100) + '%';
+                });
+
+                // Pan functionality
+                container.addEventListener('mousedown', (e) => {
+                    if (parseFloat(container.dataset.zoom) > 1) {
+                        isDragging = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        startPanX = parseFloat(container.dataset.panX) || 0;
+                        startPanY = parseFloat(container.dataset.panY) || 0;
+                        container.style.cursor = 'grabbing';
+                    }
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const zoom = parseFloat(container.dataset.zoom);
+                        const dx = (e.clientX - startX) / zoom;
+                        const dy = (e.clientY - startY) / zoom;
+                        container.dataset.panX = startPanX + dx;
+                        container.dataset.panY = startPanY + dy;
+                        updateImageTransform(container, img);
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        container.style.cursor = 'grab';
+                    }
+                });
+
+                // Mouse wheel zoom
+                container.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -0.2 : 0.2;
+                    let newZoom = parseFloat(container.dataset.zoom) + delta;
+                    newZoom = Math.max(1, Math.min(5, newZoom));
+                    container.dataset.zoom = newZoom;
+                    slider.value = newZoom;
+                    zoomValue.textContent = Math.round(newZoom * 100) + '%';
+                    updateImageTransform(container, img);
+                });
+
+                // Reset button
+                resetBtn.addEventListener('click', () => {
+                    container.dataset.zoom = 1;
+                    container.dataset.panX = 0;
+                    container.dataset.panY = 0;
+                    slider.value = 1;
+                    zoomValue.textContent = '100%';
+                    updateImageTransform(container, img);
+                });
+
+                // Delete button
+                deleteBtn.addEventListener('click', () => {
+                    card.style.transform = 'scale(0.8)';
+                    card.style.opacity = '0';
+                    setTimeout(() => card.remove(), 300);
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateImageTransform(container, img) {
+            const zoom = parseFloat(container.dataset.zoom) || 1;
+            const panX = parseFloat(container.dataset.panX) || 0;
+            const panY = parseFloat(container.dataset.panY) || 0;
+            img.style.transform = `scale(${zoom}) translate(${panX}px, ${panY}px)`;
+        }
+    </script>
+</body>
+</html>

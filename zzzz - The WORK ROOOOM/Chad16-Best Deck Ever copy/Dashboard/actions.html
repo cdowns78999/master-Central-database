@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Actions</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Action Center Styles */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .action-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .action-section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-section-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* Workflow Cards */
+        .workflow-card {
+            background: linear-gradient(135deg, rgba(76, 201, 240, 0.08), rgba(67, 97, 238, 0.08));
+            border: 1px solid rgba(76, 201, 240, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .workflow-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary), var(--accent));
+        }
+
+        .workflow-card:hover {
+            transform: translateY(-3px) translateX(3px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px rgba(76, 201, 240, 0.15);
+        }
+
+        .workflow-step {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .workflow-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .workflow-desc {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* Filter Buttons */
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-btn:hover {
+            background: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary);
+            color: #fff;
+            transform: translateX(4px);
+        }
+
+        .filter-btn .icon {
+            font-size: 1rem;
+        }
+
+        /* Status indicator */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            color: #4ade80;
+        }
+
+        .status-badge .dot {
+            width: 6px;
+            height: 6px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* Results area */
+        .results-area {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .results-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+
+        .results-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--primary);
+        }
+
+        /* Quick Fill Lab Overlay */
+        .lab-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+        }
+
+        .lab-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .lab-container {
+            min-height: 100vh;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .lab-header {
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .lab-title {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #f3f4f6;
+            margin: 0;
+        }
+
+        .lab-subtitle {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-top: 6px;
+        }
+
+        .lab-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: #4ade80;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lab-status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #4ade80;
+        }
+
+        .close-lab-btn {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 2001;
+        }
+
+        .close-lab-btn:hover {
+            background: rgba(255, 95, 86, 0.2);
+            border-color: #ff5f56;
+            color: #ff5f56;
+        }
+
+        .selection-options {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .selection-btn {
+            flex: 1;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .selection-btn:hover {
+            background: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        .selection-btn.active {
+            background: rgba(76, 201, 240, 0.15);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        .selection-btn-title {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .selection-btn-desc {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            font-weight: 400;
+        }
+
+        /* Grid Table */
+        .lab-grid-wrapper {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .lab-grid-header {
+            display: grid;
+            grid-template-columns: 40px 1.5fr 1fr 1fr 1.2fr;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+            gap: 15px;
+        }
+
+        .lab-grid-body {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .lab-grid-row {
+            display: grid;
+            grid-template-columns: 40px 1.5fr 1fr 1fr 1.2fr;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            gap: 15px;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .lab-grid-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .lab-row-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .lab-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .lab-input:focus {
+            border-color: var(--primary);
+            background: rgba(76, 201, 240, 0.05);
+        }
+
+        .lab-select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .lab-select option {
+            background: #1a1f27;
+        }
+
+        .lab-actions {
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .lab-btn {
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .lab-btn.secondary {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #9ca3af;
+        }
+
+        .lab-btn.secondary:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .lab-btn.primary {
+            background: linear-gradient(135deg, #4cc9f0, #4361ee);
+            border: none;
+            color: #000;
+            box-shadow: 0 4px 20px rgba(76, 201, 240, 0.3);
+        }
+
+        .lab-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(76, 201, 240, 0.4);
+        }
+
+        .lab-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+
+        /* Add Tiles Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: #14181e;
+            border-radius: 16px;
+            padding: 2rem;
+            min-width: 400px;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+        }
+
+        .count-picker {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .count-input {
+            width: 80px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .count-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .count-btn:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .preset-counts {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .preset-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .prefix-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .prefix-input:focus {
+            border-color: var(--primary);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn.cancel {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-dim);
+        }
+
+        .modal-btn.confirm {
+            background: var(--primary);
+            border: none;
+            color: #000;
+        }
+
+        .modal-btn.confirm:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Tiles display */
+        .tiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Schedule Section */
+        .today-display {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.1), rgba(34, 197, 94, 0.05));
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #4ade80;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .today-display::before {
+            content: '📍';
+        }
+
+        .schedule-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .schedule-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .schedule-btn:hover {
+            background: rgba(76, 201, 240, 0.08);
+            border-color: rgba(76, 201, 240, 0.3);
+            transform: translateX(4px);
+        }
+
+        .schedule-btn.overdue {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .schedule-btn.overdue:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .schedule-icon {
+            font-size: 1.2rem;
+            width: 28px;
+            text-align: center;
+        }
+
+        .schedule-info {
+            flex: 1;
+        }
+
+        .schedule-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .schedule-desc {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .schedule-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary);
+            background: rgba(76, 201, 240, 0.1);
+            padding: 6px 12px;
+            border-radius: 6px;
+            min-width: 36px;
+            text-align: center;
+        }
+
+        .schedule-btn.overdue .schedule-count {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span>OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="cards.html" class="nav-link">Cards</a>
+            <a href="actions.html" class="nav-link active">Actions</a>
+            <a href="contacts.html" class="nav-link">Contacts</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+            <a href="offboarding.html" class="nav-link">Offboarding</a>
+            <a href="social_sync.html" class="nav-link">Social Sync</a>
+            <a href="payments.html" class="nav-link">Payments</a>
+            <div
+                style="margin-top: 1rem; padding-left: 10px; font-size: 0.65rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7;">
+                Modules</div>
+            <a href="contact_manager.html" class="nav-link">Contact Manager</a>
+            <a href="seo_blog.html" class="nav-link">SEO Blog</a>
+            <a href="playlist_hunter.html" class="nav-link">Playlist Hunter</a>
+            <a href="press_hunter.html" class="nav-link">Press Hunter</a>
+            <div style="margin-top: 1rem;"></div>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1 style="margin: 0;">Action Center</h1>
+            <div class="status-badge">
+                <div class="dot"></div>
+                <span id="tileCountBadge">0 tiles loaded</span>
+            </div>
+        </div>
+
+        <div class="action-grid">
+            <!-- Workflow Section -->
+            <div class="action-section">
+                <div class="action-section-title">Workflow</div>
+
+                <div class="workflow-card" onclick="openAddModal()">
+                    <div class="workflow-step">Step 1</div>
+                    <div class="workflow-title">Add Tiles</div>
+                    <div class="workflow-desc">Create blank tiles to populate</div>
+                </div>
+
+                <div class="workflow-card" onclick="openQuickFillLab()">
+                    <div class="workflow-step">Step 2</div>
+                    <div class="workflow-title">Quick Fill Lab</div>
+                    <div class="workflow-desc">Batch populate tiles in a grid</div>
+                </div>
+            </div>
+
+            <!-- Schedule Section -->
+            <div class="action-section">
+                <div class="action-section-title">Schedule</div>
+                <div class="today-display" id="todayDisplay"></div>
+
+                <div class="schedule-grid">
+                    <button class="schedule-btn" onclick="showActiveCampaigns()">
+                        <span class="schedule-icon">🔴</span>
+                        <div class="schedule-info">
+                            <div class="schedule-title">Active Campaigns</div>
+                            <div class="schedule-desc">All non-complete campaigns</div>
+                        </div>
+                        <span class="schedule-count" id="activeCount">0</span>
+                    </button>
+                    <button class="schedule-btn overdue" onclick="showOverdueFollowups()">
+                        <span class="schedule-icon">⚠️</span>
+                        <div class="schedule-info">
+                            <div class="schedule-title">Past Due</div>
+                            <div class="schedule-desc">Follow-ups overdue</div>
+                        </div>
+                        <span class="schedule-count" id="overdueCount">0</span>
+                    </button>
+                    <button class="schedule-btn" onclick="showDueToday()">
+                        <span class="schedule-icon">📅</span>
+                        <div class="schedule-info">
+                            <div class="schedule-title">Due Today</div>
+                            <div class="schedule-desc">Follow-ups for today</div>
+                        </div>
+                        <span class="schedule-count" id="todayCount">0</span>
+                    </button>
+                    <button class="schedule-btn" onclick="showDueThisWeek()">
+                        <span class="schedule-icon">📆</span>
+                        <div class="schedule-info">
+                            <div class="schedule-title">Due This Week</div>
+                            <div class="schedule-desc">Next 7 days</div>
+                        </div>
+                        <span class="schedule-count" id="weekCount">0</span>
+                    </button>
+                    <button class="schedule-btn" onclick="showNoContact30Days()">
+                        <span class="schedule-icon">💤</span>
+                        <div class="schedule-info">
+                            <div class="schedule-title">No Contact 30+ Days</div>
+                            <div class="schedule-desc">Gone cold</div>
+                        </div>
+                        <span class="schedule-count" id="coldCount">0</span>
+                    </button>
+                    <button class="schedule-btn" onclick="showRecentlyContacted()">
+                        <span class="schedule-icon">✨</span>
+                        <div class="schedule-info">
+                            <div class="schedule-title">Recently Contacted</div>
+                            <div class="schedule-desc">Last 7 days</div>
+                        </div>
+                        <span class="schedule-count" id="recentCount">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Row -->
+        <div class="action-section" style="margin-bottom: 2rem;">
+            <div class="action-section-title">Filters</div>
+            <div class="filter-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <button class="filter-btn" onclick="showUnpopulated()">
+                    <span class="icon">📋</span> Unpopulated
+                </button>
+                <button class="filter-btn" onclick="showHighPriority()">
+                    <span class="icon">🔥</span> High Priority
+                </button>
+                <button class="filter-btn" onclick="showCompleted()">
+                    <span class="icon">✅</span> Completed
+                </button>
+                <button class="filter-btn" onclick="showPress()">
+                    <span class="icon">📰</span> Press
+                </button>
+                <button class="filter-btn" onclick="showSpotify()">
+                    <span class="icon">🎵</span> Spotify
+                </button>
+                <button class="filter-btn" onclick="showSocial()">
+                    <span class="icon">📱</span> Social
+                </button>
+                <button class="filter-btn" onclick="showAll()">
+                    <span class="icon">👁️</span> Show All
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Area -->
+        <div class="results-area" id="resultsArea" style="display: none;">
+            <div class="results-header">
+                <div class="results-title" id="resultsTitle">Results</div>
+                <div class="results-count" id="resultsCount">0 tiles</div>
+            </div>
+            <div class="tiles-grid" id="tilesContainer"></div>
+        </div>
+    </main>
+
+    <!-- Add Tiles Modal -->
+    <div class="modal-overlay" id="addModalOverlay" onclick="closeAddModal()"></div>
+    <div class="modal" id="addModal">
+        <div class="modal-title">Add Tiles</div>
+        <div class="modal-subtitle">Create blank tiles to populate</div>
+
+        <div class="count-picker">
+            <button class="count-btn" onclick="adjustCount(-1)">−</button>
+            <input type="number" class="count-input" id="tileCount" value="5" min="1" max="100">
+            <button class="count-btn" onclick="adjustCount(1)">+</button>
+        </div>
+
+        <div class="preset-counts">
+            <button class="preset-btn" onclick="setCount(1)">1</button>
+            <button class="preset-btn" onclick="setCount(5)">5</button>
+            <button class="preset-btn" onclick="setCount(10)">10</button>
+            <button class="preset-btn" onclick="setCount(25)">25</button>
+            <button class="preset-btn" onclick="setCount(50)">50</button>
+        </div>
+
+        <input type="text" class="prefix-input" id="tilePrefix" placeholder="Naming prefix (optional)...">
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeAddModal()">Cancel</button>
+            <button class="modal-btn confirm" onclick="createTiles()">Create</button>
+        </div>
+    </div>
+
+    <!-- Quick Fill Lab -->
+    <div class="lab-overlay" id="quickFillLab">
+        <button class="close-lab-btn" onclick="closeQuickFillLab()">✕ Close Lab</button>
+
+        <div class="lab-container">
+            <div class="lab-header">
+                <div>
+                    <h1 class="lab-title">Quick Fill Lab</h1>
+                    <p class="lab-subtitle">Batch populate your tiles in seconds</p>
+                </div>
+                <div class="lab-status">
+                    <div class="lab-status-dot"></div>
+                    <span id="labTileCount">0 Tiles Ready</span>
+                </div>
+            </div>
+
+            <div class="selection-options">
+                <button class="selection-btn active" id="selectNewBtn" onclick="selectNewTiles()">
+                    <div class="selection-btn-title">📦 Just Created</div>
+                    <div class="selection-btn-desc">Fill tiles you just added</div>
+                </button>
+                <button class="selection-btn" id="selectAllBtn" onclick="selectAllTiles()">
+                    <div class="selection-btn-title">🗂️ All Tiles</div>
+                    <div class="selection-btn-desc">Fill all existing tiles</div>
+                </button>
+                <button class="selection-btn" id="selectUnfilledBtn" onclick="selectUnfilledTiles()">
+                    <div class="selection-btn-title">📋 Unfilled Only</div>
+                    <div class="selection-btn-desc">Fill blank tiles only</div>
+                </button>
+            </div>
+
+            <div class="lab-grid-wrapper">
+                <div class="lab-grid-header">
+                    <span>#</span>
+                    <span>Artist / Card Name</span>
+                    <span>Song Name</span>
+                    <span>Campaign Type</span>
+                    <span>Contact</span>
+                </div>
+                <div class="lab-grid-body" id="labGridBody"></div>
+            </div>
+
+            <div class="lab-empty" id="labEmpty" style="display: none;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                <p>No tiles to fill. Create some first!</p>
+            </div>
+
+            <div class="lab-actions">
+                <button class="lab-btn secondary" onclick="clearLabInputs()">Clear All</button>
+                <button class="lab-btn primary" onclick="applyLabData()">⚡ Apply to Tiles</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="tile-component.js"></script>
+    <script>
+        // State
+        let tiles = [];
+        let newlyCreatedTiles = [];
+        let labSelectedTiles = [];
+        let displayedTiles = [];
+
+        // Load from localStorage on init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            updateBadge();
+            updateTodayDisplay();
+            updateScheduleCounts();
+        });
+
+        function updateTodayDisplay() {
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('todayDisplay').textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr || dateStr === 'MM.DD' || dateStr === '—') return null;
+            const [month, day] = dateStr.split('.');
+            const year = new Date().getFullYear();
+            return new Date(year, parseInt(month) - 1, parseInt(day));
+        }
+
+        function updateScheduleCounts() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const weekFromNow = new Date(today);
+            weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            let activeCount = 0, overdueCount = 0, todayCount = 0, weekCount = 0, coldCount = 0, recentCount = 0;
+
+            tiles.forEach(tile => {
+                Object.values(tile.projectData || {}).forEach(cat => {
+                    cat.forEach(item => {
+                        // Active (not completed, has reachout)
+                        if (item.reachout !== '—' && !item.completed) {
+                            activeCount++;
+                        }
+
+                        const lastDate = parseDate(item.last);
+
+                        // Overdue (last contact > 14 days, not completed)
+                        if (lastDate && !item.completed && item.reachout !== '—') {
+                            const fourteenDaysAgo = new Date(today);
+                            fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+                            if (lastDate < fourteenDaysAgo) {
+                                overdueCount++;
+                            }
+                        }
+
+                        // Due today (last contact is today)
+                        if (lastDate && lastDate.toDateString() === today.toDateString() && !item.completed) {
+                            todayCount++;
+                        }
+
+                        // Due this week
+                        if (lastDate && lastDate >= today && lastDate <= weekFromNow && !item.completed) {
+                            weekCount++;
+                        }
+
+                        // Cold (no contact 30+ days)
+                        if (lastDate && lastDate < thirtyDaysAgo && !item.completed && item.reachout !== '—') {
+                            coldCount++;
+                        }
+
+                        // Recently contacted
+                        if (lastDate && lastDate >= sevenDaysAgo && lastDate <= today) {
+                            recentCount++;
+                        }
+                    });
+                });
+            });
+
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('overdueCount').textContent = overdueCount;
+            document.getElementById('todayCount').textContent = todayCount;
+            document.getElementById('weekCount').textContent = weekCount;
+            document.getElementById('coldCount').textContent = coldCount;
+            document.getElementById('recentCount').textContent = recentCount;
+        }
+
+        function loadFromStorage() {
+            try {
+                const stored = localStorage.getItem('cards_session');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    tiles = data.cards || [];
+                }
+            } catch (e) {
+                console.error('Error loading:', e);
+            }
+        }
+
+        function saveToStorage() {
+            const data = { cards: tiles.map(t => t.getData ? t.getData() : t) };
+            localStorage.setItem('cards_session', JSON.stringify(data));
+        }
+
+        function updateBadge() {
+            document.getElementById('tileCountBadge').textContent = `${tiles.length} tiles loaded`;
+        }
+
+        // Add Modal
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('open');
+            document.getElementById('addModalOverlay').classList.add('open');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('open');
+            document.getElementById('addModalOverlay').classList.remove('open');
+        }
+
+        function adjustCount(delta) {
+            const input = document.getElementById('tileCount');
+            input.value = Math.max(1, Math.min(100, (parseInt(input.value) || 1) + delta));
+        }
+
+        function setCount(num) {
+            document.getElementById('tileCount').value = num;
+        }
+
+        function createTiles() {
+            const count = parseInt(document.getElementById('tileCount').value) || 1;
+            const prefix = document.getElementById('tilePrefix').value.trim() || 'New Card';
+
+            newlyCreatedTiles = [];
+
+            for (let i = 1; i <= count; i++) {
+                const name = count === 1 ? prefix : `${prefix} ${i}`;
+                const tileData = {
+                    id: 'tile-' + Math.random().toString(36).substr(2, 9),
+                    name: name,
+                    superTitle: 'Campaign',
+                    projectData: {
+                        press: [{ name: 'Song 1', reachout: '—', first: 'MM.DD', last: 'MM.DD', method: '—', followup: '0 Pending', completed: false, contacts: [] }],
+                        spotify: [{ name: 'Song 1', reachout: '—', first: 'MM.DD', last: 'MM.DD', method: '—', followup: '0 Pending', completed: false, contacts: [] }],
+                        social: [{ name: 'Song 1', reachout: '—', first: 'MM.DD', last: 'MM.DD', method: '—', followup: '0 Pending', completed: false, contacts: [] }],
+                        other: [{ name: 'Song 1', reachout: '—', first: 'MM.DD', last: 'MM.DD', method: '—', followup: '0 Pending', completed: false, contacts: [] }]
+                    }
+                };
+                tiles.push(tileData);
+                newlyCreatedTiles.push(tileData);
+            }
+
+            saveToStorage();
+            updateBadge();
+            closeAddModal();
+
+            document.getElementById('tileCount').value = 5;
+            document.getElementById('tilePrefix').value = '';
+
+            alert(`Created ${count} tile(s)! Open Quick Fill Lab to populate them.`);
+        }
+
+        // Quick Fill Lab
+        function openQuickFillLab() {
+            if (tiles.length === 0) {
+                alert('Create some tiles first!');
+                return;
+            }
+            document.getElementById('quickFillLab').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            if (newlyCreatedTiles.length > 0) {
+                selectNewTiles();
+            } else {
+                selectAllTiles();
+            }
+        }
+
+        function closeQuickFillLab() {
+            document.getElementById('quickFillLab').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function selectNewTiles() {
+            setSelectionActive('selectNewBtn');
+            labSelectedTiles = newlyCreatedTiles.length > 0 ? [...newlyCreatedTiles] : [...tiles];
+            renderLabGrid();
+        }
+
+        function selectAllTiles() {
+            setSelectionActive('selectAllBtn');
+            labSelectedTiles = [...tiles];
+            renderLabGrid();
+        }
+
+        function selectUnfilledTiles() {
+            setSelectionActive('selectUnfilledBtn');
+            labSelectedTiles = tiles.filter(t => !t.name || t.name.startsWith('New Card'));
+            renderLabGrid();
+        }
+
+        function setSelectionActive(btnId) {
+            document.querySelectorAll('.selection-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
+        }
+
+        function renderLabGrid() {
+            const body = document.getElementById('labGridBody');
+            const empty = document.getElementById('labEmpty');
+            document.getElementById('labTileCount').textContent = `${labSelectedTiles.length} Tiles Ready`;
+
+            if (labSelectedTiles.length === 0) {
+                body.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            body.style.display = 'flex';
+            empty.style.display = 'none';
+
+            body.innerHTML = labSelectedTiles.map((tile, i) => {
+                const name = tile.name || '';
+                const song = tile.projectData?.press?.[0]?.name || '';
+                return `
+                    <div class="lab-grid-row" data-tile-index="${tiles.indexOf(tile)}">
+                        <div class="lab-row-num">${i + 1}</div>
+                        <input type="text" class="lab-input" data-field="name" placeholder="Artist name..." value="${name.startsWith('New Card') ? '' : name}">
+                        <input type="text" class="lab-input" data-field="song" placeholder="Song name..." value="${song === 'Song 1' ? '' : song}">
+                        <select class="lab-select" data-field="campaign">
+                            <option value="press">📰 Press</option>
+                            <option value="spotify">🎵 Spotify</option>
+                            <option value="social">📱 Social</option>
+                            <option value="other">📦 Other</option>
+                        </select>
+                        <select class="lab-select" data-field="contact">
+                            <option value="">Select...</option>
+                            <option value="Email">📧 Email</option>
+                            <option value="DM">💬 DM</option>
+                            <option value="Portal">🌐 Portal</option>
+                            <option value="Phone">📞 Phone</option>
+                        </select>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearLabInputs() {
+            document.querySelectorAll('.lab-grid-row .lab-input').forEach(el => el.value = '');
+        }
+
+        function applyLabData() {
+            let filled = 0;
+            document.querySelectorAll('.lab-grid-row').forEach(row => {
+                const idx = parseInt(row.dataset.tileIndex);
+                const tile = tiles[idx];
+                if (!tile) return;
+
+                const nameVal = row.querySelector('[data-field="name"]').value.trim();
+                const songVal = row.querySelector('[data-field="song"]').value.trim();
+                const campaignVal = row.querySelector('[data-field="campaign"]').value;
+                const contactVal = row.querySelector('[data-field="contact"]').value;
+
+                if (nameVal || songVal) {
+                    if (nameVal) tile.name = nameVal;
+                    if (songVal) tile.projectData[campaignVal][0].name = songVal;
+                    if (contactVal) tile.projectData[campaignVal][0].method = contactVal;
+                    filled++;
+                }
+            });
+
+            if (filled > 0) {
+                saveToStorage();
+                closeQuickFillLab();
+                newlyCreatedTiles = [];
+                alert(`Applied data to ${filled} tile(s)!`);
+            }
+        }
+
+        // Filters
+        function showResults(title, filteredTiles) {
+            const area = document.getElementById('resultsArea');
+            const container = document.getElementById('tilesContainer');
+            document.getElementById('resultsTitle').textContent = title;
+            document.getElementById('resultsCount').textContent = `${filteredTiles.length} tiles`;
+
+            container.innerHTML = '';
+            displayedTiles = [];
+
+            if (filteredTiles.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim); text-align: center; grid-column: span 2;">No matching tiles found.</p>';
+            } else {
+                filteredTiles.forEach((tileData, i) => {
+                    const div = document.createElement('div');
+                    div.id = `result-tile-${i}`;
+                    container.appendChild(div);
+                    const tile = new StoneTile(tileData.name, div, { superTitle: tileData.superTitle });
+                    tile.setData(tileData);
+                    displayedTiles.push(tile);
+                });
+            }
+
+            area.style.display = 'block';
+        }
+
+        function showAll() {
+            showResults('All Tiles', tiles);
+        }
+
+        function showUnpopulated() {
+            const filtered = tiles.filter(t => !t.name || t.name.startsWith('New Card'));
+            showResults('Unpopulated', filtered);
+        }
+
+        function showActive() {
+            const filtered = tiles.filter(t =>
+                Object.values(t.projectData).some(cat =>
+                    cat.some(item => item.reachout !== '—' && !item.completed)
+                )
+            );
+            showResults('Active Campaigns', filtered);
+        }
+
+        function showHighPriority() {
+            const filtered = tiles.filter(t => {
+                const pending = Object.values(t.projectData).reduce((sum, cat) =>
+                    sum + cat.reduce((s, item) => {
+                        const m = item.followup?.match(/(\d+)/);
+                        return s + (m ? parseInt(m[1]) : 0);
+                    }, 0), 0);
+                return pending > 3;
+            });
+            showResults('High Priority', filtered);
+        }
+
+        function showCompleted() {
+            const filtered = tiles.filter(t =>
+                Object.values(t.projectData).some(cat =>
+                    cat.some(item => item.completed)
+                )
+            );
+            showResults('Completed', filtered);
+        }
+
+        function showPress() {
+            const filtered = tiles.filter(t =>
+                t.projectData.press?.some(item => item.name !== 'Song 1')
+            );
+            showResults('Press Focus', filtered);
+        }
+
+        function showSpotify() {
+            const filtered = tiles.filter(t =>
+                t.projectData.spotify?.some(item => item.name !== 'Song 1')
+            );
+            showResults('Spotify Focus', filtered);
+        }
+
+        function showSocial() {
+            const filtered = tiles.filter(t =>
+                t.projectData.social?.some(item => item.name !== 'Song 1')
+            );
+            showResults('Social Focus', filtered);
+        }
+
+        // ========================================
+        // SCHEDULE FILTERS
+        // ========================================
+        function showActiveCampaigns() {
+            const filtered = tiles.filter(t =>
+                Object.values(t.projectData || {}).some(cat =>
+                    cat.some(item => item.reachout !== '—' && !item.completed)
+                )
+            );
+            showResults('Active Campaigns', filtered);
+        }
+
+        function showOverdueFollowups() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const fourteenDaysAgo = new Date(today);
+            fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+            const filtered = tiles.filter(t =>
+                Object.values(t.projectData || {}).some(cat =>
+                    cat.some(item => {
+                        if (item.completed || item.reachout === '—') return false;
+                        const lastDate = parseDate(item.last);
+                        return lastDate && lastDate < fourteenDaysAgo;
+                    })
+                )
+            );
+            showResults('Past Due Follow-ups', filtered);
+        }
+
+        function showDueToday() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const filtered = tiles.filter(t =>
+                Object.values(t.projectData || {}).some(cat =>
+                    cat.some(item => {
+                        const lastDate = parseDate(item.last);
+                        return lastDate && lastDate.toDateString() === today.toDateString() && !item.completed;
+                    })
+                )
+            );
+            showResults('Due Today', filtered);
+        }
+
+        function showDueThisWeek() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const weekFromNow = new Date(today);
+            weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+            const filtered = tiles.filter(t =>
+                Object.values(t.projectData || {}).some(cat =>
+                    cat.some(item => {
+                        const lastDate = parseDate(item.last);
+                        return lastDate && lastDate >= today && lastDate <= weekFromNow && !item.completed;
+                    })
+                )
+            );
+            showResults('Due This Week', filtered);
+        }
+
+        function showNoContact30Days() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const thirtyDaysAgo = new Date(today);
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            const filtered = tiles.filter(t =>
+                Object.values(t.projectData || {}).some(cat =>
+                    cat.some(item => {
+                        if (item.completed || item.reachout === '—') return false;
+                        const lastDate = parseDate(item.last);
+                        return lastDate && lastDate < thirtyDaysAgo;
+                    })
+                )
+            );
+            showResults('No Contact 30+ Days', filtered);
+        }
+
+        function showRecentlyContacted() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            const filtered = tiles.filter(t =>
+                Object.values(t.projectData || {}).some(cat =>
+                    cat.some(item => {
+                        const lastDate = parseDate(item.last);
+                        return lastDate && lastDate >= sevenDaysAgo && lastDate <= today;
+                    })
+                )
+            );
+            showResults('Recently Contacted', filtered);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeQuickFillLab();
+            }
+        });
+    </script>
+</body>
+
+</html>

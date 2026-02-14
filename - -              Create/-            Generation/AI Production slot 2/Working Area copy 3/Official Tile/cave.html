@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operations Card - Stone</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Stone palette - smooth, subtle */
+            --bg: #0c0f13;
+            --card-bg: #14181e;
+            --surface: #1a1f27;
+            --surface-hover: #1e242d;
+            --surface-active: #242b36;
+
+            /* Accent colors - muted, sophisticated */
+            --press: #5eb5c9;
+            --spotify: #4aba70;
+            --social: #c975a8;
+            --other: #d4a54a;
+
+            --text: #e8eaed;
+            --text-mid: #9aa0a9;
+            --text-dim: #5c6370;
+
+            /* Smooth transitions */
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: 0.25s var(--ease);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--text);
+            padding: 20px;
+        }
+
+        /* ========================================
+           CARD CONTAINER - Stone/Slide aesthetic
+           ======================================== */
+        .card {
+            width: 400px;
+            max-width: 100%;
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.03);
+            position: relative;
+        }
+
+        /* Subtle top accent - blends in */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--press), var(--social), var(--other));
+            opacity: 0.6;
+        }
+
+        /* ========================================
+           ROW 1: NAME (Top-left, card header)
+           ======================================== */
+        .card-header {
+            padding: 20px 24px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--surface);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .card-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            color: var(--text-mid);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--spotify);
+            opacity: 0.8;
+        }
+
+        /* ========================================
+           ROW 2: FIELDS CAROUSEL (Middle)
+           Hidden carousel - slides smoothly
+           ======================================== */
+        .fields-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fields-carousel {
+            display: flex;
+            /* No CSS transition - JS handles smooth inertia */
+        }
+
+        .fields-wrapper {
+            cursor: grab;
+            user-select: none;
+        }
+
+        .fields-wrapper:active {
+            cursor: grabbing;
+        }
+
+        .fields-slide {
+            min-width: 100%;
+            padding: 0 24px 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        /* Individual field - smooth stone surface */
+        .field {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 14px 12px;
+            cursor: pointer;
+            transition:
+                background var(--transition),
+                transform var(--transition);
+        }
+
+        .field:hover {
+            background: var(--surface-hover);
+            transform: translateY(-1px);
+        }
+
+        .field:active {
+            transform: translateY(0);
+        }
+
+        .field-label {
+            font-size: 0.6rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        .field-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        /* Field spans 2 columns */
+        .field.wide {
+            grid-column: span 2;
+        }
+
+        /* Complete field special styling */
+        .field.complete-field {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .check-box {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-dim);
+            border-radius: 5px;
+            transition: all var(--transition);
+        }
+
+        .card.completed .check-box {
+            background: var(--spotify);
+            border-color: var(--spotify);
+        }
+
+        .card.completed .check-box::after {
+            content: '✓';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            height: 100%;
+        }
+
+        /* Carousel indicators (subtle dots) */
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding-bottom: 16px;
+        }
+
+        .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            opacity: 0.3;
+            transition: all var(--transition);
+            cursor: pointer;
+        }
+
+        .dot.active {
+            opacity: 1;
+            background: var(--text-mid);
+        }
+
+        /* ========================================
+           ROW 3: CATEGORY BUTTONS (Bottom)
+           4 buttons with drop-up menus
+           ======================================== */
+        .category-bar {
+            display: flex;
+            background: var(--surface);
+            position: relative;
+        }
+
+        .cat-btn {
+            flex: 1;
+            padding: 16px 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: background var(--transition);
+        }
+
+        .cat-btn:hover {
+            background: var(--surface-hover);
+        }
+
+        .cat-btn.active {
+            background: var(--surface-active);
+        }
+
+        /* Active indicator line - slides */
+        .cat-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0);
+            width: 60%;
+            height: 2px;
+            border-radius: 1px;
+            transition: transform var(--transition);
+        }
+
+        .cat-btn.active::after {
+            transform: translateX(-50%) scaleX(1);
+        }
+
+        .cat-btn[data-cat="press"]::after { background: var(--press); }
+        .cat-btn[data-cat="spotify"]::after { background: var(--spotify); }
+        .cat-btn[data-cat="social"]::after { background: var(--social); }
+        .cat-btn[data-cat="other"]::after { background: var(--other); }
+
+        .cat-btn-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cat-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            transition: color var(--transition);
+        }
+
+        .cat-btn.active .cat-label,
+        .cat-btn:hover .cat-label {
+            color: var(--text);
+        }
+
+        .cat-btn[data-cat="press"].active .cat-label { color: var(--press); }
+        .cat-btn[data-cat="spotify"].active .cat-label { color: var(--spotify); }
+        .cat-btn[data-cat="social"].active .cat-label { color: var(--social); }
+        .cat-btn[data-cat="other"].active .cat-label { color: var(--other); }
+
+        /* ========================================
+           DROP-UP MENUS (Subtle, matching colors)
+           ======================================== */
+        .dropup {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+            transform: translateY(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition:
+                transform 0.3s var(--ease),
+                opacity 0.3s var(--ease),
+                visibility 0.3s;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .cat-btn.open .dropup {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dropup-header {
+            padding: 14px 16px 10px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--surface);
+        }
+
+        .cat-btn[data-cat="press"] .dropup-header { color: var(--press); }
+        .cat-btn[data-cat="spotify"] .dropup-header { color: var(--spotify); }
+        .cat-btn[data-cat="social"] .dropup-header { color: var(--social); }
+        .cat-btn[data-cat="other"] .dropup-header { color: var(--other); }
+
+        .dropup-item {
+            padding: 12px 16px;
+            font-size: 0.75rem;
+            color: var(--text-mid);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropup-item:hover {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .dropup-item .icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .cat-btn[data-cat="press"] .dropup-item:hover { background: rgba(94, 181, 201, 0.1); }
+        .cat-btn[data-cat="spotify"] .dropup-item:hover { background: rgba(74, 186, 112, 0.1); }
+        .cat-btn[data-cat="social"] .dropup-item:hover { background: rgba(201, 117, 168, 0.1); }
+        .cat-btn[data-cat="other"] .dropup-item:hover { background: rgba(212, 165, 74, 0.1); }
+
+        /* ========================================
+           COMPLETED STATE
+           ======================================== */
+        .card.completed {
+            opacity: 0.7;
+        }
+
+        .card.completed .field {
+            opacity: 0.6;
+        }
+
+        /* Click outside to close dropup */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 5;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="overlay" id="overlay" onclick="closeAllDropups()"></div>
+
+    <div class="card" id="card">
+        <!-- ROW 1: Name -->
+        <div class="card-header">
+            <div class="card-name">
+                <div class="card-icon">🔨</div>
+                <span class="card-title">Stage Operations</span>
+            </div>
+            <div class="card-status">
+                <div class="status-dot"></div>
+                <span>Active</span>
+            </div>
+        </div>
+
+        <!-- ROW 2: Fields Carousel -->
+        <div class="fields-wrapper">
+            <div class="fields-carousel" id="carousel">
+                <!-- Slide 1: Main Fields -->
+                <div class="fields-slide" data-slide="0">
+                    <div class="field wide" onclick="expandField('reachout')">
+                        <div class="field-label">Reach Out</div>
+                        <div class="field-value" id="val-reachout">Email Pitch Sent</div>
+                    </div>
+                    <div class="field complete-field" onclick="toggleComplete()">
+                        <div>
+                            <div class="field-label">Done</div>
+                        </div>
+                        <div class="check-box"></div>
+                    </div>
+                    <div class="field" onclick="expandField('first')">
+                        <div class="field-label">First</div>
+                        <div class="field-value" id="val-first">01.10</div>
+                    </div>
+                    <div class="field" onclick="expandField('last')">
+                        <div class="field-label">Last</div>
+                        <div class="field-value" id="val-last">01.22</div>
+                    </div>
+                    <div class="field" onclick="expandField('method')">
+                        <div class="field-label">Contact</div>
+                        <div class="field-value" id="val-method">Email</div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Additional Fields (for future) -->
+                <div class="fields-slide" data-slide="1">
+                    <div class="field" onclick="expandField('followup')">
+                        <div class="field-label">Follow Up</div>
+                        <div class="field-value" id="val-followup">3 Pending</div>
+                    </div>
+                    <div class="field" onclick="expandField('notes')">
+                        <div class="field-label">Notes</div>
+                        <div class="field-value">View →</div>
+                    </div>
+                    <div class="field" onclick="expandField('priority')">
+                        <div class="field-label">Priority</div>
+                        <div class="field-value">High</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carousel Dots -->
+            <div class="carousel-dots">
+                <div class="dot active" data-slide="0" onclick="goToSlide(0)"></div>
+                <div class="dot" data-slide="1" onclick="goToSlide(1)"></div>
+            </div>
+        </div>
+
+        <!-- ROW 3: Category Buttons -->
+        <div class="category-bar">
+            <button class="cat-btn active" data-cat="press" onclick="toggleDropup(this, event)">
+                <div class="cat-btn-inner">
+                    <span class="cat-label">Press</span>
+                </div>
+                <div class="dropup">
+                    <div class="dropup-header">Press Options</div>
+                    <div class="dropup-item" onclick="selectOption('press', 'pitch', event)">
+                        <span class="icon">📧</span> Send Pitch
+                    </div>
+                    <div class="dropup-item" onclick="selectOption('press', 'followup', event)">
+                        <span class="icon">🔄</span> Follow Up
+                    </div>
+                    <div class="dropup-item" onclick="selectOption('press', 'log', event)">
+                        <span class="icon">📝</span> Log Response
+                    </div>
+                </div>
+            </button>
+
+            <button class="cat-btn" data-cat="spotify" onclick="toggleDropup(this, event)">
+                <div class="cat-btn-inner">
+                    <span class="cat-label">Spotify</span>
+                </div>
+                <div class="dropup">
+                    <div class="dropup-header">Spotify Options</div>
+                    <div class="dropup-item" onclick="selectOption('spotify', 'submit', event)">
+                        <span class="icon">🎵</span> Submit to Playlist
+                    </div>
+                    <div class="dropup-item" onclick="selectOption('spotify', 'check', event)">
+                        <span class="icon">📊</span> Check Status
+                    </div>
+                </div>
+            </button>
+
+            <button class="cat-btn" data-cat="social" onclick="toggleDropup(this, event)">
+                <div class="cat-btn-inner">
+                    <span class="cat-label">Social</span>
+                </div>
+                <div class="dropup">
+                    <div class="dropup-header">Social Options</div>
+                    <div class="dropup-item" onclick="selectOption('social', 'dm', event)">
+                        <span class="icon">💬</span> Send DM
+                    </div>
+                    <div class="dropup-item" onclick="selectOption('social', 'story', event)">
+                        <span class="icon">📱</span> Story Mention
+                    </div>
+                    <div class="dropup-item" onclick="selectOption('social', 'collab', event)">
+                        <span class="icon">🤝</span> Collab Request
+                    </div>
+                </div>
+            </button>
+
+            <button class="cat-btn" data-cat="other" onclick="toggleDropup(this, event)">
+                <div class="cat-btn-inner">
+                    <span class="cat-label">Other</span>
+                </div>
+                <div class="dropup">
+                    <div class="dropup-header">Other Options</div>
+                    <div class="dropup-item" onclick="selectOption('other', 'misc', event)">
+                        <span class="icon">📋</span> Misc Task
+                    </div>
+                    <div class="dropup-item" onclick="selectOption('other', 'add', event)">
+                        <span class="icon">➕</span> Add Custom
+                    </div>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let currentCat = 'press';
+        const totalSlides = 2;
+
+        // Category data
+        const data = {
+            press: {
+                reachout: 'Email Pitch Sent',
+                first: '01.10',
+                last: '01.22',
+                method: 'Email',
+                followup: '3 Pending'
+            },
+            spotify: {
+                reachout: 'Playlist Submitted',
+                first: '01.12',
+                last: '01.24',
+                method: 'Portal',
+                followup: '1 Pending'
+            },
+            social: {
+                reachout: 'DM Campaign',
+                first: '01.15',
+                last: '01.25',
+                method: 'DM',
+                followup: '5 Pending'
+            },
+            other: {
+                reachout: 'Misc Outreach',
+                first: '01.05',
+                last: '01.20',
+                method: 'Various',
+                followup: '0 Pending'
+            }
+        };
+
+        // ========================================
+        // INERTIA CAROUSEL PHYSICS
+        // Right-click + hold to glide
+        // ========================================
+        const carousel = document.getElementById('carousel');
+        const wrapper = document.querySelector('.fields-wrapper');
+        const slideWidth = wrapper.offsetWidth;
+
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+        let targetX = 0;
+        let velocityX = 0;
+        let lastX = 0;
+        let lastTime = 0;
+        let animating = false;
+
+        const friction = 0.92;      // Momentum decay
+        const lerp = 0.12;          // Smooth catch-up (lower = more glide)
+        const velocityScale = 0.3;  // How much velocity affects momentum
+
+        // Animation loop - the magic sauce
+        function animate() {
+            if (!animating) return;
+
+            if (isDragging) {
+                // While dragging, smoothly follow target
+                currentX += (targetX - currentX) * 0.25;
+            } else {
+                // Apply velocity (momentum)
+                targetX += velocityX;
+                velocityX *= friction;
+
+                // Smooth lerp to target
+                currentX += (targetX - currentX) * lerp;
+
+                // Snap to nearest slide when momentum dies
+                if (Math.abs(velocityX) < 0.5 && Math.abs(currentX - targetX) < 1) {
+                    snapToNearestSlide();
+                    if (Math.abs(currentX - targetX) < 0.5) {
+                        animating = false;
+                    }
+                }
+            }
+
+            // Boundary resistance
+            const maxX = 0;
+            const minX = -slideWidth * (totalSlides - 1);
+
+            if (currentX > maxX) {
+                targetX = maxX;
+                currentX += (maxX - currentX) * 0.3;
+                velocityX *= 0.5;
+            } else if (currentX < minX) {
+                targetX = minX;
+                currentX += (minX - currentX) * 0.3;
+                velocityX *= 0.5;
+            }
+
+            carousel.style.transform = `translateX(${currentX}px)`;
+            updateDots();
+
+            requestAnimationFrame(animate);
+        }
+
+        function snapToNearestSlide() {
+            const slideIndex = Math.round(-currentX / slideWidth);
+            const clampedIndex = Math.max(0, Math.min(slideIndex, totalSlides - 1));
+            targetX = -clampedIndex * slideWidth;
+            currentSlide = clampedIndex;
+        }
+
+        function updateDots() {
+            const slideIndex = Math.round(-currentX / slideWidth);
+            const clampedIndex = Math.max(0, Math.min(slideIndex, totalSlides - 1));
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === clampedIndex);
+            });
+        }
+
+        // Right-click + hold to drag
+        wrapper.addEventListener('contextmenu', e => e.preventDefault());
+
+        wrapper.addEventListener('mousedown', e => {
+            if (e.button === 2 || e.button === 0) { // Right or left click
+                isDragging = true;
+                startX = e.clientX;
+                lastX = e.clientX;
+                lastTime = Date.now();
+                velocityX = 0;
+                wrapper.style.cursor = 'grabbing';
+
+                if (!animating) {
+                    animating = true;
+                    animate();
+                }
+            }
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+
+            const now = Date.now();
+            const dt = now - lastTime;
+
+            if (dt > 0) {
+                velocityX = (e.clientX - lastX) * velocityScale;
+            }
+
+            targetX = currentX + (e.clientX - startX);
+            startX = e.clientX;
+            lastX = e.clientX;
+            lastTime = now;
+        });
+
+        document.addEventListener('mouseup', e => {
+            if (isDragging) {
+                isDragging = false;
+                wrapper.style.cursor = '';
+
+                // Boost velocity on release for satisfying glide
+                velocityX *= 1.5;
+            }
+        });
+
+        // Click on dots to go to slide
+        function goToSlide(index) {
+            currentSlide = index;
+            targetX = -index * slideWidth;
+            velocityX = 0;
+
+            if (!animating) {
+                animating = true;
+                animate();
+            }
+        }
+
+        // Touch support with inertia
+        let touchStartX = 0;
+        let touchLastX = 0;
+        let touchLastTime = 0;
+
+        wrapper.addEventListener('touchstart', e => {
+            isDragging = true;
+            touchStartX = e.touches[0].clientX;
+            touchLastX = touchStartX;
+            touchLastTime = Date.now();
+            velocityX = 0;
+
+            if (!animating) {
+                animating = true;
+                animate();
+            }
+        }, { passive: true });
+
+        wrapper.addEventListener('touchmove', e => {
+            if (!isDragging) return;
+
+            const touch = e.touches[0];
+            const now = Date.now();
+            const dt = now - touchLastTime;
+
+            if (dt > 0) {
+                velocityX = (touch.clientX - touchLastX) * velocityScale;
+            }
+
+            targetX = currentX + (touch.clientX - touchStartX);
+            touchStartX = touch.clientX;
+            touchLastX = touch.clientX;
+            touchLastTime = now;
+        }, { passive: true });
+
+        wrapper.addEventListener('touchend', e => {
+            isDragging = false;
+            velocityX *= 1.5;
+        });
+
+        // Category button + dropup
+        function toggleDropup(btn, e) {
+            e.stopPropagation();
+            const wasOpen = btn.classList.contains('open');
+
+            closeAllDropups();
+
+            if (!wasOpen) {
+                btn.classList.add('open');
+                document.getElementById('overlay').classList.add('active');
+            }
+
+            setCategory(btn.dataset.cat);
+        }
+
+        function closeAllDropups() {
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('open'));
+            document.getElementById('overlay').classList.remove('active');
+        }
+
+        function setCategory(cat) {
+            currentCat = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.cat === cat);
+            });
+
+            document.getElementById('val-reachout').innerText = data[cat].reachout;
+            document.getElementById('val-first').innerText = data[cat].first;
+            document.getElementById('val-last').innerText = data[cat].last;
+            document.getElementById('val-method').innerText = data[cat].method;
+            document.getElementById('val-followup').innerText = data[cat].followup;
+        }
+
+        function selectOption(cat, action, e) {
+            e.stopPropagation();
+            closeAllDropups();
+
+            if (action === 'add') {
+                goToSlide(1);
+            }
+        }
+
+        function expandField(field) {
+            console.log(`Expand field: ${field}`);
+        }
+
+        function toggleComplete() {
+            document.getElementById('card').classList.toggle('completed');
+        }
+
+        // Initialize
+        window.addEventListener('resize', () => {
+            // Recalculate on resize
+            const newSlideWidth = wrapper.offsetWidth;
+            if (newSlideWidth !== slideWidth) {
+                location.reload();
+            }
+        });
+    </script>
+
+</body>
+
+</html>

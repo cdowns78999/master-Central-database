@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buttons Kit: Physics-Engine Base (Awwwards Spec)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #000;
+            --color-accent: #FA5D29;
+            --bg-primary: #f8f8f8;
+            --font-main: 'Inter', sans-serif;
+            --transition-elastic: all 0.6s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-primary);
+            color: var(--color-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .header-disclaimer {
+            background: #000;
+            color: #fff;
+            text-align: center;
+            padding: 15px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 100px 40px;
+        }
+
+        .title-block {
+            text-align: center;
+            margin-bottom: 100px;
+        }
+
+        .title-label {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .main-title {
+            font-size: clamp(40px, 8vw, 80px);
+            font-weight: 800;
+            letter-spacing: -3px;
+            line-height: 0.9;
+        }
+
+        /* --- BUTTON ENGINE (PHYSICS-BASE) --- */
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 60px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .btn-physics-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            border: 1px dotted #ccc;
+            position: relative;
+        }
+
+        .magnetic-area {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+
+        .btn-physics {
+            position: relative;
+            z-index: 10;
+            padding: 20px 50px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: #000;
+            color: #fff;
+            border: none;
+            transition: var(--transition-elastic);
+            pointer-events: auto;
+        }
+
+        /* 01. THE LIQUID */
+        .btn-liquid {
+            border-radius: 50px;
+            overflow: hidden;
+        }
+
+        .btn-liquid::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150%;
+            height: 300%;
+            background: var(--color-accent);
+            transform: translate(-50%, -100%) rotate(45deg);
+            transition: transform 0.8s ease;
+            z-index: -1;
+        }
+
+        .btn-liquid:hover::before {
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        /* 02. THE ELASTIC */
+        .btn-elastic {
+            background: none;
+            color: #000;
+            border: 2px solid #000;
+        }
+
+        .btn-elastic:hover {
+            transform: scaleX(1.3) scaleY(0.8);
+            background: #000;
+            color: #fff;
+        }
+
+        /* 03. THE SHINY */
+        .btn-shiny {
+            background: linear-gradient(135deg, #222 0%, #000 100%);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-shiny::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -100%;
+            width: 50%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(30deg);
+            transition: left 0.6s ease;
+        }
+
+        .btn-shiny:hover::after {
+            left: 150%;
+        }
+
+        /* 04. THE GHOST */
+        .btn-ghost {
+            background: none;
+            color: #000;
+            border: 1px solid #ccc;
+        }
+
+        .btn-ghost:hover {
+            padding: 20px 80px;
+            border-color: #000;
+            letter-spacing: 5px;
+        }
+
+        /* CURSOR */
+        #cursor {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--color-accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.1s;
+        }
+
+        #follower {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #000;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .coords {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            font-family: monospace;
+            font-size: 10px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-disclaimer">
+        'kit' refers to 'bringing forth a balanced packaged of helpfulness, given the criteria'
+    </div>
+
+    <div class="main-content">
+        <div class="title-block">
+            <div class="title-label">04 Physics-Engine Base</div>
+            <h1 class="main-title">MAGNETIC.<br>INTERACTION.</h1>
+        </div>
+
+        <div class="button-grid">
+
+            <div class="btn-physics-wrapper">
+                <div class="magnetic-area"></div>
+                <button class="btn-physics btn-liquid">Liquid Flow</button>
+            </div>
+
+            <div class="btn-physics-wrapper">
+                <div class="magnetic-area"></div>
+                <button class="btn-physics btn-elastic">Elastic Stretch</button>
+            </div>
+
+            <div class="btn-physics-wrapper">
+                <div class="magnetic-area"></div>
+                <button class="btn-physics btn-shiny">Metallic Shine</button>
+            </div>
+
+            <div class="btn-physics-wrapper">
+                <div class="magnetic-area"></div>
+                <button class="btn-physics btn-ghost">Spatial Ghost</button>
+            </div>
+
+            <div class="btn-physics-wrapper">
+                <div class="magnetic-area"></div>
+                <button class="btn-physics"
+                    style="border-radius: 4px; background: transparent; color: #000; border: 1px dotted #000;">Dotted
+                    Node</button>
+            </div>
+
+            <div class="btn-physics-wrapper">
+                <div class="magnetic-area"></div>
+                <button class="btn-physics" style="background: var(--color-accent);">Vibrant Core</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="cursor"></div>
+    <div id="follower"></div>
+    <div class="coords" id="coords">X: 000 / Y: 000</div>
+
+    <script>
+        const cursor = document.getElementById('cursor');
+        const follower = document.getElementById('follower');
+        const coords = document.getElementById('coords');
+        const wrappers = document.querySelectorAll('.btn-physics-wrapper');
+
+        let mouseX = 0, mouseY = 0;
+        let followerX = 0, followerY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursor.style.transform = `translate(${mouseX - 5}px, ${mouseY - 5}px)`;
+            coords.textContent = `X: ${Math.round(mouseX)} / Y: ${Math.round(mouseY)}`;
+        });
+
+        function animate() {
+            followerX += (mouseX - followerX) * 0.1;
+            followerY += (mouseY - followerY) * 0.1;
+            follower.style.transform = `translate(${followerX - 20}px, ${followerY - 20}px)`;
+
+            wrappers.forEach(wrapper => {
+                const btn = wrapper.querySelector('.btn-physics');
+                const rect = wrapper.getBoundingClientRect();
+                const btnRect = btn.getBoundingClientRect();
+
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const distanceX = mouseX - centerX;
+                const distanceY = mouseY - centerY;
+                const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+                if (distance < 150) {
+                    // Magnetic pull
+                    const x = distanceX * 0.4;
+                    const y = distanceY * 0.4;
+                    btn.style.transform = `translate(${x}px, ${y}px)`;
+                    follower.style.transform += ` scale(2)`;
+                    follower.style.borderColor = '#FA5D29';
+                } else {
+                    btn.style.transform = `translate(0, 0)`;
+                    follower.style.borderColor = '#000';
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        document.addEventListener('mousedown', () => {
+            cursor.style.transform += ' scale(2)';
+            follower.style.transform += ' scale(0.5)';
+        });
+        document.addEventListener('mouseup', () => {
+            cursor.style.transform += ' scale(1)';
+            follower.style.transform += ' scale(1)';
+        });
+    </script>
+</body>
+
+</html>

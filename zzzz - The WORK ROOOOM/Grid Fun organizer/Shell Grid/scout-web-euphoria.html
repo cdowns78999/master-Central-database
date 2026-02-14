@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Scout Utopia | Euphoria V3</title>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* 🏛️ EUPHORIA DESIGN SYSTEM (STOLEN & ADAPTED) */
+        :root {
+            /* Vibrant Golden Era Tokens */
+            --bg-void: #f8fbff;
+            --primary: #D4AF37;
+            /* Polished Gold */
+            --primary-glow: rgba(212, 175, 55, 0.4);
+            --accent-cyan: #00A3FF;
+            --accent-pink: #FF3B30;
+            --emerald: #30D158;
+
+            --text-main: #1d1d1f;
+            --text-muted: rgba(0, 0, 0, 0.5);
+            --text-ghost: rgba(0, 0, 0, 0.2);
+
+            /* High-End Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.82);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-blur: blur(40px) saturate(200%);
+
+            /* Proportions */
+            --radius-xl: 44px;
+            --radius-lg: 32px;
+            --radius-md: 20px;
+            --radius-pill: 100px;
+
+            --shadow-luxe: 0 30px 60px rgba(0, 40, 80, 0.1);
+            --transition-smooth: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+
+            --safe-top: env(safe-area-inset-top, 20px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-void);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100dvh;
+            width: 100vw;
+        }
+
+        /* 🌌 UTOPIAN BACKGROUND MESH */
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            background: linear-gradient(160deg, #e6f3ff 0%, #ffffff 40%, #f0fff4 100%);
+        }
+
+        .mesh-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background: radial-gradient(circle at 50% 50%, var(--primary) 0%, transparent 70%);
+            filter: blur(150px);
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.2;
+            animation: move 30s infinite alternate ease-in-out;
+        }
+
+        .blob-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--accent-cyan);
+            top: -200px;
+            right: -100px;
+        }
+
+        .blob-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            bottom: -100px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        @keyframes move {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(100px, 150px) scale(1.3);
+            }
+        }
+
+        /* 📱 APP ARCHITECTURE */
+        .app-frame {
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #screen-mount {
+            flex: 1;
+            padding: 0 24px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-top: calc(var(--safe-top) + 20px);
+            padding-bottom: 160px;
+            scrollbar-width: none;
+        }
+
+        #screen-mount::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 🎹 CINEMATIC TAB BAR */
+        .tab-bar {
+            position: absolute;
+            bottom: calc(var(--safe-bottom) + 15px);
+            left: 24px;
+            right: 24px;
+            height: 85px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1.5px solid var(--glass-border);
+            border-radius: 35px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10000;
+            box-shadow: var(--shadow-luxe), 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-ghost);
+            cursor: pointer;
+            transition: 0.4s;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .tab-btn.center-island {
+            width: 70px;
+            height: 70px;
+            background: var(--primary);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -60px;
+            transform: rotate(45deg);
+            box-shadow: 0 15px 35px var(--primary-glow);
+            border: 5px solid #fff;
+        }
+
+        .tab-btn.center-island svg {
+            transform: rotate(-45deg);
+        }
+
+        .icon {
+            width: 28px;
+            height: 28px;
+            stroke-width: 2.2;
+            stroke: currentColor;
+            fill: none;
+        }
+
+        /* 🕊️ ARCHED CARDS (Slot 15 Influence) */
+        .u-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 40, 80, 0.05);
+        }
+
+        .u-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 40, 80, 0.1);
+        }
+
+        .u-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary);
+            opacity: 0.1;
+        }
+
+        /* 🏆 CROWN ELEMENTS */
+        .crown-pill {
+            background: var(--primary);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.6rem;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        /* 🦾 MECHANICAL ARMS (Utopia White/Gold) */
+        .u-arm {
+            position: absolute;
+            right: 0;
+            top: 20px;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+            transition: width 1s var(--transition-smooth);
+        }
+
+        .active .u-arm {
+            width: 40px;
+        }
+
+        /* 📋 LEDGER LOGS */
+        .u-log {
+            font-family: 'JetBrains Mono';
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .u-log b {
+            color: var(--primary);
+        }
+
+        /* 🔄 3D FLOPPY SYNC (Legacy Extra) */
+        .floppy-sync {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 24px;
+            height: 24px;
+            perspective: 600px;
+            transform-style: preserve-3d;
+            opacity: 0.4;
+        }
+
+        .floppy-inner {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            animation: floppySpin 10s linear infinite;
+        }
+
+        .floppy-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--primary);
+            border-radius: 2px;
+            backface-visibility: visible;
+        }
+
+        @keyframes floppySpin {
+            from {
+                transform: rotateY(0deg);
+            }
+
+            to {
+                transform: rotateY(360deg);
+            }
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s var(--transition-smooth) forwards;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="mesh-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="app-frame">
+        <div id="screen-mount"></div>
+
+        <nav class="tab-bar">
+            <div class="tab-btn active" onclick="app.load('home')">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+            </div>
+            <div class="tab-btn" onclick="app.load('hierarchy')">
+                <svg class="icon" viewBox="0 0 24 24" stroke-width="2.5">
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+            </div>
+            <div class="tab-btn center-island" onclick="app.triggerDiscovery()">
+                <svg class="icon" viewBox="0 0 24 24" stroke="white" stroke-width="3">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+            </div>
+            <div class="tab-btn" onclick="app.load('hub')">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <polyline points="23 21 23 19 23 17" />
+                    <path d="M17 11.08A7 7 0 0 0 17 4.92" />
+                </svg>
+            </div>
+            <div class="tab-btn" onclick="app.load('settings')">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        const SCREENS = {
+            home: `
+                <div class="fade-in">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px;">
+                        <div>
+                            <h1 style="font-family: 'Outfit'; font-size: 2.2rem; line-height: 1;">Euphoria <br><span style="color: var(--primary);">Golden Era</span></h1>
+                            <p style="color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 10px;">The Scout Utopia V3</p>
+                        </div>
+                        <div style="width: 50px; height: 50px; background: var(--primary); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: #fff; font-family: 'Outfit'; font-weight: 800; box-shadow: 0 10px 20px var(--primary-glow);">BP</div>
+                    </div>
+
+                    <!-- ARCHED CROWN CARD -->
+                    <div class="u-card" style="height: 220px; background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1000'); background-size: cover; background-position: center; border: none;">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(212, 175, 55, 0.9) 0%, rgba(255, 255, 255, 0.2) 100%);"></div>
+                        <div style="position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 10px;">
+                            <span class="crown-pill">PROXIMITY SYNC</span>
+                            <h2 style="font-family: 'Outfit'; font-size: 2.5rem; color: #fff; line-height: 1; text-shadow: 0 4px 10px rgba(0,0,0,0.2);">Establish The <br>Legacy.</h2>
+                        </div>
+                        <div class="floppy-sync"><div class="floppy-inner"><div class="floppy-face"></div></div></div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="u-card">
+                            <h4 style="font-size: 0.7rem; color: var(--primary); font-weight: 800; margin-bottom: 10px;">SIGNALS</h4>
+                            <p style="font-family: 'Outfit'; font-size: 1.8rem; font-weight: 800;">1.4M</p>
+                            <div style="width: 100%; height: 4px; background: rgba(0,0,0,0.05); margin-top: 15px; border-radius: 10px; overflow: hidden;">
+                                <div style="width: 70%; height: 100%; background: var(--primary);"></div>
+                            </div>
+                        </div>
+                        <div class="u-card">
+                            <h4 style="font-size: 0.7rem; color: var(--emerald); font-weight: 800; margin-bottom: 10px;">HARMONY</h4>
+                            <p style="font-family: 'Outfit'; font-size: 1.8rem; font-weight: 800;">98%</p>
+                            <div style="width: 100%; height: 4px; background: rgba(0,0,0,0.05); margin-top: 15px; border-radius: 10px; overflow: hidden;">
+                                <div style="width: 98%; height: 100%; background: var(--emerald);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="u-card" style="margin-top: 10px;">
+                        <h4 style="font-size: 0.7rem; color: var(--text-muted); font-weight: 800; margin-bottom: 15px;">INTELLIGENCE LOG</h4>
+                        <div id="uLogStream">
+                            <div class="u-log"><b>SYNC:</b> Utopian node harmonized.</div>
+                            <div class="u-log"><b>AUTH:</b> Representative Chad identified.</div>
+                            <div class="u-log"><b>PLAN:</b> Scout Utopia phase 3 initiated.</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            hierarchy: `
+                <div class="fade-in">
+                    <h1 style="font-family: 'Outfit'; font-size: 1.6rem; margin-bottom: 25px;">Hierarchy <span style="color: var(--primary);">Engine</span></h1>
+                    <div id="hStack" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="u-card" style="padding: 16px 24px; cursor: pointer;" onclick="app.drill('Eagle Badges')">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div><h3 style="font-size: 1rem;">Eagle Required</h3><p style="font-size: 0.65rem; color: var(--text-muted);">21 Badges Available</p></div>
+                                <span style="color: var(--primary); font-weight: 800;">›</span>
+                            </div>
+                        </div>
+                        <div class="u-card" style="padding: 16px 24px; cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div><h3 style="font-size: 1rem;">STEM Arch</h3><p style="font-size: 0.65rem; color: var(--text-muted);">Digital Frontiers</p></div>
+                                <span style="color: var(--primary); font-weight: 800;">›</span>
+                            </div>
+                        </div>
+                        <div class="u-card" style="padding: 16px 24px; cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div><h3 style="font-size: 1rem;">Outdoor Mastery</h3><p style="font-size: 0.65rem; color: var(--text-muted);">Nature Harmony</p></div>
+                                <span style="color: var(--primary); font-weight: 800;">›</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            hub: `
+                <div class="fade-in">
+                    <h1 style="font-family: 'Outfit'; font-size: 1.6rem; margin-bottom: 25px;">Troop Hub <span style="color: var(--accent-cyan);">Deployer</span></h1>
+                    
+                    <div class="u-card" style="background: #fff; padding: 0; overflow: hidden; border: none;">
+                        <div style="height: 120px; background: var(--primary); display: flex; align-items: center; padding: 30px;">
+                            <h2 style="color: #fff; font-family: 'Outfit';">Weekly Meeting</h2>
+                        </div>
+                        <div style="padding: 24px;">
+                            <p style="font-size: 0.9rem; margin-bottom: 8px;">Monday night @ 6:30 PM</p>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 20px;">St. Paul Lutheran Hall, Niceville</p>
+                            <div style="background: var(--bg-void); padding: 15px; border-radius: 12px; font-weight: 800; font-size: 0.7rem; text-align: center; color: var(--primary); cursor: pointer;">COPY MEETING INVITE</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                        <div class="u-card" style="padding: 15px 24px; display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 10px; height: 10px; background: var(--accent-cyan); border-radius: 50%; box-shadow: 0 0 10px var(--accent-cyan);"></div>
+                            <span style="font-size: 0.8rem; font-weight: 700;">Adult Feed (GroupMe)</span>
+                        </div>
+                        <div class="u-card" style="padding: 15px 24px; display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 10px; height: 10px; background: var(--emerald); border-radius: 50%; box-shadow: 0 0 10px var(--emerald);"></div>
+                            <span style="font-size: 0.8rem; font-weight: 700;">ScoutBook Metrics</span>
+                        </div>
+                        <div class="u-card" style="padding: 15px 24px; display: flex; align-items: center; gap: 15px; color: var(--accent-pink);">
+                            <div style="width: 10px; height: 10px; background: var(--accent-pink); border-radius: 50%; box-shadow: 0 0 10px var(--accent-pink);"></div>
+                            <span style="font-size: 0.8rem; font-weight: 700;">Payment Depot Locked</span>
+                        </div>
+                    </div>
+                </div>
+            `,
+            settings: `
+                <div class="fade-in">
+                    <h1 style="font-family: 'Outfit'; font-size: 1.6rem; margin-bottom: 25px;">Core <span style="color: var(--text-muted);">Settings</span></h1>
+                    <div class="u-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <span style="font-weight: 700;">Utopian Glow Intensity</span>
+                            <span style="color: var(--primary);">80%</span>
+                        </div>
+                        <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.05); border-radius: 10px; position: relative;">
+                            <div style="width: 80%; height: 100%; background: var(--primary);"></div>
+                        </div>
+                    </div>
+                    <div class="u-card" style="text-align: center; border-style: dashed; background: none;">
+                        <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 800;">+ CONFIGURE EXTERNAL NODE</span>
+                    </div>
+                </div>
+            `
+        };
+
+        const app = {
+            init() {
+                this.load('home');
+                console.log("Scout Utopia System Harmonized.");
+            },
+            load(screenName) {
+                const mount = document.getElementById('screen-mount');
+                mount.innerHTML = SCREENS[screenName];
+
+                // Update tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                const indexMap = { home: 0, hierarchy: 1, hub: 3, settings: 4 };
+                if (indexMap[screenName] !== undefined) {
+                    document.querySelectorAll('.tab-btn')[indexMap[screenName]].classList.add('active');
+                }
+            },
+            triggerDiscovery() {
+                const val = prompt("Enter Discovery Signal:");
+                if (val) {
+                    this.load('home');
+                    setTimeout(() => {
+                        const log = document.getElementById('uLogStream');
+                        const div = document.createElement('div');
+                        div.className = 'u-log';
+                        div.innerHTML = `<b>DISCOVERY:</b> Signal [${val}] parsed.`;
+                        log.prepend(div);
+                    }, 100);
+                }
+            },
+            drill(category) {
+                alert(`Exploring: ${category}`);
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+
+</html>

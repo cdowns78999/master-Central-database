@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sims 4 - Hierarchical Node Network</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --s4-white: #ffffff;
+            --s4-gray: #f2f2f2;
+            --s4-blue: #35C6EB;
+            --s4-dark-blue: #2594a4;
+            --s4-shadow: rgba(0, 0, 0, 0.12);
+            --node-dia: 100px;
+            --transition: 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--s4-gray);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(53, 198, 235, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(78, 195, 0, 0.05) 0px, transparent 50%);
+            color: #333;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 80px 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 120px;
+            background: var(--s4-white);
+            padding: 25px 80px;
+            border-radius: 25px;
+            box-shadow: 0 5px 25px var(--s4-shadow);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+            letter-spacing: -1px;
+        }
+
+        .hierarchy-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 100px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .level {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 80px;
+            position: relative;
+        }
+
+        .node-wrapper {
+            position: relative;
+            width: var(--node-dia);
+            height: var(--node-dia);
+        }
+
+        .node {
+            width: 100%;
+            height: 100%;
+            background: var(--s4-white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px var(--s4-shadow);
+            position: relative;
+            z-index: 10;
+        }
+
+        .node:hover {
+            transform: scale(1.1);
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(53, 198, 235, 0.3);
+        }
+
+        .plumbob-s4 {
+            width: 25px;
+            height: 40px;
+            background: #4EC300;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .connection {
+            position: absolute;
+            width: 2px;
+            background: var(--s4-blue);
+            z-index: 1;
+        }
+
+        .connection.vertical {
+            height: 100px;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .connection.horizontal {
+            height: 2px;
+            top: 50%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+        }
+
+        .pie-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+            transform: translate(-50%, -50%) scale(0.4);
+            z-index: 5;
+        }
+
+        .pie-menu.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .pie-option {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: var(--s4-white);
+            border: 2px solid var(--s4-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px var(--s4-shadow);
+            text-align: center;
+            padding: 8px;
+        }
+
+        .pie-option:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .pie-option:nth-child(1) {
+            transform: translate(-50%, -50%) rotate(0deg) translate(120px) rotate(0deg);
+        }
+
+        .pie-option:nth-child(2) {
+            transform: translate(-50%, -50%) rotate(60deg) translate(120px) rotate(-60deg);
+        }
+
+        .pie-option:nth-child(3) {
+            transform: translate(-50%, -50%) rotate(120deg) translate(120px) rotate(-120deg);
+        }
+
+        .pie-option:nth-child(4) {
+            transform: translate(-50%, -50%) rotate(180deg) translate(120px) rotate(-180deg);
+        }
+
+        .pie-option:nth-child(5) {
+            transform: translate(-50%, -50%) rotate(240deg) translate(120px) rotate(-240deg);
+        }
+
+        .pie-option:nth-child(6) {
+            transform: translate(-50%, -50%) rotate(300deg) translate(120px) rotate(-300deg);
+        }
+
+        .node-label {
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--s4-white);
+            color: #333;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 4px 10px var(--s4-shadow);
+            white-space: nowrap;
+        }
+
+        .btn-add-level {
+            margin-top: 100px;
+            padding: 18px 60px;
+            background: var(--s4-blue);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(53, 198, 235, 0.4);
+        }
+
+        .btn-add-level:hover {
+            background: var(--s4-dark-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(53, 198, 235, 0.5);
+        }
+
+        .info-bubble {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--s4-dark-blue);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-bubble::after {
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid var(--s4-dark-blue);
+        }
+
+        .pie-option:hover~.info-bubble {
+            opacity: 1;
+            visibility: visible;
+            top: -120px;
+        }
+
+        .expand-btn {
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            width: 30px;
+            height: 30px;
+            background: var(--s4-blue);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .node.expanded .expand-btn {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>Hierarchical Sims 4 Node Network</h1>
+        <p style="opacity: 0.5; font-size: 0.9rem;">MULTI-LEVEL HIERARCHY</p>
+    </header>
+
+    <div class="hierarchy-container" id="hierarchy">
+        <!-- Level 1: Root -->
+        <div class="level" id="level-1">
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)" data-level="1" data-children="level-2">
+                    <div class="plumbob-s4"></div>
+                    <button class="expand-btn" onclick="expandNode(this)">+</button>
+                    <span class="node-label">Root Sim</span>
+                </div>
+                <div class="connection vertical"></div>
+                <div class="pie-menu">
+                    <div class="pie-option" onmouseover="setTip(this, 'Open Dashboard')">Open</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Modify Structure')">Build</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Social Update')">Social</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'System Logs')">Log</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Resource Map')">Map</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Settings')">Config</div>
+                    <div class="info-bubble">Tip Text</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level 2: Children -->
+        <div class="level" id="level-2" style="display: none;">
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)" data-level="2" data-children="level-3-1">
+                    <div class="plumbob-s4"></div>
+                    <button class="expand-btn" onclick="expandNode(this)">+</button>
+                    <span class="node-label">Child A</span>
+                </div>
+                <div class="connection vertical"></div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                </div>
+            </div>
+            <div class="connection horizontal"></div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)" data-level="2" data-children="level-3-2">
+                    <div class="plumbob-s4"></div>
+                    <button class="expand-btn" onclick="expandNode(this)">+</button>
+                    <span class="node-label">Child B</span>
+                </div>
+                <div class="connection vertical"></div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)" data-level="2" data-children="level-3-3">
+                    <div class="plumbob-s4"></div>
+                    <button class="expand-btn" onclick="expandNode(this)">+</button>
+                    <span class="node-label">Child C</span>
+                </div>
+                <div class="connection vertical"></div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-add-level" onclick="addHierarchyLevel()">+ Add Hierarchy Level +</button>
+
+    <script>
+        function togglePie(el) {
+            const menu = el.parentElement.querySelector('.pie-menu');
+            const active = menu.classList.contains('active');
+
+            document.querySelectorAll('.pie-menu').forEach(m => m.classList.remove('active'));
+
+            if (!active) menu.classList.add('active');
+        }
+
+        function setTip(el, text) {
+            const tip = el.parentElement.querySelector('.info-bubble');
+            if (tip) tip.textContent = text;
+        }
+
+        function expandNode(btn) {
+            const node = btn.parentElement;
+            const childrenId = node.dataset.children;
+            const childrenLevel = document.getElementById(childrenId);
+            if (childrenLevel) {
+                if (childrenLevel.style.display === 'none' || childrenLevel.style.display === '') {
+                    childrenLevel.style.display = 'flex';
+                    childrenLevel.style.opacity = '0';
+                    childrenLevel.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        childrenLevel.style.opacity = '1';
+                        childrenLevel.style.transform = 'translateY(0)';
+                    }, 50);
+                    node.classList.add('expanded');
+                } else {
+                    childrenLevel.style.display = 'none';
+                    node.classList.remove('expanded');
+                }
+            }
+        }
+
+        let levelCount = 2;
+        function addHierarchyLevel() {
+            levelCount++;
+            const hierarchy = document.getElementById('hierarchy');
+            const level = document.createElement('div');
+            level.className = 'level';
+            level.id = `level-${levelCount}`;
+            level.style.display = 'none';
+
+            for (let i = 0; i < 3; i++) {
+                const wrap = document.createElement('div');
+                wrap.className = 'node-wrapper';
+                if (i < 2) wrap.innerHTML += '<div class="connection horizontal"></div>';
+                wrap.innerHTML += `
+                    <div class="node" onclick="togglePie(this)" data-level="${levelCount}" data-children="level-${levelCount + 1}-${i}">
+                        <div class="plumbob-s4"></div>
+                        <button class="expand-btn" onclick="expandNode(this)">+</button>
+                        <span class="node-label">Level ${levelCount} Node ${i + 1}</span>
+                    </div>
+                    <div class="connection vertical"></div>
+                    <div class="pie-menu">
+                        <div class="pie-option">Open</div>
+                        <div class="pie-option">Build</div>
+                        <div class="pie-option">Social</div>
+                        <div class="pie-option">Log</div>
+                        <div class="pie-option">Map</div>
+                        <div class="pie-option">Config</div>
+                    </div>
+                `;
+                level.appendChild(wrap);
+            }
+
+            hierarchy.appendChild(level);
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.node-wrapper')) {
+                document.querySelectorAll('.pie-menu').forEach(m => m.classList.remove('active'));
+            }
+        });
+    </script>
+</body>
+
+</html>

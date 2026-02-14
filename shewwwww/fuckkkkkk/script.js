@@ -165,6 +165,29 @@ function initConfetti() {
     drawFrame();
 }
 
+// ============================================
+// Letter Flutter Animation for Logo
+// ============================================
+
+function animateLogoText() {
+    const logoText = document.querySelector('.logo-text');
+    if (!logoText) return;
+
+    const text = logoText.textContent;
+    logoText.innerHTML = '';
+
+    text.split('').forEach((char, index) => {
+        const span = document.createElement('span');
+        span.className = 'letter-flutter';
+        span.textContent = char;
+        span.style.animationDelay = `${index * 0.08}s`;
+        logoText.appendChild(span);
+    });
+}
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', animateLogoText);
+
 // Toggle sidebar visibility
 const toggleSidebarBtn = document.querySelector('.toggle-sidebar button');
 const body = document.body;
@@ -689,9 +712,8 @@ function toggleTheme() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Restore persisted theme
-    const savedTheme = localStorage.getItem('avatar_trainer_theme') || 'dark';
-    applyTheme(savedTheme);
+    // Force light mode only
+    applyTheme('light');
 
     // Initialize tutorial if on Step 2
     if (document.getElementById('tutorial-nav')) {

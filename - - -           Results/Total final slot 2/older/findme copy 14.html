@@ -1,0 +1,3438 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sims 4 - Advanced Network Matrix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root {
+            --s4-white: #ffffff;
+            --s4-gray: #f2f2f2;
+            --s4-blue: #35C6EB;
+            --s4-dark-blue: #2594a4;
+            --s4-green: #4EC300;
+            --s4-shadow: rgba(0, 0, 0, 0.12);
+            --node-dia: 100px;
+            --sub-dia: 70px;
+            --ter-dia: 30px;
+            --curve-offset: -45px;
+            --transition: 0.4s cubic-bezier(0.17, 0.67, 0.43, 1.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #06070a;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(53, 198, 235, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(78, 195, 0, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(177, 157, 255, 0.05) 0px, transparent 100%);
+            background-size: 200% 200%;
+            animation: backgroundShimmer 20s ease infinite;
+            color: #eee;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px 150px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        @keyframes windDrift {
+            0% {
+                background-position: -200% 0;
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.15;
+            }
+
+            100% {
+                background-position: 200% 0;
+                opacity: 0;
+            }
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.05) 20%,
+                    transparent 40%,
+                    rgba(255, 255, 255, 0.08) 60%,
+                    transparent 80%);
+            background-size: 200% 100%;
+            animation: windDrift 30s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes oceanShimmer {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+
+            50% {
+                transform: scale(1.1) translate(-1%, -2%);
+            }
+
+            100% {
+                transform: scale(1) translate(0, 0);
+            }
+        }
+
+        /* --- Aurora Background & Blobs --- */
+        .aurora-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: #05080c;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .blob {
+            position: absolute;
+            width: min(80vw, 800px);
+            height: min(80vw, 800px);
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.12;
+            animation: blobDrift 25s infinite alternate ease-in-out;
+        }
+
+        .blob-1 {
+            background: var(--s4-blue);
+            top: -10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            background: var(--s4-green);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -5s;
+        }
+
+        .blob-3 {
+            background: gold;
+            top: 40%;
+            left: 50%;
+            width: 500px;
+            height: 500px;
+            animation-delay: -12s;
+        }
+
+        @keyframes blobDrift {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(150px, 80px) scale(1.3) rotate(15deg);
+            }
+        }
+
+        /* --- Jellyfish Wind Separator (Organic Wiggle) --- */
+        .wind-separator {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        .separator-string {
+            position: absolute;
+            width: 380px;
+            height: 10px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+            filter: blur(2px);
+            box-shadow: 0 0 45px rgba(53, 198, 235, 0.5);
+            border-radius: 50%;
+            animation: jellyfishCore 6s ease-in-out infinite alternate;
+        }
+
+        /* Organic Tentacle Arms */
+        .separator-string::before,
+        .separator-string::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(53, 198, 235, 0.4), transparent);
+            filter: blur(5px);
+            border-radius: 50%;
+        }
+
+        .separator-string::before {
+            top: 25px;
+            animation: jellyfishWiggle 6s ease-in-out infinite alternate -1.5s;
+        }
+
+        .separator-string::after {
+            top: -25px;
+            animation: jellyfishWiggle 6s ease-in-out infinite alternate -3s;
+        }
+
+        @keyframes jellyfishCore {
+            0% {
+                transform: translateY(-5px) rotate(-1.5deg) skewX(-4deg);
+                opacity: 0.2;
+            }
+
+            50% {
+                transform: translateY(12px) rotate(1.5deg) skewX(4deg) scaleX(1.1);
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: translateY(-5px) rotate(-1.5deg) skewX(-4deg);
+                opacity: 0.2;
+            }
+        }
+
+        @keyframes jellyfishWiggle {
+            0% {
+                transform: translateX(-40px) skewX(12deg) scaleX(0.7) rotate(-8deg);
+                opacity: 0;
+            }
+
+            50% {
+                transform: translateX(0) skewX(-12deg) scaleX(1.3) rotate(8deg);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateX(40px) skewX(12deg) scaleX(0.7) rotate(-8deg);
+                opacity: 0;
+            }
+        }
+
+        /* --- UI Elements --- */
+        #wind-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            width: 100%;
+            max-width: 900px;
+            position: sticky;
+            top: 20px;
+            z-index: 2000;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        .header>* {
+            pointer-events: auto;
+        }
+
+        h1 {
+            display: block;
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .header-actions {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2px 10px;
+            background: rgba(13, 22, 35, 0.9);
+            backdrop-filter: blur(30px);
+            border-radius: 50px;
+            border: 1.5px solid gold;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            gap: 0;
+            /* Removing gap to let separators do the work */
+        }
+
+        .btn-header {
+            padding: 10px 35px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-header:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+            background: rgba(255, 215, 0, 0.15);
+            /* Subtle gold separator */
+        }
+
+        .btn-header:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-add-top {
+            color: gold;
+        }
+
+        .btn-add-top span {
+            color: #a29bfe;
+            /* Purple plus icon */
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .btn-header:not(.btn-add-top) {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            gap: 240px;
+            /* Expansive spacing for high-end feel */
+            width: 100%;
+            max-width: 1100px;
+            align-items: center;
+            margin-top: 60px;
+        }
+
+        .node-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 110px;
+            position: relative;
+        }
+
+        .node-wrapper {
+            position: relative;
+            width: var(--node-dia);
+            height: var(--node-dia);
+        }
+
+        /* Curved Logic: Outer nodes */
+        .node-row .node-wrapper:nth-child(1),
+        .node-row .node-wrapper:nth-child(5) {
+            transform: translateY(var(--curve-offset));
+        }
+
+        /* Middle Hub - Slightly Larger */
+        .node-row .node-wrapper:nth-child(3) {
+            width: 132px;
+            height: 132px;
+            z-index: 5;
+        }
+
+        .node {
+            width: 100%;
+            height: 100%;
+            background: var(--s4-white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px var(--s4-shadow);
+            position: relative;
+            z-index: 100;
+        }
+
+
+
+        .node::before,
+        .node::after,
+        .lead-tracker::before,
+        .lead-tracker::after {
+            content: '';
+            position: absolute;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: -1;
+        }
+
+        .node::before {
+            inset: -12px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg,
+                    rgba(53, 198, 235, 0) 0%,
+                    rgba(53, 198, 235, 1) 25%,
+                    rgba(78, 195, 0, 1) 50%,
+                    rgba(53, 198, 235, 1) 75%,
+                    rgba(53, 198, 235, 0) 100%);
+            -webkit-mask: radial-gradient(transparent 62%, #000 64%);
+            mask: radial-gradient(transparent 62%, #000 64%);
+            filter: blur(1px);
+            transform: scale(0.9);
+        }
+
+        .node::after {
+            inset: -8px;
+            border-radius: 50%;
+            border: 2px solid rgba(53, 198, 235, 0.3);
+            transform: scale(0.9);
+        }
+
+        /* Visualizers trigger ONLY when hovering the gold circle */
+        .node:has(.lead-tracker:hover)::before {
+            opacity: 1;
+            transform: scale(1);
+            animation: visualizerSpin 4s linear infinite;
+        }
+
+        .node:has(.lead-tracker:hover)::after {
+            opacity: 1;
+            transform: scale(1);
+            animation: visualizerPulse 1.5s ease-out infinite;
+        }
+
+        @keyframes visualizerSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes visualizerPulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1.4);
+                opacity: 0;
+            }
+        }
+
+        @keyframes exquisiteSpin {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+
+            50% {
+                transform: rotate(180deg) scale(1.1);
+            }
+
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+
+        @keyframes exquisitePulse {
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes exquisiteFloat {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(-6px);
+            }
+        }
+
+        .node.active-primary {
+            box-shadow: 0 0 0 4px var(--s4-blue);
+        }
+
+        .plumbob {
+            width: 25px;
+            height: 40px;
+            background: var(--s4-green);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            animation: spin3d 4s linear infinite;
+            transition: 0.3s;
+            transform-origin: center;
+        }
+
+        .node.done {
+            background: var(--s4-green) !important;
+            box-shadow: 0 0 30px rgba(78, 195, 0, 0.6);
+        }
+
+        .node.done::after {
+            content: '✓';
+            color: #fff;
+            font-weight: 900;
+            font-size: 50px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .node.done .plumbob,
+        .node.done .node-label {
+            opacity: 0.3;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+                filter: brightness(1.2);
+            }
+        }
+
+        .node-label {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: transparent;
+            /* Borderless look */
+            color: rgba(255, 255, 255, 0.9);
+            padding: 8px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            outline: none;
+            border: none;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s, color 0.3s, width 0.2s;
+            width: 80px;
+            text-align: center;
+            pointer-events: auto;
+            cursor: text;
+        }
+
+        .node.has-image {
+            background-size: cover;
+            background-position: center;
+            border: 3px solid var(--s4-blue);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.5);
+        }
+
+        .node.has-image .plumbob {
+            display: none;
+        }
+
+        .node-label.active-input {
+            background: transparent;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(53, 198, 235, 0.8);
+            animation: textGlowPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes textGlowPulse {
+
+            0%,
+            100% {
+                transform: translateX(-50%) scale(1);
+                text-shadow: 0 0 10px rgba(53, 198, 235, 0.5);
+            }
+
+            50% {
+                transform: translateX(-50%) scale(1.05);
+                text-shadow: 0 0 20px rgba(53, 198, 235, 0.9);
+            }
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px rgba(53, 198, 235, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(53, 198, 235, 0.6);
+            }
+        }
+
+        .node-label.active-input:hover {
+            transform: translateX(-50%) scale(1.1);
+            text-shadow: 0 0 25px rgba(53, 198, 235, 1);
+            animation: none;
+        }
+
+        .node-label.active-input:focus {
+            background: transparent;
+            color: #fff;
+            transform: translateX(-50%) scale(1.1);
+            z-index: 1000;
+            border-bottom: 2.5px solid var(--s4-blue);
+        }
+
+        /* Specific style for central 'Main' node input */
+        .node-label.active-input.main-node {
+            color: gold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+
+        /* --- Level 2: Pie Menu (4 Sub-nodes) --- */
+        .pie-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+            transform: translate(-50%, -50%) scale(0.4) rotate(-45deg);
+            z-index: 50;
+        }
+
+        .pie-menu.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            pointer-events: auto;
+        }
+
+        .sub-node {
+            position: absolute;
+            width: var(--sub-dia);
+            height: var(--sub-dia);
+            background: var(--s4-white);
+            border: 3px solid var(--s4-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 5px 15px var(--s4-shadow);
+            padding: 5px;
+            text-align: center;
+        }
+
+        .sub-node span {
+            outline: none;
+            cursor: text;
+            display: block;
+            width: 100%;
+            border-bottom: 1px dashed transparent;
+            transition: 0.3s;
+        }
+
+        .sub-node:hover {
+            border-color: var(--s4-dark-blue);
+            transform: translate(-50%, -50%) scale(1.15);
+        }
+
+        .sub-node span:hover,
+        .sub-node span:focus {
+            border-bottom-color: var(--s4-dark-blue);
+        }
+
+        /* Blossom Style Symmetrical Distribution (All Above) */
+        .sub-node:nth-child(1) {
+            transform: translate(-50%, -50%) translate(-100px, -50px);
+        }
+
+        .sub-node:nth-child(2) {
+            transform: translate(-50%, -50%) translate(-45px, -110px);
+        }
+
+        .sub-node:nth-child(3) {
+            transform: translate(-50%, -50%) translate(45px, -110px);
+        }
+
+        .sub-node:nth-child(4) {
+            transform: translate(-50%, -50%) translate(100px, -50px);
+        }
+
+        /* --- Footer Actions --- */
+        .btn-add {
+            margin-top: 50px;
+            padding: 15px 50px;
+            background: var(--s4-blue);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(53, 198, 235, 0.4);
+        }
+
+        .btn-add:hover {
+            background: var(--s4-dark-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(53, 198, 235, 0.5);
+        }
+
+        .spotify-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(53, 198, 235, 0.3);
+            border-radius: 8px;
+            padding: 8px 15px;
+            color: var(--s4-blue);
+            font-size: 12px;
+            width: 100%;
+            max-width: 400px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .quick-integrations {
+            padding: 15px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(53, 198, 235, 0.02);
+            margin-top: 30px;
+            /* Space from title */
+        }
+
+        .quick-integrations label {
+            font-size: 11px;
+            color: var(--s4-blue);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .spotify-input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--s4-blue);
+            box-shadow: 0 0 15px rgba(53, 198, 235, 0.3);
+        }
+
+        .spotify-input::placeholder {
+            color: rgba(53, 198, 235, 0.5);
+        }
+
+        .action-log {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+            max-height: 200px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 15px var(--s4-shadow);
+            overflow-y: auto;
+            font-size: 0.8rem;
+            z-index: 3000;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2px;
+        }
+
+        /* --- Red Carpet Workflow --- */
+        .config-tile {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            /* Fixed central position */
+            transform: translate(-50%, -50%) scale(0);
+            width: min(1100px, 95vw);
+            height: min(700px, 85vh);
+            background: rgba(10, 15, 25, 0.9);
+            backdrop-filter: blur(50px);
+            padding: 30px;
+            border-radius: 40px;
+            box-shadow: 0 50px 150px rgba(0, 0, 0, 1), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .config-tile.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .workflow-note {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 30px;
+            transition: 0.3s;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .workflow-note:focus {
+            border-color: var(--s4-blue);
+            background: rgba(53, 198, 235, 0.05);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.2);
+        }
+
+        .workflow-workspace {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SPATIAL MATH PROTOCOL - Phase & Workflow Alignment System
+           ═══════════════════════════════════════════════════════════════
+
+           PHASE BUTTON DIMENSIONS:
+           • Width: 120px
+           • Height: ~117px calculated as:
+             - Top padding: 5px
+             - Label height: ~9px
+             - Gap: 3px
+             - Grid (2×2 52px squares): 107px (52 + 3 + 52)
+             - Bottom padding: 5px
+             - TOTAL: 117px
+
+           PHASE SPACING:
+           • Vertical gap between phases: 20px
+           • Left panel width: 150px
+           • Total phase cycle height: 117px + 20px = 137px
+
+           WORKFLOW STEP DIMENSIONS:
+           • Height: 35px (30% of phase height for visual balance)
+           • Connector width: 40px
+           • Vertical alignment: center (via grid align-items)
+
+           MINI MENU (Right-Click):
+           • Appears 31px below step button
+           • Height: ~28px (3px padding × 2 + 12px font + 10px)
+           • Border matches parent button color (darkened -0.15 alpha)
+
+           PROPORTIONAL RELATIONSHIPS:
+           • Phase:Step ratio = 117:35 ≈ 3.3:1
+           • Phase:Gap ratio = 117:20 ≈ 5.9:1
+           • Step:Menu ratio = 35:28 ≈ 1.25:1
+           ═══════════════════════════════════════════════════════════════ */
+
+        .left-panel {
+            flex: 0 0 150px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Phase vertical spacing */
+            padding: 15px;
+            padding-top: 60px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .left-panel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tile-title {
+            position: absolute;
+            top: 10px;
+            /* Moved even higher */
+            left: 30px;
+            right: 30px;
+            font-size: 14px;
+            color: var(--s4-blue);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-area {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 40px 1fr 40px 1fr 40px 1fr;
+            gap: 30px 0;
+            padding: 60px;
+            overflow-y: auto;
+            align-content: start;
+            /* ALIGNMENT PROTOCOL: Center-align workflow step buttons with their phase buttons */
+            /* Phase buttons: auto height (~117px: 5px top padding + 9px label + 3px gap + 107px grid + 5px bottom padding) */
+            /* Step buttons: 35px tall */
+            /* Grid ensures vertical centering regardless of phase button height */
+            align-items: center;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .main-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        .connector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: var(--s4-blue);
+            opacity: 0;
+            pointer-events: none;
+            font-weight: 900;
+            transform: translateX(-20px);
+        }
+
+        .station.selected {
+            border-color: var(--s4-blue);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.5);
+        }
+
+
+        .station {
+            width: 120px;
+            height: auto;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: stretch;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.2;
+            transform: translateY(10px);
+            cursor: default;
+            position: relative;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            overflow: visible;
+            gap: 3px;
+        }
+
+        /* Category Slider - 2x2 Grid with Perfect Squares */
+        /* Width: 120px - 10px padding (5px each side) - 3px gap = 107px available */
+        /* Each column: (107px - 3px gap) / 2 = 52px per square */
+        .category-slider {
+            display: grid;
+            grid-template-columns: 52px 52px;
+            grid-template-rows: 52px 52px;
+            gap: 3px;
+            width: 100%;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .category-block {
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-block::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.15;
+            transition: opacity 0.3s;
+        }
+
+        .category-block:hover::before {
+            opacity: 0.3;
+        }
+
+        .category-block.press {
+            background: linear-gradient(135deg, rgba(53, 198, 235, 0.2), rgba(53, 198, 235, 0.1));
+            border: 1px solid rgba(53, 198, 235, 0.3);
+            color: var(--s4-blue);
+        }
+
+        .category-block.spotify {
+            background: linear-gradient(135deg, rgba(78, 195, 0, 0.2), rgba(78, 195, 0, 0.1));
+            border: 1px solid rgba(78, 195, 0, 0.3);
+            color: var(--s4-green);
+        }
+
+        .category-block.social {
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(155, 89, 182, 0.1));
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            color: #9b59b6;
+        }
+
+        .category-block.other {
+            background: linear-gradient(135deg, rgba(230, 126, 34, 0.2), rgba(230, 126, 34, 0.1));
+            border: 1px solid rgba(230, 126, 34, 0.3);
+            color: #e67e22;
+        }
+
+        .station .plumbob {
+            display: none;
+            /* Quieter look inside tile */
+        }
+
+        .station span {
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .station.revealed {
+            opacity: 1;
+            transform: translateY(0);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .station:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--s4-blue);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .station.done {
+            opacity: 1 !important;
+        }
+
+        .station.done.category-spotify {
+            background: rgba(78, 195, 0, 0.3) !important;
+            border-color: var(--s4-green) !important;
+            color: var(--s4-green);
+            box-shadow: 0 0 30px rgba(78, 195, 0, 0.6);
+            animation: shineGreen 1s ease-in-out;
+        }
+
+        .station.done.category-press {
+            background: rgba(53, 198, 235, 0.3) !important;
+            border-color: var(--s4-blue) !important;
+            color: var(--s4-blue);
+            box-shadow: 0 0 30px rgba(53, 198, 235, 0.6);
+            animation: shineBlue 1s ease-in-out;
+        }
+
+        .station.done.category-social {
+            background: rgba(155, 89, 182, 0.3) !important;
+            /* Purple */
+            border-color: #9b59b6 !important;
+            color: #9b59b6;
+            box-shadow: 0 0 30px rgba(155, 89, 182, 0.6);
+            animation: shinePurple 1s ease-in-out;
+        }
+
+        .station.done.category-other {
+            background: rgba(230, 126, 34, 0.3) !important;
+            /* Orange */
+            border-color: #e67e22 !important;
+            color: #e67e22;
+            box-shadow: 0 0 30px rgba(230, 126, 34, 0.6);
+            animation: shineOrange 1s ease-in-out;
+        }
+
+        @keyframes shineGreen {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(78, 195, 0, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 50px rgba(78, 195, 0, 1);
+            }
+        }
+
+        @keyframes shineBlue {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(53, 198, 235, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 50px rgba(53, 198, 235, 1);
+            }
+        }
+
+        @keyframes shinePurple {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(155, 89, 182, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 50px rgba(155, 89, 182, 1);
+            }
+        }
+
+        @keyframes shineOrange {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(230, 126, 34, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 50px rgba(230, 126, 34, 1);
+            }
+        }
+
+        .station.done::after {
+            content: '✓';
+            color: var(--s4-green);
+            font-weight: 900;
+            font-size: 18px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+
+        .delete-phase {
+            position: absolute;
+            right: 3px;
+            top: 3px;
+            color: #ff4444;
+            font-size: 14px;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .delete-phase:hover {
+            opacity: 1;
+        }
+
+        .btn-add-station {
+            position: absolute;
+            top: 10px;
+            right: 40px;
+        }
+
+        .close-tile {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #ff4444;
+            font-size: 18px;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 30;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .close-tile:hover {
+            opacity: 1;
+        }
+
+        .lead-tracker {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 34px;
+            height: 34px;
+            /* Minimal Premium Look */
+            background: rgba(13, 22, 35, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(255, 215, 0, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px rgba(255, 215, 0, 0.2);
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: visible;
+            perspective: 800px;
+        }
+
+        /* Diagonal Satellite Orbit (Saturn Style) - Hidden by Default */
+        .moon-orbit {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            transform: translate(-50%, -50%) rotateX(70deg) rotateY(20deg);
+            pointer-events: none;
+            z-index: 15;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 1s ease-in-out, visibility 1s;
+        }
+
+        .satellite {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 11px;
+            height: 13px;
+            background: #dfe6e9;
+            /* Metallic body */
+            border-radius: 1px;
+            box-shadow: 0 0 18px rgba(255, 255, 255, 1);
+            animation: satelliteOrbit 6s linear infinite;
+        }
+
+        /* Tiny Solar Panels */
+        .satellite::before,
+        .satellite::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 7px;
+            background: #0984e3;
+            /* Solar blue */
+            border: 0.5px solid rgba(255, 255, 255, 0.6);
+            top: 3px;
+        }
+
+        .satellite::before {
+            left: -17px;
+        }
+
+        .satellite::after {
+            right: -17px;
+        }
+
+        @keyframes satelliteOrbit {
+            0% {
+                transform: rotate(0deg) translate(28px) rotate(0deg);
+                z-index: 15;
+            }
+
+            50% {
+                transform: rotate(180deg) translate(28px) rotate(-180deg);
+                z-index: -1;
+            }
+
+            100% {
+                transform: rotate(360deg) translate(28px) rotate(-360deg);
+                z-index: 15;
+            }
+        }
+
+        /* Specular Gloss Overlay - Softened */
+        .lead-tracker::after {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            width: 30%;
+            height: 30%;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            filter: blur(2px);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Prismatic Wind Layers (Refractive Aura) */
+        .lead-tracker::before {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 1.3s ease-in-out, transform 1.3s ease-in-out;
+            pointer-events: none;
+            filter: blur(10px);
+            z-index: -1;
+        }
+
+        /* Billiard Physics - Dramatic Travel & Speed */
+        @keyframes billiardFloat {
+            0% {
+                transform: translateX(-50%) translateY(0) rotate(0deg);
+            }
+
+            25% {
+                transform: translateX(-58%) translateY(-12px) rotate(6deg);
+            }
+
+            50% {
+                transform: translateX(-42%) translateY(-18px) rotate(-8deg);
+            }
+
+            75% {
+                transform: translateX(-54%) translateY(-10px) rotate(4deg);
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(0) rotate(0deg);
+            }
+        }
+
+        .lead-tracker span {
+            display: inline-block;
+            transition: transform 0.7s ease-out;
+            z-index: 1;
+            user-select: none;
+        }
+
+        .lead-tracker.glowing span {
+            animation: ballRoll 3.2s ease-in-out infinite;
+            /* ~10% faster than previous */
+        }
+
+        @keyframes ballRoll {
+
+            0%,
+            100% {
+                transform: rotate(0deg) scale(1.1);
+            }
+
+            50% {
+                transform: rotate(30deg) scale(1.25);
+            }
+        }
+
+        /* Intense Bright White Ignition Burst */
+        .lead-tracker.ignition {
+            animation: brightIgnition 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        @keyframes brightIgnition {
+            0% {
+                transform: translateX(-50%) scale(1);
+                filter: brightness(1) contrast(1);
+                box-shadow: 0 0 0 0 transparent;
+            }
+
+            20% {
+                transform: translateX(-50%) scale(1.6);
+                filter: brightness(2.5) contrast(1.2);
+                box-shadow:
+                    0 0 40px 15px white,
+                    0 0 60px 25px rgba(255, 255, 255, 0.8),
+                    0 0 80px 35px var(--s4-blue);
+            }
+
+            100% {
+                transform: translateX(-50%) scale(1);
+                filter: brightness(1) contrast(1);
+                box-shadow: 0 0 0 0 transparent;
+            }
+        }
+
+        /* Swirling White Comets - Hidden by Default */
+        .lead-comet {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow:
+                0 0 10px #fff,
+                0 0 20px #fff,
+                -8px 0 15px 2px rgba(255, 255, 255, 0.6);
+            /* Tail effect */
+            pointer-events: none;
+            z-index: 10;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 1s ease-in-out, visibility 1s;
+        }
+
+        .lead-tracker.glowing .lead-comet,
+        .lead-tracker.glowing .moon-orbit {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .comet-1 {
+            animation: cometSwirl 3.5s linear infinite;
+        }
+
+        .comet-2 {
+            animation: cometSwirl 4.8s linear infinite reverse;
+            animation-delay: -1.2s;
+        }
+
+        @keyframes cometSwirl {
+            0% {
+                transform: rotate(0deg) translateX(35px) rotate(0deg) scale(1);
+            }
+
+            25% {
+                scale: 1.2;
+            }
+
+            50% {
+                transform: rotate(180deg) translateX(35px) rotate(-180deg) scale(0.6);
+            }
+
+            75% {
+                scale: 0.8;
+            }
+
+            100% {
+                transform: rotate(360deg) translateX(35px) rotate(-360deg) scale(1);
+            }
+        }
+
+        @keyframes exquisiteBreath {
+
+            0%,
+            100% {
+                opacity: 0.2;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Gorgeous Harmonic Rainbow States (Speed Boosted 10%) */
+        .lead-tracker.state-low {
+            animation: billiardFloat 5s ease-in-out infinite;
+        }
+
+        .lead-tracker.state-low::before {
+            opacity: 0.35;
+            inset: -15px;
+            background: conic-gradient(from 0deg,
+                    transparent, var(--s4-blue), transparent, var(--s4-green), transparent, gold, transparent);
+            animation: exquisiteSpin 6.5s linear infinite, exquisiteBreath 3.2s ease-in-out infinite;
+            -webkit-mask: radial-gradient(transparent 55%, #000 70%);
+        }
+
+        .lead-tracker.state-mid {
+            animation: billiardFloat 3.2s ease-in-out infinite;
+        }
+
+        .lead-tracker.state-mid::before {
+            opacity: 0.55;
+            inset: -20px;
+            background: conic-gradient(from 45deg,
+                    var(--s4-blue), transparent, var(--s4-green), transparent, gold, transparent, white, transparent);
+            animation: exquisiteSpin 4.8s linear infinite, exquisiteBreath 2.4s ease-in-out infinite;
+            -webkit-mask: radial-gradient(transparent 50%, #000 65%);
+        }
+
+        .lead-tracker.state-high {
+            animation: billiardFloat 2.4s ease-in-out infinite;
+        }
+
+        .lead-tracker.state-high::before {
+            opacity: 0.75;
+            inset: -22px;
+            background: conic-gradient(from 90deg,
+                    var(--s4-blue), var(--s4-green), gold, white, var(--s4-blue), gold, var(--s4-green));
+            animation: exquisiteSpin 3.2s linear infinite, exquisiteBreath 1.8s ease-in-out infinite;
+            -webkit-mask: radial-gradient(transparent 45%, #000 60%);
+            filter: blur(5px);
+        }
+
+        .lead-tracker.state-max {
+            animation: billiardFloat 1.6s ease-in-out infinite;
+            box-shadow:
+                0 0 25px var(--s4-blue),
+                0 0 45px var(--s4-green),
+                0 0 70px gold,
+                0 0 90px white;
+            /* Dialed down */
+            filter: brightness(1.3);
+        }
+
+        .lead-tracker.state-max::before {
+            opacity: 0.95;
+            inset: -28px;
+            background: conic-gradient(from 180deg,
+                    var(--s4-blue), white, var(--s4-green), white, gold, white, var(--s4-blue), gold, var(--s4-green));
+            animation: exquisiteSpin 2.4s linear infinite, exquisiteBreath 1.6s ease-in-out infinite;
+            -webkit-mask: radial-gradient(transparent 40%, #000 55%);
+            filter: blur(4px);
+        }
+
+        .lead-tracker.state-max::after {
+            opacity: 0.8;
+            inset: -32px;
+            background: conic-gradient(from 180deg, gold, transparent, white, transparent, gold, transparent, white, transparent);
+            animation: exquisiteSpin 3s linear infinite reverse;
+            -webkit-mask: radial-gradient(transparent 50%, #000 65%);
+            filter: blur(2px) contrast(1.5);
+            box-shadow: inset 0 0 20px white;
+            /* Extra inner shimmer */
+        }
+
+        .lead-tracker:hover {
+            transform: translateX(-50%) scale(1.1);
+            filter: brightness(1.2);
+            box-shadow: 0 10px 40px rgba(53, 198, 235, 0.8), 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        /* ALIGNMENT PROTOCOL: Step buttons in workflows */
+        /* These are the horizontal workflow steps that appear when a phase expands */
+        /* Phase button height: ~117px (auto-calculated from 52×52 grid + padding + label) */
+        /* Step button height: 35px (roughly 1/3 of phase height for clean proportions) */
+        /* Parent grid's align-items: center ensures perfect vertical centering */
+        .step-button {
+            height: 35px;
+            font-size: 10px;
+            /* Center-aligned via parent grid's align-items: center */
+        }
+
+        .station span {
+            user-select: none;
+        }
+
+        .first-step.done {
+            box-shadow: 0 0 40px rgba(78, 195, 0, 0.8) !important;
+            animation: shineGreen 2s ease-in-out !important;
+        }
+
+        .tile-title span.editing {
+            background: rgba(155, 89, 182, 0.1);
+            border: 1px solid #9b59b6;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(155, 89, 182, 0.3);
+            padding: 2px 4px;
+        }
+
+        .station.selected {
+            background: rgba(53, 198, 235, 0.15);
+            box-shadow: 0 0 15px rgba(53, 198, 235, 0.3);
+        }
+
+        /* Category color coding */
+        .station.category-spotify {
+            border-color: #4EC300;
+            /* Bright green */
+        }
+
+        .station.category-press {
+            border-color: #35C6EB;
+            /* Bright blue */
+        }
+
+        .station.category-social {
+            border-color: #9b59b6;
+            /* Purple */
+        }
+
+        .station.category-other {
+            border-color: #e67e22;
+            /* Orange */
+        }
+
+        .btn-add-station {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 32px;
+            height: 32px;
+            background: rgba(53, 198, 235, 0.1);
+            border: 1px solid var(--s4-blue);
+            color: var(--s4-blue);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            transition: 0.3s;
+            z-index: 600;
+        }
+
+        .btn-add-station:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.2) rotate(90deg);
+            box-shadow: 0 0 20px var(--s4-blue);
+        }
+
+
+
+        .hover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 220px;
+            background: rgba(16, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--s4-blue);
+            border-radius: 12px;
+            padding: 15px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(20px, -50%) scale(0.9);
+            transition: opacity 0.35s ease-out, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 10000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            color: #fff;
+        }
+
+        .hover-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(15px, -50%) scale(1);
+        }
+
+        .hover-overlay h3 {
+            display: none;
+        }
+
+        .hover-overlay .meta-row {
+            display: none;
+        }
+
+        .hover-overlay .meta-val {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .overlay-workflow-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .overlay-shortcut-btn {
+            padding: 6px 12px;
+            background: rgba(53, 198, 235, 0.1);
+            border: 1px solid var(--s4-blue);
+            color: var(--s4-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-align: center;
+            pointer-events: auto;
+        }
+
+        .overlay-shortcut-btn:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        /* --- Lead Card --- */
+        .lead-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 600px;
+            height: 500px;
+            min-width: 300px;
+            min-height: 250px;
+            background: rgba(10, 15, 25, 0.95);
+            /* Concise minimal background */
+            backdrop-filter: blur(40px);
+            padding: 30px;
+            border-radius: 30px;
+            border: none;
+            /* Removed border as requested */
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+            z-index: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            resize: both;
+            overflow: hidden;
+        }
+
+        .lead-card::after {
+            content: "";
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 15px;
+            height: 15px;
+            background: linear-gradient(135deg, transparent 50%, gold 50%);
+            border-radius: 2px;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .lead-card.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .lead-title {
+            font-size: 22px;
+            color: gold;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .lead-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .lead-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .lead-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .lead-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 5px;
+            /* Minimal padding since no boxes */
+            border-radius: 12px;
+            background: transparent;
+            /* Removed layers */
+            border: none;
+            /* Removed borders */
+            transition: all 0.3s;
+        }
+
+        .lead-item:hover {
+            background: rgba(255, 255, 255, 0.02);
+            transform: translateX(3px);
+        }
+
+        .lead-check {
+            width: 20px;
+            height: 20px;
+            accent-color: gold;
+        }
+
+        .lead-note {
+            flex: 1;
+            padding: 8px 10px;
+            background: transparent;
+            /* Borderless look */
+            border: none;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+            /* Subtle indicator */
+            color: #fff;
+            border-radius: 0;
+            outline: none;
+            transition: border-bottom 0.3s;
+        }
+
+        .lead-note:focus {
+            border-bottom: 1px solid gold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .close-lead {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close-lead:hover {
+            color: #ff6666;
+            transform: scale(1.2);
+        }
+
+        @keyframes leadGlow {
+            0% {
+                box-shadow: 0 0 20px gold, 0 0 40px rgba(255, 215, 0, 0.5);
+            }
+
+            100% {
+                box-shadow: 0 0 30px gold, 0 0 60px rgba(255, 215, 0, 0.8);
+            }
+        }
+
+        .node.has-lead:has(.lead-tracker:hover) {
+            box-shadow: 0 15px 60px rgba(53, 198, 235, 0.9), 0 0 40px rgba(255, 215, 0, 0.6);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- Phase Shortcut Menu --- */
+        .phase-menu {
+            position: absolute;
+            right: -120px;
+            top: 0;
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .phase-menu.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .phase-shortcut-btn {
+            padding: 5px 10px;
+            background: rgba(53, 198, 235, 0.1);
+            border: 1px solid var(--s4-blue);
+            color: var(--s4-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .phase-shortcut-btn:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .artist-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--s4-blue);
+            margin-right: 10px;
+        }
+
+        /* --- Bouncy Submenu (Right Click) --- */
+        #bouncy-submenu {
+            position: fixed;
+            z-index: 9999;
+            background: rgba(13, 22, 35, 0.9);
+            backdrop-filter: blur(30px);
+            border: 1.5px solid gold;
+            border-radius: 30px;
+            padding: 2px 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 10px rgba(255, 215, 0, 0.2);
+            /* Initial State Hidden */
+            opacity: 0;
+            transform: perspective(1000px) translate3d(0, -20px, -50px) scale(0.5);
+            pointer-events: none;
+            transition: none;
+            /* Handled by GSAP */
+        }
+
+        /* Subtle Mechanical Handles */
+        #bouncy-submenu::before,
+        #bouncy-submenu::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 55%;
+            background: rgba(255, 215, 0, 0.15);
+            border-radius: 1px;
+            box-shadow: 0 0 6px rgba(255, 215, 0, 0.1);
+        }
+
+        #bouncy-submenu::before {
+            left: 5px;
+        }
+
+        #bouncy-submenu::after {
+            right: 5px;
+        }
+
+        #bouncy-submenu.active {
+            pointer-events: auto;
+        }
+
+        .submenu-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 3px 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .submenu-btn:hover {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .submenu-btn:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+            background: rgba(255, 215, 0, 0.15);
+            /* Gold separator from screenshot */
+        }
+
+        .submenu-btn.btn-plus span {
+            color: #a29bfe;
+            /* Purple plus from screenshot */
+            font-size: 12px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        /* --- Link Storage Fields --- */
+        .link-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 12px;
+            background: rgba(128, 128, 128, 0.08);
+            border-radius: 6px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .link-field:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+            background: rgba(255, 215, 0, 0.15);
+        }
+
+        /* Field Label (L1, L2, L3) */
+        .field-label {
+            font-size: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.6);
+            flex-shrink: 0;
+            width: 16px;
+        }
+
+        /* Link Input Field */
+        .link-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 7px;
+            font-weight: 600;
+            padding: 2px 4px;
+            outline: none;
+            transition: all 0.3s;
+            width: 80px;
+        }
+
+        .link-input:focus {
+            border-bottom-color: gold;
+            color: #fff;
+        }
+
+        .link-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 7px;
+        }
+
+        /* Link Display (Saved State) */
+        .link-display {
+            flex: 1;
+            font-size: 7px;
+            font-weight: 600;
+            color: var(--s4-blue);
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .link-display:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        /* URL Warning Indicator */
+        .link-field .url-warning {
+            position: absolute;
+            right: 2px;
+            top: 2px;
+            font-size: 8px;
+            color: orange;
+            opacity: 0.6;
+        }
+
+        /* Quick Action Menu */
+        .link-action-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            background: rgba(13, 22, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid gold;
+            border-radius: 8px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-5px);
+            transition: all 0.2s ease-out;
+            z-index: 10000;
+        }
+
+        .link-action-menu.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .link-action-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 8px;
+            font-weight: 600;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .link-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* Edit Button */
+        .field-edit {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+            cursor: pointer;
+            padding: 0;
+            transition: all 0.3s;
+        }
+
+        .field-edit:hover {
+            color: gold;
+            transform: scale(1.1);
+        }
+
+        /* Hidden State */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Active Field State */
+        .link-field.has-link {
+            background: rgba(53, 198, 235, 0.08);
+        }
+
+        /* Link Saved Glow */
+        .link-field.link-saved {
+            animation: linkGlow 1s ease-out;
+        }
+
+        @keyframes linkGlow {
+            0% {
+                box-shadow: 0 0 20px rgba(78, 195, 0, 0.8);
+            }
+            100% {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="aurora-container">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    <canvas id="wind-canvas"></canvas>
+    <header class="header">
+        <h1>MASTER DASHBOARD</h1>
+        <div class="header-actions">
+            <button class="btn-header btn-add-top" onclick="addRow()"><span>+</span> New</button>
+            <button class="btn-header" onclick="exportNetwork()">Export</button>
+            <button class="btn-header" onclick="document.getElementById('file-input').click()">Import</button>
+        </div>
+        <input type="file" id="file-input" class="hidden" accept=".json" onchange="importNetwork(event)">
+    </header>
+
+    <div class="node-container" id="matrix">
+        <!-- Rows injected here -->
+    </div>
+
+    <div class="action-log" id="log">
+        <div class="log-entry"><strong>System:</strong> Ready</div>
+    </div>
+
+    <!-- Hover Overlay Element -->
+    <div id="hover-overlay" class="hover-overlay">
+        <!-- Workflow Shortcut Buttons -->
+        <div id="overlay-buttons-container" class="overlay-workflow-buttons" style="display: none;">
+            <button class="overlay-shortcut-btn" data-category="Press">Press</button>
+            <button class="overlay-shortcut-btn" data-category="Social">Social</button>
+            <button class="overlay-shortcut-btn" data-category="Spotify">Spotify</button>
+            <button class="overlay-shortcut-btn" data-category="Other">Other</button>
+        </div>
+    </div>
+
+    <!-- Lead Card -->
+    <div id="lead-card" class="lead-card">
+        <div class="lead-title">Lead Tracker</div>
+        <div class="lead-content">
+            <div class="lead-item"><input type="checkbox" class="lead-check" onchange="saveLeadData()"><input
+                    type="text" class="lead-note" placeholder="Note 1" oninput="saveLeadData()"></div>
+            <div class="lead-item"><input type="checkbox" class="lead-check" onchange="saveLeadData()"><input
+                    type="text" class="lead-note" placeholder="Note 2" oninput="saveLeadData()"></div>
+            <div class="lead-item"><input type="checkbox" class="lead-check" onchange="saveLeadData()"><input
+                    type="text" class="lead-note" placeholder="Note 3" oninput="saveLeadData()"></div>
+            <div class="lead-item"><input type="checkbox" class="lead-check" onchange="saveLeadData()"><input
+                    type="text" class="lead-note" placeholder="Note 4" oninput="saveLeadData()"></div>
+            <div class="lead-item"><input type="checkbox" class="lead-check" onchange="saveLeadData()"><input
+                    type="text" class="lead-note" placeholder="Note 5" oninput="saveLeadData()"></div>
+        </div>
+        <button class="close-lead" onclick="closeLeadCard()">×</button>
+    </div>
+
+    <!-- Bouncy Submenu -->
+    <div id="bouncy-submenu">
+        <div class="link-field" data-field="1">
+            <span class="field-label">L1</span>
+            <input type="text" class="link-input" placeholder="Paste link..." />
+            <span class="link-display hidden"></span>
+            <button class="field-edit hidden">✎</button>
+            <span class="url-warning hidden">⚠️</span>
+            <div class="link-action-menu">
+                <button class="link-action-btn" data-action="open">🔗 Open</button>
+                <button class="link-action-btn" data-action="copy">📋 Copy</button>
+                <button class="link-action-btn" data-action="edit">✎ Edit</button>
+            </div>
+        </div>
+        <div class="link-field" data-field="2">
+            <span class="field-label">L2</span>
+            <input type="text" class="link-input" placeholder="Paste link..." />
+            <span class="link-display hidden"></span>
+            <button class="field-edit hidden">✎</button>
+            <span class="url-warning hidden">⚠️</span>
+            <div class="link-action-menu">
+                <button class="link-action-btn" data-action="open">🔗 Open</button>
+                <button class="link-action-btn" data-action="copy">📋 Copy</button>
+                <button class="link-action-btn" data-action="edit">✎ Edit</button>
+            </div>
+        </div>
+        <div class="link-field" data-field="3">
+            <span class="field-label">L3</span>
+            <input type="text" class="link-input" placeholder="Paste link..." />
+            <span class="link-display hidden"></span>
+            <button class="field-edit hidden">✎</button>
+            <span class="url-warning hidden">⚠️</span>
+            <div class="link-action-menu">
+                <button class="link-action-btn" data-action="open">🔗 Open</button>
+                <button class="link-action-btn" data-action="copy">📋 Copy</button>
+                <button class="link-action-btn" data-action="edit">✎ Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Config Tile -->
+    <div id="global-config-tile" class="config-tile">
+        <div class="tile-title">
+            <span id="global-tile-label" contenteditable="true" onfocus="this.classList.add('editing')"
+                onblur="this.classList.remove('editing')">TITLE</span>
+            <button class="btn-add-station" onclick="addStation(this)"
+                style="background: rgba(53, 198, 235, 0.2); border: 1px solid var(--s4-blue); color: var(--s4-blue); padding: 2px 8px; font-size: 12px;">+</button>
+            <button class="close-tile" onclick="closeTile(this)" title="Close Tile">×</button>
+        </div>
+        <div class="quick-integrations">
+            <label>Spotify Link:</label>
+            <input type="text" class="spotify-input" placeholder="Paste Artist/Album URL to sync..."
+                onpaste="setTimeout(()=>processTileSpotify(this.value, document.getElementById('global-config-tile')), 10)">
+        </div>
+        <div class="workflow-workspace" id="global-workflow-workspace"></div>
+    </div>
+
+    <script>
+        const matrix = document.getElementById('matrix');
+        const logEl = document.getElementById('log');
+        const overlay = document.getElementById('hover-overlay');
+        let rowCount = 0;
+        let activeTile = null;
+        let activeKey = null;
+        let hideTimeout = null;
+
+        let networkDataStore = {};
+
+        // Link Storage for Mini Menu - Format: { 'nodeId': { '1': {url: '...', name: '...'}, '2': {...}, '3': {...} } }
+        let linkStorageData = {};
+
+        const shortcutTasks = {
+            'Press': ['Press Release', 'Pitch', 'Report', 'Report link'],
+            'Social': ['Social Post', 'Engage', 'Monitor', 'Share'],
+            'Spotify': ['Pitch', 'Report', 'Check', 'Report link'],
+            'Other': ['General Task', 'Review', 'Finalize', 'Archive']
+        };
+
+        function showOverlay(e, nodeData, isPhaseNode = false) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            // Position to the right of the element
+            overlay.style.top = (rect.top + rect.height / 2) + 'px';
+            overlay.style.left = rect.right + 'px';
+
+            // Populate Data
+            // Show/hide workflow buttons based on node type
+            const buttonsContainer = document.getElementById('overlay-buttons-container');
+            if (isPhaseNode) {
+                buttonsContainer.style.display = 'flex';
+
+                // Attach click handlers to buttons with current phase data
+                const buttons = buttonsContainer.querySelectorAll('.overlay-shortcut-btn');
+                buttons.forEach(btn => {
+                    // Remove old handlers to prevent duplicates
+                    btn.onclick = null;
+
+                    // Add new handler with current nodeData in closure
+                    btn.onclick = (clickEvent) => {
+                        clickEvent.stopPropagation();
+                        const category = btn.getAttribute('data-category');
+                        fillPhaseSubs(nodeData, category);
+                        hideOverlay(); // Hide overlay after selection
+                    };
+                });
+            } else {
+                buttonsContainer.style.display = 'none';
+            }
+
+            overlay.classList.add('visible');
+
+            // Handle overlay hover to keep it open
+            overlay.onmouseenter = () => {
+                if (hideTimeout) {
+                    clearTimeout(hideTimeout);
+                    hideTimeout = null;
+                }
+            };
+            overlay.onmouseleave = () => {
+                hideOverlay();
+            };
+        }
+
+        function hideOverlay() {
+            if (hideTimeout) {
+                clearTimeout(hideTimeout);
+                hideTimeout = null;
+            }
+            overlay.classList.remove('visible');
+        }
+
+        let activeLeadKey = null;
+
+        /* --- Bouncy Submenu Logic --- */
+        const bouncyMenu = document.getElementById('bouncy-submenu');
+        let activeMenuTarget = null;
+
+        function triggerBouncyMenu(e, targetElement, dataNode) {
+            // TOGGLE LOGIC: If right-clicking the same target, hide it
+            if (activeMenuTarget === targetElement && bouncyMenu.classList.contains('active')) {
+                hideBouncyMenu();
+                return;
+            }
+
+            // Close any existing
+            hideBouncyMenu();
+
+            activeMenuTarget = targetElement;
+            const rect = targetElement.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+
+            // Get button's border color and darken it by 3px equivalent (reduce opacity/brightness)
+            const computedStyle = window.getComputedStyle(targetElement);
+            let borderColor = computedStyle.borderColor || 'rgba(255, 215, 0, 0.5)';
+
+            // Darken the border color by reducing alpha or brightness
+            if (borderColor.includes('rgba')) {
+                borderColor = borderColor.replace(/[\d.]+\)$/g, match => {
+                    const alpha = parseFloat(match);
+                    return (Math.max(0, alpha - 0.15)) + ')'; // Darken by reducing alpha
+                });
+            }
+
+            // ROBOTIC CLAW INITIAL STATE
+            // Tucked behind and under the button
+            gsap.set(bouncyMenu, {
+                left: centerX - (bouncyMenu.offsetWidth / 2),
+                top: rect.top + 2, // Start tucked behind button
+                opacity: 0,
+                scale: 0.85,
+                z: -100,
+                rotateX: -90, // Hinged back
+                transformOrigin: "center top",
+                zIndex: 9998,
+                borderTopLeftRadius: '8px',
+                borderTopRightRadius: '8px',
+                borderColor: borderColor
+            });
+
+            bouncyMenu.classList.add('active');
+
+            // MECHANICAL TIMELINE (Realistic Claw / Rotator Cuff Travel)
+            const tl = gsap.timeline();
+
+            tl.to(bouncyMenu, {
+                opacity: 1,
+                rotateX: 10, // Swing slightly past center
+                top: rect.bottom + 31, // 30px more space below button
+                z: -20,
+                duration: 0.35,
+                ease: "power2.out",
+                borderTopLeftRadius: '8px',
+                borderTopRightRadius: '8px',
+                borderColor: borderColor
+            })
+                .to(bouncyMenu, {
+                    rotateX: 0,
+                    scale: 1,
+                    z: 0,
+                    duration: 0.25,
+                    ease: "back.out(2.5)", // The mechanical "clack" stop / snap
+                    borderTopLeftRadius: '6px',
+                    borderTopRightRadius: '6px',
+                    borderColor: borderColor
+                });
+
+            // Bind link field handlers
+            const activeTile = targetElement.closest('.config-tile');
+            const phaseIndex = targetElement.getAttribute('data-phase-index');
+            const stepIndex = targetElement.getAttribute('data-step-index');
+            const workflowTitle = activeTile.querySelector('.workflow-note').value.trim() || 'default-workflow';
+            const nodeId = `${workflowTitle}-p${phaseIndex}-s${stepIndex}`;
+            bindLinkFieldHandlers(nodeId);
+        }
+
+        function hideBouncyMenu() {
+            if (!bouncyMenu.classList.contains('active')) return;
+
+            // Retract like a claw folding back up
+            gsap.to(bouncyMenu, {
+                opacity: 0,
+                rotateX: -45,
+                scale: 0.8,
+                top: "-=10",
+                duration: 0.2,
+                ease: "power2.in",
+                onComplete: () => {
+                    bouncyMenu.classList.remove('active');
+                    bouncyMenu.style.top = '-1000px';
+                }
+            });
+        }
+
+        // Global click to close menu
+        window.addEventListener('click', (e) => {
+            if (bouncyMenu.classList.contains('active') && !bouncyMenu.contains(e.target)) {
+                hideBouncyMenu();
+            }
+        });
+
+        function loadLinkStorageFromLocal() {
+            const stored = localStorage.getItem('linkStorageData');
+            if (stored) {
+                linkStorageData = JSON.parse(stored);
+            }
+        }
+
+        function saveLinkStorageToLocal() {
+            localStorage.setItem('linkStorageData', JSON.stringify(linkStorageData));
+        }
+
+        function bindLinkFieldHandlers(nodeId) {
+            for (let i = 1; i <= 3; i++) {
+                const field = document.getElementById(`link-field-${i}`);
+                const input = field.querySelector('.link-input');
+                const display = field.querySelector('.link-display');
+                const editBtn = field.querySelector('.field-edit');
+                const saved = linkStorageData[nodeId] && linkStorageData[nodeId][i.toString()];
+                if (saved) {
+                    updateLinkDisplay(nodeId, i);
+                    display.classList.remove('hidden');
+                    input.classList.add('hidden');
+                    editBtn.classList.remove('hidden');
+                    field.classList.add('has-link');
+                } else {
+                    display.classList.add('hidden');
+                    input.classList.remove('hidden');
+                    editBtn.classList.add('hidden');
+                    field.classList.remove('has-link');
+                }
+
+                // Input handler
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const url = input.value.trim();
+                        if (url) {
+                            let fixedUrl = url;
+                            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                                fixedUrl = 'https://' + url;
+                                // Subtle warning: add a class for warning
+                                field.classList.add('url-fixed');
+                                setTimeout(() => field.classList.remove('url-fixed'), 2000);
+                            }
+                            const name = prompt('Name it...', fixedUrl) || fixedUrl;
+                            saveLinkField(nodeId, i, fixedUrl, name);
+                            input.classList.add('hidden');
+                            updateLinkDisplay(nodeId, i);
+                            display.classList.remove('hidden');
+                            editBtn.classList.remove('hidden');
+                            field.classList.add('has-link');
+                            field.classList.add('link-saved');
+                            setTimeout(() => field.classList.remove('link-saved'), 1000);
+                        }
+                    }
+                });
+
+                // Display click for quick actions
+                display.addEventListener('click', () => {
+                    const saved = linkStorageData[nodeId] && linkStorageData[nodeId][i.toString()];
+                    if (!saved) return;
+                    // Simple inline menu using prompts for now
+                    const choice = prompt('Choose: 1. Open in new tab, 2. Copy URL, 3. Edit');
+                    if (choice == '1') {
+                        window.open(saved.url, '_blank');
+                        log(`Opened link: ${saved.name}`);
+                    } else if (choice == '2') {
+                        navigator.clipboard.writeText(saved.url);
+                        log(`Copied URL: ${saved.url}`);
+                    } else if (choice == '3') {
+                        editLinkField(nodeId, i, field);
+                    }
+                });
+
+                // Edit button
+                editBtn.addEventListener('click', () => editLinkField(nodeId, i, field));
+            }
+
+            // Focus first empty input
+            const emptyInputs = Array.from(document.querySelectorAll('.link-input:not(.hidden)'));
+            if (emptyInputs.length > 0) emptyInputs[0].focus();
+        }
+
+        function saveLinkField(nodeId, fieldNum, url, name) {
+            if (!linkStorageData[nodeId]) linkStorageData[nodeId] = {};
+            linkStorageData[nodeId][fieldNum.toString()] = { url, name };
+            saveLinkStorageToLocal();
+            // Fetch metadata
+            fetchTitleAndFavicon(url).then(data => {
+                if (data.title) linkStorageData[nodeId][fieldNum].title = data.title;
+                if (data.favicon) linkStorageData[nodeId][fieldNum].favicon = data.favicon;
+                updateLinkDisplay(nodeId, fieldNum);
+                saveLinkStorageToLocal();
+            }).catch(() => {
+                // If fetch fails, keep original name
+                updateLinkDisplay(nodeId, fieldNum);
+            });
+        }
+
+        function fetchTitleAndFavicon(url) {
+            return fetch(url, { mode: 'no-cors' }) // Try no-cors to avoid CORS
+                .then(response => {
+                    if (!response.ok) throw new Error('Fetch failed');
+                    return response.text();
+                })
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const title = doc.querySelector('title')?.textContent?.trim() || '';
+                    const favicon = doc.querySelector('link[rel*="icon"]')?.href || url + '/favicon.ico';
+                    return { title, favicon };
+                })
+                .catch(() => ({}));
+        }
+
+        function updateLinkDisplay(nodeId, fieldNum) {
+            const saved = linkStorageData[nodeId] && linkStorageData[nodeId][fieldNum.toString()];
+            if (!saved) return;
+            const field = document.getElementById(`link-field-${fieldNum}`);
+            const display = field.querySelector('.link-display');
+            const shortTitle = saved.title ? saved.title.substring(0,6) + '...' : (saved.name || saved.url);
+            if (saved.favicon) {
+                display.innerHTML = `<img src="${saved.favicon}" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;" onerror="this.style.display='none';"> ${shortTitle}`;
+            } else {
+                display.textContent = shortTitle;
+            }
+        }
+
+        function editLinkField(nodeId, fieldNum, field) {
+            const choice = prompt('Choose: rename, delete, replace');
+            if (choice === 'rename') {
+                const newName = prompt('New name:');
+                if (newName) {
+                    linkStorageData[nodeId][fieldNum].name = newName;
+                    saveLinkStorageToLocal();
+                    updateLinkDisplay(nodeId, fieldNum);
+                }
+            } else if (choice === 'delete') {
+                delete linkStorageData[nodeId][fieldNum];
+                saveLinkStorageToLocal();
+                field.querySelector('.link-display').classList.add('hidden');
+                field.querySelector('.link-input').classList.remove('hidden');
+                field.querySelector('.field-edit').classList.add('hidden');
+                field.classList.remove('has-link');
+            } else if (choice === 'replace') {
+                const newUrl = prompt('New URL:', linkStorageData[nodeId][fieldNum].url);
+                if (newUrl) {
+                    linkStorageData[nodeId][fieldNum].url = newUrl;
+                    saveLinkStorageToLocal();
+                }
+            }
+        }
+
+        function openLeadCard(btn) {
+            closeAll();
+            const wrap = btn.closest('.node-wrapper');
+            const key = wrap.getAttribute('data-id');
+            let data = networkDataStore[key];
+            if (!data) {
+                networkDataStore[key] = {
+                    nodes: [],
+                    notes: "Lead Tracker Initialized.",
+                    leadData: { checks: Array(5).fill(false), notes: Array(5).fill('') }
+                };
+                for (let i = 0; i < 4; i++) {
+                    networkDataStore[key].nodes.push({
+                        label: 'Phase ' + (i + 1),
+                        done: false,
+                        expanded: false,
+                        subs: [
+                            { label: 'Step 1', done: false },
+                            { label: 'Step 2', done: false },
+                            { label: 'Step 3', done: false },
+                            { label: 'Step 4', done: false }
+                        ]
+                    });
+                }
+                data = networkDataStore[key];
+            }
+            const leadCard = document.getElementById('lead-card');
+            const items = leadCard.querySelectorAll('.lead-item');
+            data.leadData.checks.forEach((checked, i) => {
+                items[i].querySelector('.lead-check').checked = checked;
+            });
+            data.leadData.notes.forEach((note, i) => {
+                items[i].querySelector('.lead-note').value = note;
+            });
+            leadCard.classList.add('active');
+            activeLeadKey = key;
+        }
+
+        function closeLeadCard() {
+            const leadCard = document.getElementById('lead-card');
+            leadCard.classList.remove('active');
+            saveLeadData();
+            activeLeadKey = null;
+        }
+
+        function saveLeadData() {
+            if (!activeLeadKey) return;
+            const leadCard = document.getElementById('lead-card');
+            const items = leadCard.querySelectorAll('.lead-item');
+            const checks = Array.from(items).map(item => item.querySelector('.lead-check').checked);
+            const notes = Array.from(items).map(item => item.querySelector('.lead-note').value);
+
+            // Trigger soft ignition on tracker for feedback
+            const wrapper = document.querySelector(`.node-wrapper[data-id="${activeLeadKey}"]`);
+            if (wrapper) {
+                const tracker = wrapper.querySelector('.lead-tracker');
+                if (tracker) {
+                    tracker.classList.remove('ignition');
+                    void tracker.offsetWidth;
+                    tracker.classList.add('ignition');
+                }
+            }
+
+            networkDataStore[activeLeadKey].leadData = { checks, notes };
+            updateGlows();
+            saveToLocalStorage();
+        }
+
+        function updateGlows() {
+            document.querySelectorAll('.lead-tracker').forEach(tracker => {
+                const wrap = tracker.closest('.node-wrapper');
+                const key = wrap.getAttribute('data-id');
+                const data = networkDataStore[key];
+
+                tracker.classList.remove('state-low', 'state-mid', 'state-high', 'state-max', 'glowing');
+
+                if (data && data.leadData) {
+                    const filledChecks = data.leadData.checks.filter(c => c).length;
+                    const filledNotes = data.leadData.notes.filter(n => n.trim() !== '').length;
+                    const totalScore = filledChecks + filledNotes;
+
+                    if (totalScore > 0) {
+                        tracker.classList.add('glowing');
+                        if (totalScore >= 1 && totalScore <= 3) tracker.classList.add('state-low');
+                        else if (totalScore >= 4 && totalScore <= 6) tracker.classList.add('state-mid');
+                        else if (totalScore >= 7 && totalScore <= 9) tracker.classList.add('state-high');
+                        else if (totalScore === 10) tracker.classList.add('state-max');
+                    }
+                }
+            });
+            document.querySelectorAll('.node').forEach(node => {
+                const wrap = node.closest('.node-wrapper');
+                const key = wrap.getAttribute('data-id');
+                const data = networkDataStore[key];
+                if (data && data.leadData && (data.leadData.checks.some(c => c) || data.leadData.notes.some(n => n.trim()))) {
+                    node.classList.add('has-lead');
+                } else {
+                    node.classList.remove('has-lead');
+                }
+            });
+        }
+
+        function saveToLocalStorage() {
+            const nodes = [];
+            document.querySelectorAll('.node-wrapper').forEach(w => {
+                nodes.push({
+                    label: w.getAttribute('data-label'),
+                    id: w.getAttribute('data-id'),
+                    done: w.querySelector('.node').classList.contains('done')
+                });
+            });
+            const data = {
+                rowCount,
+                nodes,
+                store: networkDataStore
+            };
+            localStorage.setItem('networkState', JSON.stringify(data));
+        }
+
+        function log(msg) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<strong>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}:</strong> ${msg}`;
+            logEl.prepend(entry);
+        }
+
+        function filter(val) {
+            const q = val.toLowerCase();
+            document.querySelectorAll('.node-wrapper').forEach(w => {
+                const label = w.getAttribute('data-label').toLowerCase();
+                if (label.includes(q)) w.classList.remove('hidden');
+                else w.classList.add('hidden');
+            });
+        }
+
+        function openTile(tile, key, label) {
+            closeAll();
+            activeTile = tile;
+            activeKey = key;
+
+            const labelSpan = tile.querySelector('#global-tile-label');
+            if (labelSpan && label) labelSpan.innerText = label.toUpperCase();
+
+            tile.classList.add('active');
+            // ... the rest of the logic remains same as it uses networkDataStore[key]
+            if (!networkDataStore[key]) {
+                const isShortcut = key.includes('Quick:');
+                networkDataStore[key] = {
+                    nodes: [],
+                    notes: isShortcut ? "Shortcut activated: Fields pre-filled." : "Standard Workflow Initialized.",
+                    leadData: { checks: Array(5).fill(false), notes: Array(5).fill('') }
+                };
+                for (let i = 0; i < 4; i++) {
+                    networkDataStore[key].nodes.push({
+                        label: 'Phase ' + (i + 1),
+                        done: false,
+                        expanded: false,
+                        subs: [
+                            { label: 'Step 1', done: false },
+                            { label: 'Step 2', done: false },
+                            { label: 'Step 3', done: false },
+                            { label: 'Step 4', done: false }
+                        ]
+                    });
+                }
+            }
+
+            renderWorkflow(tile, key);
+        }
+
+        function toggleRow(stepNode, items) {
+            const isSelected = stepNode.classList.contains('selected');
+            if (!isSelected) {
+                stepNode.classList.add('selected');
+                gsap.to(items, { opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: "back.out(1.7)", pointerEvents: 'auto' });
+                // Set expanded in data
+                const leftPanel = stepNode.parentElement;
+                const index = Array.from(leftPanel.children).indexOf(stepNode);
+                const key = activeKey;
+                const data = networkDataStore[key];
+                if (data && data.nodes[index]) {
+                    data.nodes[index].expanded = true;
+                }
+            }
+            // Once expanded, stays permanent unless deleted
+        }
+
+        function addStation(btn) {
+            if (!activeKey || !activeTile) return;
+            const data = networkDataStore[activeKey];
+            const newIndex = data.nodes.length;
+            data.nodes.push({
+                label: 'Phase ' + (newIndex + 1),
+                done: false,
+                expanded: false,
+                subs: [
+                    { label: 'Step 1', done: false },
+                    { label: 'Step 2', done: false },
+                    { label: 'Step 3', done: false },
+                    { label: 'Step 4', done: false }
+                ]
+            });
+            renderWorkflow(activeTile, activeKey);
+            log("Added new workflow step");
+        }
+
+
+        function renderWorkflow(tile, key) {
+            const data = networkDataStore[key];
+            const workspace = tile.querySelector('.workflow-workspace');
+            workspace.innerHTML = `
+                <div class="left-panel"></div>
+                <div class="main-area"></div>
+            `;
+
+            const leftPanel = workspace.querySelector('.left-panel');
+            const mainArea = workspace.querySelector('.main-area');
+
+            data.nodes.forEach((n, i) => {
+                const node = document.createElement('div');
+                node.className = 'station revealed' + (n.done ? ' done' : '') + (n.category ? ' category-' + n.category.toLowerCase() : '');
+                node.innerHTML = `
+                    <span contenteditable="true" style="font-size: 9px; text-align: center; margin-bottom: 2px;">${n.label}</span>
+                    <div class="category-slider">
+                        <div class="category-block press" data-category="Press">P</div>
+                        <div class="category-block spotify" data-category="Spotify">S</div>
+                        <div class="category-block social" data-category="Social">So</div>
+                        <div class="category-block other" data-category="Other">O</div>
+                    </div>
+                    <button class="delete-phase" onclick="handleDeleteClick(this)" title="Triple-click to delete phase">×</button>
+                `;
+
+                // Pre-render workflow items for this step
+                const rowItems = [];
+                n.subs.forEach((s, j) => {
+                    const sub = document.createElement('div');
+                    const isFirst = j === 0;
+                    sub.className = 'station step-button' + (s.done ? ' done' : '') + (n.category ? ' category-' + n.category.toLowerCase() : '') + (isFirst ? ' first-step' : '');
+                    sub.setAttribute('data-phase-index', i);
+                    sub.setAttribute('data-step-index', j);
+                    sub.style.opacity = '0';
+                    sub.style.transform = 'scale(0.7)';
+                    sub.style.pointerEvents = 'none';
+
+                    // Create plumbob
+                    const plumbob = document.createElement('div');
+                    plumbob.className = 'plumbob';
+
+                    // Create span
+                    const span = document.createElement('span');
+                    span.textContent = s.label;
+
+                    // Append children
+                    sub.appendChild(plumbob);
+                    sub.appendChild(span);
+
+                    // Set up click handler
+                    sub.onclick = (e) => {
+                        e.stopPropagation();
+                        sub.classList.toggle('done');
+                        s.done = sub.classList.contains('done');
+                    };
+
+                    // PROPER CONTEXT MENU TRIGGER (Right Click)
+                    sub.oncontextmenu = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        triggerBouncyMenu(e, sub, s);
+                    };
+
+                    mainArea.appendChild(sub);
+                    rowItems.push(sub);
+
+                    if (j < n.subs.length - 1) {
+                        const connector = document.createElement('div');
+                        connector.className = 'connector';
+                        connector.innerHTML = '→';
+                        Object.assign(connector.style, {
+                            fontSize: '16px',
+                            color: 'var(--s4-blue)',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            opacity: '0',
+                            pointerEvents: 'none'
+                        });
+                        mainArea.appendChild(connector);
+                        rowItems.push(connector);
+                    }
+                });
+
+                // Wire up category block clicks
+                node.querySelectorAll('.category-block').forEach(block => {
+                    block.onclick = (e) => {
+                        e.stopPropagation();
+                        const category = block.getAttribute('data-category');
+                        fillPhaseSubs(n, category);
+                        toggleRow(node, rowItems);
+                    };
+                });
+
+                // Restore expanded state
+                if (n.expanded) {
+                    node.classList.add('selected');
+                    gsap.set(rowItems, { opacity: 1, scale: 1, pointerEvents: 'auto' });
+                }
+
+                node.ondblclick = (e) => {
+                    e.stopPropagation();
+                    toggleDone(node);
+                    n.done = node.classList.contains('done');
+                };
+                node.querySelector('span').oninput = () => n.label = node.querySelector('span').innerText;
+
+                leftPanel.appendChild(node);
+            });
+
+            gsap.fromTo(Array.from(leftPanel.children), { x: -100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "back.out(1.7)" });
+
+            tile.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                leftPanel.scrollTop += e.deltaY;
+            });
+        }
+
+        function toggleDone(el) {
+            el.classList.toggle('done');
+        }
+
+        function handleDeleteClick(btn) {
+            if (!btn.clickCount) btn.clickCount = 0;
+            btn.clickCount++;
+            if (btn.clickCount === 1) {
+                btn.innerText = 'Sure?';
+                btn.style.color = 'orange';
+            } else if (btn.clickCount === 2) {
+                btn.innerText = 'Delete?';
+                btn.style.color = 'red';
+            } else if (btn.clickCount === 3) {
+                deletePhase(btn);
+                btn.clickCount = 0;
+                btn.innerText = '×';
+                btn.style.color = '#ff4444';
+            }
+            // Reset after 3 seconds if not completed
+            clearTimeout(btn.resetTimeout);
+            btn.resetTimeout = setTimeout(() => {
+                btn.clickCount = 0;
+                btn.innerText = '×';
+                btn.style.color = '#ff4444';
+            }, 3000);
+        }
+
+        function deletePhase(btn) {
+            const node = btn.closest('.station');
+            const leftPanel = node.parentElement;
+            // Collect selected indices before deletion
+            const selectedIndices = [];
+            leftPanel.querySelectorAll('.station').forEach((s, i) => {
+                if (s.classList.contains('selected')) selectedIndices.push(i);
+            });
+            const index = Array.from(leftPanel.children).indexOf(node);
+            // Adjust selected indices for the deletion
+            const adjustedIndices = selectedIndices.filter(i => i !== index).map(i => i > index ? i - 1 : i);
+            // Delete the phase
+            const data = networkDataStore[activeKey];
+            data.nodes.splice(index, 1);
+            // Re-render
+            renderWorkflow(activeTile, activeKey);
+            // Restore adjusted selected states
+            const newStations = activeTile.querySelectorAll('.left-panel .station');
+            const newMainArea = activeTile.querySelector('.main-area');
+            adjustedIndices.forEach(i => {
+                const node = newStations[i];
+                const start = i * 7;
+                const rowItems = [];
+                for (let k = 0; k < 7; k++) {
+                    rowItems.push(newMainArea.children[start + k]);
+                }
+                node.classList.add('selected');
+                gsap.to(rowItems, { opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: "back.out(1.7)", pointerEvents: 'auto' });
+            });
+            log("Deleted phase");
+        }
+
+        function fillPhaseSubs(phaseData, category) {
+            const tasks = shortcutTasks[category];
+            if (!phaseData.subs || phaseData.subs.length === 0) {
+                log(`Cannot fill phase "${phaseData.label}" - no sub-tasks available`);
+                return;
+            }
+            // Collect currently selected phases before re-rendering
+            const selectedIndices = [];
+            const currentStations = activeTile.querySelectorAll('.left-panel .station');
+            currentStations.forEach((s, i) => {
+                if (s.classList.contains('selected')) selectedIndices.push(i);
+            });
+            phaseData.subs.forEach((s, i) => {
+                if (i < tasks.length) {
+                    s.label = tasks[i];
+                }
+            });
+            // Update phase label to reflect the category
+            const phaseNumber = phaseData.label.split(' ')[1] || '1';
+            phaseData.label = category + ' ' + phaseNumber;
+            phaseData.category = category;
+            phaseData.expanded = true;
+            renderWorkflow(activeTile, activeKey);
+            // Restore selected states
+            const data = networkDataStore[activeKey];
+            const newStations = activeTile.querySelectorAll('.left-panel .station');
+            const newMainArea = activeTile.querySelector('.main-area');
+            selectedIndices.forEach(i => {
+                const node = newStations[i];
+                // Dynamically calculate element indices based on actual step counts
+                const allMainChildren = Array.from(newMainArea.children);
+                let currentIndex = 0;
+                for (let pi = 0; pi < i; pi++) {
+                    const phaseStepCount = data.nodes[pi].subs.length;
+                    const elementsForThisPhase = phaseStepCount + (phaseStepCount - 1);
+                    currentIndex += elementsForThisPhase;
+                }
+                const phaseStepCount = data.nodes[i].subs.length;
+                const rowItems = [];
+                for (let k = 0; k < phaseStepCount + (phaseStepCount - 1); k++) {
+                    if (allMainChildren[currentIndex + k]) {
+                        rowItems.push(allMainChildren[currentIndex + k]);
+                    }
+                }
+                node.classList.add('selected');
+                gsap.to(rowItems, { opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: "back.out(1.7)", pointerEvents: 'auto' });
+            });
+            // Auto-expand the filled phase to show the steps
+            const filledIndex = data.nodes.indexOf(phaseData);
+            if (filledIndex !== -1 && !selectedIndices.includes(filledIndex)) {
+                const node = newStations[filledIndex];
+                // Dynamically calculate element indices based on actual step counts
+                const allMainChildren = Array.from(newMainArea.children);
+                let currentIndex = 0;
+                for (let pi = 0; pi < filledIndex; pi++) {
+                    const phaseStepCount = data.nodes[pi].subs.length;
+                    const elementsForThisPhase = phaseStepCount + (phaseStepCount - 1);
+                    currentIndex += elementsForThisPhase;
+                }
+                const phaseStepCount = data.nodes[filledIndex].subs.length;
+                const rowItems = [];
+                for (let k = 0; k < phaseStepCount + (phaseStepCount - 1); k++) {
+                    if (allMainChildren[currentIndex + k]) {
+                        rowItems.push(allMainChildren[currentIndex + k]);
+                    }
+                }
+                node.classList.add('selected');
+                gsap.to(rowItems, { opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: "back.out(1.7)", pointerEvents: 'auto' });
+            }
+            log(`Filled phase "${phaseData.label}" with ${category} tasks`);
+        }
+
+        function exportNetwork() {
+            const nodes = [];
+            document.querySelectorAll('.node-wrapper').forEach(w => {
+                nodes.push({
+                    label: w.getAttribute('data-label'),
+                    id: w.getAttribute('data-id'),
+                    done: w.querySelector('.node').classList.contains('done')
+                });
+            });
+
+            const data = {
+                rowCount,
+                nodes,
+                store: networkDataStore
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `network_state_${Date.now()}.json`;
+            a.click();
+            log("Network exported to JSON");
+        }
+
+        function autoSizeInput(el) {
+            if (!el || el.tagName !== 'INPUT') return;
+            const tempSpan = document.createElement('span');
+            tempSpan.style.visibility = 'hidden';
+            tempSpan.style.position = 'absolute';
+            tempSpan.style.whiteSpace = 'pre';
+            tempSpan.style.font = window.getComputedStyle(el).font;
+            tempSpan.innerText = el.value || el.placeholder;
+            document.body.appendChild(tempSpan);
+            const width = Math.max(80, tempSpan.offsetWidth + 50); // Extra side padding for long names
+            el.style.width = width + 'px';
+            document.body.removeChild(tempSpan);
+        }
+
+        // Direct node sync shortcut
+        async function syncFromNode(url, input) {
+            const wrap = input.closest('.node-wrapper');
+            const nodeId = wrap.getAttribute('data-id');
+            const logMsg = await processTileSpotify(url, null, wrap);
+            if (logMsg) log(logMsg);
+        }
+
+        async function processTileSpotify(url, tile, directWrap = null) {
+            const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+            try {
+                const response = await fetch(oembedUrl);
+                const data = await response.json();
+
+                // 1. Update Title/Input
+                const artistName = data.title ? data.title.toUpperCase() : "SYNCED ARTIST";
+                if (tile) tile.querySelector('.tile-title span').innerText = artistName;
+
+                // 2. Add Artist Thumb to Tile
+                if (data.thumbnail_url && tile) {
+                    let thumb = tile.querySelector('.artist-thumb');
+                    if (!thumb) {
+                        thumb = document.createElement('img');
+                        thumb.className = 'artist-thumb';
+                        tile.querySelector('.tile-title').prepend(thumb);
+                    }
+                    thumb.src = data.thumbnail_url;
+                }
+
+                // 3. Transform Matrix Node
+                const nodeWrapper = directWrap || (tile ? tile.closest('.node-wrapper') : null);
+                if (nodeWrapper) {
+                    const matrixNode = nodeWrapper.querySelector('.node');
+                    matrixNode.style.backgroundImage = `url('${data.thumbnail_url}')`;
+                    matrixNode.classList.add('has-image');
+
+                    // Update input label
+                    const input = nodeWrapper.querySelector('.node-label.active-input');
+                    if (input) {
+                        input.value = artistName;
+                        nodeWrapper.setAttribute('data-label', artistName);
+                        autoSizeInput(input);
+                    }
+
+                    const key = nodeWrapper.getAttribute('data-id');
+                    if (networkDataStore[key]) {
+                        networkDataStore[key].spotifyData = {
+                            title: data.title,
+                            thumbnail: data.thumbnail_url,
+                            url: url
+                        };
+                    }
+                    return `Synced Artist: ${data.title}`;
+                }
+
+                // Clear the input if in tile
+                if (tile) tile.querySelector('input.spotify-input').value = '';
+            } catch (error) {
+                return 'Spotify Fetch Failed: ' + error.message;
+            }
+        }
+        function importNetwork(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    renderImported(data);
+                    log("Network imported successfully");
+                } catch (err) {
+                    log("Error importing JSON: Invalid format");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function renderImported(data) {
+            matrix.innerHTML = '';
+            rowCount = 0;
+            networkDataStore = data.store || {};
+            Object.keys(networkDataStore).forEach(key => {
+                if (!networkDataStore[key].leadData) {
+                    networkDataStore[key].leadData = { checks: Array(5).fill(false), notes: Array(5).fill('') };
+                }
+            });
+
+            // Group nodes by row
+            const rows = {};
+            data.nodes.forEach(n => {
+                const parts = n.id ? n.id.split('.') : ["1", "0"];
+                const rId = parts[0];
+                if (!rows[rId]) rows[rId] = [];
+                rows[rId].push(n);
+            });
+
+            Object.entries(rows).forEach(([rId, nodeList]) => {
+                rowCount++;
+                const row = document.createElement('div');
+                row.className = 'node-row';
+                nodeList.forEach((n, i) => {
+                    const nodeWrap = createNode(rowCount, i, n.label);
+                    if (n.done) {
+                        nodeWrap.querySelector('.node').classList.add('done');
+                    }
+                    row.appendChild(nodeWrap);
+                });
+                matrix.appendChild(row);
+            });
+            updateGlows();
+        }
+
+        function createNode(rowId, colId, customLabel) {
+            const label = customLabel || (colId === 2 ? 'Main' : 'Node');
+            const nodeId = `${rowId}.${colId}`;
+            const wrap = document.createElement('div');
+            wrap.className = 'node-wrapper';
+            wrap.setAttribute('data-label', label);
+            wrap.setAttribute('data-id', nodeId);
+
+            const isMain = colId === 2;
+            const node = document.createElement('div');
+            node.className = 'node';
+
+            // All nodes now use an input for the Spotify Shortcut
+            const labelHTML = `<input type="text" class="node-label active-input ${isMain ? 'main-node' : ''}" 
+                    placeholder="Paste Spotify..." 
+                    value="${label}"
+                    oninput="this.closest('.node-wrapper').setAttribute('data-label', this.value); autoSizeInput(this)"
+                    onpaste="setTimeout(()=>syncFromNode(this.value, this), 10)"
+                    onclick="event.stopPropagation()">`;
+
+            node.innerHTML = `<div class="plumbob"></div>
+                             ${labelHTML}
+                              <div class="lead-tracker" title="Lead Tracker" onclick="openLeadCard(this); event.stopPropagation();">
+                                💰
+                                <div class="lead-comet comet-1"></div>
+                                <div class="lead-comet comet-2"></div>
+                                <div class="moon-orbit"><div class="satellite"></div></div>
+                              </div>`;
+
+            // Auto-size after small delay to ensure DOM state
+            setTimeout(() => {
+                const input = node.querySelector('input');
+                if (input) autoSizeInput(input);
+            }, 0);
+            node.onclick = (e) => {
+                e.stopPropagation();
+                togglePrimary(node);
+            };
+            if (!isMain) {
+                node.ondblclick = (e) => {
+                    e.stopPropagation();
+                    node.classList.toggle('done');
+                    log(`${node.classList.contains('done') ? 'Completed' : 'Reset'}: ${label}`);
+                };
+            }
+
+            wrap.appendChild(node);
+            return wrap;
+        }
+
+        function addRow() {
+            rowCount++;
+
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(30px)';
+
+            for (let i = 0; i < 5; i++) {
+                const label = i === 2 ? 'Main' : 'Node';
+                row.appendChild(createNode(rowCount, i, label));
+            }
+
+            matrix.appendChild(row);
+            setTimeout(() => {
+                row.style.transition = '0.6s ease-out';
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+            }, 50);
+            log(`Added group ${rowCount}`);
+            saveToLocalStorage();
+        }
+
+        function togglePrimary(node) {
+            const wrap = node.parentElement;
+            const key = wrap.getAttribute('data-id');
+            const label = wrap.getAttribute('data-label');
+            const globalTile = document.getElementById('global-config-tile');
+            openTile(globalTile, key, label);
+        }
+
+        function closeAll() {
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('active-primary'));
+            document.querySelectorAll('.config-tile').forEach(t => t.classList.remove('active'));
+            if (typeof closeLeadCard === 'function') closeLeadCard();
+        }
+
+        function closeTile(btn) {
+            closeAll();
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLinkStorageFromLocal();
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            rowCount = 1;
+            const labels = ['Node', 'Node', 'Main', 'Node', 'Node'];
+            labels.forEach((l, i) => row.appendChild(createNode(1, i, l)));
+
+            // Relative container for the initial row and its (missing) top separator
+            const rowWrapper = document.createElement('div');
+            rowWrapper.style.position = 'relative';
+            rowWrapper.style.width = '100%';
+            rowWrapper.appendChild(row); // No separator for the very first row
+
+            matrix.appendChild(rowWrapper);
+        });
+
+        // init high-end plexus wind
+        const canvas = document.getElementById('wind-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let windWidth, windHeight;
+        let mouseX = 0, mouseY = 0;
+
+        function resizeWind() {
+            windWidth = canvas.width = window.innerWidth;
+            windHeight = canvas.height = window.innerHeight;
+            initParticles();
+        }
+
+        class WindParticle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * windWidth;
+                this.y = Math.random() * windHeight;
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.size = Math.random() * 2 + 1;
+                this.opacity = Math.random() * 0.3 + 0.1;
+                this.origX = this.x;
+                this.origY = this.y;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < -50) this.x = windWidth + 50;
+                if (this.x > windWidth + 50) this.x = -50;
+                if (this.y < -50) this.y = windHeight + 50;
+                if (this.y > windHeight + 50) this.y = -50;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 80; i++) {
+                particles.push(new WindParticle());
+            }
+        }
+
+        function drawPlexus() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p1 = particles[i];
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+
+                    if (dist < 150) {
+                        const alpha = (1 - dist / 150) * 0.15;
+                        ctx.strokeStyle = `rgba(53, 198, 235, ${alpha})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animateWind() {
+            ctx.clearRect(0, 0, windWidth, windHeight);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            drawPlexus();
+            requestAnimationFrame(animateWind);
+        }
+
+        window.addEventListener('resize', resizeWind);
+        resizeWind();
+        animateWind();
+
+        document.addEventListener('mousedown', (e) => {
+            // Only allow closing via the specific X buttons as requested
+        });
+    </script>
+</body>
+
+</html>

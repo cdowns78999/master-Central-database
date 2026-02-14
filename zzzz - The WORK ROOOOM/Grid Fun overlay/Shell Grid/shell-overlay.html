@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shell Overlay | Artist Analysis Book</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0e0d0b;
+            --accent: #d87d4a;
+            /* Terracotta */
+            --accent-soft: #e2a07d;
+            --sage: #8a9a5b;
+            --clay: #b87333;
+            --oak: #4a3728;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.5);
+            --border: rgba(255, 255, 255, 0.1);
+            --glass: rgba(20, 20, 20, 0.4);
+            --glass-bright: rgba(255, 255, 255, 0.05);
+            --glow: rgba(216, 125, 74, 0.2);
+            --ios-blur: blur(30px) saturate(180%);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            le justify-content: flex-start;
+            padding: 4rem 2rem;
+            position: relative;
+            overflow-x: hidden;
+            /* Smooth Brush Background */
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(74, 55, 40, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(138, 154, 91, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(216, 125, 74, 0.1) 0%, transparent 80%),
+                radial-gradient(circle at 80% 80%, rgba(184, 115, 51, 0.2) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Subtle Grain Overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1300px;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            z-index: 10;
+        }
+
+        /* Header Re-creation */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .header-left h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent-soft) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-left p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            letter-spacing: 0.02em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.25em;
+            color: var(--sage);
+            text-transform: uppercase;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--sage);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--sage);
+            animation: pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+                box-shadow: 0 0 25px var(--sage);
+            }
+        }
+
+        /* The Shell Overlay / Command Box */
+        .shell-overlay {
+            background: var(--glass);
+            backdrop-filter: var(--ios-blur);
+            -webkit-backdrop-filter: var(--ios-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 3rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            position: relative;
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.4),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .shell-overlay:hover {
+            border-color: rgba(216, 125, 74, 0.3);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            transform: translateY(-4px);
+        }
+
+        .shell-overlay::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--accent), transparent);
+            opacity: 0.8;
+        }
+
+        /* MODULAR PODS */
+        .pod {
+            background: var(--glass-bright);
+            backdrop-filter: var(--ios-blur);
+            -webkit-backdrop-filter: var(--ios-blur);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .pod:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .pod-label {
+            font-family: 'JetBrains Mono';
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--accent-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pod-label::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+
+        /* DASHBOARD GRID SYSTEM */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .main-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .side-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* LEDGER OVERHAUL */
+        .ledger-pod {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .ledger-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 120px;
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono';
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .ledger-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 120px;
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .ledger-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* ACCORDION STYLES */
+        .accordion-item {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .accordion-header {
+            width: 100%;
+            padding: 12px 0;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'JetBrains Mono';
+            font-size: 0.75rem;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: color 0.2s;
+        }
+
+        .accordion-header:hover {
+            color: var(--accent-soft);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 200px;
+            padding-bottom: 15px;
+        }
+
+        .accordion-item.active .chevron {
+            transform: rotate(180deg);
+        }
+
+        .chevron {
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .tile-value {
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.01em;
+        }
+
+        /* SHORTCUT BANNERS */
+        .shortcut-vault {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 1rem;
+            min-height: 38px;
+        }
+
+        .shortcut-banner {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'JetBrains Mono';
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            transition: var(--transition);
+            animation: slideUpFade 0.3s ease-out;
+        }
+
+        .shortcut-banner:hover {
+            background: var(--glass-bright);
+            color: var(--text);
+            border-color: var(--accent-soft);
+        }
+
+        .shortcut-x {
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.5;
+            transition: 0.2s;
+        }
+
+        .shortcut-x:hover {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+        .lock-btn {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-dim);
+            font-size: 1.2rem;
+        }
+
+        .lock-btn:hover {
+            background: var(--glass-bright);
+            color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(216, 125, 74, 0.2);
+        }
+
+        @keyframes slideUpFade {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* UTILITY */
+        .btn-mini {
+            padding: 6px 12px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: 'JetBrains Mono';
+            transition: var(--transition);
+        }
+
+        .btn-mini:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--glow);
+        }
+    </style>
+</head>
+
+<body>
+
+    <button class="close-workspace" style="display: none;">
+        <span style="font-size: 1.2rem; transform: rotate(45deg); display: inline-block;">+</span>
+        Close Workspace
+    </button>
+
+    <div class="container slide-up">
+        <header class="page-header">
+            <div class="header-left">
+                <h1>Global Scout Dashboard</h1>
+                <p>Advanced artist tracking & discovery protocol</p>
+            </div>
+            <div class="header-right">
+                <div class="status-dot"></div>
+                SCOUT NETWORK ACTIVE
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- MAIN COLUMN -->
+            <div class="main-stack">
+
+                <!-- MEETING RECAP AND MORE POD -->
+                <section class="pod">
+                    <div class="pod-label">Meeting Recap and More</div>
+                    <div class="accordion">
+                        <div class="accordion-item">
+                            <button class="accordion-header" onclick="toggleAccordion(this)">
+                                <span>YEARLY DUES</span>
+                                <span class="chevron">▼</span>
+                            </button>
+                            <div class="accordion-content">
+                                Status: <span style="color: var(--sage);">PAID_2025</span><br>
+                                Renewal Date: 01-12-2026<br>
+                                Amount: $2,400.00
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <button class="accordion-header" onclick="toggleAccordion(this)">
+                                <span>UPCOMING TRIPS</span>
+                                <span class="chevron">▼</span>
+                            </button>
+                            <div class="accordion-content">
+                                • LONDON_A&R_SUMMIT - MAR 12<br>
+                                • MIAMI_WMC_SCOUT - MAR 24<br>
+                                • IBIZA_CLOSINGS - OCT 02
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <button class="accordion-header" onclick="toggleAccordion(this)">
+                                <span>OTHER EXPENSES</span>
+                                <span class="chevron">▼</span>
+                            </button>
+                            <div class="accordion-content">
+                                • Spotify API Premium (Enterprise)<br>
+                                • Neural Link Maintenance<br>
+                                • Travel Insurance (Global coverage)
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- COMMAND CONSOLE POD -->
+                <section class="shell-overlay pod">
+                    <div class="pod-label">Command Console</div>
+                    <div class="path-string">
+                        <div class="segments">
+                            <span class="path-segment">SC</span><span class="separator">/</span>
+                            <span class="path-segment">DASHBOARD</span><span class="separator">/</span>
+                            <span class="file-name">SCAN_READY.exe</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem; display: flex; gap: 0.8rem; align-items: center;">
+                        <input type="text" id="artistInput" placeholder="PASTE ARTIST LINK OR HANDLE..."
+                            style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; color: #fff; flex: 1; font-family: 'JetBrains Mono'; font-size: 0.8rem; outline: none;">
+                        <div class="lock-btn" title="LOCK TO VAULT" onclick="lockToVault()">
+                            <span style="font-size: 1rem;">🔒</span>
+                        </div>
+                        <button class="btn-mini" style="padding: 0 25px; height: 46px;" onclick="deployScanner()">DEPLOY
+                            SCAN</button>
+                    </div>
+                    <div id="shortcutVault" class="shortcut-vault">
+                        <!-- Shortcuts injected here -->
+                    </div>
+                </section>
+
+                <!-- NEW: QUAD TILES GRID -->
+                <div class="quad-grid">
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <span class="tile-label">REGION</span>
+                                <span class="tile-value">NORTH AMER</span>
+                            </div>
+                            <div class="flip-card-back">
+                                <span class="tile-label">GLOBAL REACH</span>
+                                <span class="tile-value">PRIMARY</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <span class="tile-label">PRIORITY</span>
+                                <span class="tile-value">CRITICAL</span>
+                            </div>
+                            <div class="flip-card-back">
+                                <span class="tile-label">URGENCY</span>
+                                <span class="tile-value">HIGH_INT</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <span class="tile-label">MODE</span>
+                                <span class="tile-value">SOCIAL_AI</span>
+                            </div>
+                            <div class="flip-card-back">
+                                <span class="tile-label">DEPTH</span>
+                                <span class="tile-value">NEURAL_DEEP</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <span class="tile-label">ENCRYPTION</span>
+                                <span class="tile-value">SECURE</span>
+                            </div>
+                            <div class="flip-card-back">
+                                <span class="tile-label">STATUS</span>
+                                <span class="tile-value">ACTIVE</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADVANCED DISCOVERY LEDGER POD -->
+                <section class="pod ledger-pod">
+                    <div class="pod-label" style="padding: 1.5rem 1.5rem 0.5rem;">Discovery Intelligence Stream</div>
+
+                    <table class="ledger-table">
+                        <thead>
+                            <tr>
+                                <th class="ledger-header">Entity</th>
+                                <th class="ledger-header">Source</th>
+                                <th class="ledger-header" style="text-align: center;">Vibe Fit</th>
+                                <th class="ledger-header">Engagement</th>
+                                <th class="ledger-header">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scoutledger">
+                            <!-- Rows will be injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <!-- SIDECOLUMN -->
+            <div class="side-stack">
+                <div class="pod">
+                    <div class="pod-label">Scout Profile</div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div id="scoutAvatar"
+                            style="width: 60px; height: 60px; background: var(--oak); border-radius: 16px; border: 1px solid var(--border); background-size: cover; background-position: center;">
+                        </div>
+                        <div>
+                            <div id="scoutName" style="font-weight: 800; font-size: 1.1rem;">CHAD_INTERNAL</div>
+                            <div style="font-size: 0.7rem; color: var(--text-dim);">LEVEL: SR SCOUT</div>
+                        </div>
+                    </div>
+                    <div
+                        style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.7rem; color: var(--text-dim); font-family: 'JetBrains Mono';">
+                        AVG QUALITY: 9.2/10<br>
+                        ACTIVE LEADS: <span id="leadCount">0</span>
+                    </div>
+                </div>
+
+                <div class="pod">
+                    <div class="pod-label">System Metrics</div>
+                    <div id="systemMetrics"
+                        style="height: 100px; display: flex; align-items: flex-end; gap: 4px; padding-bottom: 10px;">
+                        <!-- Bars injected by JS -->
+                    </div>
+                    <div style="font-size: 0.65rem; color: var(--text-dim); text-align: center;">NETWORK_TRAFFIC_LOCAL
+                    </div>
+                </div>
+
+                <div class="pod">
+                    <div class="pod-label">Recent Intelligence</div>
+                    <div id="intelLog"
+                        style="font-family: 'JetBrains Mono'; font-size: 0.65rem; color: var(--text-dim); line-height: 1.6;">
+                        > initializing neural link...<br>
+                        > scout network synced.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DISCOVERY ENGINE
+        const state = {
+            leads: [],
+            vault: [],
+            scout: {
+                name: 'CHAD_INTERNAL',
+                avatar: ''
+            }
+        };
+
+        const mockArtists = [
+            { name: "VALENTINE", handle: "@valentine_mgmt", source: "SPOTIFY_WIRE", engagement: "24.5% MOVER", fit: "94%", img: "https://picsum.photos/seed/v1/100" },
+            { name: "NEON CLAY", handle: "@neon_sounds", source: "SOUND_CLOUD", engagement: "HOT SIGNAL", fit: "81%", img: "https://picsum.photos/seed/n1/100" },
+            { name: "OAK & SAGE", handle: "@oaksagemusic", source: "TIKTOK_TREND", engagement: "STEADY", fit: "88%", img: "https://picsum.photos/seed/o1/100" }
+        ];
+
+        function initDashboard() {
+            renderLeads();
+            updateMetrics();
+            logIntel("Scout Dashboard version 2.0.5 initialized. Vault ready.");
+        }
+
+        function lockToVault() {
+            const input = document.getElementById('artistInput');
+            const url = input.value.trim();
+            if (!url) return;
+
+            // Generate a label (e.g., domain or first few chars)
+            let label = url.replace('https://', '').replace('www.', '').split('/')[0];
+            if (url.includes('drive.google.com')) label = "DRIVE_SOURCE";
+            else if (label.length > 20) label = label.substring(0, 17) + '...';
+
+            // Capture field entry date
+            const now = new Date();
+            const dateStr = `${now.getMonth() + 1}/${now.getDate()} @ ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            const entry = { id: Date.now(), label: label, url: url, date: dateStr };
+            state.vault.push(entry);
+            renderVault();
+            logIntel(`Locked target link to vault: ${label}`);
+            // Note: We don't clear the input as per user request ("doesn't remove what was initially... but always saves it")
+        }
+
+        function renderVault() {
+            const container = document.getElementById('shortcutVault');
+            container.innerHTML = '';
+            state.vault.forEach(item => {
+                const banner = document.createElement('div');
+                banner.className = 'shortcut-banner';
+                banner.innerHTML = `
+                    <div style="display: flex; flex-direction: column;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: var(--accent-soft); font-weight: 800;">DIR:</span>
+                            <a href="${item.url}" target="_blank" style="color: inherit; text-decoration: none;">${item.label}</a>
+                        </div>
+                        <div style="font-size: 0.55rem; opacity: 0.4; margin-top: 2px;">ENTERED: ${item.date}</div>
+                    </div>
+                    <span class="shortcut-x" onclick="removeFromVault(${item.id})">✕</span>
+                `;
+                container.appendChild(banner);
+            });
+        }
+
+        function removeFromVault(id) {
+            state.vault = state.vault.filter(i => i.id !== id);
+            renderVault();
+            logIntel("Target link removed from vault.");
+        }
+
+        function deployScanner() {
+            const val = document.getElementById('artistInput').value.trim();
+            if (!val) return;
+            logIntel(`Deploying global scan for: ${val.toUpperCase()}...`);
+            document.getElementById('artistInput').value = '';
+        }
+
+        function renderLeads() {
+            const container = document.getElementById('scoutledger');
+            container.innerHTML = '';
+
+            const displayLeads = state.leads.length > 0 ? state.leads : mockArtists;
+
+            displayLeads.forEach(artist => {
+                const row = document.createElement('tr');
+                row.className = 'ledger-row';
+                row.innerHTML = `
+                    <td class="ledger-cell">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="${artist.img}" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);">
+                            <div>
+                                <div style="font-size: 0.95rem; font-weight: 800;">${artist.name}</div>
+                                <div style="font-size: 0.7rem; color: var(--text-dim);">${artist.handle}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="ledger-cell">
+                        <span style="font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--accent-soft);">${artist.source}</span>
+                    </td>
+                    <td class="ledger-cell" style="text-align: center;">
+                        <span style="padding: 4px 10px; background: rgba(216, 125, 74, 0.1); color: var(--accent); border-radius: 6px; font-weight: 800; font-size: 0.75rem; border: 1px solid rgba(216, 125, 74, 0.2);">${artist.fit}</span>
+                    </td>
+                    <td class="ledger-cell">
+                        <span style="font-weight: 800; font-size: 0.8rem; color: var(--sage);">${artist.engagement}</span>
+                    </td>
+                    <td class="ledger-cell" style="text-align: right;">
+                        <button class="btn-mini" onclick="deploySync('${artist.name}')">SYNC</button>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('leadCount').textContent = displayLeads.length;
+        }
+
+        function deploySync(artistName) {
+            logIntel(`Deploying neural sync for target: ${artistName.toUpperCase()}...`);
+            setTimeout(() => {
+                logIntel(`Sync completed. [${artistName}] metadata pulled.`);
+            }, 800);
+        }
+
+        function logIntel(msg) {
+            const log = document.getElementById('intelLog');
+            const entry = document.createElement('div');
+            entry.textContent = `> ${msg}`;
+            log.prepend(entry);
+            if (log.children.length > 6) log.lastChild.remove();
+        }
+
+        function updateMetrics() {
+            const container = document.getElementById('systemMetrics');
+            container.innerHTML = '';
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                const height = Math.random() * 80 + 10;
+                bar.style.flex = '1';
+                bar.style.height = `${height}%`;
+                bar.style.background = Math.random() > 0.8 ? 'var(--accent)' : 'var(--sage)';
+                bar.style.opacity = Math.random() * 0.5 + 0.2;
+                bar.style.borderRadius = '2px';
+                container.appendChild(bar);
+            }
+        }
+
+        // Handle Input
+        document.getElementById('artistInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                deployScanner();
+            }
+        });
+
+        window.onload = initDashboard;
+
+        function toggleAccordion(header) {
+            const item = header.parentElement;
+            item.classList.toggle('active');
+        }
+    </script>
+
+</body>
+
+</html>

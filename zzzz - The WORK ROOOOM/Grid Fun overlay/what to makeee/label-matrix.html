@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Target Matrix | House Music Intelligence</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #05070a;
+            --accent: #fa5d29;
+            --primary: #1db954;
+            /* Spotify Green */
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.4);
+            --border: rgba(255, 255, 255, 0.05);
+            --row-bg: rgba(255, 255, 255, 0.02);
+            --transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #020408;
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding: 4rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Abstract Glows */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 15% 15%, rgba(250, 93, 41, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(29, 185, 84, 0.05) 0%, transparent 40%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-left h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(to right, #fff, var(--text-dim));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-left p {
+            color: var(--text-dim);
+            font-size: 1.1rem;
+            margin-top: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+                box-shadow: 0 0 25px var(--primary);
+            }
+
+            100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+        }
+
+        /* SHELL OVERLAY (MODULAR) */
+        .shell-display {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .shell-display::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 15%;
+            bottom: 15%;
+            width: 3px;
+            background: var(--accent);
+            opacity: 0.7;
+        }
+
+        .shell-line {
+            display: flex;
+            gap: 1ch;
+            margin-bottom: 4px;
+        }
+
+        .shell-tag {
+            color: var(--accent);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .shell-path {
+            opacity: 0.8;
+        }
+
+        /* WIRE CHART STYLE */
+        .wire-protocol {
+            margin-top: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px dashed var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.8;
+            color: var(--text-dim);
+        }
+
+        .wire-header {
+            color: var(--primary);
+            font-family: 'JetBrains Mono';
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            margin-bottom: 20px;
+            display: block;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        .wire-block {
+            margin-bottom: 20px;
+            padding-left: 20px;
+            border-left: 2px solid rgba(250, 93, 41, 0.2);
+        }
+
+        .wire-title {
+            color: var(--accent);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .wire-arrow {
+            color: var(--primary);
+            font-weight: 800;
+            margin: 0 5px;
+        }
+
+        /* THE MATRIX GRID */
+        .matrix-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 12px;
+        }
+
+        .matrix-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            padding: 0 1.5rem 1rem;
+            text-align: left;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        .matrix-header:hover {
+            color: #fff;
+        }
+
+        .matrix-row {
+            background: var(--row-bg);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .matrix-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.008) translateX(5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            border-color: rgba(250, 93, 41, 0.2);
+        }
+
+        .matrix-cell {
+            padding: 1.5rem;
+            font-family: 'Outfit', sans-serif;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .matrix-cell:first-child {
+            border-left: 1px solid var(--border);
+            border-radius: 12px 0 0 12px;
+        }
+
+        .matrix-cell:last-child {
+            border-right: 1px solid var(--border);
+            border-radius: 0 12px 12px 0;
+            text-align: right;
+        }
+
+        /* LABEL IDENTITY */
+        .label-identity {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .label-icon {
+            width: 44px;
+            height: 44px;
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .label-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .label-meta {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* BADGES */
+        .fit-badge {
+            background: rgba(29, 185, 84, 0.1);
+            color: var(--primary);
+            font-family: 'JetBrains Mono';
+            font-weight: 700;
+            font-size: 0.7rem;
+            padding: 6px 12px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        /* ACTION BUTTONS */
+        .btn-protocol {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            font-family: 'JetBrains Mono';
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .btn-protocol.primary {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            background: transparent;
+        }
+
+        .btn-protocol.primary:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+        }
+
+        .btn-protocol.secondary {
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            background: transparent;
+            font-size: 0.65rem;
+            padding: 8px 14px;
+        }
+
+        .btn-protocol.secondary:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-tag {
+            font-family: 'JetBrains Mono';
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        /* GENRE SHORTCUT TAGS */
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .tag-shortcut {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono';
+            font-weight: 700;
+            font-size: 0.6rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-block;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            user-select: none;
+        }
+
+        .tag-shortcut:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .tag-shortcut.active {
+            background: rgba(29, 185, 84, 0.15);
+            color: var(--primary);
+            border-color: rgba(29, 185, 84, 0.4);
+            box-shadow: 0 0 15px rgba(29, 185, 84, 0.1);
+        }
+
+        .tag-shortcut.held {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(29, 185, 84, 0.6);
+            font-weight: 800;
+        }
+
+        /* PREMIUM SELECT DROP DOWN */
+        .premium-select {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono';
+            font-size: 0.65rem;
+            padding: 8px 30px 8px 12px;
+            cursor: pointer;
+            appearance: none;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='rgba(255,255,255,0.4)' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            min-width: 160px;
+        }
+
+        .premium-select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .premium-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.2);
+        }
+
+        .premium-select option {
+            background: #0a0c10;
+            color: #fff;
+            padding: 10px;
+        }
+
+        /* CUSTOM LARGE CHECKBOX */
+        .premium-checkbox {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .premium-checkbox:checked {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(29, 185, 84, 0.4);
+        }
+
+        .premium-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: #000;
+            font-size: 16px;
+            font-weight: 900;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .premium-checkbox:hover {
+            border-color: var(--primary);
+            background: rgba(29, 185, 84, 0.05);
+        }
+
+        /* GENERATOR INPUT ROW */
+        .generator-row {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 12px;
+            transition: var(--transition);
+        }
+
+        .generator-row:focus-within {
+            border-color: var(--primary);
+            background: rgba(29, 185, 84, 0.03);
+            box-shadow: 0 0 30px rgba(29, 185, 84, 0.1);
+        }
+
+        .generator-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            flex: 1;
+            padding: 12px;
+            outline: none;
+        }
+
+        .generator-input::placeholder {
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono';
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .btn-add {
+            width: 44px;
+            height: 44px;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .btn-add:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        /* INLINE DATE EDIT */
+        .date-input-inline {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-family: 'JetBrains Mono';
+            font-size: 0.7rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            outline: none;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- HEADER -->
+        <header class="page-header">
+            <div class="header-left">
+                <h1>Rich Furniss Label Tracker</h1>
+                <p>Strategic A&R acquisition protocol for House Music imprints</p>
+            </div>
+            <div class="header-right">
+                <a href="#" class="btn-protocol secondary" onclick="exportData()">EXPORT JSON</a>
+                <a href="#" class="btn-protocol secondary"
+                    onclick="document.getElementById('importFile').click()">IMPORT JSON</a>
+                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+                <div class="status-dot"></div>
+                MATRIX ACTIVE
+            </div>
+        </header>
+
+        <!-- MODULAR SHELL -->
+        <section class="shell-display">
+            <div class="shell-line">
+                <span class="shell-tag">PROTOCOL:</span>
+                <span class="shell-path">LABEL TARGET MATRIX</span>
+            </div>
+            <div class="shell-line">
+                <span class="shell-tag">MISSION:</span>
+                <span class="shell-path">STRATEGIC A&R ACQUISITION PROTOCOL FOR HOUSE MUSIC IMPRINTS</span>
+            </div>
+            <div class="shell-line" style="margin-top: 10px; opacity: 0.5;">
+                <span>> system_check: all targets acquired. tracking 28 entities. (Protocol Breakdown Below)</span>
+            </div>
+
+            <!-- THE WIRE CHART MARKDOWN INTEGRATION -->
+            <div class="wire-protocol">
+                <span class="wire-header">> MISSION WORKFLOW: OUTREACH_SEQUENCE_092</span>
+
+                <div class="wire-block">
+                    <span class="wire-title">[ 01: THE INITIAL PITCH ]</span>
+                    WHEN TRACKS ARE READY <span class="wire-arrow">-></span> PITCH 3-5 NEW IDEAS <span
+                        class="wire-arrow">-></span> CHOOSE ONE TARGET LABEL
+                </div>
+
+                <div class="wire-block">
+                    <span class="wire-title">[ 02: THE 48-HOUR RULE ]</span>
+                    EVERY 2 DAYS <span class="wire-arrow">-></span> SEND A POLITE FOLLOW-UP <span
+                        class="wire-arrow">-></span> STAY ON THEIR RADAR
+                </div>
+
+                <div class="wire-block">
+                    <span class="wire-title">[ 03: THE STAGGERED LIST ]</span>
+                    1 SONG PER LABEL <span class="wire-arrow">-></span> IF THEY PASS <span class="wire-arrow">-></span>
+                    PIVOT TO NEXT RANK ON YOUR LIST
+                </div>
+
+                <div class="wire-block" style="border-left-color: var(--primary);">
+                    <span class="wire-title" style="color: var(--primary);">[ 04: THE MOMENTUM PIVOT ]</span>
+                    IF 3 LABELS DECLINE <span class="wire-arrow">-></span> TRIGGER SELF-RELEASE <span
+                        class="wire-arrow">-></span> NEVER STALL YOUR CAREER
+                </div>
+            </div>
+        </section>
+
+        <!-- GENERATOR INPUT FIELD -->
+        <div class="generator-row">
+            <input type="text" id="labelInput" class="generator-input"
+                placeholder="ENTER LABEL NAME OR PASTE SPOTIFY LINK...">
+            <button class="btn-add" onclick="addNewLabel()">+</button>
+        </div>
+
+        <!-- THE MATRIX GRID -->
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th class="matrix-header" ondblclick="sortTable('name')">Label Entity</th>
+                    <th class="matrix-header" style="text-align: center;" ondblclick="sortTable('signed')">Signed Before
+                    </th>
+                    <th class="matrix-header" ondblclick="sortTable('vibe')">Genre Focus</th>
+                    <th class="matrix-header" ondblclick="sortTable('lastSignal')">Last Signal</th>
+                    <th class="matrix-header" ondblclick="sortTable('status')">Current Status</th>
+                    <th class="matrix-header" ondblclick="sortTable('engagement')">Intelligence</th>
+                    <th class="matrix-header">Action Protocol</th>
+                </tr>
+            </thead>
+            <tbody id="labelRows">
+                <!-- Top Tier Labels Populated -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const labelData = [
+            { name: "DVINE Sounds", url: "https://open.spotify.com/album/4N6wFVqUzFSOJ65mDo1oMg" },
+            { name: "There Was Jack", url: "https://open.spotify.com/album/3UyXKeprJ3Z4ebDQgP14Se" },
+            { name: "Nervous Records", url: "https://open.spotify.com/user/3n50amfqitwnsuew8flz85lm5" },
+            { name: "Toolroom", url: "https://open.spotify.com/user/1135439236/playlist/4MhfZtFGgi4Sm1vRXQ8ZOW" },
+            { name: "Kittball", url: "https://open.spotify.com/album/5fI2rb6nyaBiY25Gkf4EjU" },
+            { name: "Golden Recordings", url: "https://open.spotify.com/playlist/4bOkSkASSRW0JTvhoy85pG" },
+            { name: "Farris Wheel Recordings", url: "https://open.spotify.com/album/7djTljl4VaE9wrdjlekBo9" },
+            { name: "Warehouse Disco", url: "" },
+            { name: "Quincy Boy Records", url: "https://open.spotify.com/album/3udjaZfYe3oB1YcIKHea9d" },
+            { name: "LOW CEILING", url: "https://open.spotify.com/album/7qgqx31RzA1YHcfk6BeTxS" },
+            { name: "Alleanza", url: "" },
+            { name: "Lift Me Up Records", url: "" },
+            { name: "Voltaire Music", url: "" },
+            { name: "This Ain’t Bristol", url: "" },
+            { name: "Variety Music", url: "" },
+            { name: "HouseU Tunes", url: "" },
+            { name: "LW Recordings", url: "" },
+            { name: "Love & Other", url: "" },
+            { name: "Freakin909", url: "" },
+            { name: "Let There Be House", url: "" },
+            { name: "Whore House", url: "" },
+            { name: "Big Beat", url: "" },
+            { name: "Strangelove", url: "" },
+            { name: "Basement Sound", url: "" },
+            { name: "Box Of Cats", url: "" },
+            { name: "Purple Tea Records", url: "" }
+        ];
+
+        const vibes = ["Tech House", "Deep House", "Jackin House", "Soulful House", "Nu-Disco"];
+        const statuses = ["Ready to Deploy", "Demo Sent", "Reviewing", "Following Up"];
+        const genreShortcuts = ["Tech House", "Melodic House", "Disco House", "Minimal House", "Circuit House"];
+
+        const tableBody = document.getElementById('labelRows');
+        let sortDir = 1;
+        let lastKey = '';
+
+        // Initialize processed data once to keep genres persistent
+        const labelProcessed = labelData.map(l => {
+            const rowGenres = genreShortcuts
+                .filter(() => Math.random() > 0.3)
+                .slice(0, 4);
+            return {
+                ...l,
+                vibe: vibes[Math.floor(Math.random() * vibes.length)],
+                status: statuses[Math.floor(Math.random() * statuses.length)],
+                lastSignal: new Date(Date.now() - Math.floor(Math.random() * 10) * 86400000).toISOString().split('T')[0],
+                engagement: Math.floor(Math.random() * 450) + 50,
+                genres: rowGenres,
+                signed: Math.random() > 0.7 // Random initial state
+            };
+        });
+
+        function renderTable() {
+            tableBody.innerHTML = '';
+
+            const maxEng = Math.max(...labelProcessed.map(l => l.engagement));
+            const minEng = Math.min(...labelProcessed.map(l => l.engagement));
+
+            labelProcessed.forEach(label => {
+                const initial = label.name.substring(0, 2).toUpperCase();
+                const t = (label.engagement - minEng) / (maxEng - minEng || 1);
+                const r = Math.floor(102 + (29 - 102) * t);
+                const g = Math.floor(102 + (185 - 102) * t);
+                const b = Math.floor(102 + (84 - 102) * t);
+                const color = `rgb(${r}, ${g}, ${b})`;
+
+                const labelLink = label.url ? `<a href="${label.url}" target="_blank" style="color: inherit; text-decoration: none; border-bottom: 1px dashed rgba(255,255,255,0.2);">${label.name}</a>` : label.name;
+
+                const row = document.createElement('tr');
+                row.className = 'matrix-row';
+                row.innerHTML = `
+                    <td class="matrix-cell">
+                        <div class="label-identity">
+                            <div class="label-icon">${initial}</div>
+                            <div>
+                                <div class="label-name">${labelLink}</div>
+                                <div class="label-meta">${label.vibe} // Global</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="matrix-cell" style="text-align: center;">
+                        <input type="checkbox" class="premium-checkbox" ${label.signed ? 'checked' : ''} onchange="labelProcessed.find(l => l.name === '${label.name}').signed = this.checked">
+                    </td>
+                    <td class="matrix-cell">
+                        <div class="tag-container">
+                            ${label.genres
+                        .map(tag => `<span class="tag-shortcut" onclick="this.classList.toggle('active')" ondblclick="this.classList.toggle('held'); event.stopPropagation();">${tag}</span>`)
+                        .join('')}
+                        </div>
+                    </td>
+                    <td class="matrix-cell">
+                        <div id="date-${label.name.replace(/\s+/g, '-')}" 
+                             style="font-family: 'JetBrains Mono'; font-size: 0.7rem; color: var(--text-dim); opacity: 0.6; cursor: pointer;"
+                             ondblclick="editDate(this, '${label.name}')">
+                            ${label.lastSignal}
+                        </div>
+                    </td>
+                    <td class="matrix-cell">
+                        <select class="premium-select">
+                            ${statuses.map(s => `<option value="${s}" ${s === label.status ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="matrix-cell">
+                        <div style="font-size: 0.9rem; font-weight: 700; color: ${color}; font-family: 'JetBrains Mono';">
+                            ${label.engagement}K Engagement
+                        </div>
+                    </td>
+                    <td class="matrix-cell">
+                        <a href="#" class="btn-protocol primary">
+                            SUBMIT DEMO
+                        </a>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function sortTable(key) {
+            if (lastKey === key) sortDir *= -1;
+            else sortDir = 1;
+            lastKey = key;
+
+            labelProcessed.sort((a, b) => {
+                let valA = a[key];
+                let valB = b[key];
+                if (typeof valA === 'string') return valA.localeCompare(valB) * sortDir;
+                return (valA - valB) * sortDir;
+            });
+
+            renderTable();
+        }
+
+        function addNewLabel() {
+            const input = document.getElementById('labelInput');
+            const val = input.value.trim();
+            if (!val) return;
+
+            let name = val;
+            let url = "";
+
+            // Simple URL check
+            if (val.includes("spotify.com") || val.startsWith("http")) {
+                url = val;
+                // Try to extract name from Spotify URL if it's there, otherwise generic
+                if (val.includes("/album/")) name = "New Album Link";
+                else if (val.includes("/playlist/")) name = "New Playlist Link";
+                else if (val.includes("/artist/")) name = "New Artist Link";
+                else name = "Spotify Resource";
+            }
+
+            const newLabel = {
+                name: name,
+                url: url,
+                vibe: vibes[Math.floor(Math.random() * vibes.length)],
+                status: "Ready to Deploy",
+                lastSignal: new Date().toISOString().split('T')[0],
+                engagement: Math.floor(Math.random() * 200) + 50,
+                genres: genreShortcuts.slice(0, 3), // Default set
+                signed: false
+            };
+
+            labelProcessed.unshift(newLabel);
+            renderTable();
+            input.value = "";
+        }
+
+        function editDate(el, labelName) {
+            const currentDate = el.innerText.trim();
+            el.innerHTML = `<input type="date" class="date-input-inline" value="${currentDate}" onblur="updateDate(this, '${labelName}')" onkeypress="if(event.key==='Enter') this.blur()">`;
+            el.querySelector('input').focus();
+        }
+
+        function updateDate(input, labelName) {
+            const newDate = input.value;
+            if (newDate) {
+                const label = labelProcessed.find(l => l.name === labelName);
+                if (label) label.lastSignal = newDate;
+            }
+            renderTable();
+        }
+
+        // JSON EXPORT PROTOCOL
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(labelProcessed, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "LABEL_MATRIX_DATA.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // JSON IMPORT PROTOCOL
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        labelProcessed.length = 0; // Clear existing
+                        labelProcessed.push(...imported);
+                        renderTable();
+                        alert("PROTOCOL SYNC COMPLETE: Data imported successfully.");
+                    }
+                } catch (err) {
+                    alert("PROTOCOL ERROR: Invalid JSON file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Add Enter key support
+        document.getElementById('labelInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addNewLabel();
+        });
+
+        renderTable();
+    </script>
+</body>
+
+</html>

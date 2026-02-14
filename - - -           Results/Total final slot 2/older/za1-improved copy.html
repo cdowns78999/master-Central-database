@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sims 4 - Advanced Network Matrix (Single Layer)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        :root {
+            --s4-white: #ffffff;
+            --s4-gray: #f2f2f2;
+            --s4-blue: #35C6EB;
+            --s4-dark-blue: #2594a4;
+            --s4-green: #4EC300;
+            --s4-shadow: rgba(0, 0, 0, 0.12);
+            --node-dia: 100px;
+            --sub-dia: 120px;
+            --ter-dia: 30px;
+            --curve-offset: -45px;
+            --transition: 0.4s cubic-bezier(0.17, 0.67, 0.43, 1.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            --bg-primary: #06070a;
+            --bg-secondary: rgba(255, 255, 255, 0.05);
+            --text-primary: #eee;
+            --text-secondary: #aaa;
+            background-color: var(--bg-primary);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(53, 198, 235, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(78, 195, 0, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(177, 157, 255, 0.05) 0px, transparent 100%);
+            background-size: 200% 200%;
+            animation: backgroundShimmer 20s ease infinite;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px 150px;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: rgba(255, 255, 255, 0.08);
+            --text-primary: #f5f5f5;
+            --text-secondary: #999;
+            background-color: #1a1a1a;
+        }
+
+        body.light-mode {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: rgba(0, 0, 0, 0.05);
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            background-color: #f0f2f5;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(53, 198, 235, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(78, 195, 0, 0.05) 0px, transparent 50%);
+        }
+
+        e @keyframes backgroundShimmer {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            50% {
+                background-position: 100% 100%;
+            }
+
+            100% {
+                background-position: 0% 0%;
+            }
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M40 40c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm-20 0c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm40 0c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zM40 20c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm0 40c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* --- UI Elements --- */
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            width: 100%;
+            max-width: 900px;
+            position: sticky;
+            top: 20px;
+            z-index: 2000;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        .header>* {
+            pointer-events: auto;
+        }
+
+        h1 {
+            display: none;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(15px);
+            margin-bottom: 15px;
+        }
+
+        .search-bar:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--s4-blue);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.3);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-header {
+            padding: 12px 28px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px) scale(1.02);
+            border-color: var(--s4-blue);
+            box-shadow: 0 15px 40px rgba(53, 198, 235, 0.2);
+        }
+
+        .btn-add-top {
+            background: rgba(53, 198, 235, 0.15);
+            border: 1px solid rgba(53, 198, 235, 0.4);
+        }
+
+        /* --- Node Container --- */
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            gap: 120px;
+            /* Increased by ~20px for more breathing room */
+            width: 100%;
+            max-width: 1100px;
+            align-items: center;
+            margin-top: 80px;
+        }
+
+        .node-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 70px;
+            position: relative;
+        }
+
+        .node-wrapper {
+            position: relative;
+            width: var(--node-dia);
+            height: var(--node-dia);
+        }
+
+        /* Curved Logic: Outer nodes */
+        .node-row .node-wrapper:nth-child(1),
+        .node-row .node-wrapper:nth-child(5) {
+            transform: translateY(var(--curve-offset));
+        }
+
+        .node {
+            width: 100%;
+            height: 100%;
+            background: var(--s4-white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px var(--s4-shadow);
+            position: relative;
+            z-index: 100;
+        }
+
+        .node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(53, 198, 235, 0.3);
+        }
+
+        .node.active-primary {
+            box-shadow: 0 0 0 4px var(--s4-blue);
+        }
+
+        .plumbob {
+            width: 25px;
+            height: 40px;
+            background: var(--s4-green);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            animation: pulse 2s infinite ease-in-out;
+            transition: 0.3s;
+        }
+
+        .node.done {
+            background: var(--s4-green) !important;
+            box-shadow: 0 0 30px rgba(78, 195, 0, 0.6);
+        }
+
+        .node.done::after {
+            content: '✓';
+            color: #fff;
+            font-weight: 900;
+            font-size: 50px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .node.done .plumbob,
+        .node.done .node-label {
+            opacity: 0.3;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+                filter: brightness(1.2);
+            }
+        }
+
+        .node-label {
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+            outline: none;
+            border: 2px dashed transparent;
+            transition: all 0.3s;
+            min-width: 90px;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .node-label.editable-main {
+            pointer-events: auto;
+            cursor: text;
+            background: #fff;
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.3);
+            border-color: rgba(53, 198, 235, 0.4);
+            animation: glowPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px rgba(53, 198, 235, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(53, 198, 235, 0.6);
+            }
+        }
+
+        .node-label.editable-main:hover {
+            border-color: var(--s4-blue);
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 0 25px rgba(53, 198, 235, 0.6);
+            animation: none;
+        }
+
+        .node-label.editable-main:focus {
+            border-color: var(--s4-dark-blue);
+            border-style: solid;
+            box-shadow: 0 0 40px rgba(53, 198, 235, 0.8);
+            transform: translateX(-50%) scale(1.1);
+            z-index: 1000;
+        }
+
+        /* --- Level 2: Pie Menu (4 Sub-nodes) --- */
+        .pie-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+            transform: translate(-50%, -50%) scale(0.4) rotate(-45deg);
+            z-index: 50;
+        }
+
+        .pie-menu.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            pointer-events: auto;
+        }
+
+        .sub-node {
+            position: absolute;
+            width: var(--sub-dia);
+            height: var(--sub-dia);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: var(--transition);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .gradient-shimmer {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 100%);
+            animation: shimmer 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: translate(-100%, -100%) rotate(0deg); }
+            50% { transform: translate(0%, 0%) rotate(180deg); }
+        }
+
+        @keyframes gradientFlow {
+            0% {
+                filter: hue-rotate(0deg) brightness(1.1) saturate(1.2);
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                filter: hue-rotate(15deg) brightness(1.3) saturate(1.4);
+                transform: translate(-50%, -50%) scale(1.05);
+            }
+        }
+
+
+        /* Blossom Style Symmetrical Distribution (All Above) */
+        .sub-node:nth-child(1) {
+            transform: translate(-50%, -50%) translate(-100px, -50px);
+        }
+
+        .sub-node:nth-child(2) {
+            transform: translate(-50%, -50%) translate(-45px, -110px);
+        }
+
+        .sub-node:nth-child(3) {
+            transform: translate(-50%, -50%) translate(45px, -110px);
+        }
+
+        .sub-node:nth-child(4) {
+            transform: translate(-50%, -50%) translate(100px, -50px);
+        }
+
+        /* --- Footer Actions --- */
+        .btn-add {
+            margin-top: 50px;
+            padding: 15px 50px;
+            background: var(--s4-blue);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(53, 198, 235, 0.4);
+        }
+
+        .btn-add:hover {
+            background: var(--s4-dark-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(53, 198, 235, 0.5);
+        }
+
+        .action-log {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+            max-height: 200px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 15px var(--s4-shadow);
+            overflow-y: auto;
+            font-size: 0.8rem;
+            z-index: 3000;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2px;
+        }
+
+        /* --- Red Carpet Workflow --- */
+        .config-tile {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1200px;
+            height: 750px;
+            background: rgba(10, 15, 25, 0.98);
+            backdrop-filter: blur(80px);
+            padding: 30px;
+            border-radius: 40px;
+            border: 2px solid rgba(53, 198, 235, 0.3);
+            box-shadow: 0 50px 150px rgba(0, 0, 0, 1), 0 0 100px rgba(53, 198, 235, 0.2);
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .config-tile.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .workflow-note {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 30px;
+            transition: 0.3s;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .workflow-note:focus {
+            border-color: var(--s4-blue);
+            background: rgba(53, 198, 235, 0.05);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.2);
+        }
+
+        .workflow-workspace {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            border-top: 2px solid rgba(53, 198, 235, 0.2);
+            border-bottom: 2px solid rgba(53, 198, 235, 0.2);
+            margin: 20px 0;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+        }
+
+        .left-panel {
+            flex: 0 0 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 2px solid rgba(53, 198, 235, 0.3);
+            scroll-behavior: smooth;
+            background: rgba(53, 198, 235, 0.03);
+        }
+
+        .tile-title {
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            font-size: 14px;
+            color: var(--s4-blue);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .main-area {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(160px, 240px) 40px minmax(160px, 240px) 40px minmax(160px, 240px) 40px minmax(160px, 240px);
+            gap: 20px 0;
+            padding: 40px;
+            overflow-y: auto;
+            align-content: start;
+            scroll-behavior: smooth;
+        }
+
+        .connector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: var(--s4-blue);
+            opacity: 0;
+            pointer-events: none;
+            font-weight: 900;
+        }
+
+        .station.selected {
+            border-color: var(--s4-blue);
+            box-shadow: 0 0 20px rgba(53, 198, 235, 0.5);
+        }
+
+
+        .station {
+            min-width: 160px;
+            width: auto;
+            max-width: 240px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(53, 198, 235, 0.4);
+            border-radius: 12px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 1;
+            transform: translateY(0);
+            cursor: pointer;
+            position: relative;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 0 15px;
+            box-shadow: 0 4px 15px rgba(53, 198, 235, 0.2);
+        }
+
+        .station .plumbob {
+            display: none;
+            /* Quieter look inside tile */
+        }
+
+        .station span {
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .station.revealed {
+            opacity: 1;
+            transform: translateY(0);
+            border-color: rgba(53, 198, 235, 0.6);
+        }
+
+        .station:hover {
+            background: rgba(53, 198, 235, 0.15);
+            border-color: var(--s4-blue);
+            box-shadow: 0 8px 25px rgba(53, 198, 235, 0.4);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .station.done {
+            background: rgba(78, 195, 0, 0.2) !important;
+            border-color: var(--s4-green) !important;
+            color: var(--s4-green);
+            box-shadow: 0 0 20px rgba(78, 195, 0, 0.2);
+            opacity: 1 !important;
+        }
+
+        .station.done::after {
+            content: '✓';
+            color: var(--s4-green);
+            font-weight: 900;
+            font-size: 18px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+
+        .station.selected {
+            background: rgba(53, 198, 235, 0.15);
+            border-color: var(--s4-blue);
+            box-shadow: 0 0 15px rgba(53, 198, 235, 0.3);
+        }
+
+        .btn-add-station {
+            width: 40px;
+            height: 40px;
+            background: rgba(53, 198, 235, 0.15);
+            border: 2px solid var(--s4-blue);
+            color: var(--s4-blue);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: 600;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .btn-add-station:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.15) rotate(90deg);
+            box-shadow: 0 0 25px rgba(53, 198, 235, 0.5);
+        }
+
+        .tile-title {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            color: #555;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .hover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 220px;
+            background: rgba(16, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--s4-blue);
+            border-radius: 12px;
+            padding: 15px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(15px, -50%) scale(0.95);
+            transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 10000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            color: #fff;
+        }
+
+        .hover-overlay.visible {
+            opacity: 1;
+            transform: translate(15px, -50%) scale(1);
+        }
+
+        .hover-overlay h3 {
+            font-size: 14px;
+            color: var(--s4-blue);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 5px;
+        }
+
+        .hover-overlay .meta-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .hover-overlay .meta-val {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .overlay-workflow-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .overlay-shortcut-btn {
+            padding: 6px 12px;
+            background: rgba(53, 198, 235, 0.1);
+            border: 1px solid var(--s4-blue);
+            color: var(--s4-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-align: center;
+            pointer-events: auto;
+        }
+
+        .overlay-shortcut-btn:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- Phase Shortcut Menu --- */
+        .phase-menu {
+            position: absolute;
+            right: -120px;
+            top: 0;
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .phase-menu.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .phase-shortcut-btn {
+            padding: 5px 10px;
+            background: rgba(53, 198, 235, 0.1);
+            border: 1px solid var(--s4-blue);
+            color: var(--s4-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 700;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .phase-shortcut-btn:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <input type="text" class="search-bar" placeholder="" oninput="filter(this.value)">
+        <div class="header-actions">
+            <button class="btn-header btn-add-top" onclick="addRow()">+ Add New +</button>
+            <button class="btn-header" onclick="exportNetwork()">Export JSON</button>
+            <button class="btn-header" onclick="document.getElementById('file-input').click()">Import JSON</button>
+            <button class="btn-header" onclick="saveAsTemplate()">Save Template</button>
+            <button class="btn-header" onclick="loadTemplate()">Load Template</button>
+            <button class="btn-header" onclick="switchTheme()">Theme</button>
+            <input type="file" id="file-input" class="hidden" accept=".json" onchange="importNetwork(event)">
+        </div>
+    </header>
+
+    <div class="node-container" id="matrix">
+        <!-- Rows injected here -->
+    </div>
+
+    <div class="action-log" id="log">
+        <div class="log-entry"><strong>System:</strong> Ready</div>
+    </div>
+
+    <!-- Hover Overlay Element -->
+    <div id="hover-overlay" class="hover-overlay">
+        <h3>Phase Details</h3>
+        <div class="meta-row"><span>Status:</span> <span class="meta-val" id="ov-status">Pending</span></div>
+        <div class="meta-row"><span>Tasks:</span> <span class="meta-val" id="ov-tasks">0</span></div>
+        <div class="meta-row"><span>Est. Time:</span> <span class="meta-val">45m</span></div>
+
+        <!-- Workflow Shortcut Buttons -->
+        <div id="overlay-buttons-container" class="overlay-workflow-buttons" style="display: none;">
+            <button class="overlay-shortcut-btn" data-category="Press">Press</button>
+            <button class="overlay-shortcut-btn" data-category="Social">Social</button>
+            <button class="overlay-shortcut-btn" data-category="Spotify">Spotify</button>
+            <button class="overlay-shortcut-btn" data-category="Other">Other</button>
+        </div>
+    </div>
+
+    <script>
+        const matrix = document.getElementById('matrix');
+        const logEl = document.getElementById('log');
+        const overlay = document.getElementById('hover-overlay');
+        let rowCount = 0;
+        let activeTile = null;
+        let activeKey = null;
+
+        let networkDataStore = {};
+        let savedTemplates = JSON.parse(localStorage.getItem('workflowTemplates') || '{}');
+        let currentTheme = localStorage.getItem('theme') || 'default';
+
+        const shortcutTasks = {
+            'Press': ['Press Release', 'Pitch', 'Report', 'Report link'],
+            'Social': ['Social Post', 'Engage', 'Monitor', 'Share'],
+            'Spotify': ['Pitch', 'Report', 'Check', 'Report link'],
+            'Other': ['General Task', 'Review', 'Finalize', 'Archive']
+        };
+
+        function showOverlay(e, nodeData, isPhaseNode = false) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            // Position to the right of the element
+            overlay.style.top = (rect.top + rect.height / 2) + 'px';
+            overlay.style.left = rect.right + 'px';
+
+            // Populate Data
+            overlay.querySelector('h3').innerText = nodeData.label;
+            document.getElementById('ov-status').innerText = nodeData.done ? 'Completed' : 'In Progress';
+            document.getElementById('ov-status').style.color = nodeData.done ? 'var(--s4-green)' : '#fff';
+            document.getElementById('ov-tasks').innerText = nodeData.subs.length + ' Steps';
+
+            // Show/hide workflow buttons based on node type
+            const buttonsContainer = document.getElementById('overlay-buttons-container');
+            if (isPhaseNode) {
+                buttonsContainer.style.display = 'flex';
+
+                // Attach click handlers to buttons with current phase data
+                const buttons = buttonsContainer.querySelectorAll('.overlay-shortcut-btn');
+                buttons.forEach(btn => {
+                    // Remove old handlers to prevent duplicates
+                    btn.onclick = null;
+
+                    // Add new handler with current nodeData in closure
+                    btn.onclick = (clickEvent) => {
+                        clickEvent.stopPropagation();
+                        const category = btn.getAttribute('data-category');
+                        fillPhaseSubs(nodeData, category);
+                        hideOverlay(); // Hide overlay after selection
+                    };
+                });
+            } else {
+                buttonsContainer.style.display = 'none';
+            }
+
+            overlay.classList.add('visible');
+        }
+
+        function hideOverlay() {
+            overlay.classList.remove('visible');
+        }
+
+        function log(msg) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<strong>${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}:</strong> ${msg}`;
+            logEl.prepend(entry);
+        }
+
+        function filter(val) {
+            const q = val.toLowerCase();
+            document.querySelectorAll('.node-wrapper').forEach(w => {
+                const label = w.getAttribute('data-label').toLowerCase();
+                if (label.includes(q)) w.classList.remove('hidden');
+                else w.classList.add('hidden');
+            });
+        }
+
+        function openTile(tile, key) {
+            closeAll();
+            activeTile = tile;
+            activeKey = key;
+
+            tile.classList.add('active');
+
+            if (!networkDataStore[key]) {
+                const isShortcut = key.includes('Quick:');
+                networkDataStore[key] = {
+                    nodes: [],
+                    notes: isShortcut ? "Shortcut activated: Fields pre-filled." : "Standard Workflow Initialized."
+                };
+                for (let i = 0; i < 4; i++) {
+                    networkDataStore[key].nodes.push({
+                        label: isShortcut ? `Phase ${i + 1}` : 'Step ' + (i + 1),
+                        done: false,
+                        subs: [
+                            { label: isShortcut ? `Task ${(i + 1)}.1` : `Workflow ${(i + 1)}.1`, done: false, notes: '' },
+                            { label: isShortcut ? `Task ${(i + 1)}.2` : `Workflow ${(i + 1)}.2`, done: false, notes: '' },
+                            { label: isShortcut ? `Task ${(i + 1)}.3` : `Workflow ${(i + 1)}.3`, done: false, notes: '' },
+                            { label: isShortcut ? `Task ${(i + 1)}.4` : `Workflow ${(i + 1)}.4`, done: false, notes: '' }
+                        ]
+                    });
+                }
+            }
+
+            renderWorkflow(tile, key);
+        }
+
+        function toggleRow(stepNode, items) {
+            const isSelected = stepNode.classList.contains('selected');
+            if (isSelected) {
+                stepNode.classList.remove('selected');
+                gsap.to(items, { opacity: 0, scale: 0.7, duration: 0.4, stagger: 0.05, ease: "power2.inOut", pointerEvents: 'none' });
+            } else {
+                stepNode.classList.add('selected');
+                gsap.to(items, { opacity: 1, scale: 1, duration: 0.6, stagger: 0.08, ease: "back.out(1.7)", pointerEvents: 'auto' });
+            }
+        }
+
+        function calculateProgress(tileKey) {
+            const data = networkDataStore[tileKey];
+            if (!data || !data.nodes) return { completed: 0, total: 0, percent: 0 };
+
+            let completed = 0;
+            let total = 0;
+
+            data.nodes.forEach(node => {
+                node.subs.forEach(sub => {
+                    total++;
+                    if (sub.done) completed++;
+                });
+            });
+
+            return { completed, total, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
+        }
+
+        function updateProgress() {
+            if (activeTile && activeKey) {
+                const progress = calculateProgress(activeKey);
+                const progressText = activeTile.querySelector('.progress-text');
+                const progressFill = activeTile.querySelector('.progress-bar-fill');
+                if (progressText && progressFill) {
+                    progressText.innerText = `${progress.completed}/${progress.total} tasks complete (${progress.percent}%)`;
+                    progressFill.style.width = `${progress.percent}%`;
+                }
+            }
+        }
+
+        function addStation(btn) {
+            console.log('addStation called', { activeKey, activeTile, btn });
+
+            if (!activeKey || !activeTile) {
+                console.error('Cannot add station: activeKey or activeTile is null', { activeKey, activeTile });
+                alert('Please open a workflow tile first before adding a new phase!');
+                return;
+            }
+
+            const data = networkDataStore[activeKey];
+            if (!data) {
+                console.error('No data found for activeKey:', activeKey);
+                return;
+            }
+
+            const newIndex = data.nodes.length;
+            console.log('Adding new station at index:', newIndex);
+
+            data.nodes.push({
+                label: 'Phase ' + (newIndex + 1),
+                done: false,
+                subs: [
+                    { label: `Task ${(newIndex + 1)}.1`, done: false, notes: '' },
+                    { label: `Task ${(newIndex + 1)}.2`, done: false, notes: '' },
+                    { label: `Task ${(newIndex + 1)}.3`, done: false, notes: '' },
+                    { label: `Task ${(newIndex + 1)}.4`, done: false, notes: '' }
+                ]
+            });
+
+            renderWorkflow(activeTile, activeKey);
+
+            const leftPanel = activeTile.querySelector('.left-panel');
+            if (leftPanel && leftPanel.children.length > 0) {
+                const newNode = leftPanel.children[leftPanel.children.length - 1];
+                gsap.fromTo(newNode, { x: -100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "back.out(1.7)" });
+            }
+
+            log("Added new workflow step: Phase " + (newIndex + 1));
+            console.log('Station added successfully');
+        }
+
+
+        function renderWorkflow(tile, key) {
+            const data = networkDataStore[key];
+            const workspace = tile.querySelector('.workflow-workspace');
+            workspace.innerHTML = `
+                <div style="position: absolute; top: -18px; left: 20px; font-size: 10px; color: rgba(53, 198, 235, 0.7); font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">PHASES</div>
+                <div class="left-panel"></div>
+                <div class="main-area"></div>
+            `;
+
+            const leftPanel = workspace.querySelector('.left-panel');
+            const mainArea = workspace.querySelector('.main-area');
+
+            // Add '+' button at the top of left panel
+            const addButton = document.createElement('button');
+            addButton.className = 'btn-add-station';
+            addButton.innerHTML = '+';
+            addButton.onclick = () => addStation(addButton);
+            addButton.style.marginBottom = '10px';
+            leftPanel.appendChild(addButton);
+
+            data.nodes.forEach((n, i) => {
+                const node = document.createElement('div');
+                node.className = 'station revealed' + (n.done ? ' done' : '');
+                node.draggable = true;
+                node.innerHTML = `
+                    <div class="plumbob"></div>
+                    <span contenteditable="true">${n.label}</span>
+                `;
+
+                // Drag-to-reorder functionality
+                node.ondragstart = (e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', i);
+                    node.style.opacity = '0.5';
+                };
+
+                node.ondragend = (e) => {
+                    node.style.opacity = '1';
+                    node.style.borderTop = '';
+                };
+
+                node.ondragover = (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    node.style.borderTop = '3px solid var(--s4-blue)';
+                };
+
+                node.ondragleave = (e) => {
+                    node.style.borderTop = '';
+                };
+
+                node.ondrop = (e) => {
+                    e.preventDefault();
+                    node.style.borderTop = '';
+
+                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toIndex = i;
+
+                    if (fromIndex !== toIndex) {
+                        const data = networkDataStore[activeKey];
+                        const [movedNode] = data.nodes.splice(fromIndex, 1);
+                        data.nodes.splice(toIndex, 0, movedNode);
+
+                        renderWorkflow(activeTile, activeKey);
+                        log(`Moved phase from position ${fromIndex + 1} to ${toIndex + 1}`);
+                    }
+                };
+
+                // Pre-render workflow items for this step
+                const rowItems = [];
+                n.subs.forEach((s, j) => {
+                    if (!s.notes) s.notes = '';
+                    const sub = document.createElement('div');
+                    sub.className = 'station' + (s.done ? ' done' : '');
+                    sub.style.opacity = '0';
+                    sub.style.transform = 'scale(0.7)';
+                    sub.style.pointerEvents = 'none';
+                    sub.style.position = 'relative';
+                    sub.title = s.notes ? `${s.label}\n\nNotes: ${s.notes}` : s.label;
+                    sub.innerHTML = `
+                        <div class="plumbob"></div>
+                        <span contenteditable="true">${s.label}</span>
+                        <button class="note-btn" style="position: absolute; right: 35px; top: 50%; transform: translateY(-50%); background: none; border: none; color: ${s.notes ? 'var(--s4-blue)' : '#666'}; cursor: pointer; font-size: 14px; opacity: 0.6;">📝</button>
+                    `;
+                    sub.onclick = (e) => {
+                        e.stopPropagation();
+                        openTile(activeTile, `${activeKey}.${s.label}`);
+                    };
+                    sub.ondblclick = (e) => {
+                        e.stopPropagation();
+                        toggleDone(sub);
+                        s.done = sub.classList.contains('done');
+                    };
+                    sub.querySelector('span').oninput = () => {
+                        s.label = sub.querySelector('span').innerText;
+                        sub.title = s.notes ? `${s.label}\n\nNotes: ${s.notes}` : s.label;
+                    };
+
+                    sub.querySelector('.note-btn').onclick = (e) => {
+                        e.stopPropagation();
+                        const currentNote = s.notes || '';
+                        const newNote = prompt(`Notes for "${s.label}":`, currentNote);
+                        if (newNote !== null) {
+                            s.notes = newNote;
+                            sub.querySelector('.note-btn').style.color = newNote ? 'var(--s4-blue)' : '#666';
+                            sub.title = newNote ? `${s.label}\n\nNotes: ${newNote}` : s.label;
+                            log(`Notes ${newNote ? 'added to' : 'removed from'} "${s.label}"`);
+                        }
+                    };
+
+                    mainArea.appendChild(sub);
+                    rowItems.push(sub);
+
+                    if (j < n.subs.length - 1) {
+                        const connector = document.createElement('div');
+                        connector.className = 'connector';
+                        connector.innerHTML = '→';
+                        Object.assign(connector.style, {
+                            fontSize: '16px',
+                            color: 'var(--s4-blue)',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            opacity: '0',
+                            pointerEvents: 'none'
+                        });
+                        mainArea.appendChild(connector);
+                        rowItems.push(connector);
+                    }
+                });
+
+                node.onclick = () => toggleRow(node, rowItems);
+
+                node.ondblclick = (e) => {
+                    e.stopPropagation();
+                    toggleDone(node);
+                    n.done = node.classList.contains('done');
+                };
+                node.querySelector('span').oninput = () => n.label = node.querySelector('span').innerText;
+
+                node.onmouseenter = (e) => {
+                    showOverlay(e, n, true); // Pass true for isPhaseNode
+                };
+                node.onmouseleave = () => {
+                    hideOverlay();
+                };
+
+                leftPanel.appendChild(node);
+            });
+
+            gsap.fromTo(Array.from(leftPanel.children), { x: -100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "back.out(1.7)" });
+        }
+
+        function triggerConfetti() {
+            const canvas = document.createElement('canvas');
+            canvas.style.position = 'fixed';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.pointerEvents = 'none';
+            canvas.style.zIndex = '99999';
+            document.body.appendChild(canvas);
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const ctx = canvas.getContext('2d');
+            const particles = [];
+            const colors = ['#35C6EB', '#4EC300', '#B19DFF', '#FFD700', '#FF6B6B'];
+
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: -10,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: Math.random() * 3 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 6 + 2
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach((p, i) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.1;
+
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+
+                    if (p.y > canvas.height) {
+                        particles.splice(i, 1);
+                    }
+                });
+
+                if (particles.length > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    document.body.removeChild(canvas);
+                }
+            }
+
+            animate();
+        }
+
+        function checkWorkflowCompletion() {
+            if (!activeKey) return;
+
+            const data = networkDataStore[activeKey];
+            if (!data || !data.nodes) return;
+
+            let allDone = true;
+            data.nodes.forEach(node => {
+                node.subs.forEach(sub => {
+                    if (!sub.done) allDone = false;
+                });
+            });
+
+            if (allDone && data.nodes.length > 0) {
+                triggerConfetti();
+                log('🎉 Workflow completed! All tasks done!');
+            }
+        }
+
+        function toggleDone(el) {
+            el.classList.toggle('done');
+
+            if (el.classList.contains('done')) {
+                gsap.fromTo(el,
+                    { scale: 1 },
+                    { scale: 1.1, duration: 0.2, yoyo: true, repeat: 1, ease: 'power2.inOut' }
+                );
+            }
+
+            updateProgress();
+            checkWorkflowCompletion();
+        }
+
+        function fillPhaseSubs(phaseData, category) {
+            const tasks = shortcutTasks[category];
+            if (!phaseData.subs || phaseData.subs.length === 0) {
+                log(`Cannot fill phase "${phaseData.label}" - no sub-tasks available`);
+                return;
+            }
+            phaseData.subs.forEach((s, i) => {
+                if (i < tasks.length) {
+                    s.label = tasks[i];
+                }
+            });
+            renderWorkflow(activeTile, activeKey);
+            updateProgress();
+            log(`Filled phase "${phaseData.label}" with ${category} tasks`);
+        }
+
+        function saveAsTemplate() {
+            if (!activeKey || !activeTile) {
+                alert('Please open a workflow tile first');
+                return;
+            }
+
+            const templateName = prompt('Enter a name for this template:');
+            if (!templateName) return;
+
+            const data = networkDataStore[activeKey];
+            savedTemplates[templateName] = JSON.parse(JSON.stringify(data));
+            localStorage.setItem('workflowTemplates', JSON.stringify(savedTemplates));
+            log(`Template "${templateName}" saved successfully`);
+        }
+
+        function loadTemplate() {
+            const templateNames = Object.keys(savedTemplates);
+            if (templateNames.length === 0) {
+                alert('No templates saved yet. Use "Save as Template" first.');
+                return;
+            }
+
+            const templateList = templateNames.map((n, i) => `${i + 1}. ${n}`).join('\n');
+            const choice = prompt(`Select a template:\n${templateList}\n\nEnter name or number:`);
+            if (!choice) return;
+
+            let templateName = choice;
+            if (!isNaN(choice)) {
+                const index = parseInt(choice) - 1;
+                if (index >= 0 && index < templateNames.length) {
+                    templateName = templateNames[index];
+                }
+            }
+
+            if (savedTemplates[templateName]) {
+                if (activeKey && activeTile) {
+                    networkDataStore[activeKey] = JSON.parse(JSON.stringify(savedTemplates[templateName]));
+                    renderWorkflow(activeTile, activeKey);
+                    log(`Template "${templateName}" loaded`);
+                }
+            } else {
+                alert('Template not found');
+            }
+        }
+
+        function switchTheme() {
+            const themes = ['default', 'dark-mode', 'light-mode'];
+            const currentIndex = themes.indexOf(currentTheme);
+            const nextIndex = (currentIndex + 1) % themes.length;
+            currentTheme = themes[nextIndex];
+
+            document.body.className = currentTheme === 'default' ? '' : currentTheme;
+            localStorage.setItem('theme', currentTheme);
+
+            const themeNames = { 'default': 'Sims Blue', 'dark-mode': 'Dark Mode', 'light-mode': 'Light Mode' };
+            log(`Theme switched to: ${themeNames[currentTheme]}`);
+        }
+
+        function exportNetwork() {
+            const nodes = [];
+            document.querySelectorAll('.node-wrapper').forEach(w => {
+                nodes.push({
+                    label: w.getAttribute('data-label'),
+                    id: w.getAttribute('data-id')
+                });
+            });
+
+            const data = {
+                rowCount,
+                nodes,
+                store: networkDataStore
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `network_state_${Date.now()}.json`;
+            a.click();
+            log("Network exported to JSON");
+        }
+
+        function importNetwork(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    renderImported(data);
+                    log("Network imported successfully");
+                } catch (err) {
+                    log("Error importing JSON: Invalid format");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function renderImported(data) {
+            matrix.innerHTML = '';
+            rowCount = 0;
+            networkDataStore = data.store || {};
+
+            // Group nodes by row
+            const rows = {};
+            data.nodes.forEach(n => {
+                const parts = n.id ? n.id.split('.') : ["1", "0"];
+                const rId = parts[0];
+                if (!rows[rId]) rows[rId] = [];
+                rows[rId].push(n);
+            });
+
+            Object.entries(rows).forEach(([rId, nodeList]) => {
+                rowCount++;
+                const row = document.createElement('div');
+                row.className = 'node-row';
+                nodeList.forEach((n, i) => {
+                    row.appendChild(createNode(rowCount, i, n.label));
+                });
+                matrix.appendChild(row);
+            });
+        }
+
+        function createNode(rowId, colId, customLabel) {
+            const label = customLabel || (colId === 2 ? 'Main' : 'Node');
+            const nodeId = `${rowId}.${colId}`;
+            const wrap = document.createElement('div');
+            wrap.className = 'node-wrapper';
+            wrap.setAttribute('data-label', label);
+            wrap.setAttribute('data-id', nodeId);
+
+            const isMain = colId === 2;
+            const node = document.createElement('div');
+            node.className = 'node';
+            node.innerHTML = `<div class="plumbob"></div>
+                             <div class="node-label ${isMain ? 'editable-main' : ''}" 
+                                  ${isMain ? 'contenteditable="true"' : ''}
+                                  oninput="this.closest('.node-wrapper').setAttribute('data-label', this.innerText)"
+                                  onclick="if(${isMain}) event.stopPropagation()">${label}</div>`;
+            node.onclick = (e) => {
+                e.stopPropagation();
+                togglePrimary(node);
+            };
+            node.ondblclick = (e) => {
+                e.stopPropagation();
+                node.classList.toggle('done');
+                log(`${node.classList.contains('done') ? 'Completed' : 'Reset'}: ${label}`);
+            };
+
+            const menu = document.createElement('div');
+            menu.className = 'pie-menu';
+
+            const tile = document.createElement('div');
+            tile.className = 'config-tile';
+            const progress = calculateProgress(nodeId);
+            tile.innerHTML = `
+                <div class="tile-title">
+                    <span contenteditable="true">${label.toUpperCase()}</span>
+                    <button onclick="closeAll()" style="position: absolute; top: 0; right: 0; background: rgba(255,0,0,0.2); border: 1px solid #ff5555; color: #ff5555; padding: 8px 18px; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s;">✕</button>
+                    <div class="progress-container" style="position: absolute; top: 50px; left: 30px; right: 30px;">
+                        <div class="progress-text" style="font-size: 11px; color: var(--s4-blue); margin-bottom: 5px;">
+                            ${progress.completed}/${progress.total} tasks complete (${progress.percent}%)
+                        </div>
+                        <div class="progress-bar-bg" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                            <div class="progress-bar-fill" style="width: ${progress.percent}%; height: 100%; background: linear-gradient(90deg, var(--s4-blue), var(--s4-green)); transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="workflow-workspace"></div>
+            `;
+            tile.onclick = (e) => e.stopPropagation();
+
+            // NBC logo colors: purple, red, blue, orange, yellow, green (using 4 main colors)
+            const nbcColors = [
+                'linear-gradient(135deg, #9D4EDD 0%, #C77DFF 50%, #E0AAFF 100%)', // Purple
+                'linear-gradient(135deg, #FF006E 0%, #FF4D8F 50%, #FF99B8 100%)', // Red/Pink
+                'linear-gradient(135deg, #3A86FF 0%, #6BA3FF 50%, #A3C7FF 100%)', // Blue
+                'linear-gradient(135deg, #FFB703 0%, #FFC933 50%, #FFD966 100%)'  // Orange/Yellow
+            ];
+
+            nbcColors.forEach((gradient, index) => {
+                const sub = document.createElement('div');
+                sub.className = 'sub-node';
+                sub.style.background = gradient;
+                sub.style.animation = `gradientFlow ${3 + index * 0.3}s ease-in-out infinite alternate`;
+                sub.innerHTML = `<div class="gradient-shimmer"></div>`;
+                menu.appendChild(sub);
+            });
+
+            wrap.appendChild(node);
+            wrap.appendChild(menu);
+            wrap.appendChild(tile);
+            return wrap;
+        }
+
+        function addRow() {
+            rowCount++;
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(30px)';
+
+            for (let i = 0; i < 5; i++) {
+                const label = i === 2 ? 'Main' : 'Node';
+                row.appendChild(createNode(rowCount, i, label));
+            }
+
+            matrix.appendChild(row);
+            setTimeout(() => {
+                row.style.transition = '0.6s ease-out';
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+            }, 50);
+            log(`Added cluster set ${rowCount}`);
+        }
+
+        function togglePrimary(node) {
+            const menu = node.nextElementSibling;
+            const tile = menu.nextElementSibling;
+            const active = tile.classList.contains('active');
+            closeAll();
+
+            if (!active) {
+                // Show pretty NBC nodes first
+                menu.classList.add('active');
+                node.classList.add('active-primary');
+
+                // Then open the tile directly after a brief moment
+                setTimeout(() => {
+                    const nodeId = node.closest('.node-wrapper').getAttribute('data-node-id');
+                    openTile(tile, nodeId);
+                    log(`Opening tile: ${node.querySelector('.node-label').innerText.trim()}`);
+                }, 600);
+            }
+        }
+
+        function closeAll() {
+            document.querySelectorAll('.pie-menu').forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('active-primary'));
+            document.querySelectorAll('.config-tile').forEach(t => t.classList.remove('active'));
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.className = currentTheme === 'default' ? '' : currentTheme;
+
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            rowCount = 1;
+            const labels = ['Node', 'Node', 'Main', 'Node', 'Node'];
+            labels.forEach((l, i) => row.appendChild(createNode(1, i, l)));
+            matrix.appendChild(row);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.node-wrapper')) {
+                closeAll();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (!activeTile || !activeTile.classList.contains('active')) return;
+            if (e.target.contentEditable === 'true') return;
+
+            switch(e.key.toLowerCase()) {
+                case ' ':
+                    e.preventDefault();
+                    const selected = activeTile.querySelector('.station.selected');
+                    if (selected) {
+                        toggleDone(selected);
+                        log('Task toggled via spacebar');
+                    }
+                    break;
+
+                case 'n':
+                    e.preventDefault();
+                    addStation();
+                    log('New phase added via keyboard');
+                    break;
+
+                case 'c':
+                case 'escape':
+                    e.preventDefault();
+                    closeAll();
+                    log('Tile closed via keyboard');
+                    break;
+            }
+        });
+    </script>
+</body>
+
+</html>

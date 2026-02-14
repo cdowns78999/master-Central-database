@@ -1,0 +1,233 @@
+class ScoutConsole {
+    constructor() {
+        this.data = null;
+        this.currentView = 'home';
+        this.navElement = document.getElementById('app-nav');
+        this.viewport = document.getElementById('app-viewport');
+        this.breadcrumb = document.getElementById('breadcrumb');
+
+        this.init();
+    }
+
+    async init() {
+        try {
+            const response = await fetch('data.json');
+            this.data = await response.json();
+            this.renderNav();
+            this.switchView('home');
+            this.setupListeners();
+            this.setupThemeSwitcher();
+        } catch (error) {
+            console.error("Failed to initialize console:", error);
+            this.viewport.innerHTML = `<div class="error-state">Error loading console data.</div>`;
+        }
+    }
+
+    renderNav() {
+        this.navElement.innerHTML = this.data.navigation.map(app => `
+            <a class="nav-item ${app.id === this.currentView ? 'active' : ''}" data-view="${app.id}">
+                <span class="material-symbols-outlined">${app.icon}</span>
+                <span class="nav-label">${app.label}</span>
+            </a>
+        `).join('');
+    }
+
+    setupListeners() {
+        this.navElement.addEventListener('click', (e) => {
+            const item = e.target.closest('.nav-item');
+            if (item) {
+                const viewId = item.getAttribute('data-view');
+                this.switchView(viewId);
+            }
+        });
+    }
+
+    switchView(viewId) {
+        this.currentView = viewId;
+
+        // Update Nav UI
+        document.querySelectorAll('.nav-item').forEach(el => {
+            el.classList.toggle('active', el.getAttribute('data-view') === viewId);
+        });
+
+        // Update Breadcrumb
+        const activeApp = this.data.navigation.find(a => a.id === viewId);
+        this.breadcrumb.textContent = `Scout Console / ${activeApp.label}`;
+
+        // Render App
+        this.renderApp(viewId);
+    }
+
+    renderApp(viewId) {
+        this.viewport.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+
+        setTimeout(() => {
+            switch (viewId) {
+                case 'home': this.renderHome(); break;
+                case 'dashboard': this.renderDashboard(); break;
+                case 'vault': this.renderVault(); break;
+                case 'chronicle': this.renderChronicle(); break;
+                case 'roster': this.renderRoster(); break;
+                default: this.renderHome();
+            }
+        }, 300); // Subtle delay for feel
+    }
+
+    renderHome() {
+        this.viewport.innerHTML = `
+            <section class="app-view home-view">
+                <div class="hero-content">
+                    <h2 class="hero-title">${this.data.projectInfo.name}</h2>
+                    <p class="hero-tagline">${this.data.projectInfo.mission}</p>
+                    <div class="hero-cta">
+                        <button class="primary-btn">Begin Journey</button>
+                        <button class="secondary-btn">Learn More</button>
+                    </div>
+                </div>
+                <div class="home-stats grid-container">
+                    ${this.data.stats.slice(0, 3).map(stat => `
+                        <div class="glass-card stat-card">
+                            <span class="stat-value">${stat.value}${stat.suffix}</span>
+                            <span class="stat-label">${stat.label}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    renderDashboard() {
+        this.viewport.innerHTML = `
+            <section class="app-view dashboard-view">
+                <div class="view-header">
+                    <h3>Command Center</h3>
+                    <p>Live metrics and performance tracking</p>
+                </div>
+                <div class="grid-container">
+                    ${this.data.stats.map(stat => {
+            const val = parseInt(stat.value.replace(/[^0-9]/g, ''));
+            const target = parseInt(stat.target.replace(/[^0-9]/g, ''));
+            const percent = Math.min((val / target) * 100, 100);
+            return `
+                        <div class="glass-card analysis-card">
+                            <div class="card-head">
+                                <span class="label">${stat.label}</span>
+                                <span class="trend up">+4.2%</span>
+                            </div>
+                            <div class="card-body">
+                                <h4 class="value">${stat.value}</h4>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${percent}%"></div>
+                                </div>
+                                <div class="target">Goal: ${stat.target}</div>
+                            </div>
+                        </div>`;
+        }).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    renderVault() {
+        this.viewport.innerHTML = `
+            <section class="app-view vault-view">
+                <div class="view-header">
+                    <h3>Resource Vault</h3>
+                    <p>Central repository for troop assets</p>
+                </div>
+                <div class="resource-grid grid-container">
+                    ${this.data.resources.map(res => `
+                        <div class="glass-card resource-card">
+                            <div class="file-icon"><span class="material-symbols-outlined">description</span></div>
+                            <div class="file-info">
+                                <span class="file-title">${res.title}</span>
+                                <span class="file-meta">${res.type} &bull; ${res.size}</span>
+                            </div>
+                            <div class="file-tags">
+                                ${res.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    renderChronicle() {
+        this.viewport.innerHTML = `
+            <section class="app-view chronicle-view">
+                <div class="view-header">
+                    <h3>Scout Chronicle</h3>
+                    <p>Latest updates from the wild</p>
+                </div>
+                <div class="feed-container">
+                    ${this.data.updates.map(post => `
+                        <div class="glass-card post-card">
+                            <div class="post-meta">${post.date} &bull; ${post.author}</div>
+                            <h4 class="post-title">${post.title}</h4>
+                            <p class="post-excerpt">${post.excerpt}</p>
+                            <button class="text-btn">Read Entry <span class="material-symbols-outlined">arrow_forward</span></button>
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    renderRoster() {
+        this.viewport.innerHTML = `
+            <section class="app-view roster-view">
+                <div class="view-header">
+                    <h3>Troop Roster</h3>
+                    <p>Leaderboard and performance rankings</p>
+                </div>
+                <div class="glass-card table-card">
+                    <table class="roster-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Troop Name</th>
+                                <th>Merit Points</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.data.leaderboard.map(row => `
+                                <tr>
+                                    <td>#${row.rank}</td>
+                                    <td><strong>${row.name}</strong></td>
+                                    <td>${row.points}</td>
+                                    <td><span class="badge ${row.status.toLowerCase()}">${row.status}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        `;
+    }
+
+    setupThemeSwitcher() {
+        const dots = document.querySelectorAll('.theme-dot');
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const theme = dot.getAttribute('data-theme');
+
+                // Update Body Class
+                document.body.className = theme;
+
+                // Update Active UI
+                dots.forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+
+                // HUD Notification (Optional)
+                console.log(`Theme swapped to: ${theme}`);
+            });
+        });
+    }
+}
+
+// Initialize Console
+document.addEventListener('DOMContentLoaded', () => {
+    window.Console = new ScoutConsole();
+});

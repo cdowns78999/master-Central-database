@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Tiles</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span>OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="tiles.html" class="nav-link active">Tiles</a>
+            <a href="actions.html" class="nav-link">Actions</a>
+            <a href="schedule.html" class="nav-link">Schedule</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>All Tiles</h1>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <span id="tile-count" style="color: var(--text-dim); font-size: 0.9rem;">0 tiles</span>
+            </div>
+        </div>
+
+        <div id="tiles-container" class="tiles-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 2rem;">
+            <!-- Tiles will be dynamically added here -->
+        </div>
+
+        <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem; color: var(--text-dim);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+            <h2 style="color: var(--text); margin-bottom: 0.5rem;">No Tiles Yet</h2>
+            <p>Go to <a href="actions.html" style="color: var(--primary);">Actions</a> to create your first tile.</p>
+        </div>
+    </main>
+
+    <script src="tile-component.js"></script>
+    <script>
+        // Master Home Base - Shows ALL tiles from localStorage
+        let tiles = [];
+        let tileInstances = [];
+
+        function loadTiles() {
+            const container = document.getElementById('tiles-container');
+            const emptyState = document.getElementById('empty-state');
+            const countEl = document.getElementById('tile-count');
+
+            container.innerHTML = '';
+            tileInstances = [];
+
+            // Load from localStorage
+            const savedData = localStorage.getItem('cards_session');
+            tiles = savedData ? JSON.parse(savedData) : [];
+
+            countEl.textContent = `${tiles.length} tile${tiles.length !== 1 ? 's' : ''}`;
+
+            if (tiles.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            tiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `tile-wrapper-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name || 'New Artist', tileContainer, {
+                    data: tileData.projectData,
+                    onDelete: (instance) => {
+                        deleteTile(index);
+                    }
+                });
+
+                // Restore saved data
+                if (tileData.projectData) tile.projectData = tileData.projectData;
+                if (tileData.contactDB) tile.contactDB = tileData.contactDB;
+                if (tileData.currentCat) tile.currentCat = tileData.currentCat;
+                if (tileData.currentSongIndices) tile.currentSongIndices = tileData.currentSongIndices;
+                tile.updateCardDisplay();
+
+                tileInstances.push(tile);
+            });
+        }
+
+        function deleteTile(index) {
+            tiles.splice(index, 1);
+            saveTiles();
+            loadTiles();
+        }
+
+        function saveTiles() {
+            // Collect current state from all tile instances
+            const dataToSave = tileInstances.map(tile => tile.getData());
+            localStorage.setItem('cards_session', JSON.stringify(dataToSave));
+        }
+
+        // Auto-save on changes
+        setInterval(() => {
+            if (tileInstances.length > 0) {
+                saveTiles();
+            }
+        }, 5000);
+
+        // Listen for storage changes from other tabs/pages
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'cards_session') {
+                loadTiles();
+            }
+        });
+
+        // Initial load
+        loadTiles();
+    </script>
+</body>
+
+</html>

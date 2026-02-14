@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Social Sync</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .social-sync-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+            height: calc(100vh - 120px);
+        }
+
+        /* Artist Sidebar */
+        .artist-sidebar {
+            background: var(--panel);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-artist-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .artist-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .artist-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dim);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .artist-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+        }
+
+        .artist-item.active {
+            background: rgba(76, 201, 240, 0.1);
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Matrix Area */
+        .matrix-area {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            padding-right: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .platform-card {
+            background: rgba(17, 24, 39, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .platform-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .platform-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .platform-card:hover .platform-icon {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .platform-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .platform-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .handle-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+        }
+
+        .handle-input::placeholder {
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+        .live-pulse {
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(1.2);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .empty-matrix {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-dim);
+            opacity: 0.5;
+            background: var(--panel);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon" style="background: var(--primary);"></div>
+            <span style="font-family: 'Outfit', sans-serif; font-weight: 800; letter-spacing: 0.1em;">OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="contacts.html" class="nav-link">Contacts</a>
+            <div
+                style="margin-top: 1rem; padding-left: 10px; font-size: 0.65rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.7;">
+                Scouting Intelligence</div>
+            <a href="artist_analysis.html" class="nav-link">Analysis Book</a>
+            <a href="playlist_4.html" class="nav-link">Playlist Hunter</a>
+            <a href="press_hunter.html" class="nav-link">Press Hunter</a>
+            <div style="margin-top: 1rem;"></div>
+            <a href="social_sync.html" class="nav-link active">Social Sync</a>
+            <a href="payments.html" class="nav-link">Payments</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.2rem; margin: 0;">Social
+                    Media Sync</h1>
+                <p style="color: var(--text-dim); font-family: 'Outfit', sans-serif; margin-top: 4px;">Universal handle
+                    protocol for the data-dense creator economy</p>
+            </div>
+            <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div class="live-pulse"></div>
+                Network Active
+            </div>
+        </header>
+
+        <div class="social-sync-container">
+            <div class="artist-sidebar">
+                <div class="sidebar-header">
+                    <input type="text" class="search-artist-input" placeholder="Search artists..."
+                        oninput="filterArtists(this.value)">
+                </div>
+                <div class="artist-list" id="artistList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <div class="matrix-area" id="matrixArea">
+                <div class="empty-matrix" id="noArtistSelected">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">🌐</div>
+                    <p style="font-family: 'Outfit', sans-serif; font-weight: 600;">Select an artist to sync digital
+                        footprint</p>
+                </div>
+
+                <div id="matrixGrid" class="matrix-grid" style="display: none;">
+                    <!-- 20 Platform Cards populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const platforms = [
+            { name: 'TikTok', icon: '📱' },
+            { name: 'YouTube', icon: '📽️' },
+            { name: 'Instagram', icon: '📸' },
+            { name: 'X', icon: '✖️' },
+            { name: 'Twitch', icon: '📺' },
+            { name: 'Kick', icon: '🎮' },
+            { name: 'Locals', icon: '🏠' },
+            { name: 'Rumble', icon: '🥊' },
+            { name: 'Discord', icon: '💬' },
+            { name: 'Reddit', icon: '🤖' },
+            { name: 'Substack', icon: '✉️' },
+            { name: 'Patreon', icon: '🧡' },
+            { name: 'LinkedIn', icon: '💼' },
+            { name: 'Threads', icon: '🧵' },
+            { name: 'Pinterest', icon: '📌' },
+            { name: 'Bluesky', icon: '🦋' },
+            { name: 'Snapchat', icon: '👻' },
+            { name: 'Behance', icon: '🎨' },
+            { name: 'Dribbble', icon: '🏀' },
+            { name: 'Medium', icon: '📝' }
+        ];
+
+        let artists = [];
+        let selectedArtistId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadArtists();
+            renderArtistList();
+        });
+
+        function loadArtists() {
+            const saved = localStorage.getItem('ocean_contacts_page');
+            if (saved) {
+                artists = JSON.parse(saved);
+            }
+        }
+
+        function saveArtists() {
+            localStorage.setItem('ocean_contacts_page', JSON.stringify(artists));
+        }
+
+        function renderArtistList(filter = '') {
+            const list = document.getElementById('artistList');
+            const filtered = artists.filter(a => a.name.toLowerCase().includes(filter.toLowerCase()));
+
+            list.innerHTML = filtered.map(a => `
+                <div class="artist-item ${a.id === selectedArtistId ? 'active' : ''}" onclick="selectArtist('${a.id}')">
+                    <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--primary); opacity: 0.6;"></div>
+                    <span>${a.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function filterArtists(val) {
+            renderArtistList(val);
+        }
+
+        function selectArtist(id) {
+            selectedArtistId = id;
+            renderArtistList();
+
+            document.getElementById('noArtistSelected').style.display = 'none';
+            const grid = document.getElementById('matrixGrid');
+            grid.style.display = 'grid';
+
+            renderMatrix();
+        }
+
+        function renderMatrix() {
+            const grid = document.getElementById('matrixGrid');
+            const artist = artists.find(a => a.id === selectedArtistId);
+            if (!artist.socials) artist.socials = {};
+
+            grid.innerHTML = platforms.map(p => `
+                <div class="platform-card">
+                    <div class="platform-icon">${p.icon}</div>
+                    <div class="platform-info">
+                        <span class="platform-name">${p.name}</span>
+                        <input type="text" class="handle-input" 
+                               value="${artist.socials[p.name] || ''}" 
+                               placeholder="@handle" 
+                               oninput="updateHandle('${p.name}', this.value)">
+                    </div>
+                    <div class="live-pulse"></div>
+                </div>
+            `).join('');
+        }
+
+        function updateHandle(platform, val) {
+            const artist = artists.find(a => a.id === selectedArtistId);
+            artist.socials[platform] = val;
+            saveArtists();
+        }
+    </script>
+</body>
+
+</html>

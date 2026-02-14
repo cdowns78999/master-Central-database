@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution 15 | Client Intake</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4cc9f0;
+            --accent: #f72585;
+            --bg: #020617;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.5);
+            --transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 2rem;
+        }
+
+        /* Animated Background Blobs */
+        .blob {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            filter: blur(120px);
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.15;
+            animation: move 20s infinite alternate;
+        }
+
+        @keyframes move {
+            from {
+                transform: translate(-20%, -20%) scale(1);
+            }
+
+            to {
+                transform: translate(20%, 20%) scale(1.2);
+            }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 4rem;
+            z-index: 10;
+        }
+
+        /* Identity Section */
+        #identity-stage {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .spotify-input-wrap {
+            position: relative;
+            margin: 2rem auto;
+            max-width: 500px;
+        }
+
+        .spotify-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border);
+            border-radius: 100px;
+            padding: 1.2rem 2.5rem;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .spotify-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 30px rgba(76, 201, 240, 0.2);
+        }
+
+        /* Artist Discovery "Pop-up" */
+        #artist-discovery {
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        #artist-discovery.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+
+        .artist-bloom {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto;
+        }
+
+        .artist-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary);
+            box-shadow: 0 0 50px rgba(76, 201, 240, 0.5);
+        }
+
+        .artist-name {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-top: 1rem;
+        }
+
+        /* Questionnaire Logic */
+        .questionnaire-wrap {
+            display: none;
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 4rem;
+            margin-top: 2rem;
+            animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sentence {
+            font-size: 1.8rem;
+            line-height: 2.2;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .fill-blank {
+            display: inline-block;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: 800;
+            padding: 0 10px;
+            margin: 0 5px;
+            outline: none;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .fill-blank:focus {
+            background: rgba(76, 201, 240, 0.1);
+            border-bottom-color: #fff;
+        }
+
+        select.fill-blank {
+            appearance: none;
+            cursor: pointer;
+            text-align-last: center;
+        }
+
+        .go-btn {
+            display: block;
+            width: 100%;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            border: none;
+            border-radius: 20px;
+            padding: 1.5rem;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-top: 3rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 20px 40px rgba(247, 37, 133, 0.3);
+        }
+
+        .go-btn:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(247, 37, 133, 0.5);
+        }
+
+        /* Results Display */
+        #results-stage {
+            display: none;
+            width: 100%;
+            margin-top: 4rem;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border: 1px solid var(--primary);
+            border-radius: 32px;
+            padding: 3rem;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--primary);
+        }
+
+        /* Schedule Section */
+        #schedule-stage {
+            display: none;
+            width: 100%;
+            margin-top: 4rem;
+            animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            color: var(--text-dim);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(76, 201, 240, 0.3);
+        }
+
+        .schedule-grid {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 40px;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .row input {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 15px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .row input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .add-row-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(76, 201, 240, 0.1);
+            border: 1px dashed var(--primary);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .add-row-btn:hover {
+            background: var(--primary);
+            color: #000;
+            transform: rotate(90deg);
+        }
+
+        /* Improvement Grid */
+        .improvement-grid {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .imp-row {
+            display: grid;
+            grid-template-columns: 2fr 100px;
+            gap: 15px;
+            transition: var(--transition);
+        }
+
+        .imp-row.expanded {
+            grid-template-columns: 2fr 100px 3fr;
+        }
+
+        .imp-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            color: #fff;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .imp-toggle {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .toggle-opt {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 800;
+            transition: var(--transition);
+            color: var(--text-dim);
+        }
+
+        .toggle-opt.active {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .imp-explain {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed var(--primary);
+            border-radius: 12px;
+            padding: 12px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .expanded .imp-explain {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="blob"></div>
+
+    <div class="container">
+        <section id="identity-stage">
+            <header class="header">
+                <h1>Artist Intake</h1>
+                <p style="color: var(--text-dim); letter-spacing: 2px; text-transform: uppercase; font-size: 0.7rem;">
+                    Evolution 15 // Deep Insights</p>
+            </header>
+
+            <div class="spotify-input-wrap">
+                <input type="text" class="spotify-input" id="spotify-url" placeholder="Paste Spotify Artist URL..."
+                    autocomplete="off">
+            </div>
+
+            <div id="artist-discovery">
+                <div class="artist-bloom">
+                    <img id="artist-img" src="" alt="Artist" class="artist-img">
+                </div>
+                <div id="artist-name" class="artist-name">Artist Name</div>
+            </div>
+        </section>
+
+        <section id="questionnaire-stage" class="questionnaire-wrap">
+            <div class="sentence">
+                I am <span style="color: var(--primary); font-weight: 800;" id="display-name">Artist</span>,
+                and I plan to release
+                <select class="fill-blank" id="q-songs">
+                    <option value="1 song">1 song</option>
+                    <option value="2 song">2 song</option>
+                    <option value="3 song">3 song</option>
+                    <option value="4 song">4 song</option>
+                    <option value="a full EP">a full EP</option>
+                    <option value="a full Album">a full Album</option>
+                </select>
+                over the next
+                <select class="fill-blank" id="q-time">
+                    <option value="30 days">30 days</option>
+                    <option value="60 days">60 days</option>
+                    <option value="90 days">90 days</option>
+                    <option value="6 months">6 months</option>
+                    <option value="year">year</option>
+                </select>.
+            </div>
+
+            <div class="sentence"
+                style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem;">
+                My primary sonic identity is
+                <input type="text" class="fill-blank" id="q-genre" placeholder="Genre/Vibe" style="width: 200px;">.
+                Right now, I am focusing my growth efforts on
+                <select class="fill-blank" id="q-platform">
+                    <option value="TikTok">TikTok</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Spotify">Spotify</option>
+                    <option value="YouTube">YouTube</option>
+                </select>
+                with a monthly budget of
+                <select class="fill-blank" id="q-budget">
+                    <option value="$500 - $1k">$500 - $1k</option>
+                    <option value="$1k - $3k">$1k - $3k</option>
+                    <option value="$3k - $5k">$3k - $5k</option>
+                    <option value="$5k+">$5k+</option>
+                </select>.
+            </div>
+
+            <div class="sentence"
+                style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem;">
+                The biggest hurdle I need to clear is
+                <input type="text" class="fill-blank" id="q-hurdle" placeholder="e.g. reaching playlisters"
+                    style="width: 300px;">.
+            </div>
+
+            <div style="margin-top: 3rem;">
+                <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--primary);">
+                    Improvement Focus Areas</h3>
+                <div class="improvement-grid" id="imp-grid">
+                    <!-- 5 Rows of Improvement Logic -->
+                </div>
+            </div>
+
+            <button class="go-btn" id="generate-btn">Collect Intelligence</button>
+        </section>
+
+        <section id="results-stage">
+            <!-- Results will be injected here -->
+        </section>
+
+        <section id="schedule-stage">
+            <div class="tabs" id="schedule-tabs">
+                <div class="tab active" data-type="song">Add Song</div>
+                <div class="tab" data-type="show">Add Show</div>
+                <div class="tab" data-type="event">Online Event</div>
+                <div class="tab" data-type="project">Creative Project</div>
+            </div>
+
+            <div class="schedule-grid">
+                <div id="row-container">
+                    <div class="row">
+                        <input type="text" placeholder="Collab Partner" class="field-1">
+                        <input type="text" placeholder="Song Name" class="field-2">
+                        <input type="date" class="field-3">
+                        <div class="add-row-btn" onclick="addNewRow()">+</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const spotifyInput = document.getElementById('spotify-url');
+        const discoveryArea = document.getElementById('artist-discovery');
+        const questionnaire = document.getElementById('questionnaire-stage');
+        const artistImg = document.getElementById('artist-img');
+        const artistName = document.getElementById('artist-name');
+        const displayName = document.getElementById('display-name');
+
+        // Mock Spotify Discovery Logic
+        // In a real app, this would use the Spotify OEmbed or Web API
+        spotifyInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            if (val.includes('spotify.com/artist/')) {
+                // Simulate fetching data
+                setTimeout(() => {
+                    artistImg.src = "https://image-cdn-ak.spotifycdn.com/image/ab676161000051744255dda70ca85c44b568ce26"; // Rich Furniss example
+                    artistName.textContent = "Rich Furniss";
+                    displayName.textContent = "Rich Furniss";
+
+                    discoveryArea.classList.add('active');
+
+                    setTimeout(() => {
+                        questionnaire.style.display = 'block';
+                        questionnaire.scrollIntoView({ behavior: 'smooth' });
+                    }, 800);
+                }, 600);
+            }
+        });
+
+        document.getElementById('generate-btn').addEventListener('click', () => {
+            const data = {
+                name: artistName.textContent,
+                songs: document.getElementById('q-songs').value,
+                time: document.getElementById('q-time').value,
+                genre: document.getElementById('q-genre').value,
+                platform: document.getElementById('q-platform').value,
+                budget: document.getElementById('q-budget').value,
+                hurdle: document.getElementById('q-hurdle').value
+            };
+
+            showResults(data);
+        });
+
+        function showResults(data) {
+            const results = document.getElementById('results-stage');
+            const schedule = document.getElementById('schedule-stage');
+
+            results.style.display = 'block';
+            schedule.style.display = 'block';
+
+            results.innerHTML = `
+                <div class="result-card">
+                    <div style="font-size: 0.7rem; color: var(--primary); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 2rem;">Artist Intelligence Report</div>
+                    <div style="font-size: 1.8rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -1px;">${data.name} // Strategy Payload</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px;">Releases</div>
+                            <div style="font-weight: 800; color: var(--primary);">${data.songs}</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px;">Timeline</div>
+                            <div style="font-weight: 800; color: var(--primary);">${data.time}</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px;">Focus</div>
+                            <div style="font-weight: 800; color: var(--accent);">${data.platform}</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px;">Budget</div>
+                            <div style="font-weight: 800; color: var(--accent);">${data.budget}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <div style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px;">Mission Vision</div>
+                        <div style="color: rgba(255,255,255,0.8); line-height: 1.6;">
+                            Artist is positioning for a high-impact <strong>${data.genre}</strong> campaign. 
+                            Strategic priority is to clear the <strong>${data.hurdle}</strong> roadblock using <strong>${data.platform}</strong> as a primary lever.
+                        </div>
+                    </div>
+
+                    <button class="go-btn" style="background: rgba(255,255,255,0.05); box-shadow: none; margin-top: 0;" onclick="location.reload()">New Intake Session</button>
+                </div>
+            `;
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Schedule Logic
+        const tabs = document.querySelectorAll('.tab');
+        const rowContainer = document.getElementById('row-container');
+
+        const tabConfig = {
+            'song': { f1: 'Collab Partner', f2: 'Song Name', f3: 'type="date"' },
+            'show': { f1: 'Venue Name', f2: 'City', f3: 'type="date"' },
+            'event': { f1: 'Platform', f2: 'Event Name', f3: 'type="datetime-local"' },
+            'project': { f1: 'Project Type', f2: 'Objective', f3: 'type="date"' }
+        };
+
+        let currentTab = 'song';
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.getAttribute('data-type');
+                resetRows();
+            });
+        });
+
+        function addNewRow() {
+            const config = tabConfig[currentTab];
+            const newRow = document.createElement('div');
+            newRow.className = 'row';
+            newRow.style.animation = 'slideUp 0.4s ease forwards';
+            newRow.innerHTML = `
+                <input type="text" placeholder="${config.f1}" class="field-1">
+                <input type="text" placeholder="${config.f2}" class="field-2">
+                <input ${config.f3} class="field-3">
+                <div class="add-row-btn" onclick="addNewRow()">+</div>
+            `;
+
+            // Turn previous plus into a minus/remove? 
+            // For now just add new ones. 
+            rowContainer.appendChild(newRow);
+        }
+
+        // Improvement Logic
+        const impGrid = document.getElementById('imp-grid');
+        const impOptions = [
+            "Select focus area...",
+            "More shows",
+            "Upgrade/ pivot / improve my sound",
+            "Create '1 singular brand identity' that 'travels throughout' all social and streaming platforms",
+            "Increase my video content",
+            "Improve the video content i am producing",
+            "Get on a routine plan"
+        ];
+
+        function initImpGrid() {
+            impGrid.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const row = document.createElement('div');
+                row.className = 'imp-row';
+                row.innerHTML = `
+                    <select class="imp-select">
+                        ${impOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                    </select>
+                    <div class="imp-toggle">
+                        <div class="toggle-opt" onclick="setToggle(this, 'n')">N</div>
+                        <div class="toggle-opt" onclick="setToggle(this, 'y')">Y</div>
+                    </div>
+                    <input type="text" class="imp-explain" placeholder="Explain more...">
+                `;
+                impGrid.appendChild(row);
+            }
+        }
+
+        function setToggle(el, val) {
+            const container = el.parentElement;
+            const row = container.parentElement;
+            container.querySelectorAll('.toggle-opt').forEach(opt => opt.classList.remove('active'));
+            el.classList.add('active');
+
+            if (val === 'y') {
+                row.classList.add('expanded');
+            } else {
+                row.classList.remove('expanded');
+            }
+        }
+
+        initImpGrid();
+    </script>
+</body>
+
+</html>

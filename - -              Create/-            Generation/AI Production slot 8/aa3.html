@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Versailles Rose: Rococo Opulence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cinzel:wght@400;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --gold-leaf: #E6BE8A;
+            --rose: #F4C2C2;
+            --cream: #FFFDD0;
+            --silk: rgba(255, 253, 208, 0.1);
+            --transition-slow: all 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+            --transition-fast: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="5" fill="none" stroke="%23E6BE8A" stroke-width="1"/></svg>') 10 10, crosshair;
+        }
+
+        body {
+            background-color: #fcf8f2;
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(255, 253, 208, 0.4) 0%, transparent 100%),
+                url('https://www.transparenttextures.com/patterns/french-stucco.png');
+            color: #4a3728;
+            font-family: 'Playfair Display', serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rococo-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.15;
+            pointer-events: none;
+            background-image: url('https://www.transparenttextures.com/patterns/damask.png');
+            z-index: 0;
+        }
+
+        .header {
+            position: absolute;
+            top: 5vh;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 5rem;
+            color: var(--gold-leaf);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: -10px;
+        }
+
+        .header .subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            letter-spacing: 5px;
+            color: #8b7355;
+            text-transform: uppercase;
+        }
+
+        /* --- NODES --- */
+        .stage {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            height: 600px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .node-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .node-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: white;
+            border: 4px double var(--gold-leaf);
+            box-shadow: 0 10px 40px rgba(74, 55, 40, 0.1), inset 0 0 40px rgba(230, 190, 138, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: var(--transition-slow);
+            overflow: hidden;
+        }
+
+        .node-circle.large {
+            width: 280px;
+            height: 280px;
+            border-width: 8px;
+        }
+
+        .node-circle::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            border: 1px dotted var(--gold-leaf);
+            animation: spin 60s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .node-label {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            font-weight: 900;
+            color: #4a3728;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .large .node-label {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3rem;
+            color: var(--gold-leaf);
+        }
+
+        /* --- VINES --- */
+        .vines {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .vine-path {
+            fill: none;
+            stroke: #3e5c33;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 1500;
+            stroke-dashoffset: 1500;
+            transition: stroke-dashoffset 3s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .flower {
+            fill: var(--rose);
+            stroke: #fff;
+            stroke-width: 1;
+            opacity: 0;
+            transition: opacity 1s, transform 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(0);
+        }
+
+        .bloomed .flower {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* --- CONTROLS --- */
+        .royal-btn {
+            background: white;
+            border: 1px solid var(--gold-leaf);
+            padding: 12px 30px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: #8b7355;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .royal-btn:hover {
+            color: white;
+            background: var(--gold-leaf);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 190, 138, 0.4);
+        }
+
+        .royal-btn.active {
+            background: #4a3728;
+            color: white;
+            border-color: #4a3728;
+        }
+
+        /* --- GILDED STATE --- */
+        .gilded-manifestation {
+            box-shadow: 0 0 100px rgba(244, 194, 194, 0.4), 0 0 60px rgba(230, 190, 138, 0.4) !important;
+            background: radial-gradient(circle, #fff 0%, var(--cream) 100%) !important;
+            transform: scale(1.1) !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="rococo-bg"></div>
+
+    <header class="header">
+        <h1>Petit Trianon</h1>
+        <div class="subtitle">Le Cadeau de l'Organisation Royale</div>
+    </header>
+
+    <div class="stage">
+        <svg class="vines" viewBox="0 0 1200 600">
+            <!-- Left Vine -->
+            <path id="vine-l" class="vine-path" d="M 200,300 C 350,300 450,200 600,300" />
+            <circle class="flower" cx="350" cy="280" r="8" />
+            <circle class="flower" cx="450" cy="250" r="12" />
+            <circle class="flower" cx="520" cy="270" r="6" />
+
+            <!-- Right Vine -->
+            <path id="vine-r" class="vine-path" d="M 1000,300 C 850,300 750,200 600,300" />
+            <circle class="flower" cx="850" cy="280" r="8" />
+            <circle class="flower" cx="750" cy="250" r="12" />
+            <circle class="flower" cx="680" cy="270" r="6" />
+        </svg>
+
+        <!-- Node 1 -->
+        <div class="node-wrapper">
+            <div class="node-circle" id="node-1">
+                <div class="node-label">Le Premier<br>Pas</div>
+            </div>
+            <button class="royal-btn" onclick="authorize(1)">Cultiver</button>
+        </div>
+
+        <!-- Center Node -->
+        <div class="node-wrapper">
+            <div class="node-circle large" id="node-center">
+                <div class="node-label">L'Épanouissement</div>
+            </div>
+        </div>
+
+        <!-- Node 2 -->
+        <div class="node-wrapper">
+            <div class="node-circle" id="node-2">
+                <div class="node-label">Le Dernier<br>Acte</div>
+            </div>
+            <button class="royal-btn" onclick="authorize(2)">Cultiver</button>
+        </div>
+    </div>
+
+    <script>
+        const states = { 1: false, 2: false };
+
+        function authorize(id) {
+            states[id] = !states[id];
+            const btn = event.target;
+            const vine = document.getElementById(id === 1 ? 'vine-l' : 'vine-r');
+            const svgGroup = vine.parentElement;
+
+            if (states[id]) {
+                btn.classList.add('active');
+                btn.innerText = 'Cultivé';
+                vine.style.strokeDashoffset = '0';
+                svgGroup.classList.add('bloomed');
+            } else {
+                btn.classList.remove('active');
+                btn.innerText = 'Cultiver';
+                vine.style.strokeDashoffset = '1500';
+                svgGroup.classList.remove('bloomed');
+            }
+
+            checkMajesty();
+        }
+
+        function checkMajesty() {
+            const center = document.getElementById('node-center');
+            const title = center.querySelector('.node-label');
+
+            if (states[1] && states[2]) {
+                center.classList.add('gilded-manifestation');
+                title.innerText = 'Majesté Totale';
+            } else {
+                center.classList.remove('gilded-manifestation');
+                title.innerText = 'L\'Épanouissement';
+            }
+        }
+
+        // Magnetic Physics for Rococo feel
+        document.addEventListener('mousemove', (e) => {
+            const circles = document.querySelectorAll('.node-circle');
+            circles.forEach(circle => {
+                const rect = circle.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const dx = e.clientX - cx;
+                const dy = e.clientY - cy;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 250) {
+                    const power = (250 - dist) / 250;
+                    circle.style.transform = `translate(${dx * 0.05 * power}px, ${dy * 0.05 * power}px)`;
+                } else {
+                    circle.style.transform = `translate(0,0)`;
+                }
+            });
+        });
+
+    </script>
+</body>
+
+</html>

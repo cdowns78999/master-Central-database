@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operations Card - Stone</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* Stone palette - smooth, subtle */
+            --bg: #0c0f13;
+            cc --card-bg: #14181e;
+            --surface: #1a1f27;
+            --surface-hover: #1e242d;
+            --surface-active: #242b36;
+
+            /* Accent colors - muted, sophisticated */
+            --press: #5eb5c9;
+            --spotify: #4aba70;
+            --social: #c975a8;
+            --other: #d4a54a;
+
+            --text: #e8eaed;
+            --text-mid: #9aa0a9;
+            --text-dim: #5c6370;
+
+            /* Smooth transitions */
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: 0.25s var(--ease);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--text);
+            padding: 20px;
+        }
+
+        /* ========================================
+           CARD CONTAINER - Stone/Slide aesthetic
+           ======================================== */
+        .card {
+            width: 400px;
+            max-width: 100%;
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.03);
+            position: relative;
+        }
+
+        /* Subtle top accent - blends in */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--press), var(--social), var(--other));
+            opacity: 0.6;
+        }
+
+        /* ========================================
+           ROW 1: NAME (Top-left, card header)
+           ======================================== */
+        .card-header {
+            padding: 20px 24px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--surface);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .card-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            color: var(--text-mid);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--spotify);
+            opacity: 0.8;
+        }
+
+        /* ========================================
+           ROW 2: FIELDS CAROUSEL (Middle)
+           Hidden carousel - slides smoothly
+           ======================================== */
+        .fields-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fields-carousel {
+            display: flex;
+            /* No CSS transition - JS handles smooth inertia */
+        }
+
+        .fields-wrapper {
+            cursor: grab;
+            user-select: none;
+        }
+
+        .fields-wrapper:active {
+            cursor: grabbing;
+        }
+
+        .fields-slide {
+            min-width: 100%;
+            padding: 0 24px 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        /* Individual field - smooth stone surface */
+        .field {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 14px 12px;
+            cursor: pointer;
+            transition:
+                background var(--transition),
+                transform var(--transition);
+            min-width: 0;
+            /* Allow shrinking in grid */
+        }
+
+        .field:hover {
+            background: var(--surface-hover);
+            transform: translateY(-1px);
+        }
+
+        .field:active {
+            transform: translateY(0);
+        }
+
+        .field-label {
+            font-size: 0.6rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+
+        .field-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text);
+            outline: none;
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 0;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        /* Subtle edit state - you wouldn't know until you double-click */
+        .field-value.editing {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 6px;
+            margin: -4px -6px;
+            color: var(--text);
+        }
+
+        .field-value:focus {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Field spans based on data-span attribute */
+        .field.wide,
+        .field[data-span="2"] {
+            grid-column: span 2;
+        }
+
+        .field[data-span="3"] {
+            grid-column: span 3;
+        }
+
+        /* Dynamic grid sizing */
+        .fields-slide[data-cols="2"] {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .fields-slide[data-cols="3"] {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .fields-slide[data-cols="4"] {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .fields-slide[data-cols="6"] {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        /* Card size variants */
+        .field[data-size="sm"] {
+            padding: 10px 10px;
+        }
+
+        .field[data-size="sm"] .field-label {
+            font-size: 0.5rem;
+        }
+
+        .field[data-size="sm"] .field-value {
+            font-size: 0.7rem;
+        }
+
+        .field[data-size="lg"] {
+            padding: 18px 16px;
+        }
+
+        .field[data-size="lg"] .field-label {
+            font-size: 0.65rem;
+            margin-bottom: 6px;
+        }
+
+        .field[data-size="lg"] .field-value {
+            font-size: 0.9rem;
+        }
+
+        /* Add field button */
+        .field.add-field {
+            background: transparent;
+            border: 1px dashed var(--text-dim);
+            opacity: 0.4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+        }
+
+        .field.add-field:hover {
+            opacity: 0.7;
+            border-color: var(--text-mid);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Add Field Modal */
+        .add-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            width: 320px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s var(--ease);
+        }
+
+        .add-modal.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-mid);
+            margin-bottom: 16px;
+        }
+
+        .modal-row {
+            margin-bottom: 14px;
+        }
+
+        .modal-label {
+            font-size: 0.6rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+
+        .modal-input {
+            width: 100%;
+            background: var(--surface);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .modal-input:focus {
+            background: var(--surface-hover);
+            box-shadow: 0 0 0 2px rgba(94, 181, 201, 0.2);
+        }
+
+        .modal-row-inline {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-row-inline>div {
+            flex: 1;
+        }
+
+        .modal-select {
+            width: 100%;
+            background: var(--surface);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text);
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn.cancel {
+            background: var(--surface);
+            color: var(--text-mid);
+        }
+
+        .modal-btn.cancel:hover {
+            background: var(--surface-hover);
+        }
+
+        .modal-btn.confirm {
+            background: var(--press);
+            color: #000;
+        }
+
+        .modal-btn.confirm:hover {
+            filter: brightness(1.1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Modal Steps */
+        .modal-step {
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-step.hidden {
+            display: none;
+        }
+
+        /* Node Choice Buttons */
+        .node-choice {
+            display: flex;
+            gap: 12px;
+        }
+
+        .node-btn {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            padding: 20px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .node-btn:hover {
+            background: var(--surface-hover);
+            border-color: var(--press);
+            transform: translateY(-2px);
+        }
+
+        .node-icon {
+            font-size: 1.5rem;
+        }
+
+        .node-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .node-desc {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+        }
+
+        /* Complete field special styling */
+        .field.complete-field {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .check-box {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-dim);
+            border-radius: 5px;
+            transition: all var(--transition);
+        }
+
+        .card.completed .check-box {
+            background: var(--spotify);
+            border-color: var(--spotify);
+        }
+
+        .card.completed .check-box::after {
+            content: '✓';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-size: 12px;
+            font-weight: 700;
+            height: 100%;
+        }
+
+        /* Carousel indicators (subtle dots) */
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding-bottom: 16px;
+        }
+
+        .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            opacity: 0.3;
+            transition: all var(--transition);
+            cursor: pointer;
+        }
+
+        .dot.active {
+            opacity: 1;
+            background: var(--text-mid);
+        }
+
+        /* ========================================
+           ROW 3: CATEGORY BUTTONS (Bottom)
+           4 buttons with drop-up menus
+           ======================================== */
+        .category-bar {
+            display: flex;
+            background: var(--surface);
+            position: relative;
+        }
+
+        .cat-btn {
+            flex: 1;
+            padding: 16px 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: background var(--transition);
+        }
+
+        .cat-btn:hover {
+            background: var(--surface-hover);
+        }
+
+        .cat-btn.active {
+            background: var(--surface-active);
+        }
+
+        /* Active indicator line - slides */
+        .cat-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0);
+            width: 60%;
+            height: 2px;
+            border-radius: 1px;
+            transition: transform var(--transition);
+        }
+
+        .cat-btn.active::after {
+            transform: translateX(-50%) scaleX(1);
+        }
+
+        .cat-btn[data-cat="press"]::after {
+            background: var(--press);
+        }
+
+        .cat-btn[data-cat="spotify"]::after {
+            background: var(--spotify);
+        }
+
+        .cat-btn[data-cat="social"]::after {
+            background: var(--social);
+        }
+
+        .cat-btn[data-cat="other"]::after {
+            background: var(--other);
+        }
+
+        .cat-btn-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cat-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            transition: color var(--transition);
+        }
+
+        .cat-btn.active .cat-label,
+        .cat-btn:hover .cat-label {
+            color: var(--text);
+        }
+
+        .cat-btn[data-cat="press"].active .cat-label {
+            color: var(--press);
+        }
+
+        .cat-btn[data-cat="spotify"].active .cat-label {
+            color: var(--spotify);
+        }
+
+        .cat-btn[data-cat="social"].active .cat-label {
+            color: var(--social);
+        }
+
+        .cat-btn[data-cat="other"].active .cat-label {
+            color: var(--other);
+        }
+
+        /* ========================================
+           DROP-UP MENUS (Subtle, matching colors)
+           ======================================== */
+        .dropup {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1f27;
+            /* Richer, more solid stone */
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            transform: translateY(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition:
+                transform 0.3s var(--ease),
+                opacity 0.3s var(--ease),
+                visibility 0.3s;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .cat-btn.open .dropup {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dropup-header {
+            padding: 14px 16px 10px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--surface);
+        }
+
+        .cat-btn[data-cat="press"] .dropup-header {
+            color: var(--press);
+        }
+
+        .cat-btn[data-cat="spotify"] .dropup-header {
+            color: var(--spotify);
+        }
+
+        .cat-btn[data-cat="social"] .dropup-header {
+            color: var(--social);
+        }
+
+        .cat-btn[data-cat="other"] .dropup-header {
+            color: var(--other);
+        }
+
+        .dropup-item {
+            padding: 12px 16px;
+            font-size: 0.75rem;
+            color: var(--text-mid);
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropup-item:hover {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .dropup-item .icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .cat-btn[data-cat="press"] .dropup-item:hover {
+            background: rgba(94, 181, 201, 0.1);
+        }
+
+        .cat-btn[data-cat="spotify"] .dropup-item:hover {
+            background: rgba(74, 186, 112, 0.1);
+        }
+
+        .cat-btn[data-cat="social"] .dropup-item:hover {
+            background: rgba(201, 117, 168, 0.1);
+        }
+
+        .cat-btn[data-cat="other"] .dropup-item:hover {
+            background: rgba(212, 165, 74, 0.1);
+        }
+
+        /* ========================================
+           COMPLETED STATE
+           ======================================== */
+        .card.completed {
+            opacity: 0.7;
+        }
+
+        .card.completed .field {
+            opacity: 0.6;
+        }
+
+        /* Click outside to close dropup */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 5;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* ========================================
+           CONTACT ASSIGNMENT SECTION
+           ======================================== */
+        .contact-zone {
+            padding: 12px 24px;
+            display: none;
+            /* Only show when a song is selected */
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .contact-zone.active {
+            display: block;
+        }
+
+        .contact-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .contact-label {
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+        }
+
+        .add-contact-btn {
+            width: 12px;
+            height: 12px;
+            background: #4ade80;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .add-contact-btn:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 12px rgba(74, 222, 128, 0.6);
+        }
+
+        .contact-tags {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .tag-contact {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            padding: 3px 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.52rem;
+            color: var(--text-mid);
+            transition: all 0.2s ease;
+            height: 18px;
+            white-space: nowrap;
+        }
+
+        .tag-contact span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tag-remove {
+            font-size: 8px;
+            opacity: 0.4;
+            cursor: pointer;
+            padding-left: 4px;
+        }
+
+        .tag-remove:hover {
+            opacity: 1;
+            color: #ff5f56;
+        }
+
+        /* Contact Picker Dropdown */
+        .contact-picker {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            background: #1a1f27;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            width: 160px;
+            display: none;
+            overflow: hidden;
+        }
+
+        .contact-picker.active {
+            display: block;
+        }
+
+        .picker-item {
+            padding: 8px 12px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .picker-item:hover {
+            background: var(--surface);
+            color: var(--text);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="overlay" id="overlay" onclick="closeAllDropups()"></div>
+
+    <!-- Add Field Modal - Step 1: Choose Node -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeAddFieldModal()"></div>
+    <div class="add-modal" id="addModal">
+        <!-- Step 1: Node Choice -->
+        <div class="modal-step" id="stepNode">
+            <div class="modal-title">Where to add?</div>
+            <div class="node-choice">
+                <button class="node-btn" onclick="chooseNode('this')">
+                    <span class="node-icon">📍</span>
+                    <span class="node-label">This Node</span>
+                    <span class="node-desc">Add to current cluster</span>
+                </button>
+                <button class="node-btn" onclick="chooseNode('new')">
+                    <span class="node-icon">✨</span>
+                    <span class="node-label">New Node</span>
+                    <span class="node-desc">Create new cluster</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Field Details -->
+        <div class="modal-step hidden" id="stepField">
+            <div class="modal-title">Add New Field</div>
+            <div class="modal-row">
+                <div class="modal-label">Field Name</div>
+                <input type="text" class="modal-input" id="newFieldName" placeholder="e.g. Budget">
+            </div>
+            <div class="modal-row">
+                <div class="modal-label">Default Value</div>
+                <input type="text" class="modal-input" id="newFieldValue" placeholder="e.g. $500">
+            </div>
+            <div class="modal-row-inline">
+                <div>
+                    <div class="modal-label">Size</div>
+                    <select class="modal-select" id="newFieldSize">
+                        <option value="sm">Small</option>
+                        <option value="md" selected>Medium</option>
+                        <option value="lg">Large</option>
+                    </select>
+                </div>
+                <div>
+                    <div class="modal-label">Span</div>
+                    <select class="modal-select" id="newFieldSpan">
+                        <option value="1" selected>1 col</option>
+                        <option value="2">2 cols</option>
+                        <option value="3">Full row</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="backToNodeChoice()">← Back</button>
+                <button class="modal-btn confirm" onclick="addNewField()">Add Field</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="card">
+        <!-- ROW 1: Name -->
+        <div class="card-header">
+            <div class="card-name">
+                <div class="card-icon">🔨</div>
+                <span class="card-title" id="card-title" contenteditable="false">Stage Operations</span>
+            </div>
+            <div class="card-status">
+                <div class="status-dot"></div>
+                <span>Active</span>
+            </div>
+        </div>
+
+        <!-- ROW 2: Fields Carousel -->
+        <div class="fields-wrapper">
+            <div class="fields-carousel" id="carousel">
+                <!-- Slide 1: Main Fields (3 cols) -->
+                <div class="fields-slide" data-slide="0" data-cols="3">
+                    <div class="field" data-span="2" data-field="reachout">
+                        <div class="field-label">Reach Out</div>
+                        <div class="field-value" id="val-reachout" contenteditable="false">Email Pitch Sent</div>
+                    </div>
+                    <div class="field complete-field" onclick="toggleComplete()">
+                        <div>
+                            <div class="field-label">Done</div>
+                        </div>
+                        <div class="check-box"></div>
+                    </div>
+                    <div class="field" data-field="first">
+                        <div class="field-label">First</div>
+                        <div class="field-value" id="val-first" contenteditable="false">01.10</div>
+                    </div>
+                    <div class="field" data-field="last">
+                        <div class="field-label">Last</div>
+                        <div class="field-value" id="val-last" contenteditable="false">01.22</div>
+                    </div>
+                    <div class="field" data-field="method">
+                        <div class="field-label">Contact</div>
+                        <div class="field-value" id="val-method" contenteditable="false">Email</div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: More Fields (3 cols) -->
+                <div class="fields-slide" data-slide="1" data-cols="3">
+                    <div class="field" data-field="followup">
+                        <div class="field-label">Follow Up</div>
+                        <div class="field-value" id="val-followup" contenteditable="false">3 Pending</div>
+                    </div>
+                    <div class="field" data-field="notes">
+                        <div class="field-label">Notes</div>
+                        <div class="field-value" contenteditable="false">Click to add...</div>
+                    </div>
+                    <div class="field" data-field="priority">
+                        <div class="field-label">Priority</div>
+                        <div class="field-value" contenteditable="false">High</div>
+                    </div>
+                    <div class="field add-field" data-span="3" onclick="openAddFieldModal()">
+                        <div class="field-label" style="text-align: center; margin: 0;">+ Add Field</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacts Zone (Dynamic) -->
+            <div class="contact-zone" id="contact-zone">
+                <div class="contact-header">
+                    <div class="contact-label">Assign Contact</div>
+                    <div class="add-contact-btn" onclick="toggleContactPicker(event)" title="Add Contact"></div>
+                    <!-- Contact Picker Dropdown -->
+                    <div class="contact-picker" id="contact-picker">
+                        <!-- Dropdown items will be rendered here -->
+                    </div>
+                </div>
+                <div class="contact-tags" id="contact-tags">
+                    <!-- Tags will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Carousel Dots -->
+            <div class="carousel-dots">
+                <div class="dot active" data-slide="0" onclick="goToSlide(0)"></div>
+                <div class="dot" data-slide="1" onclick="goToSlide(1)"></div>
+            </div>
+        </div>
+
+        <!-- ROW 3: Category Buttons -->
+        <div class="category-bar">
+            <button class="cat-btn active" data-cat="press" onclick="toggleDropup(this, event)">
+                <div class="cat-btn-inner">
+                    <span class="cat-label">Press</span>
+                </div>
+                <div class="dropup" id="dropup-press">
+                    <div class="dropup-header">Press Songs</div>
+                    <div class="dropup-list"></div>
+                    <div class="dropup-item add-item" onclick="promptAddSong('press', event)">
+                        <span class="icon">➕</span> Add New Song
+                    </div>
+                </div>
+            </button>
+
+            <button class="cat-btn" data-cat="spotify" onclick="toggleDropup(this, event)">
+                <div class="cat-btn-inner">
+                    <span class="cat-label">Spotify</span>
+                </div>
+                <div class="dropup" id="dropup-spotify">
+                    <div class="dropup-header">Spotify Songs</div>
+                    <div class="dropup-list"></div>
+                    <div class="dropup-item add-item" onclick="promptAddSong('spotify', event)">
+                        <span class="icon">➕</span> Add New Song
+                    </div>
+                </div>
+            </button>
+
+            <button class="cat-btn" data-cat="social" onclick="toggleDropup(this, event)">
+                <div class="cat-btn-inner">
+                    <span class="cat-label">Social</span>
+                </div>
+                <div class="dropup" id="dropup-social">
+                    <div class="dropup-header">Social Songs</div>
+                    <div class="dropup-list"></div>
+                    <div class="dropup-item add-item" onclick="promptAddSong('social', event)">
+                        <span class="icon">➕</span> Add New Song
+                    </div>
+                </div>
+            </button>
+
+            <button class="cat-btn" data-cat="other" onclick="toggleDropup(this, event)">
+                <div class="cat-btn-inner">
+                    <span class="cat-label">Other</span>
+                </div>
+                <div class="dropup" id="dropup-other">
+                    <div class="dropup-header">Other Items</div>
+                    <div class="dropup-list"></div>
+                    <div class="dropup-item add-item" onclick="promptAddSong('other', event)">
+                        <span class="icon">➕</span> Add New Song
+                    </div>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let currentCat = 'press';
+        let currentSongIndices = {
+            press: 0,
+            spotify: 0,
+            social: 0,
+            other: 0
+        };
+        const totalSlides = 2;
+
+        // Multi-song data structure
+        const projectData = {
+            press: [
+                { name: 'Song 1', reachout: 'Email Pitch Sent', first: '01.10', last: '01.22', method: 'Email', followup: '3 Pending', completed: false, contacts: [] },
+                { name: 'Song 2', reachout: 'Press Kit Distributed', first: '01.15', last: '01.23', method: 'Direct', followup: '0 Pending', completed: true, contacts: [] }
+            ],
+            spotify: [
+                { name: 'Song 1', reachout: 'Playlist Submitted', first: '01.12', last: '01.24', method: 'Portal', followup: '1 Pending', completed: false, contacts: [] }
+            ],
+            social: [
+                { name: 'Song 1', reachout: 'DM Campaign Active', first: '01.15', last: '01.25', method: 'DM', followup: '5 Pending', completed: false, contacts: [] }
+            ],
+            other: [
+                { name: 'Item 1', reachout: 'Misc Outreach', first: '01.05', last: '01.20', method: 'Various', followup: '0 Pending', completed: false, contacts: [] }
+            ]
+        };
+
+        const contactDB = {
+            press: ['John Smith (Editor)', 'Sarah Lane (Blogger)', 'David Root (Freelance)', 'Spin Magazine', 'Pitchfork Media', 'Rolling Stone'],
+            spotify: ['Alex Curator', 'Mark Playlist', 'Emma Beats', 'Indie Rising', 'Chill Vibes Co', 'Pop Hits Admin'],
+            social: ['Influencer X', 'TikTok Star Y', 'Agency Z', 'Vibe Agency', 'Trend Setter', 'Viral Reach'],
+            other: ['General Manager', 'Booking Agent', 'Legal Team', 'Accountant', 'Road Manager', 'Studio Owner']
+        };
+
+        // Initialize contacts for any missing entries
+        Object.keys(projectData).forEach(cat => {
+            projectData[cat].forEach(song => {
+                if (!song.contacts) song.contacts = [];
+            });
+        });
+
+        // ========================================
+        // INERTIA CAROUSEL PHYSICS
+        // Right-click + hold to glide
+        // ========================================
+        const carousel = document.getElementById('carousel');
+        const wrapper = document.querySelector('.fields-wrapper');
+        const slideWidth = wrapper.offsetWidth;
+
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+        let targetX = 0;
+        let velocityX = 0;
+        let lastX = 0;
+        let lastTime = 0;
+        let animating = false;
+
+        const friction = 0.92;      // Momentum decay
+        const lerp = 0.12;          // Smooth catch-up (lower = more glide)
+        const velocityScale = 0.3;  // How much velocity affects momentum
+
+        // Animation loop - the magic sauce
+        function animate() {
+            if (!animating) return;
+
+            if (isDragging) {
+                // While dragging, smoothly follow target
+                currentX += (targetX - currentX) * 0.25;
+            } else {
+                // Apply velocity (momentum)
+                targetX += velocityX;
+                velocityX *= friction;
+
+                // Smooth lerp to target
+                currentX += (targetX - currentX) * lerp;
+
+                // Snap to nearest slide when momentum dies
+                if (Math.abs(velocityX) < 0.5 && Math.abs(currentX - targetX) < 1) {
+                    snapToNearestSlide();
+                    if (Math.abs(currentX - targetX) < 0.5) {
+                        animating = false;
+                    }
+                }
+            }
+
+            // Boundary resistance
+            const maxX = 0;
+            const minX = -slideWidth * (totalSlides - 1);
+
+            if (currentX > maxX) {
+                targetX = maxX;
+                currentX += (maxX - currentX) * 0.3;
+                velocityX *= 0.5;
+            } else if (currentX < minX) {
+                targetX = minX;
+                currentX += (minX - currentX) * 0.3;
+                velocityX *= 0.5;
+            }
+
+            carousel.style.transform = `translateX(${currentX}px)`;
+            updateDots();
+
+            requestAnimationFrame(animate);
+        }
+
+        function snapToNearestSlide() {
+            const slideIndex = Math.round(-currentX / slideWidth);
+            const clampedIndex = Math.max(0, Math.min(slideIndex, totalSlides - 1));
+            targetX = -clampedIndex * slideWidth;
+            currentSlide = clampedIndex;
+        }
+
+        function updateDots() {
+            const slideIndex = Math.round(-currentX / slideWidth);
+            const clampedIndex = Math.max(0, Math.min(slideIndex, totalSlides - 1));
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === clampedIndex);
+            });
+        }
+
+        // Right-click + hold to drag
+        wrapper.addEventListener('contextmenu', e => e.preventDefault());
+
+        wrapper.addEventListener('mousedown', e => {
+            if (e.button === 2 || e.button === 0) { // Right or left click
+                isDragging = true;
+                startX = e.clientX;
+                lastX = e.clientX;
+                lastTime = Date.now();
+                velocityX = 0;
+                wrapper.style.cursor = 'grabbing';
+
+                if (!animating) {
+                    animating = true;
+                    animate();
+                }
+            }
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+
+            const now = Date.now();
+            const dt = now - lastTime;
+
+            if (dt > 0) {
+                velocityX = (e.clientX - lastX) * velocityScale;
+            }
+
+            targetX = currentX + (e.clientX - startX);
+            startX = e.clientX;
+            lastX = e.clientX;
+            lastTime = now;
+        });
+
+        document.addEventListener('mouseup', e => {
+            if (isDragging) {
+                isDragging = false;
+                wrapper.style.cursor = '';
+
+                // Boost velocity on release for satisfying glide
+                velocityX *= 1.5;
+            }
+        });
+
+        // Click on dots to go to slide
+        function goToSlide(index) {
+            currentSlide = index;
+            targetX = -index * slideWidth;
+            velocityX = 0;
+
+            if (!animating) {
+                animating = true;
+                animate();
+            }
+        }
+
+        // Touch support with inertia
+        let touchStartX = 0;
+        let touchLastX = 0;
+        let touchLastTime = 0;
+
+        wrapper.addEventListener('touchstart', e => {
+            isDragging = true;
+            touchStartX = e.touches[0].clientX;
+            touchLastX = touchStartX;
+            touchLastTime = Date.now();
+            velocityX = 0;
+
+            if (!animating) {
+                animating = true;
+                animate();
+            }
+        }, { passive: true });
+
+        wrapper.addEventListener('touchmove', e => {
+            if (!isDragging) return;
+
+            const touch = e.touches[0];
+            const now = Date.now();
+            const dt = now - touchLastTime;
+
+            if (dt > 0) {
+                velocityX = (touch.clientX - touchLastX) * velocityScale;
+            }
+
+            targetX = currentX + (touch.clientX - touchStartX);
+            touchStartX = touch.clientX;
+            touchLastX = touch.clientX;
+            touchLastTime = now;
+        }, { passive: true });
+
+        wrapper.addEventListener('touchend', e => {
+            isDragging = false;
+            velocityX *= 1.5;
+        });
+
+        // Category button + dropup
+        function toggleDropup(btn, e) {
+            e.stopPropagation();
+            const wasOpen = btn.classList.contains('open');
+            const cat = btn.dataset.cat;
+
+            closeAllDropups();
+
+            if (!wasOpen) {
+                renderDropupList(cat);
+                btn.classList.add('open');
+                document.getElementById('overlay').classList.add('active');
+            }
+
+            setCategory(cat);
+        }
+
+        function closeAllDropups() {
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('open'));
+            document.getElementById('overlay').classList.remove('active');
+            const picker = document.getElementById('contact-picker');
+            if (picker) picker.classList.remove('active');
+        }
+
+        function toggleContactPicker(e) {
+            e.stopPropagation();
+            const picker = document.getElementById('contact-picker');
+            const isActive = picker.classList.contains('active');
+
+            if (!isActive) {
+                const items = contactDB[currentCat];
+                picker.innerHTML = items.map(name =>
+                    `<div class="picker-item" onclick="addContact('${name}', event)">${name}</div>`
+                ).join('');
+            }
+
+            picker.classList.toggle('active');
+        }
+
+        function addContact(name, e) {
+            e.stopPropagation();
+            const song = projectData[currentCat][currentSongIndices[currentCat]];
+            if (!song.contacts) song.contacts = [];
+            if (!song.contacts.includes(name)) {
+                song.contacts.push(name);
+                renderContacts();
+            }
+            document.getElementById('contact-picker').classList.remove('active');
+        }
+
+        function removeContact(index, e) {
+            e.stopPropagation();
+            const song = projectData[currentCat][currentSongIndices[currentCat]];
+            song.contacts.splice(index, 1);
+            renderContacts();
+        }
+
+        function renderContacts() {
+            const zone = document.getElementById('contact-zone');
+            const tagsContainer = document.getElementById('contact-tags');
+            const song = projectData[currentCat][currentSongIndices[currentCat]];
+
+            if (song) {
+                // Show zone if we have a song selected
+                zone.classList.add('active');
+                tagsContainer.innerHTML = (song.contacts || []).map((name, i) => `
+                    <div class="tag-contact">
+                        <span>${name}</span>
+                        <div class="tag-remove" onclick="removeContact(${i}, event)">×</div>
+                    </div>
+                `).join('');
+            } else {
+                zone.classList.remove('active');
+            }
+        }
+
+        function renderDropupList(cat) {
+            const list = document.querySelector(`#dropup-${cat} .dropup-list`);
+            list.innerHTML = '';
+
+            projectData[cat].forEach((song, index) => {
+                const item = document.createElement('div');
+                item.className = 'dropup-item';
+                if (index === currentSongIndices[cat]) item.style.background = 'rgba(255,255,255,0.05)';
+
+                item.innerHTML = `
+                    <span class="icon">${song.completed ? '✅' : '💿'}</span>
+                    ${song.name}
+                `;
+
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    selectSong(cat, index);
+                    closeAllDropups();
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function setCategory(cat) {
+            currentCat = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.cat === cat);
+            });
+
+            updateCardDisplay();
+        }
+
+        function selectSong(cat, index) {
+            currentSongIndices[cat] = index;
+            setCategory(cat);
+        }
+
+        function updateCardDisplay() {
+            const cat = currentCat;
+            const index = currentSongIndices[cat];
+            const song = projectData[cat][index];
+
+            const titleEl = document.getElementById('card-title');
+            if (titleEl) titleEl.innerText = song.name;
+
+            document.getElementById('val-reachout').innerText = song.reachout;
+            document.getElementById('val-first').innerText = song.first;
+            document.getElementById('val-last').innerText = song.last;
+            document.getElementById('val-method').innerText = song.method;
+            document.getElementById('val-followup').innerText = song.followup;
+
+            // Update completion state
+            const card = document.getElementById('card');
+            card.classList.toggle('completed', song.completed);
+
+            // Update contacts
+            renderContacts();
+        }
+
+        function promptAddSong(cat, e) {
+            e.stopPropagation();
+            const name = prompt(`Enter new ${cat === 'other' ? 'item' : 'song'} name:`, "New Entry");
+            if (name) {
+                const newEntry = {
+                    name: name,
+                    reachout: 'New Outreach',
+                    first: 'MM.DD',
+                    last: 'MM.DD',
+                    method: 'Pending',
+                    followup: '0 Pending',
+                    completed: false
+                };
+                projectData[cat].push(newEntry);
+                selectSong(cat, projectData[cat].length - 1);
+            }
+            closeAllDropups();
+        }
+
+        function selectOption(cat, action, e) {
+            e.stopPropagation();
+            closeAllDropups();
+
+            if (action === 'add') {
+                goToSlide(1);
+            }
+        }
+
+        function toggleComplete() {
+            const song = projectData[currentCat][currentSongIndices[currentCat]];
+            song.completed = !song.completed;
+            updateCardDisplay();
+        }
+
+        // ========================================
+        // DOUBLE-CLICK TO EDIT (Subtle)
+        // ========================================
+        document.querySelectorAll('.field-value[contenteditable]').forEach(el => {
+            initFieldEditing(el);
+        });
+
+        // Prevent drag when editing
+        document.querySelectorAll('.field').forEach(field => {
+            field.addEventListener('mousedown', (e) => {
+                const value = field.querySelector('.field-value');
+                if (value && value.classList.contains('editing')) {
+                    e.stopPropagation();
+                }
+            });
+        });
+
+        // ========================================
+        // ADD FIELD MODAL (with Node choice)
+        // ========================================
+        let addToNewNode = false;
+
+        function openAddFieldModal() {
+            document.getElementById('addModal').classList.add('open');
+            document.getElementById('modalOverlay').classList.add('open');
+            // Reset to step 1
+            document.getElementById('stepNode').classList.remove('hidden');
+            document.getElementById('stepField').classList.add('hidden');
+            addToNewNode = false;
+        }
+
+        function closeAddFieldModal() {
+            document.getElementById('addModal').classList.remove('open');
+            document.getElementById('modalOverlay').classList.remove('open');
+            document.getElementById('newFieldName').value = '';
+            document.getElementById('newFieldValue').value = '';
+            // Reset steps
+            document.getElementById('stepNode').classList.remove('hidden');
+            document.getElementById('stepField').classList.add('hidden');
+        }
+
+        function chooseNode(choice) {
+            addToNewNode = (choice === 'new');
+            // Go to step 2
+            document.getElementById('stepNode').classList.add('hidden');
+            document.getElementById('stepField').classList.remove('hidden');
+            document.getElementById('newFieldName').focus();
+        }
+
+        function backToNodeChoice() {
+            document.getElementById('stepField').classList.add('hidden');
+            document.getElementById('stepNode').classList.remove('hidden');
+        }
+
+        function addNewField() {
+            const name = document.getElementById('newFieldName').value.trim();
+            const value = document.getElementById('newFieldValue').value.trim() || '—';
+            const size = document.getElementById('newFieldSize').value;
+            const span = document.getElementById('newFieldSpan').value;
+
+            if (!name) {
+                document.getElementById('newFieldName').focus();
+                return;
+            }
+
+            let targetSlide;
+
+            if (addToNewNode) {
+                // Create new slide/cluster
+                targetSlide = createNewSlide();
+            } else {
+                // Use current slide with add button
+                const addBtn = document.querySelector('.field.add-field');
+                targetSlide = addBtn.closest('.fields-slide');
+            }
+
+            // Create new field
+            const field = document.createElement('div');
+            field.className = 'field';
+            field.dataset.field = name.toLowerCase().replace(/\s+/g, '-');
+            if (size !== 'md') field.dataset.size = size;
+            if (span !== '1') field.dataset.span = span;
+
+            field.innerHTML = `
+                <div class="field-label">${name}</div>
+                <div class="field-value" contenteditable="false">${value}</div>
+            `;
+
+            // Find add button in target slide (or append if new slide)
+            const addBtn = targetSlide.querySelector('.field.add-field');
+            if (addBtn) {
+                targetSlide.insertBefore(field, addBtn);
+            } else {
+                // Insert before the add button we'll create
+                const newAddBtn = createAddButton();
+                targetSlide.appendChild(field);
+                targetSlide.appendChild(newAddBtn);
+            }
+
+            // Add double-click listener to new field
+            initFieldEditing(field.querySelector('.field-value'));
+
+            closeAddFieldModal();
+
+            // Go to that slide to show the new field
+            goToSlide(parseInt(targetSlide.dataset.slide));
+        }
+
+        function createNewSlide() {
+            const carousel = document.getElementById('carousel');
+            const newIndex = totalSlides;
+            totalSlides++;
+
+            // Create new slide
+            const slide = document.createElement('div');
+            slide.className = 'fields-slide';
+            slide.dataset.slide = newIndex;
+            slide.dataset.cols = '3';
+
+            // Add the "+ Add Field" button
+            const addBtn = createAddButton();
+            slide.appendChild(addBtn);
+
+            carousel.appendChild(slide);
+
+            // Add new dot
+            const dotsContainer = document.querySelector('.carousel-dots');
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.dataset.slide = newIndex;
+            dot.onclick = () => goToSlide(newIndex);
+            dotsContainer.appendChild(dot);
+
+            return slide;
+        }
+
+        function createAddButton() {
+            const addBtn = document.createElement('div');
+            addBtn.className = 'field add-field';
+            addBtn.dataset.span = '3';
+            addBtn.onclick = openAddFieldModal;
+            addBtn.innerHTML = `<div class="field-label" style="text-align: center; margin: 0;">+ Add Field</div>`;
+            return addBtn;
+        }
+
+        function initFieldEditing(el, isName = false) {
+            el.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                el.contentEditable = 'true';
+                el.classList.add('editing');
+                el.focus();
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            });
+            el.addEventListener('blur', () => {
+                el.contentEditable = 'false';
+                el.classList.remove('editing');
+
+                // Save edit back to projectData
+                if (isName) {
+                    projectData[currentCat][currentSongIndices[currentCat]].name = el.innerText;
+                } else {
+                    const fieldKey = el.id.replace('val-', '');
+                    if (projectData[currentCat] && projectData[currentCat][currentSongIndices[currentCat]]) {
+                        projectData[currentCat][currentSongIndices[currentCat]][fieldKey] = el.innerText;
+                    }
+                }
+            });
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+                if (e.key === 'Escape') el.blur();
+            });
+        }
+
+        // Initialize header editing
+        if (document.getElementById('card-title')) {
+            initFieldEditing(document.getElementById('card-title'), true);
+        }
+
+        // Initial state
+        setCategory(currentCat);
+
+        // Initialize
+        window.addEventListener('resize', () => {
+            const newSlideWidth = wrapper.offsetWidth;
+            if (newSlideWidth !== slideWidth) {
+                location.reload();
+            }
+        });
+    </script>
+
+</body>
+
+</html>

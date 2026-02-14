@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Logic Animation Pack | Video Game UI</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --panel: rgba(20, 20, 30, 0.7);
+            --accent1: #00f2ff;
+            /* Neon Cyan */
+            --accent2: #b200ff;
+            /* Electric Purple */
+            --accent3: #00ff41;
+            /* Matrix Green */
+            --text: #e0e0e0;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 10% 20%, rgba(178, 0, 255, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(90deg, var(--accent1), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .stack-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            margin-bottom: 100px;
+        }
+
+        .stack-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stack-card h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .canvas-area {
+            width: 100%;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Stack 1: Snake Kinetic */
+        #snake-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Stack 2: Node Transit */
+        #node-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .node {
+            width: 60px;
+            height: 60px;
+            background: var(--glass);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .node.rect {
+            border-radius: 8px;
+        }
+
+        .node:hover {
+            border-color: var(--accent1);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .packet {
+            width: 8px;
+            height: 8px;
+            background: var(--accent1);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 10;
+            box-shadow: 0 0 10px var(--accent1);
+        }
+
+        .connection-line {
+            position: absolute;
+            background: var(--border);
+            height: 2px;
+            z-index: 1;
+            transform-origin: left center;
+        }
+
+        /* Stack 3: Grid Expansion */
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .grid-cell {
+            background: rgba(255, 255, 255, 0.02);
+            border: 0.1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .grid-cell.active {
+            background: rgba(0, 242, 255, 0.1);
+            border-color: var(--accent1);
+            transform: scale(0.95);
+        }
+
+        .grid-cursor {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--accent3);
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+            transition: all 0.1s linear;
+            box-shadow: 0 0 15px var(--accent3);
+        }
+
+        .floating-string {
+            position: absolute;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--accent2), transparent);
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--border);
+            border-color: var(--accent1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>TRAVEL LOGIC</h1>
+            <p>Video Game Inspired Kinetic Animations Sample Pack</p>
+        </header>
+
+        <div class="stack-row">
+            <!-- Stack 1: Snake Kinetic Paths -->
+            <div class="stack-card">
+                <h2><span>01</span> Procedural Snake Path</h2>
+                <div class="canvas-area">
+                    <canvas id="snake-canvas"></canvas>
+                </div>
+                <div class="controls">
+                    <button onclick="resetSnake()">Refresh Path</button>
+                    <button onclick="toggleSnakeSpeed()">Toggle Speed</button>
+                </div>
+            </div>
+
+            <!-- Stack 2: Node Data Transit -->
+            <div class="stack-card">
+                <h2><span>02</span> Node-to-Node Data Transit</h2>
+                <div class="canvas-area" id="node-area">
+                    <!-- Nodes and connections will be injected here -->
+                </div>
+                <div class="controls">
+                    <button onclick="spawnPacket()">Send Packet</button>
+                    <button onclick="rebuildNetwork()">Randomize Nodes</button>
+                </div>
+            </div>
+
+            <!-- Stack 3: Grid Ripple & Flow -->
+            <div class="stack-card">
+                <h2><span>03</span> Grid Expansion & Interface Ripple</h2>
+                <div class="canvas-area" id="grid-area">
+                    <div id="grid-container"></div>
+                    <div class="grid-cursor" id="grid-cursor"></div>
+                </div>
+                <div class="controls">
+                    <button onclick="pulseGrid()">System Pulse</button>
+                    <button onclick="toggleGridStrings()">Toggle Flux Strings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GSAP for smooth animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        // --- STACK 1: SNAKE PATHS ---
+        const snakeCanvas = document.getElementById('snake-canvas');
+        const ctx = snakeCanvas.getContext('2d');
+        let snakePoints = [];
+        let trail = [];
+        let snakeSpeed = 1.5;
+        let pIndex = 0;
+
+        function resizeCanvas() {
+            snakeCanvas.width = snakeCanvas.parentElement.offsetWidth;
+            snakeCanvas.height = snakeCanvas.parentElement.offsetHeight;
+            generatePath();
+        }
+
+        function generatePath() {
+            snakePoints = [];
+            const w = snakeCanvas.width;
+            const h = snakeCanvas.height;
+            let x = 50;
+            let y = h / 2;
+
+            for (let i = 0; i < 10; i++) {
+                snakePoints.push({ x, y });
+                x += Math.random() * 150 + 50;
+                y += (Math.random() - 0.5) * 200;
+                if (x > w - 50) x = w - 50;
+                if (y < 50) y = 50;
+                if (y > h - 50) y = h - 50;
+            }
+            pIndex = 0;
+            trail = [];
+        }
+
+        function drawSnake() {
+            ctx.clearRect(0, 0, snakeCanvas.width, snakeCanvas.height);
+
+            // Draw path line
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            ctx.moveTo(snakePoints[0].x, snakePoints[0].y);
+            for (let p of snakePoints) ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+
+            // Calculate current position on path segments
+            if (pIndex < snakePoints.length - 1) {
+                const p1 = snakePoints[Math.floor(pIndex)];
+                const p2 = snakePoints[Math.ceil(pIndex + 0.01)];
+                const ratio = pIndex % 1;
+
+                const curX = p1.x + (p2.x - p1.x) * ratio;
+                const curY = p1.y + (p2.y - p1.y) * ratio;
+
+                trail.push({ x: curX, y: curY });
+                if (trail.length > 40) trail.shift();
+
+                pIndex += 0.02 * snakeSpeed;
+            } else {
+                pIndex = 0;
+            }
+
+            // Draw trail
+            trail.forEach((p, i) => {
+                const alpha = i / trail.length;
+                const size = 2 + (i / trail.length) * 8;
+                ctx.fillStyle = `rgba(0, 242, 255, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (i === trail.length - 1) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = 'var(--accent1)';
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(p.x - 5, p.y - 5, 10, 10);
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            requestAnimationFrame(drawSnake);
+        }
+
+        function resetSnake() { generatePath(); }
+        function toggleSnakeSpeed() { snakeSpeed = snakeSpeed === 1.5 ? 4 : 1.5; }
+
+        // --- STACK 2: NODE TRANSIT ---
+        const nodeArea = document.getElementById('node-area');
+        let nodes = [];
+
+        function rebuildNetwork() {
+            nodeArea.innerHTML = '';
+            nodes = [];
+            const w = nodeArea.offsetWidth;
+            const h = nodeArea.offsetHeight;
+
+            for (let i = 0; i < 6; i++) {
+                const node = document.createElement('div');
+                node.className = `node ${Math.random() > 0.5 ? 'rect' : ''}`;
+                const x = 100 + Math.random() * (w - 200);
+                const y = 80 + Math.random() * (h - 160);
+                node.style.left = x + 'px';
+                node.style.top = y + 'px';
+                node.innerHTML = `<span style="font-size: 10px; color: ${i === 0 ? 'var(--accent1)' : '#666'}">${String.fromCharCode(65 + i)}</span>`;
+                nodeArea.appendChild(node);
+                nodes.push({ el: node, x: x + 30, y: y + 30 });
+            }
+
+            // Draw connections
+            for (let i = 0; i < nodes.length - 1; i++) {
+                const n1 = nodes[i];
+                const n2 = nodes[i + 1];
+                const dx = n2.x - n1.x;
+                const dy = n2.y - n1.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                const line = document.createElement('div');
+                line.className = 'connection-line';
+                line.style.width = dist + 'px';
+                line.style.left = n1.x + 'px';
+                line.style.top = n1.y + 'px';
+                line.style.transform = `rotate(${angle}deg)`;
+                nodeArea.appendChild(line);
+            }
+        }
+
+        function spawnPacket() {
+            if (nodes.length < 2) return;
+            const packet = document.createElement('div');
+            packet.className = 'packet';
+            nodeArea.appendChild(packet);
+
+            const tl = gsap.timeline({ onComplete: () => packet.remove() });
+
+            for (let i = 0; i < nodes.length - 1; i++) {
+                tl.to(packet, {
+                    x: nodes[i + 1].x - 4,
+                    y: nodes[i + 1].y - 4,
+                    duration: 0.6,
+                    ease: "power2.inOut",
+                    onStart: () => {
+                        gsap.to(nodes[i + 1].el, { scale: 1.2, duration: 0.2, yoyo: true, repeat: 1 });
+                    }
+                });
+            }
+        }
+
+        // --- STACK 3: GRID EXPANSION ---
+        const gridContainer = document.getElementById('grid-container');
+        const gridCursor = document.getElementById('grid-cursor');
+        const gridArea = document.getElementById('grid-area');
+        let cells = [];
+
+        function initGrid() {
+            gridContainer.innerHTML = '';
+            cells = [];
+            for (let i = 0; i < 200; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                gridContainer.appendChild(cell);
+                cells.push(cell);
+            }
+        }
+
+        gridArea.addEventListener('mousemove', (e) => {
+            const rect = gridArea.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            gridCursor.style.left = (x - 15) + 'px';
+            gridCursor.style.top = (y - 15) + 'px';
+
+            // Find overlapping cells
+            const col = Math.floor((x / rect.width) * 20);
+            const row = Math.floor((y / rect.height) * 10);
+            const index = row * 20 + col;
+
+            cells.forEach((c, i) => {
+                if (i === index) {
+                    c.classList.add('active');
+                    setTimeout(() => c.classList.remove('active'), 500);
+                }
+            });
+        });
+
+        function pulseGrid() {
+            gsap.to(".grid-cell", {
+                backgroundColor: "rgba(178, 0, 255, 0.2)",
+                stagger: {
+                    grid: [10, 20],
+                    from: "center",
+                    amount: 1
+                },
+                duration: 0.4,
+                yoyo: true,
+                repeat: 1
+            });
+        }
+
+        let stringsInterval;
+        function toggleGridStrings() {
+            if (stringsInterval) {
+                clearInterval(stringsInterval);
+                stringsInterval = null;
+                document.querySelectorAll('.floating-string').forEach(s => s.remove());
+                return;
+            }
+
+            stringsInterval = setInterval(() => {
+                const s = document.createElement('div');
+                s.className = 'floating-string';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = '-100px';
+                gridArea.appendChild(s);
+
+                gsap.to(s, {
+                    y: gridArea.offsetHeight + 200,
+                    duration: 1 + Math.random() * 2,
+                    ease: "none",
+                    onComplete: () => s.remove()
+                });
+            }, 200);
+        }
+
+        // Initialization
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawSnake();
+        rebuildNetwork();
+        initGrid();
+
+    </script>
+</body>
+
+</html>

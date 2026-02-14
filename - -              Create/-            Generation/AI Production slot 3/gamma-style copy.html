@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Framework - Gamma Style</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+
+        :root {
+            --bg: #010c1a;
+            --primary: #4cc9f0;
+            --accent: #4361ee;
+            --pink: #ff5d8f;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.5);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 10% 10%, #001219 0%, transparent 50%),
+                radial-gradient(circle at 90% 90%, #003049 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, #1a2a6c 0%, transparent 80%);
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* LEFT SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-header {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 0 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .slide-thumbnail {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .slide-thumbnail:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .slide-thumbnail.active {
+            background: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.1), 0 0 20px rgba(76, 201, 240, 0.2);
+        }
+
+        .thumb-number {
+            font-size: 0.625rem;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+        }
+
+        .thumb-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.4;
+        }
+
+        .thumb-indicator {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .slide-thumbnail.active .thumb-indicator {
+            opacity: 1;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.7;
+            }
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            height: 60px;
+            border-bottom: 1px solid var(--glass-border);
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        .slide-counter {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.3em;
+            color: var(--text-dim);
+        }
+
+        .slide-viewport {
+            flex: 1;
+            overflow-y: auto;
+            padding: 3rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide-content {
+            max-width: 900px;
+            width: 100%;
+            animation: slideIn 1s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-card {
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 35px;
+            padding: 4rem;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: var(--transition);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        .slide-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), 0 0 40px rgba(76, 201, 240, 0.2);
+        }
+
+        .slide-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+
+        .slide-title-main {
+            font-size: 5rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+        }
+
+        .slide-description {
+            font-size: 1.5rem;
+            color: var(--text-dim);
+            font-weight: 400;
+            max-width: 800px;
+        }
+
+        /* Special slide styles */
+        .slide-card.special {
+            background: linear-gradient(135deg, rgba(255, 93, 143, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+            border-color: rgba(255, 93, 143, 0.3);
+        }
+
+        .slide-card.special .slide-label {
+            color: var(--pink);
+        }
+
+        .slide-card.special .slide-title-main {
+            background: linear-gradient(135deg, var(--pink) 0%, #7209b7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Scrollbar */
+        .sidebar::-webkit-scrollbar,
+        .slide-viewport::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track,
+        .slide-viewport::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb,
+        .slide-viewport::-webkit-scrollbar-thumb {
+            background: rgba(76, 201, 240, 0.2);
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover,
+        .slide-viewport::-webkit-scrollbar-thumb:hover {
+            background: rgba(76, 201, 240, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+            .slide-title-main {
+                font-size: 3.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .slide-title-main {
+                font-size: 3rem;
+            }
+            .slide-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">All Slides</div>
+
+            <div class="slide-thumbnail active" onclick="goToSlide(0)">
+                <div class="thumb-number">01</div>
+                <div class="thumb-title">Step 1 - Goal</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(1)">
+                <div class="thumb-number">02</div>
+                <div class="thumb-title">Step 2 - Max Things Out</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(2)">
+                <div class="thumb-number">03</div>
+                <div class="thumb-title">A - Spotify</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(3)">
+                <div class="thumb-number">04</div>
+                <div class="thumb-title">B - Content</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(4)">
+                <div class="thumb-number">05</div>
+                <div class="thumb-title">C - The Connections</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(5)">
+                <div class="thumb-number">06</div>
+                <div class="thumb-title">New Phase</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(6)">
+                <div class="thumb-number">07</div>
+                <div class="thumb-title">Step 6 - That's Why We Do a Weekly Call</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(7)">
+                <div class="thumb-number">08</div>
+                <div class="thumb-title">Step 7 - Long-Term Plan</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(8)">
+                <div class="thumb-number">09</div>
+                <div class="thumb-title">Step 8 - Return on Results</div>
+                <div class="thumb-indicator"></div>
+            </div>
+
+            <div class="slide-thumbnail" onclick="goToSlide(9)">
+                <div class="thumb-number">10</div>
+                <div class="thumb-title">Step 9 - Recap Last Year / Plan This Year</div>
+                <div class="thumb-indicator"></div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="slide-counter" id="slideCounter">1 / 10</div>
+            </div>
+
+            <div class="slide-viewport">
+                <div class="slide-content" id="slideContent">
+                    <!-- Slide content will be injected here -->
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script>
+        const slides = [
+            {
+                label: "Foundation",
+                title: "Step 1 - Goal",
+                description: "Define the vision and objectives"
+            },
+            {
+                label: "Optimization",
+                title: "Step 2 - Max Things Out",
+                description: "Optimize all available resources"
+            },
+            {
+                label: "Platform",
+                title: "A - Spotify",
+                description: "Platform presence and growth"
+            },
+            {
+                label: "Strategy",
+                title: "B - Content",
+                description: "Creation and distribution strategy"
+            },
+            {
+                label: "Network",
+                title: "C - The Connections",
+                description: "Building strategic relationships"
+            },
+            {
+                label: "Transition",
+                title: "New Phase",
+                description: "Transition to the next level",
+                special: true
+            },
+            {
+                label: "Alignment",
+                title: "Step 6 - That's Why We Do a Weekly Call",
+                description: "Regular alignment and progress checks"
+            },
+            {
+                label: "Roadmap",
+                title: "Step 7 - Long-Term Plan",
+                description: "Strategic roadmap development"
+            },
+            {
+                label: "Measurement",
+                title: "Step 8 - Return on Results",
+                description: "Measuring impact and outcomes"
+            },
+            {
+                label: "Reflection",
+                title: "Step 9 - Recap Last Year / Plan This Year",
+                description: "Reflection and future planning"
+            }
+        ];
+
+        let currentSlide = 0;
+
+        function goToSlide(index) {
+            currentSlide = index;
+            renderSlide();
+            updateThumbnails();
+        }
+
+        function renderSlide() {
+            const slide = slides[currentSlide];
+            const slideContent = document.getElementById('slideContent');
+            const slideCounter = document.getElementById('slideCounter');
+
+            slideContent.innerHTML = `
+                <div class="slide-card ${slide.special ? 'special' : ''}">
+                    <div class="slide-label">${slide.label}</div>
+                    <h1 class="slide-title-main">${slide.title}</h1>
+                    <p class="slide-description">${slide.description}</p>
+                </div>
+            `;
+
+            slideCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+        }
+
+        function updateThumbnails() {
+            const thumbnails = document.querySelectorAll('.slide-thumbnail');
+            thumbnails.forEach((thumb, index) => {
+                thumb.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                if (currentSlide < slides.length - 1) {
+                    goToSlide(currentSlide + 1);
+                }
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                if (currentSlide > 0) {
+                    goToSlide(currentSlide - 1);
+                }
+            }
+        });
+
+        // Initialize
+        renderSlide();
+    </script>
+</body>
+
+</html>

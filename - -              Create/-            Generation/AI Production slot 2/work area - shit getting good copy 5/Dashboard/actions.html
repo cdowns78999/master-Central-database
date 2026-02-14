@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Actions</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span>OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="index.html" class="nav-link">Hub</a>
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="cards.html" class="nav-link">Cards</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+            <a href="tiles.html" class="nav-link">Tiles</a>
+            <a href="actions.html" class="nav-link active">Actions</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <h1>Action Center</h1>
+
+        <div class="action-buttons"
+            style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 2rem;">
+            <button class="action-btn" id="action1">Show Unpopulated Cards</button>
+            <button class="action-btn" id="action2">Show Ready for Campaigns</button>
+            <button class="action-btn" id="action3">Show Active Campaigns</button>
+            <button class="action-btn" id="action4">Show Completed Campaigns</button>
+            <button class="action-btn" id="action5">Show High Priority</button>
+            <button class="action-btn" id="action6">Show Recent Activity</button>
+            <button class="action-btn" id="action7">Show Press Focus</button>
+            <button class="action-btn" id="action8">Show Spotify Focus</button>
+            <button class="action-btn" id="action9">Show Social Focus</button>
+            <button class="action-btn" id="action10">Show Overdue Followups</button>
+        </div>
+
+        <div id="tiles-container" class="tiles-grid"
+            style="display: none; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 2rem; margin-top: 3rem;">
+            <!-- Tiles will be dynamically added here -->
+        </div>
+    </main>
+
+    <script src="tile-component.js"></script>
+    <script>
+        // Load data
+        let tileData = [];
+
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                tileData = data.tiles || [];
+            })
+            .catch(error => console.error('Error loading data:', error));
+
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const actionNum = btn.id.replace('action', '');
+                switch (actionNum) {
+                    case '1': showUnpopulatedCards(); break;
+                    case '2': showReadyForCampaigns(); break;
+                    case '3': showActiveCampaigns(); break;
+                    case '4': showCompletedCampaigns(); break;
+                    case '5': showHighPriority(); break;
+                    case '6': showRecentActivity(); break;
+                    case '7': showPressFocus(); break;
+                    case '8': showSpotifyFocus(); break;
+                    case '9': showSocialFocus(); break;
+                    case '10': showOverdueFollowups(); break;
+                    default: console.log(`Button ${btn.id} clicked - functionality not implemented yet`);
+                }
+            });
+        });
+
+        function showUnpopulatedCards() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles that don't have artist name filled and no campaigns added
+            const unpopulatedTiles = tileData.filter(tile => {
+                // Check if artist name is default or empty
+                if (!tile.name || tile.name.trim() === '' || tile.name === 'New Artist') {
+                    return true;
+                }
+                // Check if all categories are empty or have default entries
+                return Object.values(tile.projectData).every(cat =>
+                    cat.length === 0 || cat.every(item =>
+                        item.name === 'New Project' &&
+                        item.reachout === '—' &&
+                        item.first === 'MM.DD' &&
+                        item.last === 'MM.DD' &&
+                        item.method === '—'
+                    )
+                );
+            });
+
+            if (unpopulatedTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No unpopulated cards found.</p>';
+                return;
+            }
+
+            unpopulatedTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showReadyForCampaigns() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles that have artist name filled, songs added, but no campaigns started
+            const readyTiles = tileData.filter(tile => {
+                // Must have valid artist name
+                if (!tile.name || tile.name.trim() === '' || tile.name === 'New Artist') {
+                    return false;
+                }
+                // Must have at least one non-default song
+                const hasValidSongs = Object.values(tile.projectData).some(cat =>
+                    cat.some(item => item.name !== 'New Project')
+                );
+                if (!hasValidSongs) {
+                    return false;
+                }
+                // Must have no campaigns started (all reachout still '—')
+                const noCampaignsStarted = Object.values(tile.projectData).every(cat =>
+                    cat.every(item => item.reachout === '—')
+                );
+                return noCampaignsStarted;
+            });
+
+            if (readyTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No cards ready for campaigns found.</p>';
+                return;
+            }
+
+            readyTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showActiveCampaigns() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles with active campaigns (some reachout started, not all completed)
+            const activeTiles = tileData.filter(tile => {
+                const hasStartedCampaigns = Object.values(tile.projectData).some(cat =>
+                    cat.some(item => item.reachout !== '—')
+                );
+                const hasIncompleteCampaigns = Object.values(tile.projectData).some(cat =>
+                    cat.some(item => item.reachout !== '—' && !item.completed)
+                );
+                return hasStartedCampaigns && hasIncompleteCampaigns;
+            });
+
+            if (activeTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No active campaigns found.</p>';
+                return;
+            }
+
+            activeTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showCompletedCampaigns() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles where all campaigns are completed
+            const completedTiles = tileData.filter(tile => {
+                return Object.values(tile.projectData).every(cat =>
+                    cat.every(item => item.completed || item.reachout === '—')
+                ) && Object.values(tile.projectData).some(cat =>
+                    cat.some(item => item.reachout !== '—')
+                );
+            });
+
+            if (completedTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No completed campaigns found.</p>';
+                return;
+            }
+
+            completedTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showHighPriority() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles with high followup counts (>3 pending)
+            const highPriorityTiles = tileData.filter(tile => {
+                const totalPending = Object.values(tile.projectData).reduce((sum, cat) =>
+                    sum + cat.reduce((catSum, item) => {
+                        const match = item.followup.match(/(\d+)/);
+                        return catSum + (match && item.reachout !== '—' && !item.completed ? parseInt(match[1]) : 0);
+                    }, 0), 0);
+                return totalPending > 3;
+            });
+
+            if (highPriorityTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No high priority campaigns found.</p>';
+                return;
+            }
+
+            highPriorityTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showRecentActivity() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles with recent last contact dates (within last 7 days)
+            const recentTiles = tileData.filter(tile => {
+                const recentDate = new Date();
+                recentDate.setDate(recentDate.getDate() - 7);
+                return Object.values(tile.projectData).some(cat =>
+                    cat.some(item => {
+                        if (item.last === 'MM.DD' || item.last === '—') return false;
+                        const itemDate = new Date('2026-' + item.last.replace('.', '-'));
+                        return itemDate >= recentDate;
+                    })
+                );
+            });
+
+            if (recentTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No recent activity found.</p>';
+                return;
+            }
+
+            recentTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showPressFocus() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles with press campaigns
+            const pressTiles = tileData.filter(tile =>
+                tile.projectData.press && tile.projectData.press.length > 0 &&
+                tile.projectData.press.some(item => item.name !== 'New Project')
+            );
+
+            if (pressTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No press campaigns found.</p>';
+                return;
+            }
+
+            pressTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showSpotifyFocus() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles with Spotify campaigns
+            const spotifyTiles = tileData.filter(tile =>
+                tile.projectData.spotify && tile.projectData.spotify.length > 0 &&
+                tile.projectData.spotify.some(item => item.name !== 'New Project')
+            );
+
+            if (spotifyTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No Spotify campaigns found.</p>';
+                return;
+            }
+
+            spotifyTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showSocialFocus() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles with social campaigns
+            const socialTiles = tileData.filter(tile =>
+                tile.projectData.social && tile.projectData.social.length > 0 &&
+                tile.projectData.social.some(item => item.name !== 'New Project')
+            );
+
+            if (socialTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No social campaigns found.</p>';
+                return;
+            }
+
+            socialTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+
+        function showOverdueFollowups() {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            container.style.display = 'grid';
+
+            // Filter tiles with overdue followups (last contact > 30 days ago)
+            const overdueTiles = tileData.filter(tile => {
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                return Object.values(tile.projectData).some(cat =>
+                    cat.some(item => {
+                        if (item.last === 'MM.DD' || item.last === '—' || item.completed) return false;
+                        const itemDate = new Date('2026-' + item.last.replace('.', '-'));
+                        return itemDate < thirtyDaysAgo;
+                    })
+                );
+            });
+
+            if (overdueTiles.length === 0) {
+                container.innerHTML = '<p style="grid-column: span 2; text-align: center; color: var(--text-dim);">No overdue followups found.</p>';
+                return;
+            }
+
+            overdueTiles.forEach((tileData, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `action-tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const tile = new StoneTile(tileData.name, tileContainer, { data: tileData.projectData });
+            });
+        }
+    </script>
+</body>
+
+</html>

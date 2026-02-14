@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Form Factor Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --bg-panel: rgba(20, 20, 20, 0.7);
+            --accent-blue: #00d2ff;
+            --accent-glow: rgba(0, 210, 255, 0.5);
+            --node-size: 80px;
+            --node-size-large: 100px;
+            --curve-gap: 120px;
+            --v-spacing: 250px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(20, 20, 30, 1) 0%, transparent 80%),
+                linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8));
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 100px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 100px;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #00d2ff, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #888;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+        }
+
+        /* --- THE FORM FACTOR --- */
+        .node-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--v-spacing);
+        }
+
+        .node-group {
+            position: relative;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .node {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--bg-panel);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 0 rgba(0, 210, 255, 0);
+        }
+
+        .node::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .node:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 30px var(--accent-glow);
+            transform: scale(1.1) !important;
+        }
+
+        .node:hover::after {
+            border-color: rgba(0, 210, 255, 0.3);
+            inset: -15px;
+        }
+
+        /* Positions */
+        .node-center {
+            width: var(--node-size-large);
+            height: var(--node-size-large);
+            transform: translateY(-40px);
+            z-index: 5;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .node-l1 { 
+            width: var(--node-size); 
+            height: var(--node-size); 
+            left: calc(50% - var(--curve-gap) - var(--node-size)/2);
+            transform: translateY(0px);
+        }
+        .node-l2 { 
+            width: var(--node-size); 
+            height: var(--node-size); 
+            left: calc(50% - var(--curve-gap) * 2.2 - var(--node-size)/2);
+            transform: translateY(40px);
+        }
+        .node-r1 { 
+            width: var(--node-size); 
+            height: var(--node-size); 
+            right: calc(50% - var(--curve-gap) - var(--node-size)/2);
+            transform: translateY(0px);
+        }
+        .node-r2 { 
+            width: var(--node-size); 
+            height: var(--node-size); 
+            right: calc(50% - var(--curve-gap) * 2.2 - var(--node-size)/2);
+            transform: translateY(40px);
+        }
+
+        /* Connections - Curved SVG */
+        .svg-connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connection-path {
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 1;
+            fill: none;
+            transition: stroke 0.3s ease;
+        }
+
+        .node-group:hover .connection-path {
+            stroke: rgba(0, 210, 255, 0.1);
+        }
+
+        /* Controls */
+        .controls {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px 30px;
+            border-radius: 100px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+
+        button {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: all 0.3s ease;
+            opacity: 0.6;
+        }
+
+        button:hover {
+            opacity: 1;
+            color: var(--accent-blue);
+        }
+
+        .node-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <div class="header">
+            <h1>Dynamic Node Mesh</h1>
+            <p>Form Factor: 05-Arc Configuration</p>
+        </div>
+
+        <div class="node-container" id="nodeContainer">
+            <!-- First Row -->
+            <div class="node-group">
+                <svg class="svg-connections" viewBox="0 0 1000 300">
+                    <!-- Lines drawn dynamically or via fixed paths for this demo -->
+                    <path class="connection-path" d="M 500 110 L 380 150 L 230 190" />
+                    <path class="connection-path" d="M 500 110 L 620 150 L 770 190" />
+                </svg>
+                
+                <div class="node node-l2"><span class="node-label">EXT_L2</span></div>
+                <div class="node node-l1"><span class="node-label">EXT_L1</span></div>
+                <div class="node node-center"><span class="node-label">ROOT</span></div>
+                <div class="node node-r1"><span class="node-label">EXT_R1</span></div>
+                <div class="node node-r2"><span class="node-label">EXT_R2</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="addRow()">+ Add Group</button>
+        <button onclick="clearGroups()">Reset</button>
+    </div>
+
+    <script>
+        function addRow() {
+            const container = document.getElementById('nodeContainer');
+            const group = document.createElement('div');
+            group.className = 'node-group';
+            group.style.opacity = '0';
+            group.style.transform = 'translateY(50px)';
+            
+            group.innerHTML = `
+                <svg class="svg-connections" viewBox="0 0 1000 300">
+                    <path class="connection-path" d="M 500 110 L 380 150 L 230 190" />
+                    <path class="connection-path" d="M 500 110 L 620 150 L 770 190" />
+                </svg>
+                <div class="node node-l2"><span class="node-label">EXT_L2</span></div>
+                <div class="node node-l1"><span class="node-label">EXT_L1</span></div>
+                <div class="node node-center"><span class="node-label">SUB</span></div>
+                <div class="node node-r1"><span class="node-label">EXT_R1</span></div>
+                <div class="node node-r2"><span class="node-label">EXT_R2</span></div>
+            `;
+            
+            container.appendChild(group);
+            
+            // Animation for new row
+            setTimeout(() => {
+                group.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                group.style.opacity = '1';
+                group.style.transform = 'translateY(0)';
+            }, 10);
+
+            // Scroll to bottom
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function clearGroups() {
+            const container = document.getElementById('nodeContainer');
+            const groups = container.querySelectorAll('.node-group');
+            if (groups.length > 1) {
+                for (let i = 1; i < groups.length; i++) {
+                    groups[i].remove();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

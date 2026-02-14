@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Copier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 120px;
+            height: 120px;
+            min-width: 120px;
+            min-height: 120px;
+            max-width: 120px;
+            max-height: 120px;
+            background: #000;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-sizing: border-box;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+            animation: containerEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        /* Evolution 14.0 Premium Gradient Overlay */
+        .container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            pointer-events: none;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            opacity: 0.1;
+            filter: blur(8px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .logo.animate {
+            opacity: 0.3;
+            filter: blur(4px);
+            transform: scale(1.1);
+        }
+
+        .copy-toast {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 6px;
+            height: 6px;
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.4),
+                0 0 15px rgba(255, 255, 255, 0.8),
+                0 0 25px rgba(255, 255, 255, 0.4),
+                inset 0 0 2px rgba(255, 255, 255, 1);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 30;
+            pointer-events: none;
+        }
+
+        .copy-toast.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .copy-toast.visible:not(.error) {
+            animation: dotBreathe 3s ease-in-out 0.6s infinite;
+        }
+
+        .copy-toast.error {
+            background: transparent;
+            box-shadow: none;
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 88px;
+            font-weight: 500;
+            line-height: 1;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%) scale(1);
+            padding-bottom: 33px;
+            padding-right: 4px;
+            box-sizing: border-box;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 25;
+        }
+
+        @keyframes containerEntrance {
+            from {
+                opacity: 0;
+                filter: blur(4px);
+                transform: scale(1.05);
+            }
+
+            to {
+                opacity: 1;
+                filter: blur(0);
+                transform: scale(1);
+            }
+        }
+
+        @keyframes particleBurst {
+            0% {
+                transform: translate(-50%, -50%) translate(0, 0) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        @keyframes dotBreathe {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                filter: brightness(1);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.4);
+                opacity: 0.9;
+                filter: brightness(1.2);
+                box-shadow:
+                    0 0 0 2px rgba(255, 255, 255, 0.4),
+                    0 0 22px rgba(255, 255, 255, 0.9),
+                    0 0 32px rgba(255, 255, 255, 0.5),
+                    inset 0 0 2px rgba(255, 255, 255, 1);
+            }
+        }
+
+        @keyframes cZoom {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                filter: blur(0);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(25);
+                opacity: 0;
+                filter: blur(12px);
+            }
+        }
+
+        .copy-toast.zooming {
+            animation: cZoom 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards !important;
+        }
+
+        /* Glowing Ticker Styles */
+        .ticker-wrap {
+            position: absolute;
+            bottom: 12px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .ticker-wrap.active {
+            opacity: 1;
+        }
+
+        .ticker-content {
+            white-space: nowrap;
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(255, 255, 255, 0.4);
+            animation: tickerSlide 3s linear infinite;
+        }
+
+        @keyframes tickerSlide {
+            0% {
+                transform: translateX(50%);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .glow-line {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 1px;
+            background: #fff;
+            box-shadow: 0 0 10px #fff, 0 0 20px #fff;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .ticker-wrap.active .glow-line {
+            opacity: 0.6;
+            animation: lineBreathe 2s ease-in-out infinite;
+        }
+
+        @keyframes lineBreathe {
+
+            0%,
+            100% {
+                width: 30px;
+                opacity: 0.4;
+            }
+
+            50% {
+                width: 60px;
+                opacity: 0.8;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="logo" class="logo"></div>
+        <div id="copyToast" class="copy-toast"></div>
+        <div id="ticker" class="ticker-wrap">
+            <div class="ticker-content">COMMAND EXECUTED • CLIPBOARD READY • SYNC COMPLETE • </div>
+            <div class="glow-line"></div>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gray-1: #fafafa;
+            --gray-2: #f5f5f5;
+            --gray-3: #e5e5e5;
+            --gray-5: #d4d4d4;
+            --gray-6: #a3a3a3;
+            --gray-8: #737373;
+            --gray-10: #525252;
+            --gray-11: #404040;
+            --gray-12: #171717;
+        }
+
+        body {
+            background: var(--gray-2);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--gray-12);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Particle Background */
+        canvas#particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--gray-12);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--gray-10);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .platform-section {
+            background: var(--gray-1);
+            border: 1px solid var(--gray-3);
+            border-radius: 24px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .platform-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .platform-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .platform-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-12);
+        }
+
+        /* Auto-Suggest Input */
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .input {
+            width: 100%;
+            height: 40px;
+            background: var(--gray-1);
+            border: 1px solid var(--gray-3);
+            border-radius: 12px;
+            padding: 0 16px;
+            font-size: 14px;
+            color: var(--gray-12);
+            transition: all 0.2s;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--gray-5);
+            background: #fff;
+        }
+
+        .input::placeholder {
+            color: var(--gray-6);
+        }
+
+        /* Auto-Suggest Dropdown */
+        .suggest-results {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            width: 100%;
+            background: var(--gray-1);
+            border: 1px solid var(--gray-5);
+            border-radius: 12px;
+            z-index: 100;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggest-results.active {
+            display: block;
+        }
+
+        .suggest-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid var(--gray-3);
+            font-size: 14px;
+            color: var(--gray-12);
+        }
+
+        .suggest-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggest-item:hover {
+            background: var(--gray-2);
+        }
+
+        .suggest-item.add-custom {
+            color: #2563eb;
+            font-weight: 600;
+            border-bottom: 1px solid #2563eb;
+        }
+
+        .btn {
+            width: 100%;
+            height: 40px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-spotify {
+            background: #1DB954;
+            color: #ffffff;
+            border: 1px solid #1ed760;
+            box-shadow: 0 1.5px 0 0 rgba(255, 255, 255, 0.20) inset;
+        }
+
+        .btn-spotify:hover {
+            background: #1ed760;
+        }
+
+        .btn-soundcloud {
+            background: #FF5500;
+            color: #ffffff;
+            border: 1px solid #ff6a1f;
+            box-shadow: 0 1.5px 0 0 rgba(255, 255, 255, 0.20) inset;
+        }
+
+        .btn-soundcloud:hover {
+            background: #ff6a1f;
+        }
+
+        .btn-press {
+            background: var(--gray-12);
+            color: #ffffff;
+            border: 1px solid var(--gray-11);
+            box-shadow: 0 1.5px 0 0 rgba(255, 255, 255, 0.20) inset;
+        }
+
+        .btn-press:hover {
+            background: var(--gray-11);
+        }
+
+        .campaigns-list {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .campaign-card {
+            background: var(--gray-2);
+            border: 1px solid var(--gray-3);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .campaign-card:hover {
+            border-color: var(--gray-5);
+        }
+
+        .campaign-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .campaign-info {
+            flex: 1;
+        }
+
+        .campaign-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-12);
+        }
+
+        .delete-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: transparent;
+            border: 1px solid var(--gray-3);
+            color: var(--gray-10);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: var(--gray-3);
+        }
+
+        /* Progress Dots */
+        .progress-stages {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stage-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--gray-3);
+            border: 2px solid var(--gray-5);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .stage-dot.active {
+            background: #1DB954;
+            border-color: #1ed760;
+            box-shadow: 0 0 12px rgba(29, 185, 84, 0.5),
+                        0 0 24px rgba(29, 185, 84, 0.3);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .stage-dot.active.soundcloud {
+            background: #FF5500;
+            border-color: #ff6a1f;
+            box-shadow: 0 0 12px rgba(255, 85, 0, 0.5),
+                        0 0 24px rgba(255, 85, 0, 0.3);
+        }
+
+        .stage-dot.active.press {
+            background: var(--gray-12);
+            border-color: var(--gray-11);
+            box-shadow: 0 0 12px rgba(23, 23, 23, 0.5),
+                        0 0 24px rgba(23, 23, 23, 0.3);
+        }
+
+        @keyframes glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .stage-label {
+            font-size: 10px;
+            color: var(--gray-10);
+            text-align: center;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+        }
+
+        .stage-dot.active + .stage-label {
+            color: var(--gray-12);
+        }
+
+        .stage-connector {
+            flex: 1;
+            height: 2px;
+            background: var(--gray-3);
+            margin: 0 4px;
+            align-self: center;
+            margin-bottom: 32px;
+        }
+
+        .icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .stage-label {
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles"></canvas>
+
+    <div class="container">
+        <div class="header">
+            <h1>Campaign Dashboard</h1>
+            <p>Manage campaigns with auto-suggest and progress tracking</p>
+        </div>
+
+        <div class="grid">
+            <!-- Spotify -->
+            <div class="platform-section">
+                <div class="platform-header">
+                    <div class="platform-icon" style="background: #1DB954;">
+                        <svg class="icon" fill="white" viewBox="0 0 24 24">
+                            <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                        </svg>
+                    </div>
+                    <div class="platform-name">Spotify</div>
+                </div>
+                <div class="input-wrapper">
+                    <input type="text" class="input" id="spotifyInput" placeholder="Type campaign name..." autocomplete="off">
+                    <div class="suggest-results" id="spotifyResults"></div>
+                </div>
+                <button class="btn btn-spotify" onclick="addCampaign('spotify')">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Launch Campaign
+                </button>
+                <div class="campaigns-list" id="spotifyList"></div>
+            </div>
+
+            <!-- SoundCloud -->
+            <div class="platform-section">
+                <div class="platform-header">
+                    <div class="platform-icon" style="background: #FF5500;">
+                        <svg class="icon" fill="white" viewBox="0 0 24 24">
+                            <path d="M1.175 12.225c-.051 0-.094.046-.101.1l-.233 2.154.233 2.105c.007.058.05.098.101.098.053 0 .096-.04.103-.098l.27-2.105-.27-2.154c-.007-.057-.05-.1-.103-.1zm1.246.047c-.058 0-.1.047-.106.107l-.191 1.984.191 1.927c.006.057.048.107.106.107.059 0 .103-.046.112-.107l.23-1.927-.23-1.984c-.009-.06-.053-.107-.112-.107z"/>
+                        </svg>
+                    </div>
+                    <div class="platform-name">SoundCloud</div>
+                </div>
+                <div class="input-wrapper">
+                    <input type="text" class="input" id="soundcloudInput" placeholder="Type campaign name..." autocomplete="off">
+                    <div class="suggest-results" id="soundcloudResults"></div>
+                </div>
+                <button class="btn btn-soundcloud" onclick="addCampaign('soundcloud')">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Launch Campaign
+                </button>
+                <div class="campaigns-list" id="soundcloudList"></div>
+            </div>
+
+            <!-- Press -->
+            <div class="platform-section">
+                <div class="platform-header">
+                    <div class="platform-icon" style="background: var(--gray-12);">
+                        <svg class="icon" fill="white" viewBox="0 0 24 24">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                        </svg>
+                    </div>
+                    <div class="platform-name">Press</div>
+                </div>
+                <div class="input-wrapper">
+                    <input type="text" class="input" id="pressInput" placeholder="Type campaign name..." autocomplete="off">
+                    <div class="suggest-results" id="pressResults"></div>
+                </div>
+                <button class="btn btn-press" onclick="addCampaign('press')">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Launch Campaign
+                </button>
+                <div class="campaigns-list" id="pressList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Campaign Suggestions Database
+        const campaignDatabase = {
+            spotify: [
+                '10K Spotify Streams',
+                '25K Spotify Streams',
+                '50K Spotify Streams',
+                '100K Spotify Streams',
+                'Playlist Push Campaign',
+                'Editorial Pitch Campaign',
+                'Release Week Boost',
+                'Algorithmic Playlist Strategy'
+            ],
+            soundcloud: [
+                '5K SoundCloud Plays',
+                '10K SoundCloud Plays',
+                '25K SoundCloud Plays',
+                'Repost Campaign',
+                'SoundCloud Premier Push',
+                'Underground Promo'
+            ],
+            press: [
+                'Press Release Distribution',
+                'Blog Feature Campaign',
+                'Interview Package',
+                'Music Publication Pitch',
+                'Editorial Coverage',
+                '5 Blog Articles',
+                '10 Blog Articles',
+                'Premium Press Campaign'
+            ]
+        };
+
+        const stages = [
+            { id: 'planning', label: 'Planning' },
+            { id: 'active', label: 'Active' },
+            { id: 'review', label: 'Review' },
+            { id: 'complete', label: 'Complete' }
+        ];
+
+        // Particle Background
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = Array.from({ length: 80 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 0.5,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                opacity: Math.random() * 0.5 + 0.2
+            }));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                ctx.fillStyle = `rgba(156, 163, 175, ${p.opacity})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        animate();
+
+        // Auto-Suggest Logic (Identical to Proposal Generator)
+        function initAutoSuggest(platform) {
+            const input = document.getElementById(`${platform}Input`);
+            const results = document.getElementById(`${platform}Results`);
+
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                if (query.length > 0) {
+                    const matches = campaignDatabase[platform].filter(s =>
+                        s.toLowerCase().includes(query)
+                    );
+                    renderSuggestions(platform, matches, query);
+                } else {
+                    results.classList.remove('active');
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !results.contains(e.target)) {
+                    results.classList.remove('active');
+                }
+            });
+        }
+
+        function renderSuggestions(platform, matches, query) {
+            const results = document.getElementById(`${platform}Results`);
+            results.innerHTML = '';
+
+            // Add "Add Custom..." option first
+            const customDiv = document.createElement('div');
+            customDiv.className = 'suggest-item add-custom';
+            customDiv.innerHTML = `+ Add Custom Campaign...`;
+            customDiv.onclick = () => promptCustomCampaign(platform, query);
+            results.appendChild(customDiv);
+
+            // Add matching suggestions
+            if (matches.length > 0) {
+                results.classList.add('active');
+                matches.slice(0, 8).forEach(match => {
+                    const div = document.createElement('div');
+                    div.className = 'suggest-item';
+                    div.innerText = match;
+                    div.onclick = () => selectSuggestion(platform, match);
+                    results.appendChild(div);
+                });
+            } else if (query.length > 0) {
+                results.classList.add('active');
+            }
+        }
+
+        function selectSuggestion(platform, campaignName) {
+            const input = document.getElementById(`${platform}Input`);
+            input.value = campaignName;
+            document.getElementById(`${platform}Results`).classList.remove('active');
+        }
+
+        function promptCustomCampaign(platform, defaultValue) {
+            const input = document.getElementById(`${platform}Input`);
+            const name = prompt("Enter Custom Campaign Name:", defaultValue || input.value);
+            if (name) {
+                input.value = name;
+                document.getElementById(`${platform}Results`).classList.remove('active');
+            }
+        }
+
+        function addCampaign(platform) {
+            const input = document.getElementById(`${platform}Input`);
+            const name = input.value.trim();
+
+            if (!name) return;
+
+            const list = document.getElementById(`${platform}List`);
+            const campaignId = Date.now();
+
+            const card = document.createElement('div');
+            card.className = 'campaign-card';
+            card.id = `campaign-${campaignId}`;
+
+            let stagesHTML = '<div class="progress-stages">';
+            stages.forEach((stage, index) => {
+                stagesHTML += `
+                    <div class="stage">
+                        <div class="stage-dot ${index === 0 ? `active ${platform}` : ''}"
+                             onclick="toggleStage(${campaignId}, ${index}, '${platform}')"></div>
+                        <div class="stage-label">${stage.label}</div>
+                    </div>
+                `;
+                if (index < stages.length - 1) {
+                    stagesHTML += '<div class="stage-connector"></div>';
+                }
+            });
+            stagesHTML += '</div>';
+
+            card.innerHTML = `
+                <div class="campaign-header">
+                    <div class="campaign-info">
+                        <div class="campaign-name">${name}</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteCampaign(${campaignId})">×</button>
+                </div>
+                ${stagesHTML}
+            `;
+
+            list.appendChild(card);
+            input.value = '';
+            document.getElementById(`${platform}Results`).classList.remove('active');
+        }
+
+        function toggleStage(campaignId, stageIndex, platform) {
+            const card = document.getElementById(`campaign-${campaignId}`);
+            const dots = card.querySelectorAll('.stage-dot');
+
+            dots.forEach((dot, index) => {
+                if (index <= stageIndex) {
+                    dot.classList.add('active', platform);
+                } else {
+                    dot.classList.remove('active', platform);
+                }
+            });
+        }
+
+        function deleteCampaign(campaignId) {
+            document.getElementById(`campaign-${campaignId}`).remove();
+        }
+
+        // Initialize auto-suggest for all platforms
+        ['spotify', 'soundcloud', 'press'].forEach(platform => {
+            initAutoSuggest(platform);
+
+            // Enter key support
+            document.getElementById(`${platform}Input`).addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addCampaign(platform);
+            });
+        });
+    </script>
+</body>
+</html>

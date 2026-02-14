@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sims 4 - Expanded Node System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --s4-white: #ffffff;
+            --s4-gray: #f2f2f2;
+            --s4-blue: #35C6EB;
+            --s4-dark-blue: #2594a4;
+            --s4-green: #4EC300;
+            --s4-shadow: rgba(0, 0, 0, 0.12);
+            --node-dia: 100px;
+            --sub-node-dia: 60px;
+            --micro-node-dia: 35px;
+            --curve-offset: -45px;
+            --transition: 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--s4-gray);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(53, 198, 235, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(78, 195, 0, 0.05) 0px, transparent 50%);
+            color: #333;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 80px 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 120px;
+            background: var(--s4-white);
+            padding: 25px 80px;
+            border-radius: 25px;
+            box-shadow: 0 5px 25px var(--s4-shadow);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+            letter-spacing: -1px;
+        }
+
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            gap: 150px;
+            width: 100%;
+            max-width: 1100px;
+            align-items: center;
+        }
+
+        .node-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 70px;
+            position: relative;
+        }
+
+        .node-wrapper {
+            position: relative;
+            width: var(--node-dia);
+            height: var(--node-dia);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .node-row .node-wrapper:nth-child(1),
+        .node-row .node-wrapper:nth-child(5) {
+            transform: translateY(var(--curve-offset));
+        }
+
+        .node {
+            width: 100%;
+            height: 100%;
+            background: var(--s4-white);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px var(--s4-shadow);
+            position: relative;
+            z-index: 10;
+        }
+
+        .node:hover {
+            transform: scale(1.1);
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(53, 198, 235, 0.3);
+        }
+
+        .plumbob-s4 {
+            width: 25px;
+            height: 40px;
+            background: var(--s4-green);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .expand-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: var(--s4-blue);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 20;
+            transition: var(--transition);
+        }
+
+        .expand-indicator:hover {
+            background: var(--s4-dark-blue);
+            transform: scale(1.2);
+        }
+
+        .expand-indicator.expanded {
+            background: var(--s4-green);
+            transform: rotate(45deg);
+        }
+
+        .child-count-badge {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            width: 22px;
+            height: 22px;
+            background: var(--s4-green);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 19;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .child-count-badge.visible {
+            opacity: 1;
+        }
+
+        .sub-nodes-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 5;
+        }
+
+        .sub-nodes-container.expanded {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .sub-node {
+            position: absolute;
+            width: var(--sub-node-dia);
+            height: var(--sub-node-dia);
+            background: var(--s4-white);
+            border: 2px solid var(--s4-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 3px 10px var(--s4-shadow);
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+        }
+
+        .sub-node:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.15);
+        }
+
+        .sub-node-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--s4-white);
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 600;
+            box-shadow: 0 2px 6px var(--s4-shadow);
+            white-space: nowrap;
+        }
+
+        .connection-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            height: 2px;
+            background: var(--s4-blue);
+            opacity: 0.3;
+            transform-origin: left center;
+            z-index: 1;
+        }
+
+        .pie-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+            transform: translate(-50%, -50%) scale(0.4);
+            z-index: 15;
+        }
+
+        .pie-menu.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .pie-option {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: var(--s4-white);
+            border: 2px solid var(--s4-blue);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px var(--s4-shadow);
+            text-align: center;
+            padding: 8px;
+        }
+
+        .pie-option:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .pie-option:nth-child(1) {
+            transform: translate(-50%, -50%) rotate(0deg) translate(120px) rotate(0deg);
+        }
+
+        .pie-option:nth-child(2) {
+            transform: translate(-50%, -50%) rotate(60deg) translate(120px) rotate(-60deg);
+        }
+
+        .pie-option:nth-child(3) {
+            transform: translate(-50%, -50%) rotate(120deg) translate(120px) rotate(-120deg);
+        }
+
+        .pie-option:nth-child(4) {
+            transform: translate(-50%, -50%) rotate(180deg) translate(120px) rotate(-180deg);
+        }
+
+        .pie-option:nth-child(5) {
+            transform: translate(-50%, -50%) rotate(240deg) translate(120px) rotate(-240deg);
+        }
+
+        .pie-option:nth-child(6) {
+            transform: translate(-50%, -50%) rotate(300deg) translate(120px) rotate(-300deg);
+        }
+
+        .node-label {
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--s4-white);
+            color: #333;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 4px 10px var(--s4-shadow);
+            white-space: nowrap;
+        }
+
+        .micro-node {
+            position: absolute;
+            width: var(--micro-node-dia);
+            height: var(--micro-node-dia);
+            background: var(--s4-green);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 6px var(--s4-shadow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 8px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .micro-node:hover {
+            background: var(--s4-blue);
+            transform: scale(1.2);
+        }
+
+        .btn-add-sims {
+            margin-top: 100px;
+            padding: 18px 60px;
+            background: var(--s4-blue);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(53, 198, 235, 0.4);
+        }
+
+        .btn-add-sims:hover {
+            background: var(--s4-dark-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(53, 198, 235, 0.5);
+        }
+
+        .info-bubble {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--s4-dark-blue);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-bubble::after {
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid var(--s4-dark-blue);
+        }
+
+        .pie-option:hover~.info-bubble {
+            opacity: 1;
+            visibility: visible;
+            top: -120px;
+        }
+
+        .add-sub-node-option {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            background: var(--s4-green);
+            border: 3px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 3px 10px var(--s4-shadow);
+            font-size: 16px;
+            color: #fff;
+            font-weight: 700;
+            z-index: 6;
+        }
+
+        .add-sub-node-option:hover {
+            background: var(--s4-blue);
+            transform: scale(1.2);
+            box-shadow: 0 5px 15px rgba(53, 198, 235, 0.4);
+        }
+
+        .children-status-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: var(--s4-white);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 100;
+        }
+
+        .children-status-panel.visible {
+            display: block;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--s4-gray);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+        }
+
+        .close-panel {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--s4-gray);
+            transition: var(--transition);
+        }
+
+        .close-panel:hover {
+            color: var(--s4-red);
+        }
+
+        .node-children-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: var(--s4-gray);
+            border-radius: 10px;
+            border-left: 3px solid var(--s4-blue);
+        }
+
+        .node-children-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .node-children-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .child-tag {
+            background: var(--s4-white);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 10px;
+            color: var(--s4-dark-blue);
+            border: 1px solid var(--s4-blue);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>Expanded Node System</h1>
+        <p style="opacity: 0.5; font-size: 0.9rem;">CLICK + TO EXPAND NODES</p>
+    </header>
+
+    <div class="node-container" id="matrix">
+        <div class="node-row">
+            <div class="node-wrapper" data-parent-id="alpha">
+                <div class="child-count-badge" id="badge-alpha">0</div>
+                <div class="expand-indicator" onclick="toggleSubNodes(this, 'alpha')">+</div>
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <span class="node-label">Alpha Sim</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option" onmouseover="setTip(this, 'Open Dashboard')">Open</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Modify Structure')">Build</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Social Update')">Social</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'System Logs')">Log</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Resource Map')">Map</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Settings')">Config</div>
+                    <div class="info-bubble">Tip Text</div>
+                </div>
+                <div class="sub-nodes-container" id="subnodes-alpha">
+                    <div class="connection-line" style="width: 90px; transform: rotate(0deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(60deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(120deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(180deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(240deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(300deg);"></div>
+                    
+                    <div class="sub-node" data-type="data" onclick="toggleSubNode(this, 'alpha', 'Data')">
+                        Data
+                        <span class="sub-node-label">Node A1</span>
+                    </div>
+                    <div class="sub-node" data-type="proc" onclick="toggleSubNode(this, 'alpha', 'Proc')">
+                        Proc
+                        <span class="sub-node-label">Node A2</span>
+                    </div>
+                    <div class="sub-node" data-type="sync" onclick="toggleSubNode(this, 'alpha', 'Sync')">
+                        Sync
+                        <span class="sub-node-label">Node A3</span>
+                    </div>
+                    <div class="sub-node" data-type="cache" onclick="toggleSubNode(this, 'alpha', 'Cache')">
+                        Cache
+                        <span class="sub-node-label">Node A4</span>
+                    </div>
+                    <div class="sub-node" data-type="auth" onclick="toggleSubNode(this, 'alpha', 'Auth')">
+                        Auth
+                        <span class="sub-node-label">Node A5</span>
+                    </div>
+                    <div class="add-sub-node-option" onclick="addNewSubNode('alpha')" style="transform: translate(-50%, -50%) rotate(300deg) translate(90px) rotate(-300deg);">+</div>
+                </div>
+            </div>
+            <div class="node-wrapper" data-parent-id="beta">
+                <div class="child-count-badge" id="badge-beta">0</div>
+                <div class="expand-indicator" onclick="toggleSubNodes(this, 'beta')">+</div>
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <span class="node-label">Beta Sim</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                </div>
+                <div class="sub-nodes-container" id="subnodes-beta">
+                    <div class="connection-line" style="width: 90px; transform: rotate(0deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(120deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(240deg);"></div>
+                    
+                    <div class="sub-node" data-type="api" onclick="toggleSubNode(this, 'beta', 'API')">
+                        API
+                        <span class="sub-node-label">Node B1</span>
+                    </div>
+                    <div class="sub-node" data-type="db" onclick="toggleSubNode(this, 'beta', 'DB')">
+                        DB
+                        <span class="sub-node-label">Node B2</span>
+                    </div>
+                    <div class="sub-node" data-type="mq" onclick="toggleSubNode(this, 'beta', 'MQ')">
+                        MQ
+                        <span class="sub-node-label">Node B3</span>
+                    </div>
+                    <div class="add-sub-node-option" onclick="addNewSubNode('beta')" style="transform: translate(-50%, -50%) rotate(240deg) translate(90px) rotate(-240deg);">+</div>
+                </div>
+            </div>
+            <div class="node-wrapper" data-parent-id="gamma">
+                <div class="child-count-badge" id="badge-gamma">0</div>
+                <div class="expand-indicator" onclick="toggleSubNodes(this, 'gamma')">+</div>
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <span class="node-label">Gamma Sim</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                </div>
+                <div class="sub-nodes-container" id="subnodes-gamma">
+                    <div class="connection-line" style="width: 90px; transform: rotate(0deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(90deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(180deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(270deg);"></div>
+                    
+                    <div class="sub-node" data-type="user" onclick="toggleSubNode(this, 'gamma', 'User')">
+                        User
+                        <span class="sub-node-label">Node C1</span>
+                    </div>
+                    <div class="sub-node" data-type="file" onclick="toggleSubNode(this, 'gamma', 'File')">
+                        File
+                        <span class="sub-node-label">Node C2</span>
+                    </div>
+                    <div class="sub-node" data-type="task" onclick="toggleSubNode(this, 'gamma', 'Task')">
+                        Task
+                        <span class="sub-node-label">Node C3</span>
+                    </div>
+                    <div class="sub-node" data-type="cron" onclick="toggleSubNode(this, 'gamma', 'Cron')">
+                        Cron
+                        <span class="sub-node-label">Node C4</span>
+                    </div>
+                    <div class="add-sub-node-option" onclick="addNewSubNode('gamma')" style="transform: translate(-50%, -50%) rotate(270deg) translate(90px) rotate(-270deg);">+</div>
+                </div>
+            </div>
+            <div class="node-wrapper" data-parent-id="delta">
+                <div class="child-count-badge" id="badge-delta">0</div>
+                <div class="expand-indicator" onclick="toggleSubNodes(this, 'delta')">+</div>
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <span class="node-label">Delta Sim</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                </div>
+                <div class="sub-nodes-container" id="subnodes-delta">
+                    <div class="connection-line" style="width: 90px; transform: rotate(45deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(135deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(225deg);"></div>
+                    <div class="connection-line" style="width: 90px; transform: rotate(315deg);"></div>
+                    
+                    <div class="sub-node" data-type="test" onclick="toggleSubNode(this, 'delta', 'Test')">
+                        Test
+                        <span class="sub-node-label">Node D1</span>
+                    </div>
+                    <div class="sub-node" data-type="dev" onclick="toggleSubNode(this, 'delta', 'Dev')">
+                        Dev
+                        <span class="sub-node-label">Node D2</span>
+                    </div>
+                    <div class="sub-node" data-type="stg" onclick="toggleSubNode(this, 'delta', 'Stg')">
+                        Stg
+                        <span class="sub-node-label">Node D3</span>
+                    </div>
+                    <div class="sub-node" data-type="prod" onclick="toggleSubNode(this, 'delta', 'Prod')">
+                        Prod
+                        <span class="sub-node-label">Node D4</span>
+                    </div>
+                    <div class="add-sub-node-option" onclick="addNewSubNode('delta')" style="transform: translate(-50%, -50%) rotate(315deg) translate(90px) rotate(-315deg);">+</div>
+                </div>
+            </div>
+            <div class="node-wrapper" data-parent-id="epsilon">
+                <div class="child-count-badge" id="badge-epsilon">0</div>
+                <div class="expand-indicator" onclick="toggleSubNodes(this, 'epsilon')">+</div>
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <span class="node-label">Epsilon Sim</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                </div>
+                <div class="sub-nodes-container" id="subnodes-epsilon">
+                    <div class="connection-line" style="width: 70px; transform: rotate(0deg);"></div>
+                    <div class="connection-line" style="width: 70px; transform: rotate(72deg);"></div>
+                    <div class="connection-line" style="width: 70px; transform: rotate(144deg);"></div>
+                    <div class="connection-line" style="width: 70px; transform: rotate(216deg);"></div>
+                    <div class="connection-line" style="width: 70px; transform: rotate(288deg);"></div>
+                    
+                    <div class="sub-node" data-type="mon" onclick="toggleSubNode(this, 'epsilon', 'Mon')">
+                        Mon
+                        <span class="sub-node-label">Node E1</span>
+                    </div>
+                    <div class="sub-node" data-type="sec" onclick="toggleSubNode(this, 'epsilon', 'Sec')">
+                        Sec
+                        <span class="sub-node-label">Node E2</span>
+                    </div>
+                    <div class="sub-node" data-type="net" onclick="toggleSubNode(this, 'epsilon', 'Net')">
+                        Net
+                        <span class="sub-node-label">Node E3</span>
+                    </div>
+                    <div class="sub-node" data-type="backup" onclick="toggleSubNode(this, 'epsilon', 'Backup')">
+                        Backup
+                        <span class="sub-node-label">Node E4</span>
+                    </div>
+                    <div class="sub-node" data-type="scale" onclick="toggleSubNode(this, 'epsilon', 'Scale')">
+                        Scale
+                        <span class="sub-node-label">Node E5</span>
+                    </div>
+                    <div class="add-sub-node-option" onclick="addNewSubNode('epsilon')" style="transform: translate(-50%, -50%) rotate(288deg) translate(70px) rotate(-288deg);">+</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-add-sims" onclick="addSimsRow()">+ Join New Cluster +</button>
+
+    <div class="children-status-panel" id="status-panel">
+        <div class="panel-header">
+            <span class="panel-title">Active Node Children</span>
+            <button class="close-panel" onclick="toggleStatusPanel()">×</button>
+        </div>
+        <div id="children-list"></div>
+    </div>
+
+    <script>
+        function togglePie(el) {
+            const menu = el.nextElementSibling;
+            const active = menu.classList.contains('active');
+
+            document.querySelectorAll('.pie-menu').forEach(m => m.classList.remove('active'));
+
+            if (!active) menu.classList.add('active');
+        }
+
+        const activeSubNodes = {};
+
+        function toggleSubNodes(el, parentId) {
+            const container = el.parentElement.querySelector('.sub-nodes-container');
+            const isExpanded = container.classList.contains('expanded');
+            
+            container.classList.toggle('expanded');
+            el.classList.toggle('expanded');
+        }
+
+        function toggleSubNode(el, parentId, nodeName) {
+            const nodeType = el.dataset.type;
+            
+            if (!activeSubNodes[parentId]) {
+                activeSubNodes[parentId] = [];
+            }
+            
+            const index = activeSubNodes[parentId].indexOf(nodeName);
+            
+            if (index > -1) {
+                activeSubNodes[parentId].splice(index, 1);
+                el.style.background = 'var(--s4-white)';
+                el.style.color = 'var(--s4-dark-blue)';
+            } else {
+                activeSubNodes[parentId].push(nodeName);
+                el.style.background = 'var(--s4-green)';
+                el.style.color = '#fff';
+            }
+            
+            updateChildBadge(parentId);
+            updateStatusPanel();
+        }
+
+        function updateChildBadge(parentId) {
+            const badge = document.getElementById('badge-' + parentId);
+            const count = activeSubNodes[parentId] ? activeSubNodes[parentId].length : 0;
+            
+            badge.textContent = count;
+            
+            if (count > 0) {
+                badge.classList.add('visible');
+            } else {
+                badge.classList.remove('visible');
+            }
+        }
+
+        function updateStatusPanel() {
+            const list = document.getElementById('children-list');
+            list.innerHTML = '';
+            
+            let hasActive = false;
+            
+            for (const [parentId, nodes] of Object.entries(activeSubNodes)) {
+                if (nodes.length > 0) {
+                    hasActive = true;
+                    const wrapper = document.querySelector(`.node-wrapper[data-parent-id="${parentId}"]`);
+                    const label = wrapper.querySelector('.node-label').textContent;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'node-children-item';
+                    item.innerHTML = `
+                        <div class="node-children-header">
+                            <span>${label}</span>
+                            <span>${nodes.length} Active</span>
+                        </div>
+                        <div class="node-children-list">
+                            ${nodes.map(n => `<span class="child-tag">${n}</span>`).join('')}
+                        </div>
+                    `;
+                    list.appendChild(item);
+                }
+            }
+            
+            if (hasActive) {
+                document.getElementById('status-panel').classList.add('visible');
+            }
+        }
+
+        function toggleStatusPanel() {
+            document.getElementById('status-panel').classList.remove('visible');
+        }
+
+        function addNewSubNode(parentId) {
+            const newNodeType = prompt('Enter new sub-node type:');
+            if (newNodeType && newNodeType.trim()) {
+                const container = document.getElementById('subnodes-' + parentId);
+                const existingNodes = container.querySelectorAll('.sub-node');
+                const newNodeCount = existingNodes.length + 1;
+                
+                const angle = (360 / (existingNodes.length + 1)) * existingNodes.length;
+                const rotation = `rotate(${angle}deg) translate(90px) rotate(-${angle}deg)`;
+                
+                const newNode = document.createElement('div');
+                newNode.className = 'sub-node';
+                newNode.dataset.type = newNodeType.toLowerCase();
+                newNode.style.transform = rotation;
+                newNode.textContent = newNodeType.substring(0, 4);
+                newNode.onclick = function() { toggleSubNode(this, parentId, newNodeType); };
+                
+                const label = document.createElement('span');
+                label.className = 'sub-node-label';
+                label.textContent = `N${parentId.toUpperCase()}-${newNodeCount}`;
+                newNode.appendChild(label);
+                
+                const newLine = document.createElement('div');
+                newLine.className = 'connection-line';
+                newLine.style.width = '90px';
+                newLine.style.transform = `rotate(${angle}deg)`;
+                
+                container.insertBefore(newNode, container.querySelector('.add-sub-node-option'));
+                container.insertBefore(newLine, container.querySelector('.add-sub-node-option'));
+                
+                const addButton = container.querySelector('.add-sub-node-option');
+                const currentTransform = addButton.style.transform;
+                const newAngle = (360 / (existingNodes.length + 2)) * (existingNodes.length + 1);
+                addButton.style.transform = `translate(-50%, -50%) rotate(${newAngle}deg) translate(90px) rotate(-${newAngle}deg)`;
+                
+                const existingLines = container.querySelectorAll('.connection-line');
+                existingLines.forEach((line, index) => {
+                    const newAngle = (360 / (existingNodes.length + 1)) * index;
+                    line.style.transform = `rotate(${newAngle}deg)`;
+                });
+                
+                existingNodes.forEach((node, index) => {
+                    const newAngle = (360 / (existingNodes.length + 1)) * index;
+                    node.style.transform = `rotate(${newAngle}deg) translate(90px) rotate(-${newAngle}deg)`;
+                });
+            }
+        }
+
+        function setTip(el, text) {
+            const tip = el.parentElement.querySelector('.info-bubble');
+            if (tip) tip.textContent = text;
+        }
+
+        let rowC = 1;
+        function addSimsRow() {
+            rowC++;
+            const matrix = document.getElementById('matrix');
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(30px)';
+            row.style.transition = 'all 0.6s ease-out';
+
+            for (let i = 0; i < 5; i++) {
+                const wrap = document.createElement('div');
+                wrap.className = 'node-wrapper';
+                const parentId = `cluster${rowC}_${i + 1}`;
+                wrap.dataset.parentId = parentId;
+                wrap.innerHTML = `
+                    <div class="child-count-badge" id="badge-${parentId}">0</div>
+                    <div class="expand-indicator" onclick="toggleSubNodes(this, '${parentId}')">+</div>
+                    <div class="node" onclick="togglePie(this)">
+                        <div class="plumbob-s4"></div>
+                        <span class="node-label">Cluster ${rowC}.${i + 1}</span>
+                    </div>
+                    <div class="pie-menu">
+                        <div class="pie-option">Open</div>
+                        <div class="pie-option">Build</div>
+                        <div class="pie-option">Social</div>
+                        <div class="pie-option">Log</div>
+                        <div class="pie-option">Map</div>
+                        <div class="pie-option">Config</div>
+                    </div>
+                    <div class="sub-nodes-container" id="subnodes-${parentId}">
+                        <div class="connection-line" style="width: 90px; transform: rotate(0deg);"></div>
+                        <div class="connection-line" style="width: 90px; transform: rotate(120deg);"></div>
+                        <div class="connection-line" style="width: 90px; transform: rotate(240deg);"></div>
+                        
+                        <div class="sub-node" data-type="data" onclick="toggleSubNode(this, '${parentId}', 'Data')">
+                            Data
+                            <span class="sub-node-label">N${rowC}.${i + 1}a</span>
+                        </div>
+                        <div class="sub-node" data-type="proc" onclick="toggleSubNode(this, '${parentId}', 'Proc')">
+                            Proc
+                            <span class="sub-node-label">N${rowC}.${i + 1}b</span>
+                        </div>
+                        <div class="sub-node" data-type="sync" onclick="toggleSubNode(this, '${parentId}', 'Sync')">
+                            Sync
+                            <span class="sub-node-label">N${rowC}.${i + 1}c</span>
+                        </div>
+                        <div class="add-sub-node-option" onclick="addNewSubNode('${parentId}')" style="transform: translate(-50%, -50%) rotate(240deg) translate(90px) rotate(-240deg);">+</div>
+                    </div>
+                `;
+                row.appendChild(wrap);
+            }
+
+            matrix.appendChild(row);
+
+            setTimeout(() => {
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+            }, 50);
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.node-wrapper')) {
+                document.querySelectorAll('.pie-menu').forEach(m => m.classList.remove('active'));
+            }
+        });
+    </script>
+</body>
+
+</html>

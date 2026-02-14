@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution 15 | MASTER ELITE</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --spotify-green: #1DB954;
+            --spotify-black: #191414;
+            --obsidian: #050505;
+            --laser: #1DB954;
+            --text: #ffffff;
+            --text-dim: #929292;
+            --border: rgba(255, 255, 255, 0.08);
+            --transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            --laser-glow: 0 0 15px rgba(29, 185, 84, 0.3);
+            --card-bg: rgba(18, 18, 18, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--obsidian);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 8rem 1rem;
+            background-image:
+                radial-gradient(circle at 50% -20%, rgba(29, 185, 84, 0.08) 0%, transparent 60%),
+                radial-gradient(circle at 0% 100%, rgba(29, 185, 84, 0.02) 0%, transparent 40%);
+        }
+
+        .laser-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--spotify-green), transparent);
+            z-index: 100;
+            box-shadow: 0 0 20px var(--spotify-green);
+            opacity: 0.2;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Context Headers */
+        .context-header {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            background: linear-gradient(to bottom, #fff, #444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-top: 4rem;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 1.2s ease forwards;
+        }
+
+        /* Ultra-Blended Card System */
+        .master-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(80px) saturate(200%);
+            -webkit-backdrop-filter: blur(80px) saturate(200%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .master-card:hover {
+            border-color: rgba(29, 185, 84, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .master-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent-glow);
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .master-card:hover::after {
+            opacity: 0.3;
+        }
+
+        /* 1. Identity Stage */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: -4px;
+            background: linear-gradient(to bottom, #fff, #666);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+        }
+
+        .spotify-wrap {
+            position: relative;
+            padding: 1px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 100px;
+            transition: var(--transition);
+        }
+
+        .spotify-wrap:focus-within {
+            background: var(--spotify-green);
+        }
+
+        .spotify-input {
+            width: 100%;
+            background: #000;
+            border: none;
+            border-radius: 100px;
+            padding: 1.5rem 2.5rem;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            outline: none;
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Artist Bloom Effect */
+        #bloom-area {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: var(--transition);
+            display: none;
+            margin-bottom: 2rem;
+        }
+
+        #bloom-area.active {
+            opacity: 1;
+            transform: scale(1);
+            display: block;
+            animation: bloomPop 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        @keyframes bloomPop {
+            from {
+                filter: blur(20px);
+                transform: scale(0.8);
+            }
+
+            to {
+                filter: blur(0);
+                transform: scale(1);
+            }
+        }
+
+        .artist-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .artist-img {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 2px solid var(--spotify-green);
+            box-shadow: 0 0 50px rgba(29, 185, 84, 0.3);
+            object-fit: cover;
+        }
+
+        .artist-name {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Conversational Logic */
+        .sentence {
+            font-size: 1.7rem;
+            line-height: 2.2;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+        }
+
+        .blank {
+            background: rgba(255, 255, 255, 0.02);
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--spotify-green);
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .blank:hover,
+        .blank:focus {
+            background: rgba(29, 185, 84, 0.08);
+            border-bottom-color: var(--spotify-green);
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.1);
+        }
+
+        /* Live Stacking Logic */
+        .stack-tile {
+            background: rgba(29, 185, 84, 0.02);
+            border: 1px solid rgba(29, 185, 84, 0.1);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-top: 2rem;
+            border-left: 2px solid var(--spotify-green);
+        }
+
+        .stack-content {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #ccc;
+            line-height: 1.8;
+            letter-spacing: 0.4px;
+        }
+
+        .stack-content strong {
+            color: var(--spotify-green);
+            text-shadow: 0 0 10px rgba(29, 185, 84, 0.3);
+        }
+
+        /* Integrated Schedule */
+        .tabs-integrated {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-bottom: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .s-tab {
+            padding: 1.25rem;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .s-tab:last-child {
+            border-right: none;
+        }
+
+        .s-tab.active {
+            background: rgba(29, 185, 84, 0.1);
+            color: #fff;
+            box-shadow: inset 0 -2px 0 var(--spotify-green);
+        }
+
+        .row-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 50px;
+            gap: 10px;
+        }
+
+        .row-input input {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            color: #fff;
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono';
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .row-input input:focus {
+            border-color: rgba(29, 185, 84, 0.3);
+            background: rgba(29, 185, 84, 0.05);
+        }
+
+        .add-btn {
+            width: 100%;
+            height: 100%;
+            background: rgba(29, 185, 84, 0.1);
+            border: 1px solid rgba(29, 185, 84, 0.2);
+            color: var(--spotify-green);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .add-btn:hover {
+            background: var(--spotify-green);
+            color: #000;
+        }
+
+        /* Optimization Grid - FIXED 3 COLUMN STRUCTURE */
+        .imp-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .imp-row {
+            display: grid;
+            grid-template-columns: 2fr 80px 3fr;
+            /* Fixed 3-column structure */
+            gap: 12px;
+            align-items: center;
+        }
+
+        select.imp-select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            color: #fff;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .toggle-box {
+            display: flex;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .t-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.65rem;
+            cursor: pointer;
+            color: var(--text-dim);
+            transition: var(--transition);
+        }
+
+        .t-btn.active {
+            background: var(--spotify-green);
+            color: #000;
+        }
+
+        .explain-box {
+            visibility: hidden;
+            /* Structurally there, but hidden */
+            opacity: 0;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px dashed rgba(29, 185, 84, 0.3);
+            border-radius: 10px;
+            padding: 12px 15px;
+            color: #fff;
+            outline: none;
+            font-size: 0.8rem;
+            font-family: 'JetBrains Mono';
+            transition: var(--transition);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .imp-row.expanded .explain-box {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Subtle Engagement Glow */
+        .glow-hint {
+            position: relative;
+            animation: pulseGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                box-shadow: 0 0 0px transparent;
+                border-color: var(--border);
+            }
+
+            100% {
+                box-shadow: 0 0 15px rgba(29, 185, 84, 0.15);
+                border-color: rgba(29, 185, 84, 0.3);
+            }
+        }
+    </style>
+    /* Master Payload Button */
+    .go-master {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    color: var(--spotify-green);
+    border-radius: 12px;
+    padding: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 3rem;
+    animation: pulseGlow 4s ease-in-out infinite alternate;
+    }
+
+    .go-master:hover {
+    background: rgba(29, 185, 84, 0.1);
+    border-color: var(--spotify-green);
+    box-shadow: 0 0 40px rgba(29, 185, 84, 0.2);
+    transform: translateY(-2px);
+    }
+
+    /* Results Display */
+    #payload-results {
+    display: none;
+    margin-top: 4rem;
+    width: 100%;
+    animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    text-align: left;
+    margin: 2rem 0;
+    font-family: 'JetBrains Mono';
+    font-size: 0.8rem;
+    }
+
+    .result-item {
+    background: rgba(255,255,255,0.02);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    }
+
+    .result-label {
+    color: var(--spotify-green);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); }
+    }
+    </style>
+</head>
+
+<body>
+    <div class="laser-line"></div>
+
+    <div class="container">
+        <!-- IDENTITY -->
+        <header class="header">
+            <h1>Discovery</h1>
+            <div class="spotify-wrap">
+                <input type="text" class="spotify-input" id="spotify-link" placeholder="PASTE SPOTIFY ARTIST LINK">
+            </div>
+            <button class="example-trigger" onclick="fillExample()">Fill With Strategic Example</button>
+        </header>
+
+        <section id="bloom-area">
+            <div class="artist-hero">
+                <img id="artist-img" class="artist-img" src="" alt="">
+                <div id="artist-name" class="artist-name">Artist Name</div>
+            </div>
+        </section>
+
+        <!-- MASTER INTELLIGENCE ENGINE -->
+        <section id="engine-area" style="display: block;">
+            <div class="context-header">Build Your Profile For Me!</div>
+            <div class="master-card">
+                <div class="sentence" id="questionnaire">
+                    I am <span id="stack-name" style="color: var(--spotify-green); font-weight: 800;">[ARTIST]</span>,
+                    and I am building a strategy to release
+                    <span id="songs-container">
+                        <select class="blank" id="q-songs" onchange="handleSongsChange()">
+                            <option value="1 song">1 song</option>
+                            <option value="2 songs">2 songs</option>
+                            <option value="3 songs">3 songs</option>
+                            <option value="a full project">a full project</option>
+                            <option value="custom">custom...</option>
+                        </select>
+                    </span>
+                    within the next
+                    <select class="blank" id="q-time" onchange="updateStack()">
+                        <option value="30 days">30 days</option>
+                        <option value="90 days">90 days</option>
+                        <option value="6 months">6 months</option>
+                        <option value="1 year">1 year</option>
+                    </select>.
+                    My core sonic vibration is defined as
+                    <input type="text" class="blank" id="q-genre" placeholder="GENRE" style="width: 140px;"
+                        oninput="updateStack()">.
+                </div>
+
+                <!-- LIVE STACKING TILE -->
+                <div class="stack-tile">
+                    <div class="stack-content" id="stack-display">
+                        // AWAITING IDENTITY INITIALIZATION...
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTEGRATED SCHEDULE TILE -->
+            <div class="context-header">How many Collabs, Shows and such, are you planning this year?</div>
+            <div class="master-card" style="padding: 0; border: 1px solid rgba(29, 185, 84, 0.1);">
+                <div class="tabs-integrated">
+                    <div class="s-tab active" data-type="song">Release</div>
+                    <div class="s-tab" data-type="show">Live Show</div>
+                    <div class="s-tab" data-type="digital">Digital</div>
+                    <div class="s-tab" data-type="creative">Creative</div>
+                </div>
+
+                <div style="padding: 2.5rem;">
+                    <div
+                        style="display: grid; grid-template-columns: 1fr 1fr 1fr 50px; gap: 10px; margin-bottom: 10px; opacity: 0.5; font-size: 0.6rem; color: var(--spotify-green); font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">
+                        <div>Collaborator</div>
+                        <div>Track Name</div>
+                        <div>Date</div>
+                        <div></div>
+                    </div>
+                    <div class="row-grid" id="row-container">
+                        <!-- Dynamic Rows -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPTIMIZATION GRID -->
+            <div class="context-header">Optimization Focus Areas</div>
+            <div class="master-card">
+                <div
+                    style="display: grid; grid-template-columns: 2fr 80px 3fr; gap: 12px; margin-bottom: 15px; opacity: 0.5; font-size: 0.6rem; color: var(--spotify-green); font-weight: 800; letter-spacing: 2px; text-transform: uppercase;">
+                    <div>Target Focus</div>
+                    <div style="text-align: center;">Y / N</div>
+                    <div>Strategy Logic</div>
+                </div>
+                <div class="imp-grid" id="imp-container">
+                    <!-- 5 Rows -->
+                </div>
+            </div>
+
+            <button class="go-master" onclick="generatePayload()">Generate Verified Payload</button>
+        </section>
+
+        <!-- RESULTS -->
+        <section id="payload-results">
+            <div class="master-card" style="border: 1px solid var(--spotify-green); padding: 5rem; text-align: center;">
+                <div
+                    style="font-family: 'JetBrains Mono'; color: var(--spotify-green); font-size: 0.7rem; letter-spacing: 5px; margin-bottom: 2rem;">
+                    MASTER VERIFICATION COMPLETE
+                </div>
+
+                <div id="final-header"
+                    style="font-size: 3rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 1rem;">
+                    Artist Verified.
+                </div>
+
+                <div class="result-grid" id="payload-grid">
+                    <!-- Dynamic Data Items -->
+                </div>
+
+                <div id="final-strategy" style="font-size: 1.2rem; line-height: 1.6; color: #ccc; margin-top: 2rem;">
+                    <!-- Final Build -->
+                </div>
+
+                <div id="category-report"
+                    style="margin-top: 3rem; text-align: left; background: rgba(0,0,0,0.3); border-radius: 20px; padding: 2.5rem; border: 1px solid var(--border);">
+                    <!-- Category Breakdowns -->
+                </div>
+
+                <button class="go-master" style="background: rgba(255,255,255,0.05); color: #fff; margin-top: 4rem;"
+                    onclick="location.reload()">
+                    New Intelligence Session
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const state = {
+            name: 'Artist',
+            songs: '1 song',
+            time: '30 days',
+            genre: 'GENRE',
+            schedule: {
+                song: [],
+                show: [],
+                digital: [],
+                creative: []
+            },
+            improvements: []
+        };
+
+        // 1. Spotify Discovery
+        document.getElementById('spotify-link').addEventListener('input', (e) => {
+            if (e.target.value.includes('spotify.com/artist/')) {
+                setTimeout(() => {
+                    state.name = "Rich Furniss";
+                    document.getElementById('artist-img').src = "https://image-cdn-ak.spotifycdn.com/image/ab676161000051744255dda70ca85c44b568ce26";
+                    document.getElementById('artist-name').textContent = state.name;
+                    document.getElementById('stack-name').textContent = state.name;
+                    document.getElementById('bloom-area').classList.add('active');
+                    updateStack();
+                }, 600);
+            }
+        });
+
+        // 2. Real-time Stacking Engine
+        function handleSongsChange() {
+            const select = document.getElementById('q-songs');
+            if (select.value === 'custom') {
+                const container = document.getElementById('songs-container');
+                container.innerHTML = `<input type="text" class="blank" id="q-songs" placeholder="HOW MANY?" style="width: 120px;" oninput="updateStack()">`;
+                document.getElementById('q-songs').focus();
+            }
+            updateStack();
+        }
+
+        function updateStack() {
+            const songsEl = document.getElementById('q-songs');
+            state.songs = songsEl.value || songsEl.placeholder || '...';
+            state.time = document.getElementById('q-time').value;
+            state.genre = document.getElementById('q-genre').value || '[GENRE]';
+
+            const display = document.getElementById('stack-display');
+            if (state.name === 'Artist') {
+                display.innerHTML = `// AWAITING IDENTITY INITIALIZATION...`;
+                return;
+            }
+
+            display.innerHTML = `
+                I am <strong>${state.name}</strong>, and I am actively building a high-impact strategy to release 
+                <strong>${state.songs}</strong> within a focused <strong>${state.time}</strong> window. 
+                The core aesthetic direction for this cycle is identified as <strong>${state.genre}</strong>. 
+                As I refine my mission, this strategy will stack with my scheduled releases and optimization targets.
+            `;
+        }
+
+        // 3. Integrated Schedule
+        const schedTabs = document.querySelectorAll('.s-tab');
+        const rowContainer = document.getElementById('row-container');
+        const config = {
+            'song': { f1: 'Collaborator', f2: 'Track Name', f3: 'type="date"' },
+            'show': { f1: 'Venue', f2: 'City', f3: 'type="date"' },
+            'digital': { f1: 'Platform', f2: 'Event Goal', f3: 'type="datetime-local"' },
+            'creative': { f1: 'Asset Type', f2: 'Context', f3: 'type="date"' }
+        };
+        let activeTab = 'song';
+
+        schedTabs.forEach(t => {
+            t.addEventListener('click', () => {
+                schedTabs.forEach(tab => tab.classList.remove('active'));
+                t.classList.add('active');
+                activeTab = t.getAttribute('data-type');
+                initSchedule();
+            });
+        });
+
+        function initSchedule() {
+            // Save current fields before clearing
+            saveCurrentTab();
+
+            rowContainer.innerHTML = '';
+            const data = state.schedule[activeTab];
+
+            if (data.length === 0) {
+                for (let i = 0; i < 5; i++) {
+                    addSchedRow();
+                }
+            } else {
+                data.forEach(item => {
+                    addSchedRow(item.f1, item.f2, item.f3);
+                });
+                // Ensure at least 5 rows if data is small
+                while (rowContainer.children.length < 5) addSchedRow();
+            }
+        }
+
+        function saveCurrentTab() {
+            const rows = rowContainer.querySelectorAll('.row-input');
+            const data = [];
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                if (inputs[0].value || inputs[1].value || inputs[2].value) {
+                    data.push({
+                        f1: inputs[0].value,
+                        f2: inputs[1].value,
+                        f3: inputs[2].value
+                    });
+                }
+            });
+            state.schedule[activeTab] = data;
+        }
+
+        function fillExample() {
+            state.name = "CHAD ELITE";
+            state.genre = "EMERALD SOUL";
+
+            // Bloom
+            document.getElementById('artist-name').innerText = state.name;
+            document.getElementById('artist-img').src = "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=200&h=200&auto=format&fit=crop";
+            document.getElementById('bloom-area').classList.add('active');
+            document.getElementById('stack-name').innerText = state.name;
+
+            // Questionnaire
+            document.getElementById('q-songs').value = "3 songs";
+            document.getElementById('q-time').value = "90 days";
+            document.getElementById('q-genre').value = state.genre;
+
+            // Schedule (Add some data)
+            state.schedule.song = [{ f1: 'Antigravity', f2: 'Emerald Horizon', f3: '2026-05-20' }];
+            state.schedule.show = [{ f1: 'The Brooklyn Mirage', f2: 'New York', f3: '2026-06-15' }];
+            state.schedule.digital = [{ f1: 'YouTube Live', f2: 'EP Stream Release', f3: '2026-05-21T20:00' }];
+            state.schedule.creative = [{ f1: 'Music Video', f2: 'Main Single', f3: '2026-05-18' }];
+
+            initSchedule(); // This will render the active 'song' tab first
+
+            // Optimization (Flip some Ys)
+            initImp();
+            const rows = document.querySelectorAll('.imp-row');
+            rows[0].querySelector('.t-btn[onclick*="\'y\'"]').click();
+            rows[0].querySelector('.explain-box').value = "Scaling regional tour to 15 cities with high-density production.";
+
+            rows[2].querySelector('.t-btn[onclick*="\'y\'"]').click();
+            rows[2].querySelector('.explain-box').value = "Deploying AR filters on TikTok to sync with the single release.";
+
+            updateStack();
+        }
+
+        function addSchedRow(v1 = '', v2 = '', v3 = '') {
+            const row = document.createElement('div');
+            row.className = 'row-input';
+            const c = config[activeTab];
+            row.innerHTML = `
+                <input type="text" placeholder="${c.f1}" value="${v1}">
+                <input type="text" placeholder="${c.f2}" value="${v2}">
+                <input ${c.f3} value="${v3}">
+                <div class="add-btn" onclick="addSchedRow()">+</div>
+            `;
+            rowContainer.appendChild(row);
+        }
+
+        // 4. Optimization Grid
+        const impOptions = [
+            "Select improvement focus...",
+            "Expand Live Presence (More Shows)",
+            "Sonic Evolution / Sound Pivot",
+            "Unified Brand Identity (Digital)",
+            "Video Content Velocity (Quantity)",
+            "Premium Video Production (Quality)",
+            "Routine & Consistency Plan"
+        ];
+
+        function initImp() {
+            const container = document.getElementById('imp-container');
+            container.innerHTML = '';
+
+            // Pre-select 5 different strategies to encourage "Yes"
+            for (let i = 0; i < 5; i++) {
+                const row = document.createElement('div');
+                row.className = 'imp-row';
+                const selectedIdx = (i % (impOptions.length - 1)) + 1;
+
+                row.innerHTML = `
+                    <select class="imp-select glow-hint">
+                        ${impOptions.map((o, idx) => `<option value="${o}" ${idx === selectedIdx ? 'selected' : ''}>${o}</option>`).join('')}
+                    </select>
+                    <div class="toggle-box">
+                        <div class="t-btn" onclick="toggle(this, 'n')">N</div>
+                        <div class="t-btn" onclick="toggle(this, 'y')">Y</div>
+                    </div>
+                    <input type="text" class="explain-box" placeholder="Strategy Logic Deep-Dive...">
+                `;
+                container.appendChild(row);
+            }
+        }
+
+        function toggle(el, val) {
+            const row = el.closest('.imp-row');
+            el.parentElement.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            if (val === 'y') row.classList.add('expanded');
+            else row.classList.remove('expanded');
+        }
+
+        // 5. Build Payload
+        function generatePayload() {
+            saveCurrentTab(); // Last save
+            document.getElementById('engine-area').style.display = 'none';
+            document.getElementById('payload-results').style.display = 'block';
+
+            const grid = document.getElementById('payload-grid');
+            grid.innerHTML = '';
+
+            const items = [
+                { label: 'Artist Identity', value: state.name },
+                { label: 'Release Cycle', value: state.songs },
+                { label: 'Strategic Window', value: state.time },
+                { label: 'Sonic Filter', value: state.genre }
+            ];
+
+            // Count total events
+            const totalEvents = Object.values(state.schedule).flat().length;
+            items.push({ label: 'Scheduled Intel', value: `${totalEvents} Active Events` });
+
+            items.forEach(item => {
+                grid.innerHTML += `
+                    <div class="result-item">
+                        <div class="result-label">${item.label}</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #fff;">${item.value}</div>
+                    </div>
+                `;
+            });
+
+            // Category Report
+            const report = document.getElementById('category-report');
+            report.innerHTML = '<div style="font-size: 0.7rem; color: var(--spotify-green); font-weight: 800; letter-spacing: 3px; margin-bottom: 2rem; text-transform: uppercase;">Strategic Intelligence Breakdown</div>';
+
+            const cats = { song: 'Product Releases', show: 'Live Intelligence', digital: 'Digital Pulse', creative: 'Asset Infrastructure' };
+
+            Object.entries(state.schedule).forEach(([id, data]) => {
+                if (data.length > 0) {
+                    report.innerHTML += `
+                        <div style="margin-bottom: 2rem;">
+                            <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 1rem; color: #666;">${cats[id]}</div>
+                            ${data.map(item => `
+                                <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono'; font-size: 0.75rem; border-bottom: 1px dashed rgba(255,255,255,0.05); padding: 8px 0;">
+                                    <span style="color: #fff;">${item.f1} // ${item.f2}</span>
+                                    <span style="color: var(--spotify-green);">${item.f3}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('final-strategy').innerHTML = `
+                Intelligence payload locked for <strong>${state.name}</strong>. 
+                Deploying a <strong>${state.genre}</strong> campaign infrastructure across <strong>${state.songs}</strong> 
+                targeting the <strong>${state.time}</strong> apex.
+            `;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        initImp();
+        addSchedRow();
+        updateStack();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack Cards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&family=Space+Grotesk:wght@300;500;700&family=Bebas+Neue&family=Outfit:wght@200;400;700&family=Playfair+Display:wght@700;900&family=Monoton&family=Righteous&family=Audiowide&family=Press+Start+2P&family=Fredoka+One&family=Bungee&family=Permanent+Marker&family=Staatliches&family=Rubik+Mono+One&family=Ultra&family=Alfa+Slab+One&family=Faster+One&family=Bangers&family=Cinzel:wght@700;900&family=Lobster&family=Pacifico&family=Anton&family=Titan+One&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #a855f7;
+            --secondary: #ec4899;
+            --tertiary: #d946ef;
+            --glow: rgba(168, 85, 247, 0.5);
+            --bg1: #1a0a2e;
+            --bg2: #16213e;
+            --bg3: #0f0f23;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+            font-family: 'Outfit', sans-serif;
+            padding: 20px;
+            padding-top: 80px;
+        }
+
+        /* Clean mode - hide all UI */
+        body.clean .controls,
+        body.clean .drop-zone,
+        body.clean .card-ui,
+        body.clean .title-ui,
+        body.clean .title-nav {
+            display: none !important;
+        }
+
+        body.clean {
+            padding-top: 20px;
+        }
+
+        /* Control Panel */
+        .controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 10px 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .controls label {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            margin-right: 5px;
+        }
+
+        .controls button {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .controls button:hover,
+        .controls button.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .controls input[type="range"] {
+            width: 60px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+
+        .controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .divider {
+            width: 1px;
+            height: 30px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Content Stack */
+        .stack {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Title Block */
+        .title-block {
+            text-align: center;
+            position: relative;
+        }
+
+        .title-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4rem;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            padding: 20px;
+            outline: none;
+            text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary), 0 0 40px var(--secondary);
+            cursor: default;
+        }
+
+        .title-text[contenteditable="true"] {
+            cursor: text;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        .title-text:empty::before {
+            content: 'Click to edit...';
+            opacity: 0.3;
+        }
+
+        .title-ui {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.8);
+            border-radius: 10px;
+        }
+
+        .title-ui.hidden {
+            display: none;
+        }
+
+        .title-nav {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .title-nav button {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+
+        .title-nav button:hover {
+            background: var(--primary);
+        }
+
+        .title-ui button {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+
+        .title-ui button:hover {
+            background: var(--primary);
+        }
+
+        .title-ui button.active {
+            background: var(--primary);
+        }
+
+        .font-row {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            padding-top: 10px;
+            margin-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+
+        /* Card */
+        .card {
+            background: rgba(255,255,255,0.02);
+            border: 4px solid white;
+            border-radius: 16px;
+            padding: 15px;
+            position: relative;
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 19px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--tertiary), var(--primary));
+            background-size: 400% 400%;
+            animation: glow 6s ease infinite;
+            z-index: -1;
+            opacity: 0.7;
+        }
+
+        @keyframes glow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .card.holo::before {
+            background: linear-gradient(135deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff, #ff0000);
+            background-size: 800% 800%;
+            opacity: 1;
+            animation: glow 3s linear infinite;
+        }
+
+        .card.minimal {
+            box-shadow: none;
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .card.minimal::before {
+            display: none;
+        }
+
+        .image-wrap {
+            width: 100%;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+        }
+
+        .image-wrap:active {
+            cursor: grabbing;
+        }
+
+        .image-wrap img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+            transition: transform 0.1s;
+        }
+
+        .card-ui {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+
+        .card-ui span {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.7rem;
+        }
+
+        .card-ui input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+
+        .card-ui input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .card-ui button {
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.65rem;
+            transition: all 0.2s;
+        }
+
+        .card-ui button:hover {
+            background: var(--primary);
+        }
+
+        .card-ui button.del {
+            color: #f87171;
+        }
+
+        .card-ui button.del:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary);
+            background: rgba(168,85,247,0.1);
+        }
+
+        .drop-zone p {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .drop-zone .plus {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .drop-btns {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .drop-btns button {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .drop-btns button:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Themes */
+        body.cyber { --primary: #00f5ff; --secondary: #ff00ff; --tertiary: #00ff88; --glow: rgba(0,245,255,0.5); }
+        body.sunset { --primary: #ff6b35; --secondary: #f7c59f; --tertiary: #ff8c42; --glow: rgba(255,107,53,0.5); }
+        body.ocean { --primary: #0077b6; --secondary: #00b4d8; --tertiary: #90e0ef; --glow: rgba(0,119,182,0.5); }
+        body.matrix { --primary: #00ff00; --secondary: #00cc00; --tertiary: #00ff66; --glow: rgba(0,255,0,0.5); --bg1: #000; --bg2: #001100; --bg3: #000; }
+        body.gold { --primary: #ffd700; --secondary: #ffb347; --tertiary: #ff8c00; --glow: rgba(255,215,0,0.5); }
+        body.blood { --primary: #8b0000; --secondary: #dc143c; --tertiary: #ff0000; --glow: rgba(139,0,0,0.5); --bg1: #1a0000; --bg2: #0d0000; --bg3: #000; }
+        body.mono { --primary: #888; --secondary: #aaa; --tertiary: #666; --glow: rgba(136,136,136,0.3); --bg1: #111; --bg2: #0a0a0a; --bg3: #000; }
+        body.mint { --primary: #00d9a0; --secondary: #00f5d4; --tertiary: #72efdd; --glow: rgba(0,217,160,0.5); }
+        body.rose { --primary: #ff6b9d; --secondary: #c44569; --tertiary: #ff8dc7; --glow: rgba(255,107,157,0.5); }
+    </style>
+</head>
+
+<body>
+    <!-- Controls -->
+    <div class="controls">
+        <label>Theme</label>
+        <button class="theme active" data-theme="">Purple</button>
+        <button class="theme" data-theme="cyber">Cyber</button>
+        <button class="theme" data-theme="sunset">Sunset</button>
+        <button class="theme" data-theme="ocean">Ocean</button>
+        <button class="theme" data-theme="matrix">Matrix</button>
+        <button class="theme" data-theme="gold">Gold</button>
+        <button class="theme" data-theme="blood">Blood</button>
+        <button class="theme" data-theme="mono">Mono</button>
+        <button class="theme" data-theme="mint">Mint</button>
+        <button class="theme" data-theme="rose">Rose</button>
+        <div class="divider"></div>
+        <label>Gap</label>
+        <input type="range" id="gapCtrl" min="10" max="80" value="30">
+        <div class="divider"></div>
+        <button id="cleanBtn">Clean Mode [C]</button>
+    </div>
+
+    <!-- Stack -->
+    <div class="stack" id="stack">
+        <div class="drop-zone" id="dropZone">
+            <div class="plus">+</div>
+            <p>Drop images or click to upload</p>
+            <input type="file" id="fileInput" multiple accept="image/*" hidden>
+            <div class="drop-btns">
+                <button id="addTitle">+ Title</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const stack = document.getElementById('stack');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        const fonts = [
+            { name: 'Bebas', family: "'Bebas Neue'" },
+            { name: 'Orbitron', family: "'Orbitron'" },
+            { name: 'Anton', family: "'Anton'" },
+            { name: 'Bungee', family: "'Bungee'" },
+            { name: 'Bangers', family: "'Bangers'" },
+            { name: 'Audiowide', family: "'Audiowide'" },
+            { name: 'Monoton', family: "'Monoton'" },
+            { name: 'Lobster', family: "'Lobster'" },
+            { name: 'Pacifico', family: "'Pacifico'" },
+            { name: 'Cinzel', family: "'Cinzel'" },
+            { name: 'Outfit', family: "'Outfit'" },
+            { name: 'Space', family: "'Space Grotesk'" }
+        ];
+
+        // Theme switching
+        document.querySelectorAll('.theme').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.theme').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.body.className = btn.dataset.theme;
+            });
+        });
+
+        // Gap control
+        document.getElementById('gapCtrl').addEventListener('input', e => {
+            stack.style.gap = e.target.value + 'px';
+        });
+
+        // Clean mode
+        document.getElementById('cleanBtn').addEventListener('click', function() {
+            this.classList.toggle('active');
+            document.body.classList.toggle('clean');
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.target.isContentEditable) return;
+            if (e.key === 'c' || e.key === 'C') {
+                document.getElementById('cleanBtn').click();
+            }
+        });
+
+        // Drop zone
+        dropZone.addEventListener('click', e => {
+            if (e.target.closest('button')) return;
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.background = 'rgba(168,85,247,0.1)';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '';
+            dropZone.style.background = '';
+        });
+
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.style.borderColor = '';
+            dropZone.style.background = '';
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) createCard(file);
+            });
+        }
+
+        // Add title button
+        document.getElementById('addTitle').addEventListener('click', e => {
+            e.stopPropagation();
+            createTitle();
+        });
+
+        // Create title block
+        function createTitle(text = 'YOUR TITLE') {
+            const block = document.createElement('div');
+            block.className = 'title-block';
+            block.innerHTML = `
+                <div class="title-text">${text}</div>
+                <div class="title-nav">
+                    <button data-move="up">▲</button>
+                    <button data-move="down">▼</button>
+                    <button class="toggle-tools">Tools</button>
+                </div>
+                <div class="title-ui hidden">
+                    <button data-size="bigger">A+</button>
+                    <button data-size="smaller">A-</button>
+                    <button class="del" data-action="delete">Delete</button>
+                    <div class="font-row"></div>
+                </div>
+            `;
+
+            const fontRow = block.querySelector('.font-row');
+            fonts.forEach((f, i) => {
+                const btn = document.createElement('button');
+                btn.textContent = f.name;
+                btn.style.fontFamily = f.family;
+                btn.dataset.font = f.family;
+                if (i === 0) btn.classList.add('active');
+                fontRow.appendChild(btn);
+            });
+
+            const titleText = block.querySelector('.title-text');
+            const titleUI = block.querySelector('.title-ui');
+            const toggleBtn = block.querySelector('.toggle-tools');
+
+            // Toggle tools button
+            toggleBtn.addEventListener('click', () => {
+                titleUI.classList.toggle('hidden');
+                toggleBtn.textContent = titleUI.classList.contains('hidden') ? 'Tools' : 'Hide';
+            });
+
+            // Double-click to edit
+            titleText.addEventListener('dblclick', () => {
+                titleText.contentEditable = 'true';
+                titleText.focus();
+                document.execCommand('selectAll', false, null);
+            });
+
+            // Enter key = exit edit + clean mode
+            titleText.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    titleText.contentEditable = 'false';
+                    titleText.blur();
+                    document.body.classList.add('clean');
+                    document.getElementById('cleanBtn').classList.add('active');
+                }
+            });
+
+            // Click outside = exit edit
+            titleText.addEventListener('blur', () => {
+                titleText.contentEditable = 'false';
+            });
+
+            // Size buttons
+            block.querySelectorAll('[data-size]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const size = parseFloat(getComputedStyle(titleText).fontSize);
+                    titleText.style.fontSize = (btn.dataset.size === 'bigger' ? size * 1.15 : size * 0.85) + 'px';
+                });
+            });
+
+            // Move buttons
+            block.querySelectorAll('[data-move]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.move === 'up') {
+                        const prev = block.previousElementSibling;
+                        if (prev && !prev.classList.contains('drop-zone')) {
+                            stack.insertBefore(block, prev);
+                        }
+                    } else {
+                        const next = block.nextElementSibling;
+                        if (next && !next.classList.contains('drop-zone')) {
+                            stack.insertBefore(next, block);
+                        }
+                    }
+                });
+            });
+
+            // Delete
+            block.querySelector('[data-action="delete"]').addEventListener('click', () => block.remove());
+
+            // Font buttons
+            fontRow.addEventListener('click', e => {
+                if (e.target.dataset.font) {
+                    fontRow.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    titleText.style.fontFamily = e.target.dataset.font;
+                }
+            });
+
+            stack.insertBefore(block, dropZone);
+        }
+
+        // Create card
+        function createCard(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="image-wrap">
+                        <img src="${e.target.result}" draggable="false">
+                    </div>
+                    <div class="card-ui">
+                        <span>Zoom</span>
+                        <input type="range" class="zoom" min="1" max="4" step="0.1" value="1">
+                        <span class="zoom-val">100%</span>
+                        <button data-style="holo">Holo</button>
+                        <button data-style="minimal">Minimal</button>
+                        <button data-move="up">▲</button>
+                        <button data-move="down">▼</button>
+                        <button class="del" data-action="delete">✕</button>
+                    </div>
+                `;
+
+                const wrap = card.querySelector('.image-wrap');
+                const img = card.querySelector('img');
+                const zoomRange = card.querySelector('.zoom');
+                const zoomVal = card.querySelector('.zoom-val');
+
+                let zoom = 1, panX = 0, panY = 0;
+                let dragging = false, startX, startY, startPanX, startPanY;
+
+                function updateImage() {
+                    img.style.transform = `scale(${zoom}) translate(${panX}px, ${panY}px)`;
+                }
+
+                zoomRange.addEventListener('input', () => {
+                    zoom = parseFloat(zoomRange.value);
+                    zoomVal.textContent = Math.round(zoom * 100) + '%';
+                    updateImage();
+                });
+
+                wrap.addEventListener('mousedown', e => {
+                    if (zoom > 1) {
+                        dragging = true;
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        startPanX = panX;
+                        startPanY = panY;
+                    }
+                });
+
+                document.addEventListener('mousemove', e => {
+                    if (dragging) {
+                        panX = startPanX + (e.clientX - startX) / zoom;
+                        panY = startPanY + (e.clientY - startY) / zoom;
+                        updateImage();
+                    }
+                });
+
+                document.addEventListener('mouseup', () => dragging = false);
+
+                wrap.addEventListener('wheel', e => {
+                    e.preventDefault();
+                    zoom = Math.max(1, Math.min(4, zoom + (e.deltaY > 0 ? -0.2 : 0.2)));
+                    zoomRange.value = zoom;
+                    zoomVal.textContent = Math.round(zoom * 100) + '%';
+                    updateImage();
+                }, { passive: false });
+
+                // Style buttons
+                card.querySelectorAll('[data-style]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        card.classList.remove('holo', 'minimal');
+                        card.classList.toggle(btn.dataset.style);
+                    });
+                });
+
+                // Move buttons
+                card.querySelectorAll('[data-move]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (btn.dataset.move === 'up') {
+                            const prev = card.previousElementSibling;
+                            if (prev && !prev.classList.contains('drop-zone')) {
+                                stack.insertBefore(card, prev);
+                            }
+                        } else {
+                            const next = card.nextElementSibling;
+                            if (next && !next.classList.contains('drop-zone')) {
+                                stack.insertBefore(next, card);
+                            }
+                        }
+                    });
+                });
+
+                // Delete
+                card.querySelector('[data-action="delete"]').addEventListener('click', () => card.remove());
+
+                stack.insertBefore(card, dropZone);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Create initial title
+        createTitle('STACK CARDS');
+    </script>
+</body>
+
+</html>

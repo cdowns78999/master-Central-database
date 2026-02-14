@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEBULA XP | COMMAND STATION</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --void: #02010a;
+            --nebula: #4B4CED;
+            --plasma: #00F2FF;
+            --star-glow: #FF00DE;
+            --xp-gold: #FFCB05;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --font-main: 'Outfit', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--void);
+            color: #fff;
+            font-family: var(--font-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            transition: filter 0.1s;
+        }
+
+        /* 🌠 CINEMATIC SPACE BACKGROUND */
+        .space-engine {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a0b35 0%, var(--void) 100%);
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: twinkle var(--speed, 3s) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .nebula-cloud {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--nebula) 0%, transparent 70%);
+            filter: blur(100px);
+            opacity: 0.2;
+            animation: float 20s infinite alternate;
+        }
+
+        @keyframes float {
+            from {
+                transform: translate(-10%, -10%);
+            }
+
+            to {
+                transform: translate(10%, 10%);
+            }
+        }
+
+        /* 🛸 COMMAND INTERFACE */
+        .station-frame {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 25px;
+            gap: 20px;
+            transition: transform 0.1s;
+        }
+
+        .rank-sector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+        }
+
+        .rank-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .rank-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--nebula), var(--star-glow));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0 20px var(--nebula);
+            transform: rotate(-5deg);
+        }
+
+        .xp-bar-container {
+            width: 250px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .xp-fill {
+            height: 100%;
+            width: 45%;
+            background: linear-gradient(to right, var(--plasma), var(--nebula));
+            box-shadow: 0 0 10px var(--plasma);
+            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* 🔒 LOCK PROTOCOL */
+        .lock-protocol {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 8px 25px;
+            border-radius: 50px;
+            border: 2px solid var(--glass-border);
+            cursor: pointer;
+            transition: 0.4s;
+        }
+
+        .lock-protocol.armed {
+            background: rgba(0, 242, 255, 0.1);
+            border-color: var(--plasma);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #333;
+        }
+
+        .armed .dot {
+            background: var(--plasma);
+            box-shadow: 0 0 10px var(--plasma);
+            animation: blink 1s infinite;
+        }
+
+        /* 🛰️ MISSION SECTORS */
+        .mission-deck {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            overflow: hidden;
+        }
+
+        .sector-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sector-title {
+            font-family: var(--font-code);
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--plasma);
+            opacity: 0.6;
+            letter-spacing: 2px;
+        }
+
+        /* 💎 MISSION TILE */
+        .mission-tile {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 28px;
+            padding: 25px;
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mission-tile.focus-active {
+            border-color: var(--plasma);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 242, 255, 0.1);
+        }
+
+        .terminal-input {
+            font-family: var(--font-code);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px 18px;
+            color: var(--plasma);
+            outline: none;
+            width: 100%;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .btn-launch {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: var(--nebula);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-launch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(75, 76, 237, 0.5);
+        }
+
+        /* ⚡ SHOCK ANOMALY */
+        #anomaly-event {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(255, 0, 222, 0.1);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .shock-text {
+            font-family: var(--font-code);
+            font-size: 4rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 4px 4px var(--plasma), -4px -4px var(--star-glow);
+            animation: glitch 0.1s infinite;
+        }
+
+        @keyframes glitch {
+            0% {
+                transform: translate(0);
+            }
+
+            20% {
+                transform: translate(-10px, 5px) skew(10deg);
+            }
+
+            40% {
+                transform: translate(10px, -5px) scale(1.1);
+            }
+
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        .shake-ui {
+            animation: hard-shake 0.4s both;
+        }
+
+        @keyframes hard-shake {
+
+            10%,
+            90% {
+                transform: translate3d(-5px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-15px, 0, 0) scale(1.05);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(15px, 0, 0);
+            }
+        }
+
+        /* 🎡 CAROUSEL ELEMENTS */
+        .type-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+
+        .nav-arrow {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            opacity: 0.5;
+        }
+
+        .nav-arrow:hover {
+            opacity: 1;
+        }
+
+        .nav-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-dot.active {
+            background: var(--plasma);
+            box-shadow: 0 0 10px var(--plasma);
+        }
+
+        #hyperfocus-shroud {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.6s;
+            backdrop-filter: blur(15px);
+        }
+
+        body.hyperfocused #hyperfocus-shroud {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="space-engine">
+        <div class="nebula-cloud"></div>
+    </div>
+    <div id="hyperfocus-shroud"></div>
+    <div id="anomaly-event">
+        <div class="shock-text" id="anomaly-msg">BREACH</div>
+    </div>
+
+    <div class="station-frame" id="main-frame">
+        <header class="rank-sector">
+            <div class="rank-info">
+                <div class="rank-icon">🚀</div>
+                <div>
+                    <div style="font-size: 0.6rem; color: var(--plasma); font-weight: 800; letter-spacing: 2px;">
+                        COMMANDER STATUS</div>
+                    <div id="rank-name" style="font-size: 1.3rem; font-weight: 900;">VOYAGER LVL-1</div>
+                    <div class="xp-bar-container">
+                        <div id="xp-fill" class="xp-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="lock-btn" class="lock-protocol" onclick="ui.toggleHyperspace()">
+                <div class="dot"></div>
+                <div style="font-weight: 800; font-size: 0.8rem;">HYPERFOCUS PROTOCOL</div>
+            </div>
+        </header>
+
+        <main class="mission-deck">
+            <section class="sector-column">
+                <h3 class="sector-title">STREAM 01 :: DISCOVERY</h3>
+                <div id="deck-1"></div><button class="btn-launch" onclick="mission.start(1)">+ NEW MISSION</button>
+            </section>
+            <section class="sector-column">
+                <h3 class="sector-title">STREAM 02 :: JUMPSTART</h3>
+                <div id="deck-2"></div><button class="btn-launch" onclick="mission.start(2)">+ NEW MISSION</button>
+            </section>
+            <section class="sector-column">
+                <h3 class="sector-title">STREAM 03 :: ARCHIVE</h3>
+                <div id="deck-3"></div><button class="btn-launch" onclick="mission.start(3)">+ NEW MISSION</button>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const state = { missions: [], xp: 45, level: 1, isHyperspace: false };
+        const TILE_TYPES = [
+            { id: 'release', label: 'Release', icon: '🎵', color: 'var(--plasma)' },
+            { id: 'social', label: 'Social', icon: '📱', color: 'var(--star-glow)' },
+            { id: 'milestone', label: 'Goal', icon: '🏆', color: 'var(--xp-gold)' },
+            { id: 'task', label: 'Task', icon: '⚙️', color: '#FF4B4B' },
+            { id: 'decision', label: 'Choice', icon: '⚖️', color: '#9D50BB' },
+            { id: 'deliverable', label: 'Asset', icon: '📦', color: '#2ecc71' },
+            { id: 'predictor', label: 'Lab', icon: '🧪', color: 'var(--plasma)' }
+        ];
+
+        const mission = {
+            start(streamId) {
+                if (state.isHyperspace) return;
+                const id = Date.now();
+                state.missions.push({ id, streamId, status: 'wizard', step: -1, typeIndex: 0, data: { title: '', date: '', time: '', caption: '' } });
+                this.render();
+            },
+
+            updateType(id, dir) {
+                const m = state.missions.find(x => x.id === id);
+                if (m) { m.typeIndex = (m.typeIndex + dir + TILE_TYPES.length) % TILE_TYPES.length; this.render(); }
+            },
+
+            next(id) {
+                const m = state.missions.find(x => x.id === id);
+                if (m) {
+                    m.step++;
+                    if (m.step > 3) { m.status = 'baked'; this.triggerShock(); this.awardXP(25); }
+                    this.render();
+                }
+            },
+
+            edit(id) {
+                const m = state.missions.find(x => x.id === id);
+                if (m) { m.status = 'wizard'; m.step = 0; this.render(); }
+            },
+
+            delete(id) {
+                if (state.isHyperspace) return;
+                state.missions = state.missions.filter(x => x.id !== id);
+                this.render();
+            },
+
+            awardXP(pts) {
+                state.xp += pts;
+                if (state.xp >= 100) { state.level++; state.xp -= 100; document.getElementById('rank-name').innerText = `COMMANDER LVL-${state.level}`; }
+                document.getElementById('xp-fill').style.width = state.xp + '%';
+            },
+
+            triggerShock() {
+                const anomaly = document.getElementById('anomaly-event');
+                const frame = document.getElementById('main-frame');
+                anomaly.style.display = 'flex';
+                frame.classList.add('shake-ui');
+                document.body.style.filter = 'invert(1) hue-rotate(90deg)';
+                setTimeout(() => { document.body.style.filter = 'none'; anomaly.style.display = 'none'; frame.classList.remove('shake-ui'); }, 400);
+            },
+
+            render() {
+                for (let i = 1; i <= 3; i++) {
+                    const mount = document.getElementById(`deck-${i}`);
+                    mount.innerHTML = state.missions.filter(m => m.streamId === i).map(m => this.createCardUI(m)).join('');
+                }
+            },
+
+            createCardUI(m) {
+                if (m.status === 'wizard') {
+                    if (m.step === -1) {
+                        const type = TILE_TYPES[m.typeIndex];
+                        return `
+                            <div class="mission-tile focus-active">
+                                <div style="font-size: 0.6rem; color: var(--plasma); font-weight: 800; text-align:center;">CAROUSEL: SELECT DRIVE</div>
+                                <div class="type-nav">
+                                    <button class="nav-arrow" onclick="mission.updateType(${m.id},-1)">‹</button>
+                                    <div style="text-align:center;">
+                                        <div style="font-size:3rem; margin-bottom:10px;">${type.icon}</div>
+                                        <div style="font-weight:900; letter-spacing:2px;">${type.label.toUpperCase()}</div>
+                                    </div>
+                                    <button class="nav-arrow" onclick="mission.updateType(${m.id},1)">›</button>
+                                </div>
+                                <button class="btn-launch" style="width:100%;" onclick="mission.next(${m.id})">ENGAGE →</button>
+                            </div>
+                        `;
+                    } else {
+                        const steps = [{ label: 'TITLE', key: 'title', type: 'text' }, { label: 'DATE', key: 'date', type: 'date' }, { label: 'TIME', key: 'time', type: 'time' }, { label: 'BRIEF', key: 'caption', type: 'text' }];
+                        const curr = steps[m.step];
+                        return `
+                            <div class="mission-tile focus-active">
+                                <div style="font-size: 0.6rem; opacity:0.5; font-family:var(--font-code);">STEP 0${m.step + 1} :: FRACTURE</div>
+                                <div style="font-weight:800; font-size: 0.8rem; margin-top:10px; color:${TILE_TYPES[m.typeIndex].color};">${curr.label}</div>
+                                <input class="terminal-input" type="${curr.type}" onkeydown="if(event.key==='Enter') mission.next(${m.id})" onchange="mission.update(${m.id},'${curr.key}',this.value)" value="${m.data[curr.key]}" autofocus>
+                                <button class="btn-launch" style="width:100%; background:${TILE_TYPES[m.typeIndex].color}; color:#000;" onclick="mission.next(${m.id})">PROCEED →</button>
+                            </div>
+                        `;
+                    }
+                } else {
+                    const type = TILE_TYPES[m.typeIndex];
+                    return `
+                        <div class="mission-tile" style="margin-bottom:20px; border-left:4px solid ${type.color}">
+                            ${!state.isHyperspace ? `
+                                <div style="position:absolute; top:15px; right:15px; display:flex; gap:5px;">
+                                    <button onclick="mission.edit(${m.id})" style="background:none; border:none; color:white; opacity:0.3; cursor:pointer;">✎</button>
+                                    <button onclick="mission.delete(${m.id})" style="background:none; border:none; color:#FF4B4B; opacity:0.5; cursor:pointer;">✕</button>
+                                </div>
+                            ` : ''}
+                            <div style="font-size:0.6rem; color:${type.color}; font-weight:800; letter-spacing:2px;">${type.label.toUpperCase()} :: ONLINE</div>
+                            <div style="font-size:1.2rem; font-weight:900; margin-top:5px;">${m.data.title}</div>
+                            <div style="display:flex; gap:10px; margin-top:15px; font-size:0.7rem;">
+                                <div style="color:var(--plasma);">⏰ ${m.data.time}</div>
+                                <div style="opacity:0.5;">📅 ${m.data.date}</div>
+                            </div>
+                            ${state.isHyperspace ? `<button class="btn-launch" style="width:100%; border:1px solid ${type.color}; background:none; color:${type.color}" onclick="mission.awardXP(100); mission.delete(${m.id})">MISSION COMPLETE</button>` : ''}
+                        </div>
+                    `;
+                }
+            }
+        };
+
+        const ui = {
+            init() {
+                const engine = document.querySelector('.space-engine');
+                for (let i = 0; i < 150; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.top = Math.random() * 100 + '%';
+                    star.style.width = Math.random() * 3 + 'px';
+                    star.style.height = star.style.width;
+                    star.style.setProperty('--speed', Math.random() * 3 + 2 + 's');
+                    engine.appendChild(star);
+                }
+            },
+            toggleHyperspace() {
+                state.isHyperspace = !state.isHyperspace;
+                const btn = document.getElementById('lock-btn');
+                btn.classList.toggle('armed');
+                document.body.classList.toggle('hyperfocused');
+                mission.render();
+            }
+        };
+
+        window.onload = () => { ui.init(); mission.render(); };
+    </script>
+</body>
+
+</html>

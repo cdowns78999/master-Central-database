@@ -1,0 +1,22 @@
+const playlistData = [
+    { name: "Chill Vibes", link: "https://open.spotify.com/playlist/37i9dQZF1DX4WYpdgoIcn6", curator: "Spotify Editorial", tag: "" },
+    { name: "Beast Mode", link: "https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7AP", curator: "Spotify Editorial", tag: "" },
+    { name: "Peaceful Piano", link: "https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO", curator: "Spotify Editorial", tag: "" },
+    { name: "RapCaviar", link: "https://open.spotify.com/playlist/37i9dQZF1DX0XUsuxWHRQd", curator: "Spotify Editorial", tag: "" },
+    { name: "mint", link: "https://open.spotify.com/playlist/37i9dQZF1DX4dyzvuaRJ0n", curator: "Spotify Editorial", tag: "" },
+    { name: "Hot Country", link: "https://open.spotify.com/playlist/37i9dQZF1DX1lVhptIYRda", curator: "Spotify Editorial", tag: "" },
+    { name: "Today's Top Hits", link: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M", curator: "Spotify Editorial", tag: "" },
+    { name: "Discover Weekly", link: "https://open.spotify.com/playlist/37i9dQZF1EIYp2YdcFsxkj", curator: "Algorithmic", tag: "" },
+    { name: "Release Radar", link: "https://open.spotify.com/playlist/37i9dQZF1E4y2jBZadiMbl", curator: "Algorithmic", tag: "" },
+    { name: "Lo-Fi Beats", link: "https://open.spotify.com/playlist/37i9dQZF1DWWQRwui0ExPn", curator: "Spotify Editorial", tag: "" },
+    { name: "Indie Pop", link: "https://open.spotify.com/playlist/37i9dQZF1DWWEcRhUVtL8n", curator: "Spotify Editorial", tag: "" },
+    { name: "All Out 2010s", link: "https://open.spotify.com/playlist/37i9dQZF1DX5Ejj0EkURtP", curator: "Spotify Editorial", tag: "" },
+    { name: "Deep Focus", link: "https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ", curator: "Spotify Editorial", tag: "" },
+    { name: "Baila Reggaeton", link: "https://open.spotify.com/playlist/37i9dQZF1DX1nyztxtKl6E", curator: "Spotify Editorial", tag: "" },
+    { name: "Rock This", link: "https://open.spotify.com/playlist/37i9dQZF1DXcF6B6QPhFDv", curator: "Spotify Editorial", tag: "" },
+    { name: "Dance Hits", link: "https://open.spotify.com/playlist/37i9dQZF1DX0BcQWzuB7ZO", curator: "Spotify Editorial", tag: "" },
+    { name: "Soft Pop Hits", link: "https://open.spotify.com/playlist/37i9dQZF1DX3YSRoSdA634", curator: "Spotify Editorial", tag: "" },
+    { name: "Jazz Vibes", link: "https://open.spotify.com/playlist/37i9dQZF1DX0SM0LYsmbMT", curator: "Spotify Editorial", tag: "" },
+    { name: "Bedroom Pop", link: "https://open.spotify.com/playlist/37i9dQZF1DXcxvFzl58uP7", curator: "Spotify Editorial", tag: "" },
+    { name: "Pollen", link: "https://open.spotify.com/playlist/37i9dQZF1DWWBHeXOYZf74", curator: "Spotify Editorial", tag: "" }
+];

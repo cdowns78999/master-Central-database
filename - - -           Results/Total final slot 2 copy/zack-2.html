@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sims 4 - Advanced Node Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --s4-white: #ffffff;
+            --s4-gray: #f2f2f2;
+            --s4-blue: #35C6EB;
+            --s4-dark-blue: #2594a4;
+            --s4-shadow: rgba(0, 0, 0, 0.12);
+            --node-dia: 120px;
+            --curve-offset: -50px;
+            --transition: 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--s4-gray);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(53, 198, 235, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(78, 195, 0, 0.05) 0px, transparent 50%);
+            color: #333;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 80px 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 120px;
+            background: var(--s4-white);
+            padding: 30px 100px;
+            border-radius: 30px;
+            box-shadow: 0 5px 25px var(--s4-shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+            letter-spacing: -1px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            font-size: 0.9rem;
+        }
+
+        .stat {
+            background: var(--s4-blue);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            gap: 180px;
+            width: 100%;
+            max-width: 1400px;
+            align-items: center;
+        }
+
+        .node-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 80px;
+            position: relative;
+        }
+
+        .node-wrapper {
+            position: relative;
+            width: var(--node-dia);
+            height: var(--node-dia);
+        }
+
+        /* Curved Logic: Outer nodes (+50px higher) */
+        .node-row .node-wrapper:nth-child(1),
+        .node-row .node-wrapper:nth-child(7) {
+            transform: translateY(var(--curve-offset));
+        }
+
+        .node {
+            width: 100%;
+            height: 100%;
+            background: var(--s4-white);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px var(--s4-shadow);
+            position: relative;
+            z-index: 10;
+            padding: 10px;
+        }
+
+        .node:hover {
+            transform: scale(1.15);
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(53, 198, 235, 0.3);
+        }
+
+        .plumbob-s4 {
+            width: 30px;
+            height: 45px;
+            background: #4EC300;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            margin-bottom: 5px;
+        }
+
+        .node-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--s4-blue);
+            border-radius: 50%;
+            margin-bottom: 5px;
+        }
+
+        /* Sims 4 Pie Menu */
+        .pie-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+            transform: translate(-50%, -50%) scale(0.4);
+            z-index: 5;
+        }
+
+        .pie-menu.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .pie-option {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: var(--s4-white);
+            border: 2px solid var(--s4-blue);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--s4-dark-blue);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px var(--s4-shadow);
+            text-align: center;
+            padding: 5px;
+        }
+
+        .pie-option:hover {
+            background: var(--s4-blue);
+            color: #fff;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        /* Distribution (Radius 140px) */
+        .pie-option:nth-child(1) {
+            transform: translate(-50%, -50%) rotate(0deg) translate(140px) rotate(0deg);
+        }
+
+        .pie-option:nth-child(2) {
+            transform: translate(-50%, -50%) rotate(45deg) translate(140px) rotate(-45deg);
+        }
+
+        .pie-option:nth-child(3) {
+            transform: translate(-50%, -50%) rotate(90deg) translate(140px) rotate(-90deg);
+        }
+
+        .pie-option:nth-child(4) {
+            transform: translate(-50%, -50%) rotate(135deg) translate(140px) rotate(-135deg);
+        }
+
+        .pie-option:nth-child(5) {
+            transform: translate(-50%, -50%) rotate(180deg) translate(140px) rotate(-180deg);
+        }
+
+        .pie-option:nth-child(6) {
+            transform: translate(-50%, -50%) rotate(225deg) translate(140px) rotate(-225deg);
+        }
+
+        .pie-option:nth-child(7) {
+            transform: translate(-50%, -50%) rotate(270deg) translate(140px) rotate(-270deg);
+        }
+
+        .pie-option:nth-child(8) {
+            transform: translate(-50%, -50%) rotate(315deg) translate(140px) rotate(-315deg);
+        }
+
+        .node-label {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--s4-white);
+            color: #333;
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 4px 10px var(--s4-shadow);
+            white-space: nowrap;
+        }
+
+        .btn-add-sims {
+            margin-top: 120px;
+            padding: 20px 70px;
+            background: var(--s4-blue);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 20px rgba(53, 198, 235, 0.4);
+        }
+
+        .btn-add-sims:hover {
+            background: var(--s4-dark-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(53, 198, 235, 0.5);
+        }
+
+        /* Pop-up bubble for interactions */
+        .info-bubble {
+            position: absolute;
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--s4-dark-blue);
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-bubble::after {
+            content: "";
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 7px solid var(--s4-dark-blue);
+        }
+
+        .pie-option:hover~.info-bubble {
+            opacity: 1;
+            visibility: visible;
+            top: -140px;
+        }
+
+        .sidebar {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--s4-white);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 25px var(--s4-shadow);
+            width: 200px;
+        }
+
+        .sidebar h3 {
+            color: var(--s4-dark-blue);
+            margin-bottom: 15px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .sidebar li:hover {
+            color: var(--s4-blue);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>Advanced Sims 4 Node Matrix</h1>
+        <p style="opacity: 0.5; font-size: 1rem;">EXPANDED NETWORK DASHBOARD</p>
+        <div class="stats">
+            <div class="stat">Nodes: 35</div>
+            <div class="stat">Clusters: 5</div>
+            <div class="stat">Active: 28</div>
+        </div>
+    </header>
+
+    <div class="node-container" id="matrix">
+        <!-- Template Row -->
+        <div class="node-row">
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Alpha Prime</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option" onmouseover="setTip(this, 'Open Dashboard')">Open</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Modify Structure')">Build</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Social Update')">Social</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'System Logs')">Log</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Resource Map')">Map</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Settings')">Config</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'AI Assist')">AI</div>
+                    <div class="pie-option" onmouseover="setTip(this, 'Export Data')">Export</div>
+                    <div class="info-bubble">Tip Text</div>
+                </div>
+            </div>
+            <!-- Repeat for 6 more nodes -->
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Beta Core</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Gamma Hub</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Delta Link</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Epsilon Nexus</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Zeta Bridge</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Eta Relay</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+        </div>
+        <!-- Additional rows -->
+        <div class="node-row">
+            <!-- 7 nodes -->
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Theta Node</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <!-- Repeat -->
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Iota Link</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Kappa Hub</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Lambda Core</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Mu Relay</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Nu Bridge</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+            <div class="node-wrapper">
+                <div class="node" onclick="togglePie(this)">
+                    <div class="plumbob-s4"></div>
+                    <div class="node-icon"></div>
+                    <span class="node-label">Xi Nexus</span>
+                </div>
+                <div class="pie-menu">
+                    <div class="pie-option">Open</div>
+                    <div class="pie-option">Build</div>
+                    <div class="pie-option">Social</div>
+                    <div class="pie-option">Log</div>
+                    <div class="pie-option">Map</div>
+                    <div class="pie-option">Config</div>
+                    <div class="pie-option">AI</div>
+                    <div class="pie-option">Export</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-add-sims" onclick="addSimsRow()">+ Expand Network +</button>
+
+    <div class="sidebar">
+        <h3>Quick Actions</h3>
+        <ul>
+            <li onclick="alert('Global Stats')">View Stats</li>
+            <li onclick="alert('Network Map')">Network Map</li>
+            <li onclick="alert('AI Insights')">AI Insights</li>
+            <li onclick="alert('Backup')">Backup</li>
+        </ul>
+    </div>
+
+    <script>
+        function togglePie(el) {
+            const menu = el.nextElementSibling;
+            const active = menu.classList.contains('active');
+
+            document.querySelectorAll('.pie-menu').forEach(m => m.classList.remove('active'));
+
+            if (!active) menu.classList.add('active');
+        }
+
+        function setTip(el, text) {
+            const tip = el.parentElement.querySelector('.info-bubble');
+            if (tip) tip.textContent = text;
+        }
+
+        let rowC = 2;
+        function addSimsRow() {
+            rowC++;
+            const matrix = document.getElementById('matrix');
+            const row = document.createElement('div');
+            row.className = 'node-row';
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(30px)';
+            row.style.transition = 'all 0.6s ease-out';
+
+            for (let i = 0; i < 7; i++) {
+                const wrap = document.createElement('div');
+                wrap.className = 'node-wrapper';
+                wrap.innerHTML = `
+                    <div class="node" onclick="togglePie(this)">
+                        <div class="plumbob-s4"></div>
+                        <div class="node-icon"></div>
+                        <span class="node-label">Cluster ${rowC}.${i + 1}</span>
+                    </div>
+                    <div class="pie-menu">
+                        <div class="pie-option">Open</div>
+                        <div class="pie-option">Build</div>
+                        <div class="pie-option">Social</div>
+                        <div class="pie-option">Log</div>
+                        <div class="pie-option">Map</div>
+                        <div class="pie-option">Config</div>
+                        <div class="pie-option">AI</div>
+                        <div class="pie-option">Export</div>
+                    </div>
+                `;
+                row.appendChild(wrap);
+            }
+
+            matrix.appendChild(row);
+
+            setTimeout(() => {
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
+            }, 50);
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.node-wrapper')) {
+                document.querySelectorAll('.pie-menu').forEach(m => m.classList.remove('active'));
+            }
+        });
+    </script>
+</body>
+
+</html>
