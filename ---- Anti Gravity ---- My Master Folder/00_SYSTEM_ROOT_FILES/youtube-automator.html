@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Automator</title>
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --surface-color: #1e1e1e;
+            --accent-color: #ff0000; /* YouTube Red */
+            --accent-hover: #cc0000;
+            --text-color: #ffffff;
+            --text-secondary: #aaaaaa;
+            --border-color: #333333;
+            --box-bg: #2a2a2a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* --- Layout --- */
+        header {
+            padding: 1.5rem 2rem;
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        #board {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* --- Typography --- */
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .phase-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* --- Components --- */
+        .btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--glass);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        /* --- Phase Card --- */
+        .phase-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .box-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .box {
+            background: var(--box-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .box:hover {
+            border-color: var(--accent-color);
+        }
+
+        .box textarea {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            resize: none;
+            width: 100%;
+            height: 100%;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .box-header {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- Add Buttons --- */
+        .add-box-btn {
+            height: 120px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .add-box-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background: rgba(255, 0, 0, 0.05);
+        }
+
+        .add-phase-anchor {
+            display: flex;
+            justify-content: center;
+            padding: 1rem 0;
+        }
+
+        /* --- Modals --- */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .modal h2 {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* --- Sidebar --- */
+        #history-sidebar {
+            position: fixed;
+            right: -350px;
+            top: 0;
+            width: 350px;
+            height: 100%;
+            background: var(--surface-color);
+            border-left: 1px solid var(--border-color);
+            z-index: 500;
+            padding: 2rem;
+            transition: right 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        #history-sidebar.open {
+            right: 0;
+        }
+
+        .save-item {
+            background: var(--box-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .save-item:hover {
+            border-color: var(--accent-color);
+        }
+
+        .save-item .date {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* --- Utilities --- */
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <h1>YouTube Automator</h1>
+        </div>
+        <div class="header-right" style="display: flex; gap: 0.75rem;">
+            <button class="btn btn-secondary" onclick="toggleOverlay('how-to-overlay')">How it works</button>
+            <button class="btn btn-secondary" onclick="toggleSidebar()">History</button>
+            <button class="btn" onclick="addPhase()">+ Add Phase</button>
+            <button class="btn btn-outline" onclick="saveBoard()">Save Board</button>
+        </div>
+    </header>
+
+    <main id="board">
+        <!-- Phases will be injected here -->
+    </main>
+
+    <!-- How It Works Overlay -->
+    <div id="how-to-overlay" class="overlay" onclick="closeIfOuter(event)">
+        <div class="modal">
+            <h2>How it works</h2>
+            <p>Welcome to the <strong>YouTube Automator</strong>. This board helps you visualize and track your content production pipeline.</p>
+            <ul style="margin: 1.5rem 0; padding-left: 1.5rem;">
+                <li><strong>Phases:</strong> Add sequential stages (e.g., Ideas, Research, Production).</li>
+                <li><strong>Boxes:</strong> Each phase starts with 5 boxes. Click <strong>[+]</strong> to add up to 10.</li>
+                <li><strong>Dynamic Flow:</strong> Use the <strong>[+ Add Phase]</strong> button under any phase to chain the next step.</li>
+                <li><strong>Persistence:</strong> Your progress is tracked in your browser's local storage. You can also export the board to a JSON file.</li>
+            </ul>
+            <div class="modal-footer">
+                <button class="btn" onclick="toggleOverlay('how-to-overlay')">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Sidebar -->
+    <div id="history-sidebar">
+        <h2 style="margin-bottom: 1.5rem;">Save History</h2>
+        <div id="save-list">
+            <!-- Save items will be injected here -->
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
+            <button class="btn btn-secondary" style="width: 100%;" onclick="exportJSON()">Download JSON</button>
+            <button class="btn btn-secondary" style="width: 100%;" onclick="document.getElementById('file-input').click()">Upload JSON</button>
+            <input type="file" id="file-input" class="hidden" accept=".json" onchange="importJSON(event)">
+            <button class="btn btn-outline" style="width: 100%; margin-top: 1rem;" onclick="clearHistory()">Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let state = {
+            projectTitle: "YouTube Automator",
+            phases: []
+        };
+
+        const STORAGE_KEY = "yt_automator_state";
+        const HISTORY_KEY = "yt_automator_history";
+
+        // --- Initialization ---
+        window.onload = () => {
+            const savedState = localStorage.getItem(STORAGE_KEY);
+            if (savedState) {
+                state = JSON.parse(savedState);
+                renderBoard();
+            } else {
+                // Initial Default Phase
+                addPhase();
+            }
+            updateHistoryList();
+        };
+
+        // --- Core Functions ---
+        function addPhase() {
+            const phaseId = 'phase-' + Date.now();
+            const newPhase = {
+                id: phaseId,
+                title: `Phase ${state.phases.length + 1}`,
+                boxes: Array.from({length: 5}, (_, i) => ({ id: `${phaseId}-box-${i}`, content: "" }))
+            };
+            state.phases.push(newPhase);
+            saveToLocal();
+            renderBoard();
+        }
+
+        function addBox(phaseId) {
+            const phase = state.phases.find(p => p.id === phaseId);
+            if (phase && phase.boxes.length < 10) {
+                phase.boxes.push({ id: `${phaseId}-box-${phase.boxes.length}`, content: "" });
+                saveToLocal();
+                renderBoard();
+            } else if (phase.boxes.length >= 10) {
+                alert("Max 10 boxes per phase reached.");
+            }
+        }
+
+        function updateBox(phaseId, boxId, value) {
+            const phase = state.phases.find(p => p.id === phaseId);
+            const box = phase.boxes.find(b => b.id === boxId);
+            if (box) {
+                box.content = value;
+                saveToLocal();
+            }
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+
+            state.phases.forEach((phase, index) => {
+                const phaseEl = document.createElement('div');
+                phaseEl.className = 'phase-card';
+                
+                let boxesHtml = phase.boxes.map(box => `
+                    <div class="box">
+                        <div class="box-header"><span>Slot</span></div>
+                        <textarea oninput="updateBox('${phase.id}', '${box.id}', this.value)" placeholder="Type something...">${box.content}</textarea>
+                    </div>
+                `).join('');
+
+                // Add "+" button if under 10
+                if (phase.boxes.length < 10) {
+                    boxesHtml += `
+                        <div class="add-box-btn" onclick="addBox('${phase.id}')">
+                            <span style="font-size: 2rem;">+</span>
+                        </div>
+                    `;
+                }
+
+                phaseEl.innerHTML = `
+                    <div class="phase-title">
+                        <span>${phase.title}</span>
+                    </div>
+                    <div class="box-container">
+                        ${boxesHtml}
+                    </div>
+                `;
+
+                board.appendChild(phaseEl);
+
+                // Add Phase anchor between phases
+                const anchor = document.createElement('div');
+                anchor.className = 'add-phase-anchor';
+                anchor.innerHTML = `<button class="btn btn-secondary btn-outline" onclick="addPhase()">+ Add Phase</button>`;
+                board.appendChild(anchor);
+            });
+        }
+
+        // --- Persistence ---
+        function saveToLocal() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function saveBoard() {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+            const newSave = {
+                id: 'save-' + Date.now(),
+                timestamp: new Date().toLocaleString(),
+                state: JSON.parse(JSON.stringify(state)) // Deep clone
+            };
+            history.unshift(newSave); // Newest first
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            updateHistoryList();
+            alert("Board state saved to history.");
+        }
+
+        function loadFromHistory(saveId) {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+            const save = history.find(s => s.id === saveId);
+            if (save && confirm(`Load save from ${save.timestamp}? Current board will be overwritten.`)) {
+                state = JSON.parse(JSON.stringify(save.state));
+                saveToLocal();
+                renderBoard();
+                toggleSidebar();
+            }
+        }
+
+        function updateHistoryList() {
+            const list = document.getElementById('save-list');
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+            list.innerHTML = history.length ? '' : '<p style="color: var(--text-secondary);">No saves yet.</p>';
+            
+            history.forEach(save => {
+                const item = document.createElement('div');
+                item.className = 'save-item';
+                item.onclick = () => loadFromHistory(save.id);
+                item.innerHTML = `
+                    <div class="name">Automator Save</div>
+                    <div class="date">${save.timestamp}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function clearHistory() {
+            if (confirm("Clear all saved history? This cannot be undone.")) {
+                localStorage.removeItem(HISTORY_KEY);
+                updateHistoryList();
+            }
+        }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `yt_automator_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm("Import this board? Current board will be overwritten.")) {
+                        state = imported;
+                        saveToLocal();
+                        renderBoard();
+                    }
+                } catch (err) {
+                    alert("Invalid JSON file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- UI Interactions ---
+        function toggleOverlay(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function closeIfOuter(e) {
+            if (e.target.classList.contains('overlay')) {
+                e.target.style.display = 'none';
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('history-sidebar').classList.toggle('open');
+        }
+
+    </script>
+</body>
+</html>

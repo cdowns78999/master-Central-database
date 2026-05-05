@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mom Quest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-cream: #f4e9d8;
+            --border-dark: #2c1810;
+            --text-dark: #3a2418;
+            --mom-happy: #4ecdc4;
+            --mom-angry: #ee5a6f;
+            --button-primary: #95e1d3;
+            --button-secondary: #f38181;
+            --button-warning: #aa96da;
+            --pixel-shadow: #1a0f08;
+            --glow: #fffacd;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            width: min(390px, 96vw);
+            height: min(844px, 96vh);
+            max-height: 96vh;
+            aspect-ratio: 9 / 19.5;
+            background: var(--bg-cream);
+            border: 8px solid var(--border-dark);
+            border-radius: 16px;
+            box-shadow: 0 0 0 3px var(--glow), 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #gameContainer::before, #gameContainer::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border-dark);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #gameContainer::before {
+            top: 8px;
+            left: 8px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        #gameContainer::after {
+            bottom: 8px;
+            right: 8px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .pixel-bg {
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px),
+                              repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+        }
+
+        #header {
+            background: linear-gradient(180deg, var(--border-dark) 0%, #3d2414 100%);
+            color: var(--glow);
+            padding: 12px;
+            text-align: center;
+            border-bottom: 3px solid var(--pixel-shadow);
+        }
+
+        #header h1 {
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 var(--pixel-shadow);
+            margin-bottom: 6px;
+            letter-spacing: 2px;
+        }
+
+        #stats {
+            display: flex;
+            justify-content: space-around;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            opacity: 0.8;
+            margin-bottom: 3px;
+        }
+
+        .stat-bar {
+            width: 70px;
+            height: 10px;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid var(--border-dark);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            height: 100%;
+            transition: width 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .stat-fill.mood { background: linear-gradient(90deg, var(--mom-angry), var(--mom-happy)); }
+        .stat-fill.sanity { background: linear-gradient(90deg, var(--button-warning), var(--button-primary)); }
+        .stat-fill.score { background: linear-gradient(90deg, var(--button-secondary), var(--glow)); }
+
+        #gameArea {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #momDisplay {
+            flex: 0.4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: linear-gradient(180deg, #e8dcc4 0%, var(--bg-cream) 100%);
+            border-bottom: 3px dashed var(--border-dark);
+        }
+
+        #momSprite {
+            width: 100px;
+            height: 100px;
+            background: var(--mom-angry);
+            border-radius: 50%;
+            border: 4px solid var(--border-dark);
+            animation: momBob 2s ease-in-out infinite;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        #momSprite::before {
+            content: '';
+            position: absolute;
+            top: 25%;
+            left: 20%;
+            width: 15px;
+            height: 15px;
+            background: var(--border-dark);
+            border-radius: 50%;
+        }
+
+        #momSprite::after {
+            content: '';
+            position: absolute;
+            top: 25%;
+            right: 20%;
+            width: 15px;
+            height: 15px;
+            background: var(--border-dark);
+            border-radius: 50%;
+        }
+
+        #momSprite.happy {
+            background: var(--mom-happy);
+        }
+
+        #momSprite.neutral {
+            background: var(--button-warning);
+        }
+
+        @keyframes momBob {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        #timerDisplay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--mom-angry);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: bold;
+            border: 2px solid var(--border-dark);
+            animation: timerPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        #dialogueBox {
+            flex: 0.35;
+            background: white;
+            margin: 12px;
+            padding: 16px;
+            border: 3px solid var(--border-dark);
+            border-radius: 10px;
+            box-shadow: 3px 3px 0 var(--pixel-shadow);
+        }
+
+        #momRequest {
+            font-size: 15px;
+            line-height: 1.4;
+            color: var(--text-dark);
+            font-weight: bold;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #choicesArea {
+            flex: 0.25;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px;
+            background: linear-gradient(180deg, var(--bg-cream) 0%, #e0d5c0 100%);
+        }
+
+        .choice-btn {
+            flex: 1;
+            border: 3px solid var(--border-dark);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 5px 0 var(--pixel-shadow);
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .choice-btn:nth-child(1) { background: linear-gradient(180deg, var(--button-primary), #7dd4c6); }
+        .choice-btn:nth-child(2) { background: linear-gradient(180deg, var(--button-secondary), #f27272); }
+        .choice-btn:nth-child(3) { background: linear-gradient(180deg, var(--button-warning), #9785ca); }
+
+        .choice-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 var(--pixel-shadow);
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--button-primary) 0%, var(--button-warning) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 30px;
+            text-align: center;
+        }
+
+        #startScreen h1 {
+            font-size: 32px;
+            color: var(--border-dark);
+            text-shadow: 3px 3px 0 rgba(255,255,255,0.5);
+            margin-bottom: 15px;
+            animation: titleFloat 2s ease-in-out infinite;
+        }
+
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+
+        #startScreen p {
+            font-size: 15px;
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            max-width: 270px;
+            line-height: 1.5;
+        }
+
+        #startBtn {
+            background: linear-gradient(180deg, var(--mom-happy), #3dbdb5);
+            border: 4px solid var(--border-dark);
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            padding: 16px 45px;
+            box-shadow: 0 5px 0 var(--pixel-shadow);
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 0 var(--pixel-shadow);
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #startBtn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 var(--pixel-shadow);
+        }
+
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 30px;
+            text-align: center;
+        }
+
+        #gameOverScreen.show {
+            display: flex;
+        }
+
+        #gameOverScreen h2 {
+            font-size: 40px;
+            color: var(--mom-angry);
+            text-shadow: 3px 3px 0 var(--pixel-shadow);
+            margin-bottom: 15px;
+        }
+
+        #gameOverScreen p {
+            font-size: 16px;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        #finalScore {
+            font-size: 28px;
+            color: var(--glow);
+            margin: 15px 0;
+        }
+
+        #restartBtn {
+            background: linear-gradient(180deg, var(--button-warning), #9785ca);
+            border: 4px solid var(--border-dark);
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            padding: 14px 35px;
+            box-shadow: 0 5px 0 var(--pixel-shadow);
+            font-family: 'Courier New', monospace;
+            margin-top: 15px;
+            touch-action: manipulation;
+        }
+
+        #restartBtn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 var(--pixel-shadow);
+        }
+
+        #soundToggle {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid var(--border-dark);
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 10;
+            color: white;
+            font-weight: bold;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="gameContainer" class="pixel-bg">
+        <div id="header">
+            <h1>MOM QUEST</h1>
+            <div id="stats">
+                <div class="stat">
+                    <div class="stat-label">MOM MOOD</div>
+                    <div class="stat-bar"><div class="stat-fill mood" id="moodBar" style="width: 50%"></div></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">SANITY</div>
+                    <div class="stat-bar"><div class="stat-fill sanity" id="sanityBar" style="width: 100%"></div></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">SCORE</div>
+                    <div class="stat-bar"><div class="stat-fill score" id="scoreBar" style="width: 0%"></div></div>
+                </div>
+            </div>
+            <div id="soundToggle">ON</div>
+        </div>
+
+        <div id="gameArea">
+            <div id="momDisplay">
+                <div id="momSprite" class="neutral"></div>
+                <div id="timerDisplay"><span id="timerValue">10</span>s</div>
+            </div>
+
+            <div id="dialogueBox">
+                <div id="momRequest">Waiting for Mom...</div>
+            </div>
+
+            <div id="choicesArea">
+                <button class="choice-btn" id="choice1">Choice 1</button>
+                <button class="choice-btn" id="choice2">Choice 2</button>
+                <button class="choice-btn" id="choice3">Choice 3</button>
+            </div>
+        </div>
+
+        <div id="startScreen">
+            <h1>MOM QUEST</h1>
+            <p>Survive your mom's endless requests! Choose wisely, manage her mood, and don't lose your sanity!</p>
+            <button id="startBtn">START GAME</button>
+        </div>
+
+        <div id="gameOverScreen">
+            <h2 id="gameOverTitle">GAME OVER</h2>
+            <p id="gameOverMessage">You survived!</p>
+            <div id="finalScore">SCORE: 0</div>
+            <p id="endingText">Results here</p>
+            <button id="restartBtn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const gameState = {
+            momMood: 50,
+            sanity: 100,
+            score: 0,
+            combo: 0,
+            requestCount: 0,
+            timer: 10,
+            isPlaying: false,
+            soundEnabled: true,
+            currentRequest: null,
+            timerInterval: null
+        };
+
+        const momRequests = [
+            {
+                text: "Can you take out the trash? It's getting stinky!",
+                choices: [
+                    { text: "Sure, right now!", mood: 15, sanity: -5, feedback: "Mom is happy!" },
+                    { text: "In 5 minutes!", mood: -5, sanity: -3, feedback: "Mom sighs..." },
+                    { text: "I'm busy!", mood: -20, sanity: 5, feedback: "Mom is annoyed!" }
+                ]
+            },
+            {
+                text: "Your room is a disaster! Clean it up!",
+                choices: [
+                    { text: "I'll clean it now", mood: 20, sanity: -10, feedback: "Mom is impressed!" },
+                    { text: "It's not that bad...", mood: -10, sanity: -5, feedback: "Mom gives you the look" },
+                    { text: "It's my room!", mood: -25, sanity: 0, feedback: "Big mistake!" }
+                ]
+            },
+            {
+                text: "Did you do your homework yet?",
+                choices: [
+                    { text: "Yes, all done!", mood: 10, sanity: -5, feedback: "Mom is proud!" },
+                    { text: "Almost finished!", mood: 0, sanity: -8, feedback: "Mom is suspicious..." },
+                    { text: "What homework?", mood: -15, sanity: -10, feedback: "Mom is disappointed!" }
+                ]
+            },
+            {
+                text: "Can you help me with dinner?",
+                choices: [
+                    { text: "I'd love to!", mood: 18, sanity: -8, feedback: "Quality time!" },
+                    { text: "Can I help later?", mood: -3, sanity: -5, feedback: "Mom is mildly annoyed" },
+                    { text: "I can't cook...", mood: -12, sanity: -2, feedback: "Mom shakes her head" }
+                ]
+            },
+            {
+                text: "Did you feed the dog?",
+                choices: [
+                    { text: "Already did!", mood: 12, sanity: -3, feedback: "Responsible!" },
+                    { text: "I'll do it now", mood: 5, sanity: -5, feedback: "Good enough" },
+                    { text: "I forgot...", mood: -18, sanity: -8, feedback: "The dog is sad!" }
+                ]
+            },
+            {
+                text: "Turn down that music! I can't think!",
+                choices: [
+                    { text: "Sorry, Mom!", mood: 10, sanity: -6, feedback: "Peace restored" },
+                    { text: "It's not that loud", mood: -12, sanity: 0, feedback: "It IS that loud" },
+                    { text: "Turns it up", mood: -30, sanity: 10, feedback: "DANGER ZONE!" }
+                ]
+            },
+            {
+                text: "Get off your phone and talk to me!",
+                choices: [
+                    { text: "Puts phone away", mood: 18, sanity: -8, feedback: "Connection!" },
+                    { text: "One sec...", mood: -8, sanity: -4, feedback: "Still waiting..." },
+                    { text: "Keeps scrolling", mood: -25, sanity: 0, feedback: "Disrespectful!" }
+                ]
+            },
+            {
+                text: "Clean up after yourself! I'm not your maid!",
+                choices: [
+                    { text: "You're right, sorry", mood: 14, sanity: -7, feedback: "Maturity!" },
+                    { text: "I will eventually", mood: -10, sanity: -5, feedback: "Eventually isn't now" },
+                    { text: "Chill out!", mood: -24, sanity: 0, feedback: "DANGER!" }
+                ]
+            },
+            {
+                text: "We're having family dinner tonight. Be there at 6!",
+                choices: [
+                    { text: "Wouldn't miss it!", mood: 15, sanity: -5, feedback: "Family time!" },
+                    { text: "Can I eat fast?", mood: -8, sanity: -3, feedback: "Mom frowns" },
+                    { text: "I have plans...", mood: -22, sanity: -10, feedback: "Family emergency!" }
+                ]
+            },
+            {
+                text: "Can you watch your little sibling for an hour?",
+                choices: [
+                    { text: "Of course!", mood: 20, sanity: -15, feedback: "Super helpful!" },
+                    { text: "Only if I have to", mood: -5, sanity: -8, feedback: "Reluctant babysitter" },
+                    { text: "No way!", mood: -20, sanity: 5, feedback: "Selfish!" }
+                ]
+            },
+            {
+                text: "I need you to run to the store for milk!",
+                choices: [
+                    { text: "On my way!", mood: 16, sanity: -10, feedback: "Helpful child!" },
+                    { text: "Can't someone else?", mood: -10, sanity: -5, feedback: "Mom is not amused" },
+                    { text: "I don't have gas", mood: -14, sanity: 0, feedback: "Excuses!" }
+                ]
+            },
+            {
+                text: "Your friend called. Call them back!",
+                choices: [
+                    { text: "Thanks, I will!", mood: 8, sanity: -2, feedback: "Mom appreciates it" },
+                    { text: "I'll text them", mood: -2, sanity: 0, feedback: "Mom rolls her eyes" },
+                    { text: "They can wait", mood: -8, sanity: 3, feedback: "Mom is unimpressed" }
+                ]
+            }
+        ];
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playSound(type) {
+            if (!gameState.soundEnabled) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'click') {
+                oscillator.frequency.value = 800;
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'good') {
+                oscillator.frequency.value = 600;
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.2);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'bad') {
+                oscillator.frequency.value = 400;
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        function startGame() {
+            playSound('click');
+            document.getElementById('startScreen').classList.add('hidden');
+            gameState.isPlaying = true;
+            gameState.momMood = 50;
+            gameState.sanity = 100;
+            gameState.score = 0;
+            gameState.combo = 0;
+            gameState.requestCount = 0;
+            updateUI();
+            generateNewRequest();
+            startTimer();
+        }
+
+        function generateNewRequest() {
+            const request = momRequests[Math.floor(Math.random() * momRequests.length)];
+            gameState.currentRequest = request;
+            gameState.requestCount++;
+
+            const requestEl = document.getElementById('momRequest');
+            requestEl.textContent = '';
+            let i = 0;
+            const typeInterval = setInterval(function() {
+                if (i < request.text.length) {
+                    requestEl.textContent += request.text[i];
+                    i++;
+                } else {
+                    clearInterval(typeInterval);
+                }
+            }, 30);
+
+            document.getElementById('choice1').textContent = request.choices[0].text;
+            document.getElementById('choice2').textContent = request.choices[1].text;
+            document.getElementById('choice3').textContent = request.choices[2].text;
+
+            gameState.timer = Math.max(8, 12 - Math.floor(gameState.requestCount / 5));
+            document.getElementById('timerValue').textContent = gameState.timer;
+        }
+
+        function makeChoice(index) {
+            if (!gameState.isPlaying) return;
+
+            playSound('click');
+            const choice = gameState.currentRequest.choices[index];
+
+            gameState.momMood = Math.max(0, Math.min(100, gameState.momMood + choice.mood));
+            gameState.sanity = Math.max(0, Math.min(100, gameState.sanity + choice.sanity));
+
+            if (choice.mood > 10) {
+                gameState.score += 100 + (choice.mood * 5);
+                gameState.combo++;
+                playSound('good');
+            } else if (choice.mood < -10) {
+                gameState.score += 10;
+                gameState.combo = 0;
+                playSound('bad');
+            } else {
+                gameState.score += 50;
+                gameState.combo = 0;
+            }
+
+            updateUI();
+
+            if (gameState.momMood <= 0 || gameState.sanity <= 0) {
+                setTimeout(function() {
+                    endGame();
+                }, 500);
+                return;
+            }
+
+            if (gameState.requestCount >= 20 && gameState.momMood >= 70) {
+                setTimeout(function() {
+                    winGame();
+                }, 500);
+                return;
+            }
+
+            setTimeout(function() {
+                generateNewRequest();
+            }, 1500);
+        }
+
+        function startTimer() {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+
+            gameState.timerInterval = setInterval(function() {
+                if (!gameState.isPlaying) {
+                    clearInterval(gameState.timerInterval);
+                    return;
+                }
+
+                gameState.timer--;
+                document.getElementById('timerValue').textContent = gameState.timer;
+
+                if (gameState.timer <= 0) {
+                    makeChoice(2);
+                }
+            }, 1000);
+        }
+
+        function updateUI() {
+            document.getElementById('moodBar').style.width = gameState.momMood + '%';
+            document.getElementById('sanityBar').style.width = gameState.sanity + '%';
+            document.getElementById('scoreBar').style.width = Math.min(100, (gameState.score / 3000) * 100) + '%';
+
+            const momSprite = document.getElementById('momSprite');
+            momSprite.className = '';
+            if (gameState.momMood > 70) {
+                momSprite.className = 'happy';
+            } else if (gameState.momMood > 40) {
+                momSprite.className = 'neutral';
+            } else {
+                momSprite.className = '';
+            }
+        }
+
+        function endGame() {
+            gameState.isPlaying = false;
+            clearInterval(gameState.timerInterval);
+
+            const screen = document.getElementById('gameOverScreen');
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            const endingText = document.getElementById('endingText');
+
+            if (gameState.momMood <= 0) {
+                title.textContent = 'MOM IS FURIOUS!';
+                message.textContent = 'You pushed Mom too far...';
+                endingText.textContent = 'Grounded for life!';
+            } else if (gameState.sanity <= 0) {
+                title.textContent = 'SANITY DEPLETED!';
+                message.textContent = 'You could not handle the pressure...';
+                endingText.textContent = 'You need a break!';
+            }
+
+            document.getElementById('finalScore').textContent = 'SCORE: ' + gameState.score;
+            screen.classList.add('show');
+        }
+
+        function winGame() {
+            gameState.isPlaying = false;
+            clearInterval(gameState.timerInterval);
+
+            const screen = document.getElementById('gameOverScreen');
+            document.getElementById('gameOverTitle').textContent = 'VICTORY!';
+            document.getElementById('gameOverTitle').style.color = 'var(--mom-happy)';
+            document.getElementById('gameOverMessage').textContent = 'You survived and made Mom proud!';
+            document.getElementById('endingText').textContent = 'You are the best child ever!';
+            document.getElementById('finalScore').textContent = 'SCORE: ' + gameState.score;
+            screen.classList.add('show');
+        }
+
+        function restartGame() {
+            playSound('click');
+            document.getElementById('gameOverScreen').classList.remove('show');
+            document.getElementById('gameOverTitle').style.color = 'var(--mom-angry)';
+            startGame();
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', restartGame);
+        document.getElementById('choice1').addEventListener('click', function() { makeChoice(0); });
+        document.getElementById('choice2').addEventListener('click', function() { makeChoice(1); });
+        document.getElementById('choice3').addEventListener('click', function() { makeChoice(2); });
+
+        document.getElementById('soundToggle').addEventListener('click', function() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            document.getElementById('soundToggle').textContent = gameState.soundEnabled ? 'ON' : 'OFF';
+            playSound('click');
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        document.addEventListener('click', function() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
