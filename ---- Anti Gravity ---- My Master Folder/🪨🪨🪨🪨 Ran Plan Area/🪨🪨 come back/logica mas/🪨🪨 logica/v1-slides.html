@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Campaign Dashboard — Slide View</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #fff;
+    color: #111;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── CLIPPING CONTAINER ── */
+  .clip {
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  /* ── SLIDING STRIP ── */
+  .strip {
+    display: flex;
+    width: 500vw;
+    height: 100vh;
+    transform: translate3d(0, 0, 0);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* ── EACH PANEL ── */
+  .panel {
+    width: 100vw;
+    height: 100vh;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    padding: 18px 28px 0;
+    gap: 16px;
+    min-height: 58px;
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #0084ff;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .back-btn:hover { opacity: 0.7; }
+  .back-btn.hidden { visibility: hidden; pointer-events: none; }
+
+  .panel-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -0.3px;
+  }
+
+  /* ── BREADCRUMB ── */
+  .breadcrumb {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #888;
+    padding: 10px 28px 0;
+    min-height: 30px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .breadcrumb span { color: #0084ff; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: #e4e4e4;
+    margin: 14px 0 0;
+    flex-shrink: 0;
+  }
+
+  /* ── SCROLL BODY ── */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 24px 28px 32px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* ── CLIENT GRID ── */
+  .client-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+  }
+
+  .client-card {
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 14px;
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    user-select: none;
+  }
+  .client-card:hover {
+    border-color: #0084ff;
+    box-shadow: 0 4px 18px rgba(0,132,255,0.1);
+    transform: translateY(-1px);
+  }
+  .client-card:active { transform: translateY(0); }
+
+  .client-emoji {
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .client-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    line-height: 1.3;
+  }
+
+  /* ── PATH SCREEN ── */
+  .path-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 640px;
+    margin-bottom: 32px;
+  }
+
+  .path-card {
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 16px;
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    user-select: none;
+  }
+  .path-card:hover {
+    border-color: #0084ff;
+    box-shadow: 0 4px 24px rgba(0,132,255,0.12);
+    transform: translateY(-2px);
+  }
+  .path-card:active { transform: translateY(0); }
+
+  .path-emoji { font-size: 32px; line-height: 1; }
+
+  .path-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .path-sub {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.4;
+  }
+
+  /* ── EXISTING CAMPAIGNS ── */
+  .campaign-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 480px;
+    margin-top: 16px;
+  }
+
+  .campaign-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #fafafa;
+    border: 1px solid #e4e4e4;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .campaign-item:hover { border-color: #0084ff; }
+
+  .campaign-status {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .campaign-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    flex: 1;
+  }
+
+  .campaign-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .badge-active { background: #e6f7ee; color: #00a854; }
+  .badge-done { background: #f0f0f0; color: #888; }
+  .badge-draft { background: #fff0f0; color: #e53935; }
+
+  /* ── SERVICE GRID ── */
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .service-card {
+    background: #fff;
+    border: 2px solid #e4e4e4;
+    border-radius: 16px;
+    padding: 28px 22px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s, background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    user-select: none;
+    position: relative;
+  }
+  .service-card:hover {
+    border-color: #0084ff;
+    box-shadow: 0 6px 28px rgba(0,132,255,0.13);
+    transform: translateY(-2px);
+  }
+  .service-card.selected {
+    border-color: #0084ff;
+    background: #f0f7ff;
+    box-shadow: 0 0 0 3px rgba(0,132,255,0.15);
+  }
+  .service-card:active { transform: translateY(0); }
+
+  .service-emoji { font-size: 36px; line-height: 1; }
+
+  .service-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .service-desc {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.4;
+  }
+
+  .service-check {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 22px;
+    height: 22px;
+    background: #0084ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .service-card.selected .service-check { opacity: 1; }
+
+  .continue-bar {
+    padding: 16px 28px;
+    border-top: 1px solid #e4e4e4;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .selected-summary {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #888;
+  }
+
+  .btn-primary {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    background: #0084ff;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.2px;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* ── BUDGET SCREEN ── */
+  .budget-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .budget-card {
+    background: #fff;
+    border: 2px solid #e4e4e4;
+    border-radius: 16px;
+    padding: 26px 22px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s, background 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    user-select: none;
+    position: relative;
+  }
+  .budget-card:hover {
+    border-color: #0084ff;
+    box-shadow: 0 4px 24px rgba(0,132,255,0.12);
+    transform: translateY(-2px);
+  }
+  .budget-card.selected {
+    border-color: #0084ff;
+    background: #f0f7ff;
+    box-shadow: 0 0 0 3px rgba(0,132,255,0.15);
+  }
+  .budget-card:active { transform: translateY(0); }
+
+  .budget-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .budget-tier {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0084ff;
+    letter-spacing: 0.5px;
+  }
+
+  .budget-desc {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.4;
+    margin-top: 4px;
+  }
+
+  .budget-check {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 22px;
+    height: 22px;
+    background: #0084ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .budget-card.selected .budget-check { opacity: 1; }
+
+  .custom-budget-wrap {
+    border: 1px solid #e4e4e4;
+    border-radius: 14px;
+    padding: 20px 20px;
+    max-width: 380px;
+  }
+
+  .custom-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .custom-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .currency-prefix {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: #888;
+  }
+
+  .custom-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111;
+    border: none;
+    border-bottom: 2px solid #e4e4e4;
+    outline: none;
+    width: 160px;
+    padding: 4px 0;
+    background: transparent;
+    transition: border-color 0.15s;
+  }
+  .custom-input:focus { border-color: #0084ff; }
+  .custom-input::placeholder { color: #ccc; }
+
+  /* ── STRIPE AREA ── */
+  .stripe-area {
+    margin-top: 20px;
+    background: #fafafa;
+    border: 1px dashed #ddd;
+    border-radius: 14px;
+    padding: 22px 20px;
+    max-width: 380px;
+  }
+
+  .stripe-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stripe-placeholder {
+    font-size: 14px;
+    color: #aaa;
+  }
+
+  /* ── COMPLETE SCREEN ── */
+  .complete-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 32px;
+  }
+
+  .complete-icon {
+    font-size: 64px;
+    line-height: 1;
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.3); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .complete-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: #111;
+    text-align: center;
+  }
+
+  .complete-summary {
+    background: #fafafa;
+    border: 1px solid #e4e4e4;
+    border-radius: 16px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 320px;
+    max-width: 440px;
+    width: 100%;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .summary-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .summary-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    text-align: right;
+  }
+
+  .summary-divider {
+    height: 1px;
+    background: #e4e4e4;
+  }
+
+  .btn-see-campaign {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    background: #f0f0f0;
+    color: #aaa;
+    border: 1px solid #e4e4e4;
+    border-radius: 10px;
+    padding: 13px 32px;
+    cursor: not-allowed;
+    letter-spacing: 0.2px;
+  }
+
+  .btn-new-campaign {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    background: none;
+    color: #0084ff;
+    border: none;
+    cursor: pointer;
+    padding: 8px 0;
+    transition: opacity 0.15s;
+  }
+  .btn-new-campaign:hover { opacity: 0.7; }
+
+  /* ── SCROLLBAR ── */
+  .body::-webkit-scrollbar { width: 4px; }
+  .body::-webkit-scrollbar-track { background: transparent; }
+  .body::-webkit-scrollbar-thumb { background: #e4e4e4; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="clip">
+  <div class="strip" id="strip">
+
+    <!-- ══════════════════════════════════════════
+         PANEL 0 — CLIENTS
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="p0">
+      <div class="header">
+        <button class="back-btn hidden">← Back</button>
+        <div class="panel-title">Clients</div>
+      </div>
+      <div class="breadcrumb" id="bc0">Clients</div>
+      <div class="divider"></div>
+      <div class="body">
+        <div class="section-label">Select a client to begin</div>
+        <div class="client-grid" id="clientGrid"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 1 — PATH (New / Existing)
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="p1">
+      <div class="header">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <div class="panel-title" id="p1Title">Campaign Path</div>
+      </div>
+      <div class="breadcrumb" id="bc1">Clients › —</div>
+      <div class="divider"></div>
+      <div class="body">
+        <div class="section-label" style="margin-bottom:20px">Choose campaign type</div>
+        <div class="path-grid">
+          <div class="path-card" onclick="choosePath('new')">
+            <div class="path-emoji">✨</div>
+            <div class="path-title">New Campaign</div>
+            <div class="path-sub">Start fresh — pick a service, set a budget, launch.</div>
+          </div>
+          <div class="path-card" onclick="choosePath('existing')">
+            <div class="path-emoji">📂</div>
+            <div class="path-title">Existing Campaign</div>
+            <div class="path-sub">View or edit a campaign already in progress.</div>
+          </div>
+        </div>
+
+        <div id="existingSection" style="display:none">
+          <div class="section-label">Existing Campaigns</div>
+          <div class="campaign-list" id="campaignList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 2 — SERVICES
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="p2">
+      <div class="header">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <div class="panel-title">Services</div>
+      </div>
+      <div class="breadcrumb" id="bc2">Clients › — › New › —</div>
+      <div class="divider"></div>
+      <div class="body">
+        <div class="section-label" style="margin-bottom:20px">Select a service</div>
+        <div class="service-grid" id="serviceGrid"></div>
+      </div>
+      <div class="continue-bar">
+        <div class="selected-summary" id="serviceSummary">No service selected</div>
+        <button class="btn-primary" id="serviceContinueBtn" onclick="goToPanel(3)" disabled>Continue →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 3 — BUDGET
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="p3">
+      <div class="header">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <div class="panel-title">Budget</div>
+      </div>
+      <div class="breadcrumb" id="bc3">Clients › — › New › — › Budget</div>
+      <div class="divider"></div>
+      <div class="body">
+        <div class="section-label" style="margin-bottom:20px">Choose your budget tier</div>
+        <div class="budget-grid" id="budgetGrid"></div>
+
+        <div class="custom-budget-wrap">
+          <div class="custom-label">Custom Amount</div>
+          <div class="custom-input-row">
+            <span class="currency-prefix">$</span>
+            <input class="custom-input" id="customInput" type="number" placeholder="0" min="1"
+              oninput="onCustomInput(this.value)" />
+          </div>
+        </div>
+
+        <div class="stripe-area" style="margin-top:24px">
+          <div class="stripe-label">Payment</div>
+          <div class="stripe-placeholder">Stripe Payment — wired soon</div>
+        </div>
+      </div>
+      <div class="continue-bar">
+        <div class="selected-summary" id="budgetSummary">No budget selected</div>
+        <button class="btn-primary" id="budgetContinueBtn" onclick="goToPanel(4)" disabled>Create Campaign →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 4 — COMPLETE
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="p4">
+      <div class="header">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <div class="panel-title">Done</div>
+      </div>
+      <div class="breadcrumb" id="bc4">Clients › — › New › — › Budget › Complete</div>
+      <div class="divider"></div>
+      <div class="complete-body">
+        <div class="complete-icon">✅</div>
+        <div class="complete-title">Campaign Created!</div>
+        <div class="complete-summary" id="completeSummary"></div>
+        <button class="btn-see-campaign">See Campaign →</button>
+        <button class="btn-new-campaign" onclick="resetAll()">+ Start Another Campaign</button>
+      </div>
+    </div>
+
+  </div><!-- /strip -->
+</div><!-- /clip -->
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+const CLIENTS = [
+  { name: 'Chad Downs', emoji: '🧔' },
+  { name: 'Ray Downs', emoji: '👨' },
+  { name: 'Family Chat', emoji: '👩👦' },
+  { name: 'Ray & Kim', emoji: '👨👩' },
+  { name: 'Randy Engineersski', emoji: '🎸' },
+  { name: 'James Poddubny', emoji: '🧑' },
+  { name: 'Jenna Bodley', emoji: '👩‍🦱' },
+  { name: 'Kim Downs', emoji: '👩' },
+  { name: 'Linda-Brooke Thompson', emoji: '👩‍🦳' },
+  { name: 'Ed Adkins Sr.', emoji: '👨‍🦳' },
+  { name: 'Kayla Amber', emoji: '🧕' },
+  { name: 'Ari Aloush', emoji: '🧑‍💼' },
+];
+
+const SERVICES = [
+  { name: 'Press', emoji: '📰', desc: 'Media outreach, press releases, editorial coverage.' },
+  { name: 'Spotify', emoji: '🎵', desc: 'Playlist pitching, streaming promos, editorial reach.' },
+  { name: 'Soundcloud', emoji: '🎧', desc: 'Track promotion, plays, reposts, fan engagement.' },
+  { name: 'Social Media', emoji: '📱', desc: 'Instagram, TikTok, Twitter content & ad management.' },
+];
+
+const BUDGETS = [
+  { amount: '$500', tier: 'Starter', desc: 'Ideal for testing — core placements, 1 service.' },
+  { amount: '$1,500', tier: 'Pro', desc: 'Multi-platform reach, enhanced targeting.' },
+  { amount: '$5,000', tier: 'Premium', desc: 'Full-scale rollout, priority support.' },
+  { amount: 'Custom', tier: 'Custom', desc: 'Set your own amount below.' },
+];
+
+const CAMPAIGNS = [
+  { name: 'Summer Drop 2025', status: '🟢', badge: 'Active', badgeClass: 'badge-active' },
+  { name: 'Spring Launch', status: '✅', badge: 'Done', badgeClass: 'badge-done' },
+  { name: 'Q1 Ads', status: '🔴', badge: 'Draft', badgeClass: 'badge-draft' },
+];
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let state = {
+  currentPanel: 0,
+  history: [],
+  client: null,
+  path: null,
+  service: null,
+  budget: null,
+};
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+const strip = document.getElementById('strip');
+
+function goToPanel(idx) {
+  state.history.push(state.currentPanel);
+  state.currentPanel = idx;
+  strip.style.transform = `translate3d(-${idx * 100}vw, 0, 0)`;
+  updateBreadcrumbs();
+}
+
+function goBack() {
+  if (!state.history.length) return;
+  const prev = state.history.pop();
+  state.currentPanel = prev;
+  strip.style.transform = `translate3d(-${prev * 100}vw, 0, 0)`;
+  updateBreadcrumbs();
+}
+
+function resetAll() {
+  state = { currentPanel: 0, history: [], client: null, path: null, service: null, budget: null };
+  // deselect service cards
+  document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.budget-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('customInput').value = '';
+  document.getElementById('serviceSummary').textContent = 'No service selected';
+  document.getElementById('budgetSummary').textContent = 'No budget selected';
+  document.getElementById('serviceContinueBtn').disabled = true;
+  document.getElementById('budgetContinueBtn').disabled = true;
+  document.getElementById('existingSection').style.display = 'none';
+  strip.style.transform = 'translate3d(0, 0, 0)';
+  updateBreadcrumbs();
+}
+
+/* ═══════════════════════════════════════════
+   BREADCRUMBS
+═══════════════════════════════════════════ */
+function updateBreadcrumbs() {
+  const c = state.client ? state.client.name : '—';
+  const s = state.service ? state.service.name : '—';
+  const b = state.budget || '—';
+  const p = state.currentPanel;
+
+  document.getElementById('bc0').innerHTML = `<span>Clients</span>`;
+  document.getElementById('bc1').innerHTML = `Clients › <span>${c}</span>`;
+  document.getElementById('bc2').innerHTML = `Clients › ${c} › New › <span>${s}</span>`;
+  document.getElementById('bc3').innerHTML = `Clients › ${c} › New › ${s} › <span>Budget</span>`;
+  document.getElementById('bc4').innerHTML = `Clients › ${c} › New › ${s} › Budget › <span>Complete</span>`;
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN BUILDERS
+═══════════════════════════════════════════ */
+
+// CLIENT GRID
+function buildClients() {
+  const grid = document.getElementById('clientGrid');
+  grid.innerHTML = '';
+  CLIENTS.forEach(cl => {
+    const card = document.createElement('div');
+    card.className = 'client-card';
+    card.innerHTML = `<div class="client-emoji">${cl.emoji}</div><div class="client-name">${cl.name}</div>`;
+    card.onclick = () => selectClient(cl);
+    grid.appendChild(card);
+  });
+}
+
+function selectClient(cl) {
+  state.client = cl;
+  document.getElementById('p1Title').textContent = cl.name;
+  goToPanel(1);
+}
+
+// PATH
+function choosePath(path) {
+  state.path = path;
+  if (path === 'new') {
+    document.getElementById('existingSection').style.display = 'none';
+    goToPanel(2);
+  } else {
+    document.getElementById('existingSection').style.display = 'block';
+    buildCampaigns();
+  }
+}
+
+function buildCampaigns() {
+  const list = document.getElementById('campaignList');
+  list.innerHTML = '';
+  CAMPAIGNS.forEach(cam => {
+    const item = document.createElement('div');
+    item.className = 'campaign-item';
+    item.innerHTML = `
+      <div class="campaign-status">${cam.status}</div>
+      <div class="campaign-name">${cam.name}</div>
+      <div class="campaign-badge ${cam.badgeClass}">${cam.badge}</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// SERVICE GRID
+function buildServices() {
+  const grid = document.getElementById('serviceGrid');
+  grid.innerHTML = '';
+  SERVICES.forEach(sv => {
+    const card = document.createElement('div');
+    card.className = 'service-card';
+    card.dataset.name = sv.name;
+    card.innerHTML = `
+      <div class="service-check">✓</div>
+      <div class="service-emoji">${sv.emoji}</div>
+      <div class="service-name">${sv.name}</div>
+      <div class="service-desc">${sv.desc}</div>
+    `;
+    card.onclick = () => selectService(sv, card);
+    grid.appendChild(card);
+  });
+}
+
+function selectService(sv, card) {
+  document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  state.service = sv;
+  document.getElementById('serviceSummary').textContent = `${sv.emoji} ${sv.name} selected`;
+  document.getElementById('serviceContinueBtn').disabled = false;
+  updateBreadcrumbs();
+}
+
+// BUDGET GRID
+function buildBudgets() {
+  const grid = document.getElementById('budgetGrid');
+  grid.innerHTML = '';
+  BUDGETS.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'budget-card';
+    card.innerHTML = `
+      <div class="budget-check">✓</div>
+      <div class="budget-amount">${b.amount}</div>
+      <div class="budget-tier">${b.tier}</div>
+      <div class="budget-desc">${b.desc}</div>
+    `;
+    if (b.tier !== 'Custom') {
+      card.onclick = () => selectBudget(b.amount, card);
+    } else {
+      card.onclick = () => {
+        document.querySelectorAll('.budget-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        document.getElementById('customInput').focus();
+      };
+    }
+    grid.appendChild(card);
+  });
+}
+
+function selectBudget(amount, card) {
+  document.querySelectorAll('.budget-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  state.budget = amount;
+  document.getElementById('customInput').value = '';
+  document.getElementById('budgetSummary').textContent = `${amount} selected`;
+  document.getElementById('budgetContinueBtn').disabled = false;
+}
+
+function onCustomInput(val) {
+  if (val && parseFloat(val) > 0) {
+    state.budget = `$${val}`;
+    document.getElementById('budgetSummary').textContent = `$${val} custom budget`;
+    document.getElementById('budgetContinueBtn').disabled = false;
+    document.querySelectorAll('.budget-card').forEach(c => c.classList.remove('selected'));
+    // highlight custom card
+    const cards = document.querySelectorAll('.budget-card');
+    if (cards[3]) cards[3].classList.add('selected');
+  } else {
+    if (!document.querySelector('.budget-card.selected:not(:nth-child(4))')) {
+      document.getElementById('budgetSummary').textContent = 'No budget selected';
+      document.getElementById('budgetContinueBtn').disabled = true;
+      state.budget = null;
+    }
+  }
+}
+
+// Override goToPanel(4) to build complete screen
+const _originalGoToPanel = goToPanel;
+
+function goToPanel(idx) {
+  state.history.push(state.currentPanel);
+  state.currentPanel = idx;
+  strip.style.transform = `translate3d(-${idx * 100}vw, 0, 0)`;
+  updateBreadcrumbs();
+  if (idx === 4) buildCompleteScreen();
+}
+
+function buildCompleteScreen() {
+  const cl = state.client || { name: '—', emoji: '' };
+  const sv = state.service || { name: '—', emoji: '' };
+  const bud = state.budget || '—';
+
+  document.getElementById('bc4').innerHTML =
+    `Clients › ${cl.name} › New › ${sv.name} › Budget › <span>Complete</span>`;
+
+  document.getElementById('completeSummary').innerHTML = `
+    <div class="summary-row">
+      <span class="summary-key">Client</span>
+      <span class="summary-val">${cl.emoji} ${cl.name}</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-row">
+      <span class="summary-key">Service</span>
+      <span class="summary-val">${sv.emoji} ${sv.name}</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-row">
+      <span class="summary-key">Budget</span>
+      <span class="summary-val">${bud}</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-row">
+      <span class="summary-key">Status</span>
+      <span class="summary-val" style="color:#00a854">🟢 Active</span>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+buildClients();
+buildServices();
+buildBudgets();
+updateBreadcrumbs();
+</script>
+</body>
+</html>

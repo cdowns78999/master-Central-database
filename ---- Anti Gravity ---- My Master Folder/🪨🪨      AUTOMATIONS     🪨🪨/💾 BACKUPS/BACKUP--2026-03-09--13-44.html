@@ -1,0 +1,1604 @@
+html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Railroad Control Panel | Digital Coms</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --lamp-deep: #c2560a;
+            --lamp-mid: #e07b2e;
+            --lamp-warm: #f2a54a;
+            --lamp-soft: #f8c97d;
+            --lamp-glow: #fde8c8;
+            --white: #ffffff;
+            --text: #3b1a04;
+            --text-dim: rgba(59, 26, 4, 0.55);
+            --border-thick: 4px;
+            --radius: 16px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow-y: auto;
+            background:
+                radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%),
+                linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%);
+        }
+
+        /* ══════════════════════════════════════
+           4-Zone Grid Layout
+           ══════════════════════════════════════ */
+        .railroad-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto auto;
+            grid-template-areas:
+                "left loaded"
+                "left working"
+                "left questions"
+                "left results";
+            min-height: 100vh;
+            gap: 10px;
+            padding: 16px;
+        }
+
+        /* ── ZONE 3 RIGHT — Questions ── */
+        .zone-questions {
+            grid-area: questions;
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .zone-questions-header {
+            padding: 0.8rem 1.4rem 0.5rem;
+            border-bottom: 2px solid rgba(194, 86, 10, 0.1);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .zone-questions-header .zqh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+        }
+
+        .zone-questions-header .zqh-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: var(--lamp-mid);
+            background: var(--lamp-glow);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .zone-questions-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.6rem 1.2rem;
+        }
+
+        .question-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(194, 86, 10, 0.06);
+            font-size: 0.72rem;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .question-row .qr-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: var(--white);
+            background: var(--lamp-deep);
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .question-row .qr-text {
+            flex: 1;
+        }
+
+        .question-row .qr-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.45rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 2px;
+        }
+
+        .question-row .qr-status.open {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .question-row .qr-status.answered {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* ── LEFT ZONE — Current Step ── */
+        .zone-left {
+            grid-area: left;
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .zone-left-header {
+            padding: 1.4rem 1.6rem 1rem;
+            border-bottom: 2px solid rgba(194, 86, 10, 0.1);
+            flex-shrink: 0;
+        }
+
+        .zone-left-header .zlh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+            margin-bottom: 0.5rem;
+        }
+
+        .zone-left-header .zlh-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text);
+        }
+
+        .zone-left-header .zlh-section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 8px;
+            background: var(--lamp-glow);
+            border: 2px solid var(--white);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--lamp-deep);
+            margin-bottom: 0.6rem;
+        }
+
+        .zone-left-header .zlh-section-badge .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--lamp-deep);
+        }
+
+        .zone-left-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.2rem 1.6rem;
+        }
+
+        .step-card {
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            background: var(--lamp-glow);
+            border: 2px solid var(--white);
+            margin-bottom: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+
+        .step-card .sc-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .step-card .sc-head-left {
+            flex: 1;
+        }
+
+        .step-card .sc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: var(--lamp-deep);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 0.3rem;
+        }
+
+        .step-card .sc-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+
+        /* ── Claudify Button (lives in header next to JOB badge) ── */
+        .claudify-header-btn {
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #dbeafe;
+            border: 2px solid #93c5fd;
+            color: #1e40af;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.45rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .claudify-header-btn:hover {
+            background: #bfdbfe;
+            border-color: #60a5fa;
+        }
+
+        /* ── Step Gauge (mini speedometer per step card) ── */
+        .step-gauge {
+            width: 38px;
+            height: 22px;
+            position: relative;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-gauge svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .gauge-red {
+            stroke: #fca5a5;
+        }
+
+        .gauge-white {
+            stroke: #e5e7eb;
+        }
+
+        .gauge-green {
+            stroke: #86efac;
+        }
+
+        .gauge-needle {
+            stroke: var(--text);
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            transition: all 0.4s ease;
+        }
+
+        .gauge-dot {
+            fill: var(--text);
+            r: 1.5;
+        }
+
+        .gauge-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 5px;
+            font-weight: 700;
+            text-anchor: middle;
+            fill: var(--text-dim);
+        }
+
+        .step-gauge-note {
+            display: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.45rem;
+            color: #065f46;
+            margin-top: 0.3rem;
+            padding: 3px 8px;
+            background: #d1fae5;
+            border-radius: 4px;
+        }
+
+        .step-gauge-note.show {
+            display: inline-block;
+        }
+
+        .step-card .sc-sub {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            padding-left: 0.8rem;
+            position: relative;
+        }
+
+        .step-card .sc-sub::before {
+            content: '';
+            position: absolute;
+            left: 0.2rem;
+            top: 0.4em;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--lamp-mid);
+            opacity: 0.7;
+        }
+
+        .step-card.active-step {
+            background: var(--lamp-warm);
+            border-color: var(--lamp-deep);
+            box-shadow: 0 0 0 2px var(--lamp-deep), 0 4px 12px rgba(194, 86, 10, 0.2);
+        }
+
+        .step-card.completed-step {
+            opacity: 0.55;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .step-card.completed-step::after {
+            content: ' \2713';
+            color: #10b981;
+            font-weight: 800;
+        }
+
+        /* Status pill */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-top: 0.5rem;
+        }
+
+        .status-pill.status-active {
+            background: var(--lamp-warm);
+            color: var(--text);
+        }
+
+        .status-pill.status-done {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-pill.status-waiting {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-pill.status-skipped {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .status-pill .sp-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+        .status-pill.status-active .sp-dot {
+            background: var(--lamp-deep);
+        }
+
+        .status-pill.status-done .sp-dot {
+            background: #10b981;
+        }
+
+        .status-pill.status-waiting .sp-dot {
+            background: #f59e0b;
+        }
+
+        /* Progress bar */
+        .progress-bar-wrap {
+            padding: 1rem 1.6rem;
+            border-top: 2px solid rgba(194, 86, 10, 0.1);
+            flex-shrink: 0;
+        }
+
+        .progress-bar-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: var(--lamp-deep);
+            margin-bottom: 0.4rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(194, 86, 10, 0.12);
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--lamp-deep), var(--lamp-warm));
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        /* ── ZONE 1 RIGHT — Loaded Tasks ── */
+        .zone-loaded {
+            grid-area: loaded;
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .zone-loaded-header {
+            padding: 0.8rem 1.4rem 0.5rem;
+            border-bottom: 2px solid rgba(194, 86, 10, 0.1);
+            flex-shrink: 0;
+        }
+
+        .zone-loaded-header .zlh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+        }
+
+        .zone-loaded-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.6rem 1.2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            line-height: 1.9;
+            color: var(--text);
+        }
+
+        .loaded-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(194, 86, 10, 0.06);
+        }
+
+        .loaded-row .lr-num {
+            color: var(--lamp-deep);
+            font-weight: 700;
+            min-width: 20px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .loaded-row .lr-title {
+            flex: 1;
+            color: var(--text);
+            font-size: 0.65rem;
+        }
+
+        .loaded-row .lr-type {
+            font-weight: 700;
+            flex-shrink: 0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.45rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .loaded-row .lr-type.chad {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .loaded-row .lr-type.claude {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* ── ZONE 2 RIGHT — Currently Working ── */
+        .zone-working {
+            grid-area: working;
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .zone-working-header {
+            padding: 0.8rem 1.4rem 0.5rem;
+            border-bottom: 2px solid rgba(194, 86, 10, 0.1);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .zone-working-header .zwh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+        }
+
+        .zone-working-header .zwh-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: var(--lamp-mid);
+            background: var(--lamp-glow);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .zone-working-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.6rem 1.2rem;
+        }
+
+        .working-card {
+            padding: 0.7rem 1rem;
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            border: 2px solid var(--white);
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .working-card.active {
+            background: var(--lamp-warm);
+            border-color: var(--lamp-deep);
+            box-shadow: 0 0 0 2px var(--lamp-deep), 0 4px 12px rgba(194, 86, 10, 0.2);
+        }
+
+        .working-card .wc-agent {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: var(--lamp-deep);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+
+        .working-card .wc-task {
+            flex: 1;
+            font-size: 0.72rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .working-card .wc-spinner {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--lamp-mid);
+            border-top-color: var(--lamp-deep);
+            flex-shrink: 0;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .working-idle {
+            text-align: center;
+            padding: 1.2rem 1rem;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+        }
+
+        /* ── ZONE 4 RIGHT — Results ── */
+        .zone-results {
+            grid-area: results;
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .zone-results-header {
+            padding: 0.8rem 1.4rem 0.5rem;
+            border-bottom: 2px solid rgba(194, 86, 10, 0.1);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .zone-results-header .zrh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+        }
+
+        .zone-results-header .zrh-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .zrh-badge.verified {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .zrh-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .zrh-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .zone-results-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.8rem 1.2rem;
+        }
+
+        .output-block {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            border: 2px solid var(--white);
+            margin-bottom: 0.6rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+
+        .output-block .ob-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--lamp-deep);
+            margin-bottom: 0.3rem;
+        }
+
+        .output-block .ob-content {
+            font-size: 0.75rem;
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .output-block .ob-content pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .ob-english {
+            margin-top: 0.5rem;
+            padding: 0.6rem 0.8rem;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            border-left: 3px solid var(--lamp-mid);
+        }
+
+        .ob-english-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--lamp-mid);
+            margin-bottom: 0.4rem;
+        }
+
+        .ob-eng-group {
+            margin-bottom: 0.3rem;
+            font-size: 0.72rem;
+            line-height: 1.6;
+        }
+
+        .ob-eng-tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--lamp-deep);
+            background: var(--lamp-glow);
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-right: 6px;
+        }
+
+        .ob-eng-text {
+            color: var(--text);
+        }
+
+        .ob-eng-check {
+            margin-top: 0.3rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: #065f46;
+        }
+
+        .output-empty {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+        }
+
+        .output-empty .oe-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.4rem;
+            opacity: 0.3;
+        }
+
+        /* ── Completion Banner ── */
+        .completion-banner {
+            display: none;
+            padding: 1.2rem 1.6rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            border: 2px solid var(--white);
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+        }
+
+        .completion-banner.show {
+            display: block;
+        }
+
+        .completion-banner .cb-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+        }
+
+        .completion-banner .cb-sub {
+            font-size: 0.72rem;
+            opacity: 0.9;
+        }
+
+        /* ── Scrollbar styling ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(194, 86, 10, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(194, 86, 10, 0.35);
+        }
+
+        /* ══════════════════════════════════════
+           VIDEO GAME AESTHETIC LAYER
+           ══════════════════════════════════════ */
+
+        /* XP Level badge — top left corner */
+        .game-hud {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .game-level {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.5rem;
+            color: var(--lamp-glow);
+            background: var(--lamp-deep);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 2px solid var(--lamp-warm);
+            box-shadow: 0 0 12px rgba(194, 86, 10, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            letter-spacing: 0.05em;
+        }
+
+        .game-xp-bar {
+            width: 120px;
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--lamp-warm);
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-xp-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+            transition: width 0.6s ease;
+        }
+
+        /* Train track connector between steps */
+        .track-connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 0;
+            color: var(--lamp-mid);
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            opacity: 0.5;
+        }
+
+        .track-connector.active-track {
+            opacity: 1;
+            color: var(--lamp-deep);
+            animation: trackPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes trackPulse {
+
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Train emoji row — shows between completed outputs */
+        .train-row {
+            text-align: center;
+            padding: 4px 0;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            animation: trainSlide 0.8s ease-out;
+        }
+
+        @keyframes trainSlide {
+            0% {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Pixel-style section badge override */
+        .zone-left-header .zlh-section-badge {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.45rem;
+            letter-spacing: 0.1em;
+            background: var(--lamp-deep);
+            color: var(--lamp-glow);
+            border-color: var(--lamp-warm);
+            box-shadow: 0 0 8px rgba(194, 86, 10, 0.3);
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+        }
+
+        .zone-left-header .zlh-section-badge .badge-dot {
+            background: #10b981;
+            box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
+        }
+
+        /* Loaded Tasks header game style */
+        .zone-loaded-header .zlh-label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.4rem;
+            color: var(--lamp-deep);
+        }
+
+        /* Working header game style */
+        .zone-working-header .zwh-label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.4rem;
+            color: var(--lamp-deep);
+        }
+
+        /* Results header game style */
+        .zone-results-header .zrh-label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.4rem;
+        }
+
+        /* Progress bar game override — chunky pixel feel */
+        .progress-bar-track {
+            border: 2px solid var(--lamp-warm);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 40%, #6ee7b7 100%);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            background-size: 20px 20px;
+            background-image: linear-gradient(45deg,
+                    rgba(255, 255, 255, 0.15) 25%, transparent 25%,
+                    transparent 50%, rgba(255, 255, 255, 0.15) 50%,
+                    rgba(255, 255, 255, 0.15) 75%, transparent 75%);
+            animation: progressStripe 1s linear infinite;
+        }
+
+        @keyframes progressStripe {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 20px 0;
+            }
+        }
+
+        .progress-bar-label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.35rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Game HUD -->
+    <div class="game-hud">
+        <div class="game-level" id="gameLevel">JOB 1 — COMMS SCRAPE</div>
+        <div class="game-xp-bar">
+            <div class="game-xp-fill" id="gameXpFill" style="width:0%;"></div>
+        </div>
+    </div>
+
+    <div class="railroad-grid">
+
+        <!-- ═══ LEFT ZONE — Current Step ═══ -->
+        <div class="zone-left">
+            <div class="zone-left-header">
+                <div class="zlh-label">Current Job</div>
+                <div style="display:flex;align-items:center;gap:0;margin-bottom:0.6rem;">
+                    <div class="zlh-section-badge" id="sectionBadge" style="margin-bottom:0;">
+                        <span class="badge-dot"></span>
+                        <span id="sectionBadgeText">JOB 2 — SSWEEP</span>
+                    </div>
+                    <button class="claudify-header-btn" onclick="claudifyJob()"
+                        title="Claudify this job">Claudify</button>
+                </div>
+                <div class="zlh-title" id="stepTitle">Run Contact Enrichment</div>
+            </div>
+
+            <div class="zone-left-body" id="stepBody">
+                <div class="step-card completed-step" data-step="s2-0" data-type="chad">
+                    <div class="sc-head">
+                        <div class="sc-head-left">
+                            <div class="sc-num">Step 1</div>
+                            <div class="sc-title">Connect Social Accounts</div>
+                        </div>
+                        <div class="step-gauge" title="chad step">
+                            <svg viewBox="0 0 38 22">
+                                <path d="M 5 19 A 14 14 0 0 1 33 19" class="gauge-bg gauge-red" />
+                                <path d="M 12 7 A 14 14 0 0 1 26 7" class="gauge-bg gauge-white" />
+                                <path d="M 26 7 A 14 14 0 0 1 33 19" class="gauge-bg gauge-green" />
+                                <line x1="19" y1="19" x2="30" y2="12" class="gauge-needle" />
+                                <circle cx="19" cy="19" class="gauge-dot" />
+                                <text x="19" y="21.5" class="gauge-label">DONE</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sc-sub">Link LinkedIn, Instagram, Twitter/X, email</div>
+                    <div class="sc-sub">Import calendar contacts for meeting history</div>
+                    <div class="step-gauge-note">results in output block #5</div>
+                    <div class="status-pill status-done"><span class="sp-dot"></span> DONE</div>
+                </div>
+                <div class="step-card active-step" data-step="s2-1" data-type="chad">
+                    <div class="sc-head">
+                        <div class="sc-head-left">
+                            <div class="sc-num">Step 2</div>
+                            <div class="sc-title">Run Contact Enrichment</div>
+                        </div>
+                        <div class="step-gauge" title="chad step">
+                            <svg viewBox="0 0 38 22">
+                                <path d="M 5 19 A 14 14 0 0 1 33 19" class="gauge-bg gauge-red" />
+                                <path d="M 12 7 A 14 14 0 0 1 26 7" class="gauge-bg gauge-white" />
+                                <path d="M 26 7 A 14 14 0 0 1 33 19" class="gauge-bg gauge-green" />
+                                <line x1="19" y1="19" x2="8" y2="12" class="gauge-needle" />
+                                <circle cx="19" cy="19" class="gauge-dot" />
+                                <text x="19" y="21.5" class="gauge-label">CHAD</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sc-sub">Trigger initial contact database scan</div>
+                    <div class="sc-sub">Review enriched profiles for accuracy → approve</div>
+                    <div class="step-gauge-note"></div>
+                    <div class="status-pill status-active"><span class="sp-dot"></span> ACTIVE</div>
+                </div>
+                <div class="step-card" data-step="s2-2" data-type="chad">
+                    <div class="sc-head">
+                        <div class="sc-head-left">
+                            <div class="sc-num">Step 3</div>
+                            <div class="sc-title">Configure Search + Reports</div>
+                        </div>
+                        <div class="step-gauge" title="chad step">
+                            <svg viewBox="0 0 38 22">
+                                <path d="M 5 19 A 14 14 0 0 1 33 19" class="gauge-bg gauge-red" />
+                                <path d="M 12 7 A 14 14 0 0 1 26 7" class="gauge-bg gauge-white" />
+                                <path d="M 26 7 A 14 14 0 0 1 33 19" class="gauge-bg gauge-green" />
+                                <line x1="19" y1="19" x2="8" y2="12" class="gauge-needle" />
+                                <circle cx="19" cy="19" class="gauge-dot" />
+                                <text x="19" y="21.5" class="gauge-label">CHAD</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="sc-sub">Set up "Who do I know" query templates</div>
+                    <div class="sc-sub">Configure monthly relationship reports</div>
+                    <div class="step-gauge-note"></div>
+                    <div class="status-pill status-waiting"><span class="sp-dot"></span> WAITING</div>
+                </div>
+            </div>
+
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-label">
+                    <span>Progress</span>
+                    <span id="progressCount">5 / 16</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="progressFill" style="width: 31.25%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ZONE 1 RIGHT — Loaded Tasks ═══ -->
+        <div class="zone-loaded">
+            <div class="zone-loaded-header">
+                <div class="zlh-label">Loaded Tasks</div>
+            </div>
+            <div class="zone-loaded-body" id="loadedBody">
+                <div class="loaded-row"><span class="lr-num">6</span><span class="lr-title">Run Contact Enrichment</span><span class="lr-type chad">CHAD</span></div>
+                <div class="loaded-row"><span class="lr-num">7</span><span class="lr-title">Configure Search + Reports</span><span class="lr-type chad">CHAD</span></div>
+                <div class="loaded-row"><span class="lr-num">8</span><span class="lr-title">Connect All Inboxes</span><span class="lr-type chad">CHAD</span></div>
+                <div class="loaded-row"><span class="lr-num">9</span><span class="lr-title">Set Up Routing Rules</span><span class="lr-type chad">CHAD</span></div>
+                <div class="loaded-row"><span class="lr-num">10</span><span class="lr-title">Test Auto-Responses</span><span class="lr-type chad">CHAD</span></div>
+                <div class="loaded-row"><span class="lr-num">11</span><span class="lr-title">Install Alley Pixel</span><span class="lr-type chad">CHAD</span></div>
+                <div class="loaded-row"><span class="lr-num">12</span><span class="lr-title">Configure Alerts</span><span class="lr-type claude">CLAUDE</span></div>
+                <div class="loaded-row"><span class="lr-num">13</span><span class="lr-title">Review First Visitors</span><span class="lr-type chad">CHAD</span></div>
+                <div class="loaded-row"><span class="lr-num">14</span><span class="lr-title">Update Wing pillData</span><span class="lr-type claude">CLAUDE</span></div>
+                <div class="loaded-row"><span class="lr-num">15</span><span class="lr-title">Test Star Card Drop Zone</span><span class="lr-type chad">CHAD</span></div>
+                <div class="loaded-row"><span class="lr-num">16</span><span class="lr-title">Verify Pre-fill</span><span class="lr-type chad">CHAD</span></div>
+            </div>
+        </div>
+
+        <!-- ═══ ZONE 2 RIGHT — Currently Working ═══ -->
+        <div class="zone-working">
+            <div class="zone-working-header">
+                <div class="zwh-label">Currently Working</div>
+                <div class="zwh-status" id="workingStatus">Active</div>
+            </div>
+            <div class="zone-working-body" id="workingBody">
+                <div class="working-card active">
+                    <div class="wc-agent">Main Agent</div>
+                    <div class="wc-task">Run Contact Enrichment // S2</div>
+                    <div class="wc-spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ZONE 3 RIGHT — Questions ═══ -->
+        <div class="zone-questions">
+            <div class="zone-questions-header">
+                <div class="zqh-label">Questions for Chad</div>
+                <div class="zqh-count" id="questionCount">2 open</div>
+            </div>
+            <div class="zone-questions-body" id="questionsBody">
+                <div class="question-row">
+                    <span class="qr-badge">Q1</span>
+                    <span class="qr-text">Does Chad want the {#+1} counter logic on Engine Running to be made permanent in the job runner skill?</span>
+                    <span class="qr-status open">OPEN</span>
+                </div>
+                <div class="question-row">
+                    <span class="qr-badge">Q2</span>
+                    <span class="qr-text">Does Chad want the 3-panel presentation flow to stay on Engine Running HTML?</span>
+                    <span class="qr-status open">OPEN</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ ZONE 4 RIGHT — Results ═══ -->
+        <div class="zone-results">
+            <div class="zone-results-header">
+                <div class="zrh-label">Results</div>
+                <div class="zrh-badge" id="resultsBadge">Verified</div>
+            </div>
+            <div class="zone-results-body" id="resultsBody">
+                <div class="output-block">
+                    <div class="ob-label">S1 — Step 1</div>
+                    <div class="ob-content">Built gmail-scrape.py — OAuth2 auth, thread pulling with pagination (500 max), metadata extraction (From, To, Subject, Date, snippet), contact-based organization, JSON + CSV export with timestamps. Tool located at ADMIN/tools/gmail-scrape.py.</div>
+                    <div class="ob-english">
+                        <div class="ob-english-header">English Please...</div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What I did</span>
+                            <span class="ob-eng-text">Built a Python tool that connects to Gmail, pulls all your email threads, and organizes them by who you talked to and when.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What it does</span>
+                            <span class="ob-eng-text">Gives Ahead a structured export of every email conversation — sorted by contact so you can see your full communication history with any client, supplier, or lead at a glance.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">How to connect it</span>
+                            <span class="ob-eng-text">The JSON/CSV exports feed into the Wing Dashboard pipeline pills. When S5 wires pillData, Gmail contact data populates the Clients and Pipeline wings. Green-sheet s1 Steps tab updated.</span>
+                        </div>
+                        <div class="ob-eng-check">Validated</div>
+                    </div>
+                </div>
+                <div class="output-block">
+                    <div class="ob-label">S1 — Step 2</div>
+                    <div class="ob-content">Built imessage-pull.py — reads macOS chat.db via SQLite (read-only), Apple timestamp conversion, contact/thread grouping, top-20 contact summary, JSON + CSV export. Tool at ADMIN/tools/imessage-pull.py.</div>
+                    <div class="ob-english">
+                        <div class="ob-english-header">English Please...</div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What I did</span>
+                            <span class="ob-eng-text">Built a Python tool that reads your local iMessage database and exports all conversations sorted by contact and thread.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What it does</span>
+                            <span class="ob-eng-text">Pulls your iMessage history so Ahead can see who you've texted, how often, and the full conversation timeline — no API needed, just reads the local database.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">How to connect it</span>
+                            <span class="ob-eng-text">Contact data feeds into the same Wing Dashboard pipeline as Gmail. The summary JSON shows your top 20 most-messaged contacts — ready for the Clients wing.</span>
+                        </div>
+                        <div class="ob-eng-check">Validated</div>
+                    </div>
+                </div>
+                <div class="output-block">
+                    <div class="ob-label">S1 — Step 3</div>
+                    <div class="ob-content">Built whatsapp-export.py — parses WhatsApp .txt/.zip chat exports, regex-based message parsing, multi-file batch processing, contact + date organization, media attachment tracking, JSON + CSV export. Tool at ADMIN/tools/whatsapp-export.py.</div>
+                    <div class="ob-english">
+                        <div class="ob-english-header">English Please...</div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What I did</span>
+                            <span class="ob-eng-text">Built a Python tool that processes WhatsApp chat export files and organizes every message by contact, date, and media attachments.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What it does</span>
+                            <span class="ob-eng-text">Takes the .txt files you export from WhatsApp and turns them into structured data — who said what, when, and whether they sent media. Batch processes multiple chats at once.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">How to connect it</span>
+                            <span class="ob-eng-text">WhatsApp contact data merges into the unified comms layer at S5. Feeds the Pipeline and Clients wings alongside Gmail and iMessage data.</span>
+                        </div>
+                        <div class="ob-eng-check">Validated</div>
+                    </div>
+                </div>
+                <div class="output-block">
+                    <div class="ob-label">S1 — Step 4</div>
+                    <div class="ob-content">Built other-comms.py — catch-all scraper for Discord, Messenger, and other platforms. Unified message format across all sources, platform-specific parsers, batch processing from imports folders, JSON + CSV export. Tool at ADMIN/tools/other-comms.py.</div>
+                    <div class="ob-english">
+                        <div class="ob-english-header">English Please...</div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What I did</span>
+                            <span class="ob-eng-text">Built a catch-all scraper that normalizes Discord, Messenger, and any other platform exports into one unified format.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What it does</span>
+                            <span class="ob-eng-text">No matter where a conversation happened — Discord, Messenger, wherever — this tool converts it to the same structured format so Ahead can see all comms in one place.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">How to connect it</span>
+                            <span class="ob-eng-text">The unified JSON output is the final piece of the comms layer. Combined with Gmail, iMessage, and WhatsApp data, all 4 feeds merge into Wing Dashboard at S5.</span>
+                        </div>
+                        <div class="ob-eng-check">Validated</div>
+                    </div>
+                </div>
+                <div class="output-block">
+                    <div class="ob-label">S2 — Step 1</div>
+                    <div class="ob-content">Chad connected social accounts: LinkedIn, Instagram, Twitter/X, email linked. Calendar contacts imported for meeting history. Social Sweep foundation set.</div>
+                    <div class="ob-english">
+                        <div class="ob-english-header">English Please...</div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What I did</span>
+                            <span class="ob-eng-text">Connected all social accounts to the Social Sweep system — LinkedIn, Instagram, Twitter/X, and email — plus imported calendar contacts.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">What it does</span>
+                            <span class="ob-eng-text">Social Sweep now has access to all your social profiles and meeting history, so it can map your network and identify relationship patterns across platforms.</span>
+                        </div>
+                        <div class="ob-eng-group">
+                            <span class="ob-eng-tag">How to connect it</span>
+                            <span class="ob-eng-text">Connected accounts feed the contact enrichment in S2 Step 2. Once enriched, this data flows into Wing Dashboard Clients and Pipeline wings at S5.</span>
+                        </div>
+                        <div class="ob-eng-check">Validated</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ══════════════════════════════════════════════
+           Railroad State — read/written by c9-3-railroad skill
+           ══════════════════════════════════════════════ */
+
+        const railroadState = {
+            currentSection: 's2',
+            currentStep: 1,
+            completedSteps: ['s1-0','s1-1','s1-2','s1-3','s2-0'],
+            skippedSteps: [],
+            loadedTasks: ['s2-1','s2-2','s3-0','s3-1','s3-2','s4-0','s4-1','s4-2','s5-0','s5-1','s5-2'],
+            currentlyWorking: {agent:'Main Agent',task:'Run Contact Enrichment // S2'},
+            results: [
+                {step:'s1-0',status:'done',label:'S1 — Step 1'},
+                {step:'s1-1',status:'done',label:'S1 — Step 2'},
+                {step:'s1-2',status:'done',label:'S1 — Step 3'},
+                {step:'s1-3',status:'done',label:'S1 — Step 4'},
+                {step:'s2-0',status:'done',label:'S2 — Step 1'},
+            ],
+            totalSteps: 16,
+            mode: 'main',
+            activePlatforms: [],
+            sessionStarted: '2026-03-07T00:00:00.000Z',
+            questions: [{id:1,text:'Does Chad want the {#+1} counter logic on Engine Running to be made permanent in the job runner skill?',status:'open',answer:null,step:'s2-1'},{id:2,text:'Does Chad want the 3-panel presentation flow to stay on Engine Running HTML?',status:'open',answer:null,step:'s2-1'}],
+            claudifyQueue: [],
+        };
+
+        /* ── Step Data (mirrored from build-digital-coms.html) ── */
+
+        const stepData = {
+            s1: [
+                { title: 'Gmail Scrape', subs: ['Connect to Gmail API \u2192 authenticate with OAuth2', 'Pull email threads \u2192 organize exports by contact + date'], type: 'claude' },
+                { title: 'iMessage Pull', subs: ['Access local iMessage database (chat.db on macOS)', 'Extract conversation history \u2192 parse by contact + thread'], type: 'claude' },
+                { title: 'WhatsApp Export', subs: ['Pull WhatsApp chat exports \u2192 parse .txt / .zip files', 'Organize messages by contact + date + media attachments'], type: 'claude' },
+                { title: 'Other Comms', subs: ['Catch-all for remaining channels: Messenger, Discord, etc.', 'Scrape + normalize into unified comms format'], type: 'claude' },
+            ],
+            s2: [
+                { title: 'Connect Social Accounts', subs: ['Link LinkedIn, Instagram, Twitter/X, email', 'Import calendar contacts for meeting history'], type: 'chad' },
+                { title: 'Run Contact Enrichment', subs: ['Trigger initial contact database scan', 'Review enriched profiles for accuracy \u2192 approve'], type: 'chad' },
+                { title: 'Configure Search + Reports', subs: ['Set up "Who do I know" query templates', 'Configure monthly relationship reports'], type: 'chad' },
+            ],
+            s3: [
+                { title: 'Connect All Inboxes', subs: ['Link Instagram DMs, Messenger, Twitter/X DMs', 'Add Gmail + WhatsApp Business if available'], type: 'chad' },
+                { title: 'Set Up Routing Rules', subs: ['Create rules: leads vs support vs general', 'Configure conversation labels and tags'], type: 'chad' },
+                { title: 'Test Auto-Responses', subs: ['Create after-hours templates + common query responses', 'Send test messages across all platforms'], type: 'chad' },
+            ],
+            s4: [
+                { title: 'Install Alley Pixel', subs: ['Get tracking pixel code from Alley dashboard', 'Add to all website pages in header \u2192 verify firing'], type: 'chad' },
+                { title: 'Configure Alerts', subs: ['Set rules: repeat visitors, high-intent pages', 'Configure lead export format + webhook'], type: 'claude' },
+                { title: 'Review First Visitors', subs: ['Monitor first identified visitors in Alley dashboard', 'Check identification accuracy \u2192 refine thresholds'], type: 'chad' },
+            ],
+            s5: [
+                { title: 'Update Wing pillData', subs: ['Add coms pills to all 7 wing sections in dashboard code', 'Map: Clients / Pricing / Projects / Pipeline / Suppliers / Services / Inventory'], type: 'claude' },
+                { title: 'Test Star Card Drop Zone', subs: ['Drag coms pills to star card \u2192 verify detail view loads', 'Check platform stats, cost breakdown, quick actions'], type: 'chad' },
+                { title: 'Verify Pre-fill', subs: ['Open coms overlay \u2192 complete all 4 steps \u2192 close', 'Confirm all wings populated with new pills'], type: 'chad' },
+            ],
+        };
+
+        const platformData = {
+            gmail: {
+                name: 'Gmail', sectionCode: 'GMAIL', steps: [
+                    { title: 'Create or designate business Gmail account', type: 'chad' },
+                    { title: 'Enable Gmail API in Google Cloud Console', type: 'chad' },
+                    { title: 'Create OAuth2 credentials for app access', type: 'chad' },
+                    { title: 'Set up professional email signature', type: 'claude' },
+                    { title: 'Create label structure: Leads / Clients / Suppliers', type: 'chad' },
+                    { title: 'Configure filters for auto-sorting', type: 'claude' },
+                    { title: 'Connect to Revio for unified inbox', type: 'chad' },
+                    { title: 'Load email templates for outreach', type: 'claude' },
+                ]
+            },
+            whatsapp: {
+                name: 'WhatsApp', sectionCode: 'WHATSAPP', steps: [
+                    { title: 'Download WhatsApp Business app', type: 'chad' },
+                    { title: 'Set up business profile (name, hours, description)', type: 'chad' },
+                    { title: 'Create quick reply templates', type: 'claude' },
+                    { title: 'Set up auto-greeting and away messages', type: 'claude' },
+                    { title: 'Create broadcast lists: Clients / Suppliers / Prospects', type: 'chad' },
+                    { title: 'Configure conversation labels', type: 'chad' },
+                    { title: 'Connect to Revio for unified inbox', type: 'chad' },
+                    { title: 'Set up catalog for service listings', type: 'chad' },
+                ]
+            },
+            imessage: {
+                name: 'iMessage', sectionCode: 'IMESSAGE', steps: [
+                    { title: 'Organize threads by pinning key clients', type: 'chad' },
+                    { title: 'Create contact groups in macOS Contacts', type: 'chad' },
+                    { title: 'Set up Focus modes for business hours', type: 'chad' },
+                    { title: 'Establish naming convention for group chats', type: 'claude' },
+                    { title: 'Document key conversations in Obsidian vault', type: 'chad' },
+                    { title: 'Set reminder system for follow-ups', type: 'chad' },
+                    { title: 'Use Shortcuts app for message templates', type: 'chad' },
+                    { title: 'Log important conversations in dashboard', type: 'claude' },
+                ]
+            },
+            messenger: {
+                name: 'Messenger', sectionCode: 'MESSENGER', steps: [
+                    { title: 'Ensure Facebook Business Page is active', type: 'chad' },
+                    { title: 'Enable Messenger for business page', type: 'chad' },
+                    { title: 'Set up instant replies and greeting', type: 'claude' },
+                    { title: 'Create FAQ auto-responses', type: 'claude' },
+                    { title: 'Configure lead gen through Messenger ads', type: 'chad' },
+                    { title: 'Connect to Revio for unified inbox', type: 'chad' },
+                    { title: 'Set up conversation labels/tags', type: 'chad' },
+                    { title: 'Create response templates', type: 'claude' },
+                ]
+            },
+            discord: {
+                name: 'Discord', sectionCode: 'DISCORD', steps: [
+                    { title: 'Create Ahead Artist Solutions server', type: 'chad' },
+                    { title: 'Set up roles: Admin / Team / Clients / Artists', type: 'claude' },
+                    { title: 'Create channel categories: General / Projects / Support', type: 'claude' },
+                    { title: 'Configure permissions per role', type: 'claude' },
+                    { title: 'Set up welcome channel with onboarding', type: 'claude' },
+                    { title: 'Add utility bots (MEE6 or Carl-bot)', type: 'chad' },
+                    { title: 'Create webhook for dashboard notifications', type: 'claude' },
+                    { title: 'Set up thread system for projects', type: 'claude' },
+                ]
+            },
+            vrchat: {
+                name: 'VRChat', sectionCode: 'VRCHAT', steps: [
+                    { title: 'Create or verify VRChat account', type: 'chad' },
+                    { title: 'Identify or create branded meeting world', type: 'chad' },
+                    { title: 'Set up friends list with clients', type: 'chad' },
+                    { title: 'Create event calendar for VR meetups', type: 'claude' },
+                    { title: 'Document world IDs in Obsidian vault', type: 'chad' },
+                    { title: 'Set up recording workflow for meetings', type: 'chad' },
+                    { title: 'Create follow-up templates for post-VR', type: 'claude' },
+                    { title: 'Log VRChat sessions in dashboard', type: 'claude' },
+                ]
+            },
+            local: {
+                name: 'Local', sectionCode: 'LOCAL', steps: [
+                    { title: 'Compile local business directory', type: 'claude' },
+                    { title: 'Identify recurring networking events', type: 'claude' },
+                    { title: 'Create contact cards / QR code', type: 'chad' },
+                    { title: 'Set up event calendar with local meetups', type: 'claude' },
+                    { title: 'Create follow-up workflow: event \u2192 connect \u2192 pipeline', type: 'claude' },
+                    { title: 'Track local referrals in Obsidian vault', type: 'chad' },
+                    { title: 'Document in-person meeting notes', type: 'chad' },
+                    { title: 'Log local leads into dashboard pipeline', type: 'claude' },
+                ]
+            },
+            manis: {
+                name: 'Manis', sectionCode: 'MANIS', steps: [
+                    { title: 'Create Manis account and complete onboarding', type: 'chad' },
+                    { title: 'Define ideal client profile (ICP)', type: 'chad' },
+                    { title: 'Set lead criteria filters', type: 'chad' },
+                    { title: 'Configure first batch: 100 leads', type: 'chad' },
+                    { title: 'Review and approve first batch quality', type: 'chad' },
+                    { title: 'Set up monthly delivery schedule', type: 'chad' },
+                    { title: 'Export format: CSV with full contact data', type: 'claude' },
+                    { title: 'Import leads into dashboard pipeline', type: 'claude' },
+                    { title: 'Create follow-up sequence templates', type: 'claude' },
+                    { title: 'Set up lead scoring rules', type: 'claude' },
+                ]
+            },
+            socialsweep: {
+                name: 'Social Sweep', sectionCode: 'SSWEEP', steps: [
+                    { title: 'Create Social Sweep account', type: 'chad' },
+                    { title: 'Connect social accounts: LinkedIn, Instagram, email', type: 'chad' },
+                    { title: 'Import calendar contacts', type: 'chad' },
+                    { title: 'Run initial contact scan and enrichment', type: 'chad' },
+                    { title: 'Review enriched profiles for accuracy', type: 'chad' },
+                    { title: 'Set up "Who do I know" search queries', type: 'chad' },
+                    { title: 'Create introduction request workflows', type: 'claude' },
+                    { title: 'Configure monthly relationship reports', type: 'chad' },
+                    { title: 'Set up opportunity alerts', type: 'chad' },
+                    { title: 'Export key contacts to dashboard', type: 'claude' },
+                ]
+            },
+            revio: {
+                name: 'Revio', sectionCode: 'REVIO', steps: [
+                    { title: 'Create Revio account and complete setup', type: 'chad' },
+                    { title: 'Connect Instagram DMs, Messenger, Twitter/X', type: 'chad' },
+                    { title: 'Connect email inboxes (Gmail, Outlook)', type: 'chad' },
+                    { title: 'Connect WhatsApp Business', type: 'chad' },
+                    { title: 'Set up routing rules: leads vs support', type: 'claude' },
+                    { title: 'Create auto-response templates', type: 'claude' },
+                    { title: 'Configure conversation labels and tags', type: 'claude' },
+                    { title: 'Set up team assignment rules', type: 'claude' },
+                    { title: 'Enable conversation analytics', type: 'chad' },
+                    { title: 'Test inbound across all platforms', type: 'chad' },
+                ]
+            },
+            alley: {
+                name: 'Alley', sectionCode: 'ALLEY', steps: [
+                    { title: 'Create Alley account and get pixel code', type: 'chad' },
+                    { title: 'Install pixel on all website pages', type: 'chad' },
+                    { title: 'Verify pixel is firing correctly', type: 'chad' },
+                    { title: 'Configure visitor ID thresholds', type: 'chad' },
+                    { title: 'Set up alert rules for repeat visitors', type: 'claude' },
+                    { title: 'Configure lead export format and webhook', type: 'claude' },
+                    { title: 'Set up follow-up sequences', type: 'claude' },
+                    { title: 'Set up weekly visitor report', type: 'claude' },
+                    { title: 'Monitor and refine identification', type: 'chad' },
+                    { title: 'Review first 500 visitor IDs', type: 'chad' },
+                ]
+            }
+        };
+
+        /* ── Section name mapping ── */
+        const sectionNames = {
+            s1: 'JOB 1 — COMMS SCRAPE', s2: 'JOB 2 — SSWEEP', s3: 'JOB 3 — REVIO', s4: 'JOB 4 — ALLEY', s5: 'JOB 5 — INTEG',
+            gmail: 'JOB 6 — GMAIL', whatsapp: 'JOB 7 — WHATSAPP', imessage: 'JOB 8 — IMESSAGE', messenger: 'JOB 9 — MESSENGER',
+            discord: 'JOB 10 — DISCORD', vrchat: 'JOB 11 — VRCHAT', local: 'JOB 12 — LOCAL',
+            manis: 'JOB 13 — MANIS', socialsweep: 'JOB 14 — SSWEEP', revio: 'JOB 15 — REVIO', alley: 'JOB 16 — ALLEY'
+        };
+
+        /* ── Helper: get steps for a section key ── */
+        function getSteps(sectionKey) {
+            if (stepData[sectionKey]) return stepData[sectionKey];
+            if (platformData[sectionKey]) return platformData[sectionKey].steps.map(s => ({
+                title: s.title, subs: [], type: s.type
+            }));
+            return [];
+        }
+
+        /* ── Helper: count total completed ── */
+        function countCompleted() {
+            return railroadState.completedSteps.length;
+        }
+
+        /* ── Helper: update progress bar ── */
+        function updateProgress() {
+            const done = countCompleted();
+            const total = railroadState.totalSteps;
+            const pct = Math.round((done / total) * 100);
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressCount').textContent = done + ' / ' + total;
+        }
+
+        /* ── Gauge helpers ── */
+
+        // Needle angles: red(chad)=-45°, white(claude-ready)=0°, green(claude-done)=45°
+        // SVG needle endpoints for each state:
+        //   chad:        x2=8,  y2=12  (pointing left/red)
+        //   claude-ready: x2=19, y2=5   (pointing up/white)
+        //   claude-done:  x2=30, y2=12  (pointing right/green)
+
+        function setGaugeState(card, state, note) {
+            const needle = card.querySelector('.gauge-needle');
+            const label = card.querySelector('.gauge-label');
+            const noteEl = card.querySelector('.step-gauge-note');
+            if (!needle) return;
+
+            if (state === 'chad') {
+                needle.setAttribute('x2', '8');
+                needle.setAttribute('y2', '12');
+                label.textContent = 'CHAD';
+            } else if (state === 'claude') {
+                needle.setAttribute('x2', '19');
+                needle.setAttribute('y2', '5');
+                label.textContent = 'CLAUDE';
+            } else if (state === 'done') {
+                needle.setAttribute('x2', '30');
+                needle.setAttribute('y2', '12');
+                label.textContent = 'DONE';
+                if (note && noteEl) {
+                    noteEl.textContent = note;
+                    noteEl.classList.add('show');
+                }
+            }
+        }
+
+        /* ── Claudify Job (header button) ── */
+
+        function claudifyJob() {
+            const jobName = railroadState.currentSection
+                ? sectionNames[railroadState.currentSection]
+                : 'this job';
+
+            // drop a question in Questions zone
+            const qNum = railroadState.questions.length + 1;
+            const qText = 'CLAUDIFY JOB: "' + jobName + '" — Chad wants to build this entire job as an in-house Claude process.';
+            railroadState.questions.push({
+                id: qNum, text: qText, status: 'claudify', answer: null, step: railroadState.currentSection
+            });
+            railroadState.claudifyQueue.push({ stepId: railroadState.currentSection, title: jobName, details: null });
+
+            const qBody = document.getElementById('questionsBody');
+            const row = document.createElement('div');
+            row.className = 'question-row';
+            row.innerHTML = '<span class="qr-badge">Q' + qNum + '</span>' +
+                '<span class="qr-text">' + qText + '</span>' +
+                '<span class="qr-status open">CLAUDIFY</span>';
+            qBody.appendChild(row);
+
+            const openCount = railroadState.questions.filter(q => q.status !== 'answered').length;
+            document.getElementById('questionCount').textContent = openCount + ' open';
+        }
+
+        /* Initial render */
+        updateProgress();
+    </script>
+
+</body>
+
+</html>

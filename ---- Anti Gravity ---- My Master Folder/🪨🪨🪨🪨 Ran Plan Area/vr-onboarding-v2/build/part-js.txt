@@ -1,0 +1,226 @@
+<script>
+// ══════════════════════════════════════════
+// QUAD NAVIGATION SYSTEM
+// ══════════════════════════════════════════
+const QUADS = [
+  { id: 'quad-1', label: 'Scouted',       zoomClass: 'zoom-q1' },
+  { id: 'quad-2', label: 'How It Works',  zoomClass: 'zoom-q2' },
+  { id: 'quad-3', label: 'Pick Your Song',zoomClass: 'zoom-q3' },
+  { id: 'quad-4', label: 'Your Deal',     zoomClass: 'zoom-q4' },
+];
+
+let currentQuad = 0;
+const DESKTOP_BP = 768;
+
+function isDesktop() {
+  return window.innerWidth >= DESKTOP_BP;
+}
+
+function showQuad(index) {
+  if (index < 0) index = QUADS.length - 1;
+  if (index >= QUADS.length) index = 0;
+  currentQuad = index;
+
+  if (isDesktop()) {
+    // Desktop: CSS zoom states — all quads visible, active one zoomed
+    QUADS.forEach(q => document.body.classList.remove(q.zoomClass));
+    document.body.classList.add(QUADS[index].zoomClass);
+  } else {
+    // Mobile: show only the active quad
+    QUADS.forEach((q, i) => {
+      const el = document.getElementById(q.id);
+      if (!el) return;
+      el.classList.toggle('quad-active', i === index);
+    });
+  }
+
+  updateNavDots(index);
+  updateArrowGlow(index);
+}
+
+function nextQuad() {
+  showQuad((currentQuad + 1) % QUADS.length);
+}
+
+function prevQuad() {
+  showQuad((currentQuad - 1 + QUADS.length) % QUADS.length);
+}
+
+// ══════════════════════════════════════════
+// NAV DOTS
+// ══════════════════════════════════════════
+function updateNavDots(index) {
+  document.querySelectorAll('.quad-nav-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === index);
+  });
+}
+
+// ══════════════════════════════════════════
+// ARROW GLOW GUIDE
+// When on quad 0 (Scouted), the "next" arrow glows yellow
+// to cue the user to follow the journey forward
+// ══════════════════════════════════════════
+function updateArrowGlow(index) {
+  const nextBtn = document.getElementById('zoomNext');
+  if (!nextBtn) return;
+  if (index === 0) {
+    nextBtn.classList.add('glow-guide');
+  } else {
+    nextBtn.classList.remove('glow-guide');
+  }
+}
+
+// ══════════════════════════════════════════
+// HOW IT WORKS MODAL
+// ══════════════════════════════════════════
+function hiwModalOpen() {
+  const ov = document.getElementById('hiw-overlay');
+  if (ov) ov.classList.add('active');
+}
+
+function hiwModalClose() {
+  const ov = document.getElementById('hiw-overlay');
+  if (ov) ov.classList.remove('active');
+}
+
+// ══════════════════════════════════════════
+// FULL PLAN NAVIGATION
+// ══════════════════════════════════════════
+function openFullPlan() {
+  window.open('full-plan.html', '_blank');
+}
+
+// ══════════════════════════════════════════
+// PLATFORM BANNER SELECTION
+// ══════════════════════════════════════════
+let selectedPlatform = null;
+
+function selectPlatform(el, platform) {
+  document.querySelectorAll('.platform-banner').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPlatform = platform;
+}
+
+function validateSongURL(val) {
+  const patterns = {
+    youtube:    /youtube\.com|youtu\.be/i,
+    spotify:    /spotify\.com/i,
+    apple:      /music\.apple\.com/i,
+    soundcloud: /soundcloud\.com/i,
+  };
+  for (const [platform, regex] of Object.entries(patterns)) {
+    if (regex.test(val)) {
+      const banner = document.querySelector(`.platform-banner[data-platform="${platform}"]`);
+      if (banner) selectPlatform(banner, platform);
+      return;
+    }
+  }
+}
+
+function confirmSong() {
+  const input = document.getElementById('songUrl');
+  const btn = document.getElementById('submitSong');
+  if (!input || !btn) return;
+  if (!input.value.trim()) {
+    input.style.borderColor = 'var(--accent)';
+    input.focus();
+    setTimeout(() => { input.style.borderColor = ''; }, 1500);
+    return;
+  }
+  btn.textContent = '✓ Submitted';
+  btn.classList.add('success');
+  btn.disabled = true;
+  // Navigate to full plan after brief success delay
+  setTimeout(() => {
+    showQuad(3); // go to deal quad
+  }, 800);
+}
+
+// ══════════════════════════════════════════
+// BEGIN JOURNEY
+// ══════════════════════════════════════════
+function beginJourney() {
+  openFullPlan();
+}
+
+// ══════════════════════════════════════════
+// TOUCH SWIPE (mobile)
+// ══════════════════════════════════════════
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  // Only trigger swipe if horizontal movement dominates
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 55) {
+    if (dx < 0) nextQuad();
+    else prevQuad();
+  }
+}, { passive: true });
+
+// ══════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const modalOpen = document.getElementById('hiw-overlay')?.classList.contains('active');
+  if (e.key === 'Escape') {
+    if (modalOpen) hiwModalClose();
+    return;
+  }
+  if (modalOpen) return; // don't navigate while modal is open
+  if (e.key === 'ArrowRight') nextQuad();
+  if (e.key === 'ArrowLeft')  prevQuad();
+});
+
+// ══════════════════════════════════════════
+// RESIZE HANDLER
+// ══════════════════════════════════════════
+window.addEventListener('resize', () => {
+  // Re-apply current quad for the new viewport size
+  showQuad(currentQuad);
+});
+
+// ══════════════════════════════════════════
+// DOM READY — BIND EVERYTHING
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // Initial state: start at Q1 with 1s fade-in delay
+  setTimeout(() => showQuad(0), 300);
+
+  // Button bindings
+  document.getElementById('hiwBtn')?.addEventListener('click', hiwModalOpen);
+  document.getElementById('fullPlanBtn')?.addEventListener('click', openFullPlan);
+  document.getElementById('hiwModalClose')?.addEventListener('click', hiwModalClose);
+  document.getElementById('zoomNext')?.addEventListener('click', nextQuad);
+  document.getElementById('zoomPrev')?.addEventListener('click', prevQuad);
+  document.getElementById('beginBtn')?.addEventListener('click', beginJourney);
+  document.getElementById('submitSong')?.addEventListener('click', e => {
+    e.preventDefault();
+    confirmSong();
+  });
+
+  // Nav dots
+  document.querySelectorAll('.quad-nav-dot').forEach((dot, i) => {
+    dot.addEventListener('click', () => showQuad(i));
+  });
+
+  // Click outside modal body to close
+  document.getElementById('hiw-overlay')?.addEventListener('click', e => {
+    if (e.target.id === 'hiw-overlay') hiwModalClose();
+  });
+
+  // Step cards in Q2 → open modal to that step (future enhancement)
+  document.querySelectorAll('.step-card').forEach(card => {
+    card.addEventListener('click', e => {
+      e.stopPropagation();
+      hiwModalOpen();
+    });
+  });
+});
+</script>

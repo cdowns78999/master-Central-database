@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Ozzy</title>
+<style>
+  :root {
+    --cream: #fdf8f3;
+    --cream-2: #f7efe5;
+    --warm-ink: #3a2f2a;
+    --warm-ink-soft: #6b5a50;
+    --accent: #c98b73;
+    --accent-soft: #e8c5b5;
+    --card: #ffffff;
+    --shadow: 0 6px 18px rgba(120, 80, 60, 0.08);
+    --shadow-soft: 0 2px 8px rgba(120, 80, 60, 0.06);
+    --heart: #e76a7a;
+    --heart-soft: #f4a3ad;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--cream);
+    color: var(--warm-ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    overscroll-behavior-y: none;
+    min-height: 100vh;
+  }
+
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    padding: 0 18px 40px;
+    background: linear-gradient(180deg, var(--cream) 0%, var(--cream-2) 100%);
+  }
+
+  /* Top hint arrow */
+  .top-hint {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: var(--warm-ink-soft);
+    opacity: 0.25;
+    letter-spacing: 2px;
+    pointer-events: none;
+    user-select: none;
+    transition: opacity 0.4s ease;
+  }
+
+  /* Swipe capture zone (top 80px) */
+  .swipe-zone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    z-index: 5;
+    touch-action: none;
+  }
+
+  /* Heart reveal */
+  .heart-wrap {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(-120px);
+    z-index: 20;
+    opacity: 0;
+    transition: transform 0.5s cubic-bezier(.2,.9,.3,1.2), opacity 0.4s ease;
+    pointer-events: none;
+    padding-top: 18px;
+  }
+  .heart-wrap.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .heart-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .heart-svg {
+    width: 72px;
+    height: 72px;
+    filter: drop-shadow(0 6px 14px rgba(231, 106, 122, 0.35));
+    animation: heartPulse 2.2s ease-in-out infinite;
+  }
+  .heart-label {
+    font-size: 12px;
+    color: var(--heart);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+    opacity: 0.8;
+  }
+  @keyframes heartPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+  }
+
+  /* Drag indicator during swipe */
+  .drag-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--heart-soft), transparent);
+    transform: scaleX(0);
+    transform-origin: center;
+    z-index: 15;
+    transition: transform 0.15s ease;
+  }
+
+  /* Header */
+  header {
+    padding: 50px 4px 20px;
+    text-align: center;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--warm-ink);
+  }
+  header .sub {
+    margin: 0;
+    font-size: 13px;
+    color: var(--warm-ink-soft);
+    letter-spacing: 0.8px;
+  }
+
+  /* Category cards (main screen) */
+  .categories {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 22px;
+  }
+  .cat-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    border: 1px solid rgba(201, 139, 115, 0.08);
+  }
+  .cat-card:active {
+    transform: scale(0.98);
+    box-shadow: var(--shadow-soft);
+  }
+  .cat-icon {
+    font-size: 28px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cream-2);
+    flex-shrink: 0;
+  }
+  .cat-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .cat-title {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0 0 2px;
+    color: var(--warm-ink);
+  }
+  .cat-count {
+    font-size: 13px;
+    color: var(--warm-ink-soft);
+  }
+  .cat-arrow {
+    color: var(--accent);
+    font-size: 20px;
+    opacity: 0.6;
+  }
+
+  /* Detail view */
+  .detail {
+    display: none;
+    padding-top: 28px;
+  }
+  .detail.active { display: block; }
+  .main-view.hidden { display: none; }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .back-btn {
+    background: var(--card);
+    border: 1px solid rgba(201, 139, 115, 0.15);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 18px;
+    color: var(--accent);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-soft);
+  }
+  .back-btn:active { transform: scale(0.94); }
+  .detail-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--warm-ink);
+  }
+
+  .item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .item {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(201, 139, 115, 0.06);
+  }
+  .item-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-soft);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+  .item-check.done {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-size: 12px;
+  }
+  .item-text {
+    flex: 1;
+    font-size: 15px;
+    color: var(--warm-ink);
+    word-break: break-word;
+  }
+  .item-text.done {
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+  .item-del {
+    background: none;
+    border: none;
+    color: var(--warm-ink-soft);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    opacity: 0.4;
+  }
+  .item-del:hover { opacity: 0.9; }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(201, 139, 115, 0.1);
+  }
+  .add-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 12px;
+    font-size: 15px;
+    color: var(--warm-ink);
+    outline: none;
+    font-family: inherit;
+  }
+  .add-input::placeholder { color: var(--warm-ink-soft); opacity: 0.6; }
+  .add-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0 18px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+  }
+  .add-btn:active { transform: scale(0.96); }
+
+  /* Notes view — textarea style */
+  .notes-area {
+    width: 100%;
+    min-height: 260px;
+    background: var(--card);
+    border: 1px solid rgba(201, 139, 115, 0.1);
+    border-radius: 14px;
+    padding: 16px;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--warm-ink);
+    box-shadow: var(--shadow-soft);
+    resize: vertical;
+    outline: none;
+    line-height: 1.5;
+  }
+
+  .empty-note {
+    text-align: center;
+    color: var(--warm-ink-soft);
+    font-size: 13px;
+    padding: 20px 0;
+    opacity: 0.6;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Top hint -->
+  <div class="top-hint">&darr;</div>
+
+  <!-- Swipe capture zone -->
+  <div class="swipe-zone" id="swipeZone"></div>
+
+  <!-- Drag indicator -->
+  <div class="drag-indicator" id="dragIndicator"></div>
+
+  <!-- Heart reveal -->
+  <div class="heart-wrap" id="heartWrap">
+    <button class="heart-btn" id="heartBtn" aria-label="Ozzy memorial">
+      <svg class="heart-svg" viewBox="0 0 32 29" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f4a3ad"/>
+            <stop offset="100%" stop-color="#e76a7a"/>
+          </linearGradient>
+        </defs>
+        <path d="M16 28s-13-8.5-13-17.5C3 5.8 6.8 2 11.5 2c2.8 0 5.1 1.3 6.5 3.3C19.4 3.3 21.7 2 24.5 2 29.2 2 33 5.8 33 10.5 33 19.5 16 28 16 28z"
+              transform="translate(-1 0)"
+              fill="url(#hg)"
+              stroke="#d85565"
+              stroke-width="0.6"
+              stroke-linejoin="round"/>
+      </svg>
+      <span class="heart-label">for ozzy</span>
+    </button>
+  </div>
+
+  <!-- Main view -->
+  <div class="main-view" id="mainView">
+    <header>
+      <h1>Ozzy</h1>
+      <p class="sub">a gentle place to keep things</p>
+    </header>
+
+    <div class="categories" id="categories"></div>
+  </div>
+
+  <!-- Detail view -->
+  <div class="detail" id="detailView">
+    <div class="detail-header">
+      <button class="back-btn" id="backBtn">&larr;</button>
+      <h2 class="detail-title" id="detailTitle">Category</h2>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+  // ---- Data ----
+  const CATEGORIES = [
+    { id: 'medicine',  title: 'Medicine',    icon: '\uD83D\uDC8A', type: 'list',  placeholder: 'add a medication or dose...',  seed: ['Morning tablet', 'Evening drops'] },
+    { id: 'personal',  title: 'Personal',    icon: '\uD83C\uDF3F', type: 'list',  placeholder: 'add a personal item...',        seed: ['Call family', 'Gentle walk'] },
+    { id: 'work',      title: 'Work',        icon: '\u2728',       type: 'list',  placeholder: 'add a work task...',            seed: ['Review notes', 'Email back'] },
+    { id: 'extra',     title: 'Extra Tasks', icon: '\uD83D\uDCCC', type: 'list',  placeholder: 'add an extra task...',          seed: ['Pick up groceries'] },
+    { id: 'notes',     title: 'Notes',       icon: '\uD83D\uDCDD', type: 'notes', placeholder: '',                              seed: '' }
+  ];
+
+  const STORAGE_KEY = 'ozzy-app-v1';
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return seedState();
+      return JSON.parse(raw);
+    } catch (e) { return seedState(); }
+  }
+  function seedState() {
+    const s = {};
+    CATEGORIES.forEach(c => {
+      if (c.type === 'list') {
+        s[c.id] = c.seed.map(t => ({ text: t, done: false }));
+      } else {
+        s[c.id] = c.seed;
+      }
+    });
+    return s;
+  }
+  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+  let state = loadState();
+
+  // ---- Render main categories ----
+  const categoriesEl = document.getElementById('categories');
+  const mainView = document.getElementById('mainView');
+  const detailView = document.getElementById('detailView');
+  const detailTitle = document.getElementById('detailTitle');
+  const detailBody = document.getElementById('detailBody');
+
+  function countFor(cat) {
+    if (cat.type === 'list') return `${state[cat.id].length} item${state[cat.id].length === 1 ? '' : 's'}`;
+    const len = (state[cat.id] || '').length;
+    return len ? `${len} character${len === 1 ? '' : 's'}` : 'empty';
+  }
+
+  function renderCategories() {
+    categoriesEl.innerHTML = '';
+    CATEGORIES.forEach(cat => {
+      const card = document.createElement('div');
+      card.className = 'cat-card';
+      card.innerHTML = `
+        <div class="cat-icon">${cat.icon}</div>
+        <div class="cat-meta">
+          <p class="cat-title">${cat.title}</p>
+          <p class="cat-count">${countFor(cat)}</p>
+        </div>
+        <div class="cat-arrow">&rsaquo;</div>
+      `;
+      card.addEventListener('click', () => openCategory(cat));
+      categoriesEl.appendChild(card);
+    });
+  }
+
+  // ---- Detail view ----
+  let currentCat = null;
+
+  function openCategory(cat) {
+    currentCat = cat;
+    detailTitle.textContent = cat.title;
+    mainView.classList.add('hidden');
+    detailView.classList.add('active');
+    if (cat.type === 'list') renderList(cat);
+    else renderNotes(cat);
+  }
+
+  function closeDetail() {
+    currentCat = null;
+    detailView.classList.remove('active');
+    mainView.classList.remove('hidden');
+    renderCategories();
+  }
+
+  function renderList(cat) {
+    detailBody.innerHTML = '';
+    const list = document.createElement('ul');
+    list.className = 'item-list';
+
+    const items = state[cat.id];
+    if (items.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-note';
+      empty.textContent = 'nothing here yet — add something below';
+      detailBody.appendChild(empty);
+    } else {
+      items.forEach((it, idx) => {
+        const li = document.createElement('li');
+        li.className = 'item';
+        li.innerHTML = `
+          <div class="item-check ${it.done ? 'done' : ''}">${it.done ? '\u2713' : ''}</div>
+          <div class="item-text ${it.done ? 'done' : ''}"></div>
+          <button class="item-del" aria-label="delete">&times;</button>
+        `;
+        li.querySelector('.item-text').textContent = it.text;
+        li.querySelector('.item-check').addEventListener('click', () => {
+          items[idx].done = !items[idx].done;
+          saveState();
+          renderList(cat);
+        });
+        li.querySelector('.item-del').addEventListener('click', () => {
+          items.splice(idx, 1);
+          saveState();
+          renderList(cat);
+        });
+        list.appendChild(li);
+      });
+      detailBody.appendChild(list);
+    }
+
+    // Add row
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    addRow.innerHTML = `
+      <input class="add-input" type="text" placeholder="${cat.placeholder}" />
+      <button class="add-btn">Add</button>
+    `;
+    const input = addRow.querySelector('.add-input');
+    const btn = addRow.querySelector('.add-btn');
+    function doAdd() {
+      const v = input.value.trim();
+      if (!v) return;
+      items.push({ text: v, done: false });
+      input.value = '';
+      saveState();
+      renderList(cat);
+    }
+    btn.addEventListener('click', doAdd);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+    detailBody.appendChild(addRow);
+  }
+
+  function renderNotes(cat) {
+    detailBody.innerHTML = '';
+    const ta = document.createElement('textarea');
+    ta.className = 'notes-area';
+    ta.placeholder = 'write whatever is on your mind...';
+    ta.value = state[cat.id] || '';
+    ta.addEventListener('input', () => {
+      state[cat.id] = ta.value;
+      saveState();
+    });
+    detailBody.appendChild(ta);
+  }
+
+  document.getElementById('backBtn').addEventListener('click', closeDetail);
+
+  // ---- Swipe-down heart gesture ----
+  const swipeZone = document.getElementById('swipeZone');
+  const heartWrap = document.getElementById('heartWrap');
+  const heartBtn = document.getElementById('heartBtn');
+  const dragIndicator = document.getElementById('dragIndicator');
+
+  const THRESHOLD = 60;
+  const FADE_MS = 2200;
+
+  let dragging = false;
+  let startY = 0;
+  let fadeTimer = null;
+
+  function showHeart() {
+    heartWrap.classList.add('visible');
+    scheduleFade();
+  }
+  function hideHeart() {
+    heartWrap.classList.remove('visible');
+    if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null; }
+  }
+  function scheduleFade() {
+    if (fadeTimer) clearTimeout(fadeTimer);
+    fadeTimer = setTimeout(() => hideHeart(), FADE_MS);
+  }
+
+  function onStart(y) {
+    dragging = true;
+    startY = y;
+  }
+  function onMove(y) {
+    if (!dragging) return;
+    const dy = y - startY;
+    if (dy <= 0) { dragIndicator.style.transform = 'scaleX(0)'; return; }
+    const pct = Math.min(dy / THRESHOLD, 1);
+    dragIndicator.style.transform = `scaleX(${pct})`;
+  }
+  function onEnd(y) {
+    if (!dragging) return;
+    dragging = false;
+    const dy = y - startY;
+    dragIndicator.style.transform = 'scaleX(0)';
+    if (dy >= THRESHOLD) showHeart();
+  }
+
+  // Touch events
+  swipeZone.addEventListener('touchstart', e => {
+    if (!e.touches[0]) return;
+    onStart(e.touches[0].clientY);
+  }, { passive: true });
+  swipeZone.addEventListener('touchmove', e => {
+    if (!e.touches[0]) return;
+    onMove(e.touches[0].clientY);
+  }, { passive: true });
+  swipeZone.addEventListener('touchend', e => {
+    const y = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientY : startY;
+    onEnd(y);
+  });
+
+  // Mouse events (desktop)
+  swipeZone.addEventListener('mousedown', e => {
+    onStart(e.clientY);
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if (dragging) onMove(e.clientY);
+  });
+  window.addEventListener('mouseup', e => {
+    if (dragging) onEnd(e.clientY);
+  });
+
+  // Reset fade timer on heart hover/tap
+  heartWrap.addEventListener('mouseenter', () => { if (fadeTimer) clearTimeout(fadeTimer); });
+  heartWrap.addEventListener('mouseleave', () => { if (heartWrap.classList.contains('visible')) scheduleFade(); });
+  heartWrap.addEventListener('touchstart', () => { if (fadeTimer) clearTimeout(fadeTimer); }, { passive: true });
+
+  // Tap heart -> navigate
+  heartBtn.addEventListener('click', () => {
+    window.location.href = 'ozzy-memorial.html';
+  });
+
+  // Initial render
+  renderCategories();
+</script>
+</body>
+</html>

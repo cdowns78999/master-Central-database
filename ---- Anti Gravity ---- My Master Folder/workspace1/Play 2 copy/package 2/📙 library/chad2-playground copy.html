@@ -1,0 +1,2336 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playground | OS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg: #010c1a;
+            --card-bg: rgba(255, 255, 255, 0.04);
+            --primary: #4cc9f0;
+            --accent: #4361ee;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.5);
+            --radius: 28px;
+            --transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 50% -20%, #003049 0%, transparent 70%),
+                radial-gradient(circle at 0% 100%, #1a2a6c 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, #001219 0%, transparent 50%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient Background Blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+            opacity: 0.3;
+            animation: drift 20s infinite alternate ease-in-out;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .blob-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+            bottom: -150px;
+            right: -150px;
+            animation-delay: -5s;
+        }
+
+        @keyframes drift {
+            from {
+                transform: translate(0, 0) scale(1);
+            }
+
+            to {
+                transform: translate(100px, 50px) scale(1.1);
+            }
+        }
+
+        #bgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* iOS-Style Main Title */
+        .main-title {
+            position: fixed;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            text-align: center;
+            opacity: 0;
+            animation: dramaticFadeIn 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation-delay: 0.3s;
+        }
+
+        .main-title h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.05em;
+            margin: 0;
+            text-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .main-title .subtitle {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--text-dim);
+            margin-top: 0.5rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0.6;
+        }
+
+        @keyframes dramaticFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(30px) scale(0.92);
+                filter: blur(15px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+                filter: blur(0px);
+            }
+        }
+
+        .tiles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .tile-card {
+            width: 320px;
+            height: 320px;
+            background: var(--card-bg);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+            position: absolute;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            pointer-events: all;
+            touch-action: none;
+            transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0);
+        }
+
+        .tile-card.hover-active {
+            overflow: visible;
+        }
+
+        .tile-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 255, 255, 0.05);
+        }
+
+        /* Drag Handle - Upper Right */
+        .drag-handle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 50px;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drag-handle::after {
+            content: '⠿';
+            font-size: 16px;
+            color: var(--primary);
+            opacity: 0.3;
+            transition: 0.3s;
+        }
+
+        .drag-handle:hover::after {
+            opacity: 1;
+        }
+
+        /* Batch Half-Pill Button - Top Inside */
+        .batch-btn {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            /* Increased background brightness */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            /* Brighter border */
+            border-top: none;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            cursor: pointer;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            opacity: 1;
+            /* Maximum opacity */
+        }
+
+        .batch-btn:hover {
+            background: rgba(76, 201, 240, 0.08);
+            border-color: rgba(76, 201, 240, 0.2);
+            opacity: 1;
+        }
+
+        .batch-btn::before {
+            content: '+';
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            color: #fff;
+            opacity: 1;
+            transition: all 0.3s ease;
+        }
+
+        .batch-btn:hover::before {
+            color: var(--primary);
+        }
+
+        .batch-btn.flash {
+            animation: flash-glow 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes flash-glow {
+            0% {
+                background: rgba(255, 255, 255, 0.02);
+                box-shadow: 0 0 0px var(--primary);
+                opacity: 0.4;
+            }
+
+            30% {
+                background: rgba(76, 201, 240, 0.4);
+                box-shadow: 0 0 20px var(--primary);
+                opacity: 1;
+            }
+
+            100% {
+                background: rgba(255, 255, 255, 0.02);
+                box-shadow: 0 0 0px var(--primary);
+                opacity: 0.4;
+            }
+        }
+
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 3px;
+            margin-bottom: 0.75rem;
+            opacity: 0.7;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.08);
+            /* Brighter background */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            /* Brighter border */
+            border-top: none;
+            border-radius: 4px;
+            padding: 3px 11px;
+            color: #ffffff;
+            /* Pure white text */
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+
+        .action-btn:hover {
+            background: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .action-btn:hover~.script-box {
+            opacity: 1;
+        }
+
+        /* Script Box */
+        .script-box {
+            margin-top: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .script-input {
+            width: 100%;
+            height: 60px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            resize: none;
+            padding: 0.5rem;
+        }
+
+        /* Sliding Half-Pill Overlay */
+        .batch-overlay {
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: calc(45% + 80px);
+            background: rgba(1, 12, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid var(--primary);
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            z-index: 100;
+            padding: 0 1.5rem 1.5rem 1.5rem;
+            transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+
+
+
+
+        .batch-overlay.active {
+            top: 0;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .batch-input {
+            width: 100%;
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            resize: none;
+            padding: 0.5rem;
+        }
+
+
+        /* Add Tile Button */
+        .add-tile-btn {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            color: white;
+            font-size: 32px;
+            font-weight: 300;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(67, 97, 238, 0.4);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .add-tile-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        /* Persistence Controls */
+        .persistence-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            z-index: 1000;
+        }
+
+        .p-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .p-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 15px rgba(76, 201, 240, 0.2);
+            color: var(--primary);
+        }
+
+        .p-btn.export {
+            border-color: rgba(76, 201, 240, 0.3);
+        }
+
+        .p-btn.import {
+            border-color: rgba(67, 97, 238, 0.3);
+        }
+
+        /* Inner Snap Menu Styles */
+        .snap-container {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            gap: 1rem;
+            padding: 100px 0;
+            height: 100%;
+            scroll-behavior: smooth;
+        }
+
+        .snap-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .snap-item {
+            flex: 0 0 40px;
+            width: calc(100% - 40px);
+            margin: 0 20px;
+            scroll-snap-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            /* Solid background for visibility */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            /* Brighter border */
+            border-radius: 12px;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1), transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+            position: relative;
+            opacity: 1;
+            /* Maximum opacity */
+        }
+
+        .snap-item-arrow-controls {
+            position: absolute;
+            left: -22px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            z-index: 35;
+        }
+
+        .snap-item-arrow-btn {
+            width: 10px;
+            height: 10px;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            color: var(--primary);
+            font-size: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            user-select: none;
+            opacity: 0.7;
+        }
+
+        .snap-item-arrow-btn:hover {
+            background: var(--primary);
+            transform: scale(1.2);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        .snap-item-arrow-btn:hover {
+            background: rgba(76, 201, 240, 0.2);
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .snap-item.sorting-up {
+            animation: sortUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .snap-item.sorting-down {
+            animation: sortDown 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes sortUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+                box-shadow: 0 0 0px rgba(76, 201, 240, 0);
+            }
+
+            30% {
+                transform: translateY(-8px) scale(1.02);
+                opacity: 0.9;
+                box-shadow: 0 8px 20px rgba(76, 201, 240, 0.3);
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+                box-shadow: 0 0 0px rgba(76, 201, 240, 0);
+            }
+        }
+
+        @keyframes sortDown {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+                box-shadow: 0 0 0px rgba(67, 97, 238, 0);
+            }
+
+            30% {
+                transform: translateY(8px) scale(1.02);
+                opacity: 0.9;
+                box-shadow: 0 8px 20px rgba(67, 97, 238, 0.3);
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+                box-shadow: 0 0 0px rgba(67, 97, 238, 0);
+            }
+        }
+
+        .snap-item.placeholder {
+            border-style: dotted;
+            opacity: 0.2;
+        }
+
+        .snap-item.active:not(.placeholder) {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--primary);
+        }
+
+        .snap-item.locked {
+            border-style: dashed;
+            border-color: var(--accent);
+            height: calc(100% - 20px) !important;
+            width: calc(100% - 40px) !important;
+            margin: 10px 20px !important;
+            flex: 0 0 auto !important;
+            opacity: 1 !important;
+            filter: blur(0px) !important;
+        }
+
+        .snap-item.delete-confirm {
+            border-color: #ff5d8f;
+            background: rgba(255, 93, 143, 0.1);
+        }
+
+        .snap-item.delete-confirm::after {
+            content: '?';
+            position: absolute;
+            right: 15px;
+            color: #ff5d8f;
+            font-weight: 800;
+            font-size: 1rem;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .snap-item.delete-final {
+            border-color: #ff004c;
+            background: rgba(255, 0, 76, 0.15);
+        }
+
+        .snap-item.delete-final::after {
+            content: '?';
+            position: absolute;
+            right: 15px;
+            color: #ff004c;
+            font-weight: 800;
+            font-size: 1rem;
+            transform: scale(2);
+            pointer-events: none;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .editable-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #ffffff;
+            background: transparent;
+            border: none;
+            outline: none;
+            text-align: center;
+            width: 100%;
+        }
+
+        .editable-name::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .snap-item.active .editable-name {
+            cursor: text;
+        }
+
+
+
+        .side-spots {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: auto;
+            overflow: visible;
+        }
+
+        .side-spots.left {
+            left: -75px;
+        }
+
+        .side-spots.right {
+            right: -75px;
+        }
+
+        .side-btn {
+            width: auto;
+            min-width: 28px;
+            max-width: 55px;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            /* Brighter background */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            /* Brighter border */
+            color: #ffffff;
+            /* Pure white text */
+            font-size: 0.55rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1), transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            position: relative;
+            user-select: none;
+            padding: 2px 4px;
+            text-align: center;
+            line-height: 1;
+            letter-spacing: 0.5px;
+        }
+
+        .side-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .side-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .side-btn.dragging {
+            opacity: 0.3;
+            cursor: grabbing;
+            z-index: 1000;
+            transform: scale(1.2);
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .arrow-controls {
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            z-index: 35;
+        }
+
+        .arrow-btn {
+            width: 16px;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            color: var(--primary);
+            font-size: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .arrow-btn:hover {
+            background: rgba(76, 201, 240, 0.2);
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .arrow-btn:active {
+            transform: scale(0.95);
+        }
+
+        .drag-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(1, 12, 26, 0.98);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 3px solid var(--primary);
+            border-radius: 20px;
+            padding: 30px 60px;
+            color: #ffffff;
+            font-size: 2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            z-index: 999999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 30px 60px rgba(76, 201, 240, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .drag-overlay.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.1);
+            animation: dragPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes dragPulse {
+            from {
+                box-shadow: 0 30px 60px rgba(76, 201, 240, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            }
+
+            to {
+                box-shadow: 0 40px 80px rgba(76, 201, 240, 0.8), 0 0 20px rgba(76, 201, 240, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        .side-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .nav-dots {
+            position: absolute;
+            right: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+            opacity: 0.8;
+            /* Increased opacity */
+        }
+
+        .dot {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: #fff;
+            transition: 0.3s;
+        }
+
+        .dot.active {
+            background: var(--primary);
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* Hover Card */
+        .hover-card {
+            position: absolute;
+            top: -175px;
+            /* Default top, adjusted via JS */
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            width: 300px;
+            background: rgba(1, 15, 30, 0.98);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 3px solid var(--primary);
+            border-radius: 20px;
+            padding: 18px;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .hover-card::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            width: 12px;
+            height: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            box-shadow: 0 0 15px var(--primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: -1;
+        }
+
+        .hover-card.pulse::after {
+            animation: soft-pulse 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes soft-pulse {
+            0% {
+                box-shadow: 0 0 15px var(--primary);
+                transform: translateX(-50%) rotate(45deg) scale(1);
+            }
+
+            50% {
+                box-shadow: 0 0 40px var(--primary), 0 0 80px rgba(76, 201, 240, 0.4);
+                transform: translateX(-50%) rotate(45deg) scale(1.3);
+            }
+
+            100% {
+                box-shadow: 0 0 15px var(--primary);
+                transform: translateX(-50%) rotate(45deg) scale(1);
+            }
+        }
+
+        .hc-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.5;
+            pointer-events: none;
+            transform: translateX(-14px);
+        }
+
+
+
+
+
+        .hover-card.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .hc-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .hc-title::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .hc-desc {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.5;
+        }
+
+        .hc-meta {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .hc-status {
+            color: #4ade80;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .hc-input {
+            width: 100%;
+            height: 60px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            resize: none;
+            padding: 0.5rem;
+        }
+
+        /* Tile Title Box */
+        .tile-title-box {
+            position: absolute;
+            top: 35px;
+            /* Moved down 10px total */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 24px;
+            background: transparent;
+            /* Blends with background */
+            border: none;
+            /* No border for disguise */
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .tile-title-dot {
+            width: 7px;
+            /* Fine-tuned size */
+            height: 7px;
+            /* Fine-tuned size */
+            background: #ffffff;
+            border-radius: 50%;
+            opacity: 0.1;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            position: absolute;
+            top: 32px;
+            /* Fine-tuned: 25px + 7px */
+            left: 18px;
+            /* Fine-tuned: 15px + 3px */
+            z-index: 26;
+        }
+
+        .tile-title-dot:hover {
+            opacity: 0.4;
+            transform: scale(1.5);
+        }
+
+        .tile-title-box.title-active .tile-title-dot {
+            opacity: 1;
+            box-shadow: 0 0 12px #ffffff;
+            background: #ffffff;
+        }
+
+        .tile-title-input {
+            width: auto;
+            /* Allow width to be determined by gap or fixed width */
+            max-width: 160px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: rgba(255, 255, 255, 0.2);
+            /* Suble, disguised color */
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            transition: var(--transition);
+        }
+
+        .tile-title-input:hover,
+        .tile-title-input:focus,
+        .tile-title-box.title-active .tile-title-input {
+            color: #ffffff;
+            /* Reveal on interaction */
+            opacity: 1;
+        }
+
+        .tile-title-input::placeholder {
+            color: rgba(255, 255, 255, 0.15);
+            /* Very subtle placeholder */
+        }
+
+        /* Floating Link Style - Bottom Left */
+        #floating-client-link {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            padding: 14px 28px;
+            background: rgba(13, 22, 35, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            z-index: 10000;
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        #floating-client-link:hover {
+            background: rgba(20, 30, 45, 0.8);
+            border-color: var(--primary);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow:
+                0 20px 45px rgba(0, 0, 0, 0.6),
+                0 0 20px rgba(76, 201, 240, 0.2);
+            color: var(--primary);
+        }
+
+        #floating-client-link .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--primary);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .copy-dropdown-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .copy-dropdown-btn:hover {
+            background: rgba(76, 201, 240, 0.2);
+            border-color: var(--primary);
+        }
+
+        .copy-dropdown {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(1, 12, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 10px;
+            display: none;
+            z-index: 1000;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .copy-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            color: white;
+        }
+
+        .copy-card:hover {
+            background: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .copy-grid {
+            display: grid;
+            grid-template: repeat(2, 1fr) / repeat(4, 1fr);
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .copy-word-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 3px;
+        }
+
+        .copy-word-btn:hover {
+            background: rgba(76, 201, 240, 0.1);
+            border-color: var(--primary);
+        }
+
+        .copy-word-btn[data-word="GOAL"] {
+            font-size: 0.8rem;
+            padding: 6px 8px;
+            background: rgba(76, 201, 240, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .copy-word-btn[data-word="GOAL"]:hover {
+            background: rgba(76, 201, 240, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.4);
+        }
+
+        .side-btn.dragging {
+            opacity: 0.5;
+        }
+
+        .side-btn.sorting-up {
+            animation: sortUpSide 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .side-btn.sorting-down {
+            animation: sortDownSide 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes sortUpSide {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+                box-shadow: 0 0 0px rgba(76, 201, 240, 0);
+            }
+
+            30% {
+                transform: translateY(-4px) scale(1.05);
+                opacity: 0.8;
+                box-shadow: 0 4px 12px rgba(76, 201, 240, 0.4);
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+                box-shadow: 0 0 0px rgba(76, 201, 240, 0);
+            }
+        }
+
+        @keyframes sortDownSide {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+                box-shadow: 0 0 0px rgba(67, 97, 238, 0);
+            }
+
+            30% {
+                transform: translateY(4px) scale(1.05);
+                opacity: 0.8;
+                box-shadow: 0 4px 12px rgba(67, 97, 238, 0.4);
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+                box-shadow: 0 0 0px rgba(67, 97, 238, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bgCanvas"></canvas>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="main-title">
+        <div class="persistence-controls">
+            <button class="p-btn export" onclick="exportAppData()">💾 Export</button>
+            <button class="p-btn import" onclick="document.getElementById('importFile').click()">📂 Import</button>
+            <input type="file" id="importFile" style="display: none" accept=".json" onchange="importAppData(event)">
+        </div>
+        <h1>Playground</h1>
+        <div class="subtitle">Architectural OS</div>
+    </div>
+
+    <button id="copy-dropdown-btn" class="copy-dropdown-btn">📋</button>
+    <div id="copy-dropdown" class="copy-dropdown">
+        <div class="copy-card" data-copy="🔵🔵">🔵🔵</div>
+        <div class="copy-card" data-copy="[Text]
+~ Text ~">[Text] ~ Text ~</div>
+        <button id="goal-btn-in-dropdown"
+            style="width: 100%; margin-top: 10px; padding: 8px; background: rgba(76, 201, 240, 0.2); border: 1px solid rgba(76, 201, 240, 0.4); border-radius: 8px; color: white; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.3s; font-family: 'Outfit', sans-serif;"
+            onmouseover="this.style.background='rgba(76, 201, 240, 0.4)'"
+            onmouseout="this.style.background='rgba(76, 201, 240, 0.2)'">GOAL</button>
+        <div class="copy-card" data-copy="[]
+[]
+[]
+[]
+[]">[] [] [] [] []</div>
+        <div class="copy-card" data-copy="~
+~">~ ~</div>
+        <div class="copy-grid">
+            <button class="copy-word-btn" data-word="CAPTURE">CAPTURE</button>
+            <button class="copy-word-btn" data-word="EXTRACT">EXTRACT</button>
+            <button class="copy-word-btn" data-word="SORT">SORT</button>
+            <button class="copy-word-btn" data-word="REFINE">REFINE</button>
+            <button class="copy-word-btn" data-word="CUT">CUT</button>
+            <button class="copy-word-btn" data-word="COPY">COPY</button>
+            <button class="copy-word-btn" data-word="PRODUCE">PRODUCE</button>
+            <button class="copy-word-btn" data-word="GENERATE">GENERATE</button>
+        </div>
+
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <textarea id="paragraph-copy-box"
+                style="width: 100%; min-height: 120px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: white; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; resize: vertical; outline: none;"
+                placeholder="Enter paragraph text to copy...">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+'Big Goal: [Here]'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Mini  Goal: [Here]
+
+[1A] [Refine]
+- Sub task
+
+[1B] [Polish]
+- Sub task
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+🌟Match!🌟 - Generated [Unique Item]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~ ~ {Repeat Above as needed} ~ ~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[Goal Complete] 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</textarea>
+            <button id="copy-paragraph-btn"
+                style="width: 100%; margin-top: 8px; padding: 8px; background: rgba(67, 97, 238, 0.2); border: 1px solid rgba(67, 97, 238, 0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; font-family: 'Outfit', sans-serif;"
+                onmouseover="this.style.background='rgba(67, 97, 238, 0.3)'"
+                onmouseout="this.style.background='rgba(67, 97, 238, 0.2)'">COPY PARAGRAPH</button>
+        </div>
+    </div>
+
+    <div class="tiles-container" id="tilesContainer">
+        <!-- Main Tile -->
+        <div class="tile-card" style="top: calc(50% + 20px); left: 50%; transform: translate(-50%, -50%);">
+            <div class="drag-handle"></div>
+            <div class="batch-btn"></div>
+            <div class="tile-title-dot"></div>
+            <div class="tile-title-box">
+                <input type="text" class="tile-title-input" placeholder="..." spellcheck="false">
+            </div>
+            <div class="side-spots left">
+                <button class="side-btn action-btn" data-title="L1">L1</button>
+                <button class="side-btn action-btn" data-title="L2">L2</button>
+                <button class="side-btn action-btn" data-title="L3">L3</button>
+            </div>
+            <div class="side-spots right">
+                <button class="side-btn action-btn" data-title="R1">R1</button>
+                <button class="side-btn action-btn" data-title="R2">R2</button>
+                <button class="side-btn action-btn" data-title="R3">R3</button>
+            </div>
+            <div class="hover-card">
+                <textarea class="hc-input" placeholder="Drop ideas... (comma or newline separated)">task 1
+task 2</textarea>
+                <div class="hc-footer"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <div class="hc-replace"
+                        style="font-size: 0.65rem; font-weight: 700; color: #ff5d8f; cursor: pointer; opacity: 0.7; transition: 0.3s;"
+                        onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">REPLACE</div>
+                    <div class="hc-label"></div>
+                    <div class="hc-call"
+                        style="font-size: 0.65rem; font-weight: 700; color: #4ade80; cursor: pointer; opacity: 0.7; transition: 0.3s;"
+                        onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">CALL</div>
+
+                </div>
+            </div>
+            <div class="batch-overlay">
+                <div class="action-buttons">
+                    <button class="action-btn" data-title="s1">s1</button>
+                    <button class="action-btn" data-title="s2">s2</button>
+                    <button class="action-btn" data-title="s3">s3</button>
+                </div>
+                <textarea class="batch-input" placeholder="Drop ideas..."></textarea>
+                <div class="script-box">
+                    <textarea class="script-input" placeholder="Paste script here..."></textarea>
+                </div>
+            </div>
+
+
+            <div class="snap-container">
+                <div class="snap-item placeholder">
+                    <div class="snap-item-arrow-controls">
+                        <button class="snap-item-arrow-btn up-arrow">▲</button>
+                        <button class="snap-item-arrow-btn down-arrow">▼</button>
+                    </div>
+                    <input type="text" class="editable-name" placeholder="enter field" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="nav-dots">
+                <div class="dot active"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="add-tile-btn" id="addTileBtn">+</button>
+
+    <script>
+        const tilesContainer = document.getElementById('tilesContainer');
+        const addTileBtn = document.getElementById('addTileBtn');
+
+        function initTile(tile, tileId = 'main', initialData = null) {
+            tile.dataset.id = tileId;
+            const container = tile.querySelector('.snap-container');
+            const dotsContainer = tile.querySelector('.nav-dots');
+            const dragHandle = tile.querySelector('.drag-handle');
+            const batchBtn = tile.querySelector('.batch-btn');
+            const batchOverlay = tile.querySelector('.batch-overlay');
+            const batchInput = tile.querySelector('.batch-input');
+            const hoverCard = tile.querySelector('.hover-card');
+            const actionBtns = tile.querySelectorAll('.action-btn');
+            const titleBox = tile.querySelector('.tile-title-box');
+            const titleDot = tile.querySelector('.tile-title-dot');
+
+            // Initialize in-memory storage
+            tile.taskStorage = {
+                batchContent: '',
+                fields: {}
+            };
+            if (!tile.taskStorage.fields) tile.taskStorage.fields = {};
+
+
+            function flashBatch() {
+                batchBtn.classList.remove('flash');
+                void batchBtn.offsetWidth;
+                batchBtn.classList.add('flash');
+            }
+
+            function syncBatchToFields() {
+                const content = batchInput.value;
+                const lines = content.split('\n');
+                const patterns = ['L1', 'L2', 'L3', 'R1', 'R2', 'R3', 's1', 's2', 's3'];
+
+                lines.forEach(line => {
+                    const separatorIndex = line.indexOf(':');
+                    if (separatorIndex !== -1) {
+                        const key = line.substring(0, separatorIndex).trim();
+                        const val = line.substring(separatorIndex + 1).trim();
+                        if (patterns.includes(key)) {
+                            tile.taskStorage.fields[key] = val;
+                        }
+                    }
+                });
+            }
+
+            function syncFieldToBatch(key, value) {
+                const content = batchInput.value;
+                const lines = content.split('\n');
+                let found = false;
+                const newLines = lines.map(line => {
+                    if (line.trim().startsWith(key + ':')) {
+                        found = true;
+                        return `${key}: ${value}`;
+                    }
+                    return line;
+                });
+
+                if (!found) {
+                    newLines.push(`${key}: ${value}`);
+                }
+
+                batchInput.value = newLines.join('\n').trim();
+                tile.taskStorage.batchContent = batchInput.value;
+            }
+
+            function syncFieldsToBatch() {
+                const patterns = ['L1', 'L2', 'L3', 'R1', 'R2', 'R3', 's1', 's2', 's3', 'goal'];
+                let newBatchLines = [];
+                patterns.forEach(key => {
+                    const val = tile.taskStorage.fields[key];
+                    if (val) {
+                        newBatchLines.push(`${key}: ${val}`);
+                    }
+                });
+                batchInput.value = newBatchLines.join('\n');
+                tile.taskStorage.batchContent = batchInput.value;
+            }
+
+
+
+
+
+            // Interaction State
+            let isDragging = false;
+            let hasMoved = false;
+            const dragThreshold = 5;
+            let targetX = initialData ? initialData.targetX : 0;
+            let targetY = initialData ? initialData.targetY : 0;
+            tile._targetX = targetX;
+            tile._targetY = targetY;
+            let currentX = targetX;
+            let currentY = targetY;
+            let initialX, initialY;
+
+            // Apply starting position
+            tile.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
+
+            // Movement Loop
+            const updatePosition = () => {
+                if (isDragging || Math.abs(currentX - targetX) > 0.01 || Math.abs(currentY - targetY) > 0.01) {
+                    currentX += (targetX - currentX) * 0.15;
+                    currentY += (targetY - currentY) * 0.15;
+                    tile._targetX = targetX;
+                    tile._targetY = targetY;
+                    tile.style.transform = `translate(calc(-50% + ${currentX}px), calc(-50% + ${currentY}px))`;
+                    requestAnimationFrame(updatePosition);
+                }
+            };
+
+            // Drag
+            dragHandle.onpointerdown = e => {
+                e.preventDefault();
+                isDragging = true;
+                hasMoved = false;
+                initialX = e.clientX - targetX;
+                initialY = e.clientY - targetY;
+                tile.style.zIndex = '500';
+                tile.setPointerCapture(e.pointerId);
+                requestAnimationFrame(updatePosition);
+            };
+            tile.onpointermove = e => {
+                if (!isDragging) return;
+                const dx = e.clientX - initialX;
+                const dy = e.clientY - initialY;
+
+                if (!hasMoved) {
+                    const dist = Math.hypot(e.clientX - (initialX + targetX), e.clientY - (initialY + targetY));
+                    if (dist > dragThreshold) hasMoved = true;
+                }
+
+                if (hasMoved) {
+                    targetX = dx;
+                    targetY = dy;
+                }
+            };
+            tile.onpointerup = e => {
+                isDragging = false;
+                tile.releasePointerCapture(e.pointerId);
+            };
+
+            // Title Dot Interaction
+            titleDot.onclick = (e) => {
+                e.stopPropagation();
+                titleBox.classList.toggle('title-active');
+            };
+
+            // Batch Magic - Opens both batch overlay and hover system
+            batchBtn.onclick = () => {
+                batchOverlay.classList.toggle('active');
+                if (batchOverlay.classList.contains('active')) {
+                    batchInput.value = tile.taskStorage.batchContent || '';
+                    batchInput.focus();
+                }
+
+                // Also open hover system
+                clearTimeout(hoverTimeout);
+                hoverCard.classList.add('active');
+                tile.classList.add('hover-active');
+            };
+
+            // Close batch overlay when clicking outside
+            document.addEventListener('click', (e) => {
+                if (batchOverlay.classList.contains('active') &&
+                    !batchOverlay.contains(e.target) &&
+                    !batchBtn.contains(e.target)) {
+                    batchOverlay.classList.remove('active');
+                }
+            });
+
+            // Hover Card Logic
+            let hoverTimeout;
+            const hideCard = () => {
+                hoverTimeout = setTimeout(() => {
+                    hoverCard.classList.remove('active');
+                    tile.classList.remove('hover-active');
+                }, 2000);
+            };
+
+            actionBtns.forEach(btn => {
+                const buttonTitle = btn.getAttribute('data-title');
+                let isDragging = false;
+                let startY = 0;
+                let startTop = 0;
+
+                btn.onmouseenter = () => {
+                    if (!isDragging) {
+                        clearTimeout(hoverTimeout);
+
+                        // Trigger pulse glow if switching buttons
+                        if (currentButton !== buttonTitle) {
+                            hoverCard.classList.remove('pulse');
+                            // Use requestAnimationFrame instead of offsetWidth for smoother restart
+                            requestAnimationFrame(() => {
+                                hoverCard.classList.add('pulse');
+                            });
+                        }
+
+                        // Set current button and load its data
+                        currentButton = buttonTitle;
+                        hcInput.value = tile.taskStorage.fields[buttonTitle] || '';
+
+                        // Ensure card is positioned correctly (it's already fixed in CSS but we set it just in case)
+                        hoverCard.style.left = '50%';
+                        hoverCard.style.top = '-175px';
+
+                        tile.classList.add('hover-active');
+                        hoverCard.classList.add('active');
+                    }
+                };
+                btn.onmouseleave = () => {
+                    if (!isDragging) {
+                        hideCard();
+                    }
+                };
+
+
+            });
+
+            hoverCard.onmouseenter = () => clearTimeout(hoverTimeout);
+            hoverCard.onmouseleave = hideCard;
+            hoverCard.onpointerdown = e => e.stopPropagation();
+            hoverCard.onclick = e => e.stopPropagation();
+
+            // Call & Replace/Save logic
+            const hcCall = hoverCard.querySelector('.hc-call');
+            const hcReplace = hoverCard.querySelector('.hc-replace');
+            const hcInput = hoverCard.querySelector('.hc-input');
+            const hcLabel = hoverCard.querySelector('.hc-label');
+
+            // Clear label to prevent unwanted updates
+            if (hcLabel) hcLabel.textContent = '';
+
+            // Auto-resize textarea
+            hcInput.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+
+            let currentButton = null;
+
+            hcCall.onclick = () => {
+                if (currentButton) {
+                    tile.taskStorage.fields[currentButton] = hcInput.value;
+                    syncFieldToBatch(currentButton, hcInput.value);
+                    flashBatch();
+                }
+            };
+
+
+
+
+
+            hcReplace.onclick = () => {
+                if (hcReplace.textContent === 'REPLACE') {
+                    // Pull from batch for this specific field if pattern exists
+                    syncBatchToFields();
+                    hcInput.value = tile.taskStorage.fields[currentButton] || '';
+                    hcReplace.textContent = 'SAVE';
+                    hcReplace.style.color = '#4cc9f0';
+                    hcInput.focus();
+                } else {
+                    hcReplace.textContent = 'REPLACE';
+                    hcReplace.style.color = '#ff5d8f';
+                }
+            };
+
+
+            hcInput.onkeydown = e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    if (hcReplace.textContent === 'SAVE') {
+                        if (currentButton) {
+                            tile.taskStorage.fields[currentButton] = hcInput.value;
+                            syncFieldToBatch(currentButton, hcInput.value);
+                            flashBatch();
+                        }
+
+                        hcReplace.textContent = 'REPLACE';
+                        hcReplace.style.color = '#ff5d8f';
+                        e.preventDefault();
+                    }
+                }
+                e.stopPropagation();
+            };
+
+            hcInput.onpointerdown = e => e.stopPropagation();
+            hcInput.onclick = e => e.stopPropagation();
+
+
+            // Store changes to hover card input
+            hcInput.oninput = e => {
+                e.stopPropagation();
+                if (currentButton) {
+                    tile.taskStorage.fields[currentButton] = hcInput.value;
+                }
+            };
+
+
+
+            batchInput.onkeydown = e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    const lines = batchInput.value.split(/[,\n]/).map(s => s.trim()).filter(s => s);
+                    lines.reverse().forEach(text => {
+                        const item = createItem();
+                        item.classList.remove('placeholder');
+                        item.querySelector('input').value = text;
+                    });
+
+                    // Add the "enter field" option at the top
+                    const next = createItem();
+
+                    tile.taskStorage.batchContent = batchInput.value;
+                    batchInput.value = '';
+                    batchOverlay.classList.remove('active');
+
+                    setTimeout(() => {
+                        const target = next.offsetTop - container.offsetTop - (container.clientHeight / 2) + (next.offsetHeight / 2);
+                        smoothScroll(target);
+                        next.querySelector('input').focus();
+                    }, 50);
+                }
+            };
+
+            // Store changes to batch input
+            batchInput.oninput = () => {
+                tile.taskStorage.batchContent = batchInput.value;
+                syncBatchToFields();
+            };
+
+
+
+            // Logic
+            function smoothScroll(target) {
+                const start = container.scrollTop;
+                const dist = target - start;
+                const startTime = performance.now();
+                const animate = (time) => {
+                    const progress = Math.min((time - startTime) / 700, 1);
+                    const ease = progress < 0.5 ? 8 * Math.pow(progress, 4) : 1 - Math.pow(-2 * progress + 2, 4) / 2;
+                    container.scrollTop = start + dist * ease;
+                    if (progress < 1) requestAnimationFrame(animate);
+                };
+                requestAnimationFrame(animate);
+            }
+
+            function createItem() {
+                const item = document.createElement('div');
+                item.className = 'snap-item placeholder';
+                item.innerHTML = `
+                    <div class="snap-item-arrow-controls">
+                        <button class="snap-item-arrow-btn up-arrow">▲</button>
+                        <button class="snap-item-arrow-btn down-arrow">▼</button>
+                    </div>
+                    <input type="text" class="editable-name" placeholder="enter field" spellcheck="false">
+                `;
+
+                container.prepend(item);
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dotsContainer.prepend(dot);
+                setupEvents(item);
+                observer.observe(item);
+                return item;
+            }
+
+
+            function setupEvents(item) {
+                const input = item.querySelector('.editable-name');
+                const upArrow = item.querySelector('.up-arrow');
+                const downArrow = item.querySelector('.down-arrow');
+
+                // Add arrow functionality - separate from item delete zone
+                if (upArrow) {
+                    upArrow.onclick = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const allItems = Array.from(container.querySelectorAll('.snap-item'));
+                        const currentIndex = allItems.indexOf(item);
+
+                        if (currentIndex > 0) {
+                            const prevItem = allItems[currentIndex - 1];
+
+                            // Add sorting animation classes
+                            item.classList.add('sorting-up');
+                            prevItem.classList.add('sorting-down');
+
+                            // Perform the actual DOM manipulation
+                            container.insertBefore(item, prevItem);
+
+                            // Remove animation classes after animation completes
+                            setTimeout(() => {
+                                item.classList.remove('sorting-up');
+                                prevItem.classList.remove('sorting-down');
+                            }, 600);
+                        }
+                    };
+                }
+
+                if (downArrow) {
+                    downArrow.onclick = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const allItems = Array.from(container.querySelectorAll('.snap-item'));
+                        const currentIndex = allItems.indexOf(item);
+
+                        if (currentIndex < allItems.length - 1) {
+                            const nextItem = allItems[currentIndex + 1];
+
+                            // Add sorting animation classes
+                            item.classList.add('sorting-down');
+                            nextItem.classList.add('sorting-up');
+
+                            // Perform the actual DOM manipulation
+                            container.insertBefore(nextItem, item);
+
+                            // Remove animation classes after animation completes
+                            setTimeout(() => {
+                                item.classList.remove('sorting-down');
+                                nextItem.classList.remove('sorting-up');
+                            }, 600);
+                        }
+                    };
+                }
+
+                input.onkeydown = e => {
+                    if (e.key === 'Enter' && input.value.trim()) {
+                        item.classList.remove('placeholder');
+                        const next = createItem();
+                        setTimeout(() => {
+                            const target = next.offsetTop - container.offsetTop - (container.clientHeight / 2) + (next.offsetHeight / 2);
+                            smoothScroll(target);
+                            next.querySelector('input').focus();
+                        }, 50);
+                    }
+                    e.stopPropagation();
+                };
+
+                item.onclick = () => {
+                    const target = item.offsetTop - container.offsetTop - (container.clientHeight / 2) + (item.offsetHeight / 2);
+                    smoothScroll(target);
+
+                    if (item.classList.contains('delete-final')) {
+                        // Third Click - Delete
+                        item.classList.add('removing');
+                        const index = Array.from(container.querySelectorAll('.snap-item')).indexOf(item);
+                        if (index > -1 && dotsContainer.children[index]) {
+                            dotsContainer.children[index].remove();
+                        }
+                        item.remove();
+                    } else if (item.classList.contains('delete-confirm')) {
+                        // Second Click - Final Confirm (Big ?)
+                        item.classList.remove('delete-confirm');
+                        item.classList.add('delete-final');
+                    } else {
+                        // First Click - Confirm (?)
+                        container.querySelectorAll('.snap-item').forEach(i => {
+                            i.classList.remove('delete-confirm');
+                            i.classList.remove('delete-final');
+                        });
+                        item.classList.add('delete-confirm');
+                    }
+                };
+
+                ['mousedown', 'touchstart', 'pointerdown'].forEach(ev => input.addEventListener(ev, e => e.stopPropagation()));
+            }
+
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const items = Array.from(container.querySelectorAll('.snap-item'));
+                        const idx = items.indexOf(entry.target);
+                        items.forEach((it, i) => {
+                            const active = i === idx;
+                            it.classList.toggle('active', active);
+                            const dot = dotsContainer.children[i];
+                            if (dot) dot.classList.toggle('active', active);
+                            // Maximum brightness for all states as requested
+                            it.style.opacity = active ? '1' : '0.8';
+                        });
+                    }
+                });
+            }, { root: container, rootMargin: '-50% 0px -50% 0px', threshold: 0 });
+
+            container.querySelectorAll('.snap-item').forEach(it => { setupEvents(it); observer.observe(it); });
+
+            // Sortable side buttons
+            const sideSpots = tile.querySelectorAll('.side-spots');
+            sideSpots.forEach(spot => {
+                const buttons = spot.querySelectorAll('.side-btn');
+                buttons.forEach(btn => {
+                    btn.draggable = true;
+                    btn.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', btn.dataset.title);
+                        btn.classList.add('dragging');
+                    });
+                    btn.addEventListener('dragend', () => {
+                        btn.classList.remove('dragging');
+                    });
+                });
+                spot.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(spot, e.clientY);
+                    const dragging = spot.querySelector('.dragging');
+                    if (afterElement == null) {
+                        spot.appendChild(dragging);
+                    } else {
+                        spot.insertBefore(dragging, afterElement);
+                    }
+                });
+            });
+            function getDragAfterElement(container, y) {
+                const draggableElements = [...container.querySelectorAll('.side-btn:not(.dragging)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            // Restoration
+            if (initialData) {
+                // Restore storage
+                tile.taskStorage = initialData.taskStorage;
+                batchInput.value = tile.taskStorage.batchContent || '';
+
+                // Restore Title
+                const titleInput = tile.querySelector('.tile-title-input');
+                if (initialData.tileTitle) {
+                    titleInput.value = initialData.tileTitle;
+                    if (initialData.titleActive) titleBox.classList.add('title-active');
+                }
+
+                // Restore Snap Items
+                if (initialData.snapItems && initialData.snapItems.length) {
+                    // Clear placeholder if we have real items
+                    container.innerHTML = '';
+                    dotsContainer.innerHTML = '';
+                    initialData.snapItems.forEach(text => {
+                        const item = createItem();
+                        item.classList.remove('placeholder');
+                        item.querySelector('input').value = text;
+                    });
+                    // Re-observe after clearing
+                    container.querySelectorAll('.snap-item').forEach(it => { setupEvents(it); observer.observe(it); });
+                }
+            }
+        }
+
+        // Standardized tile HTML template (copied from original tile 1)
+        function getTileHTML() {
+            return `
+            <div class="drag-handle"></div>
+            <div class="batch-btn"></div>
+            <div class="tile-title-dot"></div>
+            <div class="tile-title-box">
+                <input type="text" class="tile-title-input" placeholder="..." spellcheck="false">
+            </div>
+            <div class="side-spots left">
+                <button class="side-btn action-btn" data-title="L1">L1</button>
+                <button class="side-btn action-btn" data-title="L2">L2</button>
+                <button class="side-btn action-btn" data-title="L3">L3</button>
+            </div>
+            <div class="side-spots right">
+                <button class="side-btn action-btn" data-title="R1">R1</button>
+                <button class="side-btn action-btn" data-title="R2">R2</button>
+                <button class="side-btn action-btn" data-title="R3">R3</button>
+            </div>
+            <div class="hover-card">
+                <textarea class="hc-input" placeholder="Drop ideas... (comma or newline separated)"></textarea>
+                <div class="hc-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <div class="hc-replace" style="font-size: 0.65rem; font-weight: 700; color: #ff5d8f; cursor: pointer; opacity: 0.7; transition: 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">REPLACE</div>
+                    <div class="hc-label"></div>
+                    <div class="hc-call" style="font-size: 0.65rem; font-weight: 700; color: #4ade80; cursor: pointer; opacity: 0.7; transition: 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">CALL</div>
+                </div>
+            </div>
+            <div class="batch-overlay">
+                <div class="action-buttons">
+                    <button class="action-btn" data-title="s1">s1</button>
+                    <button class="action-btn" data-title="s2">s2</button>
+                    <button class="action-btn" data-title="s3">s3</button>
+                    <button class="action-btn" data-title="goal">goal</button>
+                </div>
+                <textarea class="batch-input" placeholder="Drop ideas..."></textarea>
+                <div class="script-box">
+                    <textarea class="script-input" placeholder="Paste script here..."></textarea>
+                </div>
+            </div>
+
+            <div class="snap-container">
+                <div class="snap-item placeholder">
+                    <div class="snap-item-arrow-controls">
+                        <button class="snap-item-arrow-btn up-arrow">▲</button>
+                        <button class="snap-item-arrow-btn down-arrow">▼</button>
+                    </div>
+                    <input type="text" class="editable-name" placeholder="enter field" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="nav-dots"><div class="dot active"></div></div>`;
+        }
+
+        let tileCounter = 0;
+        addTileBtn.onclick = () => {
+            tileCounter++;
+            const tile = document.createElement('div');
+            tile.className = 'tile-card';
+            tile.style.top = '50%';
+            tile.style.left = '50%';
+            tile.style.transform = 'translate(-50%, -50%) scale(0)';
+            tile.innerHTML = getTileHTML();
+            tilesContainer.appendChild(tile);
+            initTile(tile, `tile_${tileCounter}`);
+            requestAnimationFrame(() => {
+                tile.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                tile.style.transform = 'translate(-50%, -50%) scale(1)';
+            });
+        };
+
+
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const resize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = Array.from({ length: 40 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                s: Math.random() * 2 + 1,
+                v: Math.random() * 0.4 + 0.1,
+                o: Math.random() * 0.4 + 0.1
+            }));
+        };
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.y -= p.v; if (p.y < -20) p.y = canvas.height + 20;
+                ctx.fillStyle = `rgba(76, 201, 240, ${p.o})`;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        };
+        window.onresize = resize;
+        resize(); animate();
+        initTile(document.querySelector('.tile-card'), 'main');
+
+        // Copy dropdown functionality
+        const copyBtn = document.getElementById('copy-dropdown-btn');
+        const copyDropdown = document.getElementById('copy-dropdown');
+
+        copyBtn.onclick = () => {
+            const isOpening = copyDropdown.style.display === 'block';
+            copyDropdown.style.display = isOpening ? 'none' : 'block';
+
+            // When opening dropdown, also trigger hover cards
+            if (!isOpening) {
+                // Close hover cards
+                document.querySelectorAll('.hover-card').forEach(card => {
+                    card.classList.remove('active');
+                    const tile = card.closest('.tile-card');
+                    if (tile) tile.classList.remove('hover-active');
+                });
+            } else {
+                // Open hover cards for all tiles immediately when dropdown opens
+                document.querySelectorAll('.tile-card').forEach(tile => {
+                    const hoverCard = tile.querySelector('.hover-card');
+                    if (hoverCard) {
+                        hoverCard.classList.add('active');
+                        tile.classList.add('hover-active');
+                    }
+                });
+            }
+        };
+
+        function resetMultiCopyStates() {
+            Object.keys(multiCopyStates).forEach(index => {
+                if (multiCopyStates[index].active) {
+                    multiCopyStates[index].active = false;
+                    clearTimeout(multiCopyStates[index].timeout);
+                    const card = document.querySelectorAll('.copy-card')[index];
+                    card.innerHTML = card.innerHTML.replace('✓ ', '');
+                }
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!copyBtn.contains(e.target) && !copyDropdown.contains(e.target)) {
+                resetMultiCopyStates();
+                copyDropdown.style.display = 'none';
+            }
+        });
+
+        let multiCopyStates = {};
+        document.querySelectorAll('.copy-card').forEach((card, index) => {
+            multiCopyStates[index] = { active: false, timeout: null, accumulatedText: '' };
+            card.onclick = () => {
+                const text = card.dataset.copy;
+                if (!multiCopyStates[index].active) {
+                    // First click
+                    multiCopyStates[index].accumulatedText = text;
+                    navigator.clipboard.writeText(text).then(() => {
+                        // Show checkmark
+                        card.innerHTML = '✓ ' + card.innerHTML;
+                        card.style.background = 'rgba(76, 201, 240, 0.3)';
+                        multiCopyStates[index].active = true;
+                        multiCopyStates[index].timeout = setTimeout(() => {
+                            multiCopyStates[index].active = false;
+                            card.innerHTML = card.innerHTML.replace('✓ ', '');
+                            multiCopyStates[index].accumulatedText = '';
+                        }, 2000);
+                    });
+                } else {
+                    // Append
+                    multiCopyStates[index].accumulatedText += '\n' + text;
+                    navigator.clipboard.writeText(multiCopyStates[index].accumulatedText).then(() => {
+                        // Reset timeout
+                        clearTimeout(multiCopyStates[index].timeout);
+                        multiCopyStates[index].timeout = setTimeout(() => {
+                            multiCopyStates[index].active = false;
+                            card.innerHTML = card.innerHTML.replace('✓ ', '');
+                            multiCopyStates[index].accumulatedText = '';
+                        }, 2000);
+                    });
+                }
+            };
+        });
+
+        document.querySelectorAll('.copy-word-btn').forEach(btn => {
+            btn.onclick = () => {
+                const word = btn.dataset.word;
+                navigator.clipboard.writeText(word).then(() => {
+                    btn.style.background = 'rgba(76, 201, 240, 0.3)';
+                    setTimeout(() => btn.style.background = '', 200);
+                });
+            };
+        });
+
+        // Special GOAL button in dropdown - copies "goal" to clipboard
+        const goalBtnInDropdown = document.getElementById('goal-btn-in-dropdown');
+        if (goalBtnInDropdown) {
+            goalBtnInDropdown.onclick = () => {
+                navigator.clipboard.writeText('goal').then(() => {
+                    goalBtnInDropdown.style.background = 'rgba(76, 201, 240, 0.4)';
+                    goalBtnInDropdown.textContent = '✓ GOAL COPIED';
+                    setTimeout(() => {
+                        goalBtnInDropdown.style.background = 'rgba(76, 201, 240, 0.2)';
+                        goalBtnInDropdown.textContent = 'GOAL';
+                    }, 1500);
+                });
+            };
+        }
+
+        // Paragraph copy button
+        const copyParagraphBtn = document.getElementById('copy-paragraph-btn');
+        const paragraphCopyBox = document.getElementById('paragraph-copy-box');
+        if (copyParagraphBtn && paragraphCopyBox) {
+            copyParagraphBtn.onclick = () => {
+                const text = paragraphCopyBox.value;
+                if (text.trim()) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        copyParagraphBtn.style.background = 'rgba(67, 97, 238, 0.4)';
+                        copyParagraphBtn.textContent = '✓ COPIED';
+                        setTimeout(() => {
+                            copyParagraphBtn.style.background = 'rgba(67, 97, 238, 0.2)';
+                            copyParagraphBtn.textContent = 'COPY PARAGRAPH';
+                        }, 1500);
+                    });
+                }
+            };
+        }
+
+        document.addEventListener('paste', () => {
+            Object.keys(multiCopyStates).forEach(index => {
+                if (multiCopyStates[index].active) {
+                    multiCopyStates[index].active = false;
+                    clearTimeout(multiCopyStates[index].timeout);
+                    const card = document.querySelectorAll('.copy-card')[index];
+                    card.innerHTML = card.innerHTML.replace('✓ ', '');
+                    multiCopyStates[index].accumulatedText = '';
+                }
+            });
+        });
+
+        // --- PERSISTENCE LOGIC ---
+        function exportAppData(isAuto = false) {
+            const tiles = Array.from(document.querySelectorAll('.tile-card'));
+            const data = tiles.map(tile => {
+                const snapItems = Array.from(tile.querySelectorAll('.snap-item:not(.placeholder) .editable-name'))
+                    .map(input => input.value)
+                    .filter(v => v.trim());
+
+                return {
+                    tileId: tile.dataset.id,
+                    targetX: tile._targetX || 0,
+                    targetY: tile._targetY || 0,
+                    taskStorage: tile.taskStorage,
+                    tileTitle: tile.querySelector('.tile-title-input').value,
+                    titleActive: tile.querySelector('.tile-title-box').classList.contains('title-active'),
+                    snapItems: snapItems
+                };
+            });
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            a.download = (isAuto ? 'AUTO-BACKUP_' : 'playground_state_') + timestamp + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importAppData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // Validate data
+                    if (!Array.isArray(data)) {
+                        throw new Error("Invalid file format: Expected array of tile data");
+                    }
+
+                    if (data.length === 0) {
+                        alert("No tiles found in import file");
+                        return;
+                    }
+
+                    // Clear existing tiles
+                    tilesContainer.innerHTML = '';
+                    tileCounter = 0;
+
+                    // Rebuild tiles
+                    data.forEach((tileData, index) => {
+                        // Validate tile data structure
+                        if (!tileData || !tileData.tileId) {
+                            console.warn("Skipping invalid tile data at index", index);
+                            return;
+                        }
+
+                        const tile = document.createElement('div');
+                        tile.className = 'tile-card';
+                        tile.style.top = '50%';
+                        tile.style.left = '50%';
+                        tile.style.opacity = '1';
+                        tile.style.transform = 'translate(-50%, -50%) scale(1)';
+                        tile.innerHTML = getTileHTML();
+                        tilesContainer.appendChild(tile);
+
+                        // Initialize tile with imported data
+                        initTile(tile, tileData.tileId, tileData);
+
+                        // Update tile counter
+                        if (tileData.tileId.startsWith('tile_')) {
+                            const num = parseInt(tileData.tileId.split('_')[1]);
+                            if (!isNaN(num) && num > tileCounter) {
+                                tileCounter = num;
+                            }
+                        }
+                    });
+
+                    // Show success feedback
+                    const importBtn = event.target;
+                    const originalText = importBtn.parentElement.querySelector('.p-btn.import').textContent;
+                    importBtn.parentElement.querySelector('.p-btn.import').textContent = '✓ Imported';
+                    setTimeout(() => {
+                        importBtn.parentElement.querySelector('.p-btn.import').textContent = originalText;
+                    }, 2000);
+
+                } catch (err) {
+                    console.error("Import error:", err);
+                    alert("Error importing file: " + err.message + "\n\nPlease ensure you're selecting a valid JSON export file.");
+                }
+            };
+            reader.onerror = () => {
+                alert("Error reading file. Please try again.");
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        // Exit Protection
+        window.onbeforeunload = function (e) {
+            exportAppData(true);
+            const msg = "Are you sure you want to leave? Your progress has been auto-backed up to JSON.";
+            e.returnValue = msg;
+            return msg;
+        };
+    </script>
+    <a href="https://chad2-playground.tiiny.site" target="_blank" id="floating-client-link">
+        <div class="dot"></div>
+        <span>Playground</span>
+    </a>
+
+
+
+
+</body>
+
+</html>

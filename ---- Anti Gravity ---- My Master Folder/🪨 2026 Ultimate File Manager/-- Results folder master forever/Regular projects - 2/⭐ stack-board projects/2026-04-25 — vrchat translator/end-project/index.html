@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VRChat Translator // live</title>
+<link rel="stylesheet" href="overlay.css">
+<style>
+  :root {
+    --bg-0: #07060d;
+    --bg-1: #0d0a1a;
+    --bg-2: #120f24;
+    --panel: rgba(22, 18, 38, 0.62);
+    --panel-edge: rgba(140, 110, 255, 0.18);
+    --panel-edge-hot: rgba(140, 110, 255, 0.55);
+    --ink: #eef0ff;
+    --ink-dim: #8b8aa8;
+    --ink-faint: #514f6e;
+    --violet: #a78bfa;
+    --violet-deep: #6d4dff;
+    --cyan: #22d3ee;
+    --cyan-deep: #0891b2;
+    --magenta: #f472b6;
+    --rec: #ff3b6e;
+    --grid: rgba(140, 110, 255, 0.06);
+    --mono: ui-monospace, "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: var(--sans);
+    background: var(--bg-0);
+    overflow-x: hidden;
+  }
+  /* Layered VR-flavored background — radial glow + scanline grid */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 18% 8%, rgba(109, 77, 255, 0.28), transparent 55%),
+      radial-gradient(ellipse at 82% 92%, rgba(34, 211, 238, 0.22), transparent 55%),
+      radial-gradient(ellipse at 50% 50%, rgba(244, 114, 182, 0.08), transparent 70%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    z-index: -2;
+  }
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, #000 35%, transparent 80%);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 36px;
+    border-bottom: 1px solid var(--panel-edge);
+    background: linear-gradient(180deg, rgba(13, 10, 26, 0.85), rgba(7, 6, 13, 0.4));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .mic-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--violet-deep), var(--cyan-deep));
+    display: grid; place-items: center;
+    box-shadow: 0 0 18px rgba(109, 77, 255, 0.5), inset 0 0 12px rgba(255, 255, 255, 0.08);
+    position: relative;
+  }
+  .mic-icon svg { width: 20px; height: 20px; fill: #fff; }
+  .mic-icon::after {
+    content: ""; position: absolute; inset: -2px;
+    border-radius: 12px;
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    pointer-events: none;
+  }
+  .brand-text {
+    display: flex; flex-direction: column; line-height: 1;
+  }
+  .brand-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.32em;
+    color: var(--violet);
+    text-transform: uppercase;
+  }
+  .brand-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
+    margin-top: 6px;
+  }
+  .rec-status {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border: 1px solid var(--panel-edge);
+    border-radius: 999px;
+    background: rgba(7, 6, 13, 0.55);
+  }
+  .rec-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--ink-faint);
+    box-shadow: 0 0 0 0 rgba(255, 59, 110, 0);
+    transition: background 200ms;
+  }
+  .rec-status.is-live .rec-dot {
+    background: var(--rec);
+    animation: recPulse 1.2s ease-out infinite;
+  }
+  .rec-status.is-live { color: var(--rec); border-color: rgba(255, 59, 110, 0.4); }
+  @keyframes recPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(255, 59, 110, 0.6); }
+    70%  { box-shadow: 0 0 0 10px rgba(255, 59, 110, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 59, 110, 0); }
+  }
+
+  /* LAYOUT */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 32px 36px 120px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  /* Glass panel base */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 14px;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--violet), var(--cyan), transparent);
+    opacity: 0.6;
+  }
+  .panel-head {
+    padding: 14px 22px;
+    display: flex; align-items: center; gap: 14px;
+    border-bottom: 1px solid var(--panel-edge);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  .panel-head .head-tag {
+    color: var(--violet);
+    padding: 3px 8px;
+    border: 1px solid rgba(167, 139, 250, 0.32);
+    border-radius: 4px;
+    background: rgba(167, 139, 250, 0.06);
+  }
+  .panel-head .head-spacer { flex: 1; }
+  .panel-head .head-meta { color: var(--ink-faint); }
+
+  /* LANG ROW */
+  .lang-row {
+    padding: 22px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    align-items: end;
+  }
+  .picker-block label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  select.picker {
+    width: 100%;
+    background: rgba(7, 6, 13, 0.65);
+    border: 1px solid var(--panel-edge);
+    color: var(--ink);
+    padding: 14px 40px 14px 16px;
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23a78bfa' d='M6 8L0 0h12z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    transition: border-color 160ms, box-shadow 160ms;
+  }
+  select.picker:focus,
+  select.picker:hover {
+    outline: none;
+    border-color: var(--violet);
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.12);
+  }
+  .swap-wrap { display: flex; align-items: end; padding-bottom: 2px; }
+  .swap-btn {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.14), rgba(34, 211, 238, 0.14));
+    border: 1px solid var(--panel-edge);
+    color: var(--cyan);
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: transform 220ms, border-color 160ms, color 160ms;
+    font-size: 18px;
+  }
+  .swap-btn:hover {
+    transform: rotate(180deg);
+    border-color: var(--cyan);
+    color: #fff;
+  }
+
+  /* LIVE SUBTITLE PREVIEW (in-app card preview, separate from #subtitleOverlay overlay style) */
+  .live-card {
+    margin: 0 22px 22px;
+    padding: 26px;
+    border-radius: 12px;
+    background:
+      radial-gradient(ellipse at 80% 0%, rgba(34, 211, 238, 0.12), transparent 55%),
+      radial-gradient(ellipse at 0% 100%, rgba(167, 139, 250, 0.16), transparent 55%),
+      rgba(7, 6, 13, 0.65);
+    border: 1px solid var(--panel-edge);
+    min-height: 130px;
+    position: relative;
+  }
+  .live-card .live-tag {
+    position: absolute; top: 14px; right: 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    color: var(--cyan);
+    text-transform: uppercase;
+  }
+  .live-src {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink-dim);
+    letter-spacing: 0.02em;
+    margin-bottom: 12px;
+    min-height: 20px;
+  }
+  .live-dst {
+    font-family: var(--sans);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    text-shadow: 0 0 22px rgba(34, 211, 238, 0.18);
+    min-height: 32px;
+  }
+  .live-empty { color: var(--ink-faint); font-style: italic; font-weight: 400; font-size: 16px; }
+
+  /* SESSION LOG */
+  #sessionLog {
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 8px 0;
+    scrollbar-color: var(--violet) transparent;
+    scrollbar-width: thin;
+  }
+  #sessionLog::-webkit-scrollbar { width: 8px; }
+  #sessionLog::-webkit-scrollbar-track { background: transparent; }
+  #sessionLog::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--violet), var(--cyan));
+    border-radius: 4px;
+  }
+  .log-entry {
+    padding: 14px 22px;
+    border-bottom: 1px solid rgba(140, 110, 255, 0.08);
+    display: grid;
+    grid-template-columns: 70px auto 1fr;
+    gap: 14px;
+    align-items: start;
+    font-family: var(--mono);
+    animation: logSlide 280ms ease-out;
+  }
+  .log-entry:hover { background: rgba(140, 110, 255, 0.04); }
+  .log-entry:last-child { border-bottom: none; }
+  @keyframes logSlide {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .log-time {
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    padding-top: 4px;
+  }
+  .log-badges {
+    display: flex; gap: 4px; flex-direction: column;
+    padding-top: 2px;
+  }
+  .lang-badge {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .lang-badge.from { background: rgba(167, 139, 250, 0.14); color: var(--violet); border: 1px solid rgba(167, 139, 250, 0.3); }
+  .lang-badge.to   { background: rgba(34, 211, 238, 0.14);  color: var(--cyan);   border: 1px solid rgba(34, 211, 238, 0.3); }
+  .log-text {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .log-src { color: var(--ink-dim); }
+  .log-arrow { color: var(--violet); margin: 0 6px; }
+  .log-dst { color: var(--ink); font-weight: 500; }
+
+  /* ACTION BAR */
+  .action-bar {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(13, 10, 26, 0.82);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--panel-edge);
+    border-radius: 16px;
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.6),
+      0 0 40px rgba(109, 77, 255, 0.15);
+    z-index: 60;
+  }
+  .act {
+    background: transparent;
+    border: 1px solid var(--panel-edge);
+    color: var(--ink);
+    padding: 11px 18px;
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: border-color 160ms, color 160ms, background 160ms, transform 120ms;
+  }
+  .act:hover { border-color: var(--violet); color: var(--violet); background: rgba(167, 139, 250, 0.06); }
+  .act:active { transform: translateY(1px); }
+  .act .key {
+    font-size: 9px;
+    color: var(--ink-faint);
+    border: 1px solid var(--panel-edge);
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.1em;
+  }
+  .act.ptt {
+    background: linear-gradient(135deg, rgba(109, 77, 255, 0.25), rgba(34, 211, 238, 0.25));
+    border-color: var(--violet);
+    color: #fff;
+  }
+  .act.ptt.is-active {
+    background: linear-gradient(135deg, var(--violet-deep), var(--cyan-deep));
+    box-shadow: 0 0 24px rgba(109, 77, 255, 0.6);
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 100px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(13, 10, 26, 0.92);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms, transform 180ms;
+    z-index: 70;
+  }
+  .toast.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 720px) {
+    main { padding: 22px 16px 140px; }
+    header { padding: 18px 20px; }
+    .lang-row { grid-template-columns: 1fr; }
+    .swap-wrap { justify-content: center; padding: 4px 0; }
+    .action-bar { width: calc(100% - 24px); justify-content: space-between; }
+    .act { padding: 10px 12px; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="mic-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">VRChat Translator</div>
+      <div class="brand-sub">live // jp &harr; en // OSC overlay</div>
+    </div>
+  </div>
+  <div class="rec-status" id="recStatus">
+    <div class="rec-dot"></div>
+    <span id="recLabel">idle</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- LANGUAGE PICKERS -->
+  <section class="panel">
+    <div class="panel-head">
+      <span class="head-tag">CH 01</span>
+      <span>language route</span>
+      <span class="head-spacer"></span>
+      <span class="head-meta" id="routeMeta">auto &rarr; en</span>
+    </div>
+    <div class="lang-row">
+      <div class="picker-block">
+        <label for="fromLang">From</label>
+        <select class="picker" id="fromLang">
+          <option value="auto">Auto-detect</option>
+          <option value="jp">Japanese (JP)</option>
+          <option value="en">English (EN)</option>
+          <option value="es">Spanish (ES)</option>
+          <option value="fr">French (FR)</option>
+          <option value="ko">Korean (KO)</option>
+        </select>
+      </div>
+      <div class="swap-wrap">
+        <button class="swap-btn" id="swapBtn" title="Swap languages" aria-label="Swap languages">&#x21C4;</button>
+      </div>
+      <div class="picker-block">
+        <label for="toLang">To</label>
+        <select class="picker" id="toLang">
+          <option value="en">English (EN)</option>
+          <option value="jp">Japanese (JP)</option>
+          <option value="es">Spanish (ES)</option>
+          <option value="fr">French (FR)</option>
+          <option value="ko">Korean (KO)</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE SUBTITLES PREVIEW (the in-app card; #subtitleOverlay below is the floating one styled by overlay.css) -->
+  <section class="panel">
+    <div class="panel-head">
+      <span class="head-tag">CH 02</span>
+      <span>live subtitles</span>
+      <span class="head-spacer"></span>
+      <span class="head-meta" id="latencyMeta">--ms</span>
+    </div>
+    <div class="live-card">
+      <div class="live-tag">// streaming</div>
+      <div class="live-src" id="liveSrc"></div>
+      <div class="live-dst" id="liveDst"><span class="live-empty">hold space (or tap PTT) to talk&hellip;</span></div>
+    </div>
+  </section>
+
+  <!-- SESSION LOG -->
+  <section class="panel">
+    <div class="panel-head">
+      <span class="head-tag">CH 03</span>
+      <span>session log</span>
+      <span class="head-spacer"></span>
+      <span class="head-meta"><span id="logCount">0</span> entries</span>
+    </div>
+    <div id="sessionLog" role="log" aria-live="polite"></div>
+  </section>
+
+</main>
+
+<!-- Floating subtitle overlay (styled entirely by overlay.css — agent A2 owns it) -->
+<div id="subtitleOverlay" class="is-hidden" aria-hidden="true">
+  <span class="subtitleSrc"></span>
+  <span class="subtitleDst"></span>
+</div>
+
+<!-- ACTION BAR -->
+<div class="action-bar" role="toolbar" aria-label="Actions">
+  <button class="act" id="copyBtn" title="Copy last translation">Copy <span class="key">C</span></button>
+  <button class="act" id="saveBtn" title="Save session log">Save <span class="key">S</span></button>
+  <button class="act" id="swapBarBtn" title="Swap languages">Swap <span class="key">X</span></button>
+  <button class="act ptt" id="pttBtn" title="Push to talk (hold space)">PTT <span class="key">SPACE</span></button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- A1 + A2 modules -->
+<script type="module" src="engine.js"></script>
+<script type="module" src="capture.js"></script>
+<script type="module" src="detect.js"></script>
+
+<!-- A3 modules -->
+<script type="module" src="log.js"></script>
+<script type="module" src="controls.js"></script>
+
+<script type="module">
+  import { init } from "./controls.js";
+  init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Step 8 v2 — Live Performance 101</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --ink: #1a2332;
+    --ink-soft: #4a5568;
+    --ink-mute: #7c8a9e;
+    --rule: #dde3ec;
+    --rule-soft: #eef1f6;
+    --accent: #4a6da7;
+    --accent-deep: #34507f;
+    --accent-soft: #e8eef8;
+    --chip-bg: #eef2f8;
+    --show: #e94f4f;
+    --show-soft: #fde6e6;
+    --drive: #f5b942;
+    --drive-soft: #fdf3dc;
+    --rest: #ffffff;
+    --rest-bd: #e2e8f0;
+    --good: #2f9e6f;
+    --shadow-sm: 0 1px 2px rgba(20, 30, 50, 0.04), 0 1px 3px rgba(20, 30, 50, 0.06);
+    --shadow-md: 0 4px 12px rgba(20, 30, 50, 0.08), 0 2px 4px rgba(20, 30, 50, 0.04);
+    --shadow-lg: 0 12px 32px rgba(20, 30, 50, 0.14);
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ============ HEADER ============ */
+  .page-header {
+    background: rgba(255,255,255,0.92);
+    border-bottom: 1px solid var(--rule);
+    padding: 24px 48px 22px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+  }
+  .header-left { flex: 1; min-width: 0; }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+  .back-link:hover { color: var(--accent); text-decoration: none; }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent-soft), transparent);
+    max-width: 200px;
+  }
+  .page-title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 760px;
+  }
+  .register-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid var(--accent-deep);
+  }
+  .register-btn::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffd166;
+    box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.25);
+  }
+  .register-btn:hover {
+    background: var(--accent-deep);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+  }
+  .register-btn:active { transform: translateY(0); }
+
+  /* ============ MAIN ============ */
+  main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 36px 48px 80px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-head h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0;
+  }
+  .section-head .meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  .section-head .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
+    letter-spacing: 0.05em;
+  }
+  .section-head .num.diamond {
+    background: linear-gradient(135deg, #ffe9a8, #f7c948);
+    color: #6b4a00;
+  }
+
+  /* ============ KEY CONCEPTS TILES ============ */
+  .examples-section { margin-bottom: 56px; }
+  .examples-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .example-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .example-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent);
+  }
+  .mock-thumb {
+    aspect-ratio: 16 / 10;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 18px;
+    color: #fff;
+  }
+  .mock-thumb::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+  .mock-thumb-deal {
+    background:
+      radial-gradient(circle at 20% 30%, #6e8ab8 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, #a4c2e0 0%, transparent 50%),
+      linear-gradient(135deg, #2d4570 0%, #4a6da7 100%);
+  }
+  .mock-thumb-merch {
+    background:
+      radial-gradient(circle at 70% 20%, #c8a96a 0%, transparent 50%),
+      linear-gradient(140deg, #1f2a44 0%, #3a4d75 60%, #5e7aa6 100%);
+  }
+  .mock-thumb-cost {
+    background:
+      radial-gradient(circle at 30% 80%, #b97a7a 0%, transparent 45%),
+      linear-gradient(160deg, #4a2d2d 0%, #8b4747 60%, #b06b6b 100%);
+  }
+  .mock-bars {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    height: 50%;
+    opacity: 0.78;
+  }
+  .mock-bars span {
+    flex: 1;
+    background: rgba(255,255,255,0.9);
+    border-radius: 2px 2px 0 0;
+  }
+  .mock-thumb-deal .mock-bars span:nth-child(1) { height: 45%; }
+  .mock-thumb-deal .mock-bars span:nth-child(2) { height: 75%; }
+  .mock-thumb-deal .mock-bars span:nth-child(3) { height: 35%; }
+  .mock-thumb-deal .mock-bars span:nth-child(4) { height: 90%; background: #ffd166; }
+  .mock-thumb-deal .mock-bars span:nth-child(5) { height: 60%; }
+  .mock-icons {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    opacity: 0.85;
+  }
+  .mock-icons .ic {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.92);
+    color: #2d4570;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  }
+  .mock-stack {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    height: 50%;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    gap: 6px; opacity: 0.85;
+  }
+  .mock-stack .row {
+    height: 14px; border-radius: 3px;
+    background: rgba(255,255,255,0.92);
+    display: flex; align-items: center;
+    padding: 0 8px; gap: 6px;
+  }
+  .mock-stack .row::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .mock-stack .row::after {
+    content: ""; flex: 1; height: 3px;
+    background: rgba(74, 109, 167, 0.5); border-radius: 2px;
+  }
+  .mock-overlay { position: relative; z-index: 2; width: 100%; }
+  .mock-overlay .name {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .mock-overlay .tag {
+    font-size: 11px;
+    opacity: 0.85;
+    margin: 2px 0 0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .example-body { padding: 14px 18px 16px; }
+  .example-body p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .example-body .open-hint {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ============ RESEARCH SECTIONS ============ */
+  .research-block { margin-bottom: 48px; }
+  .research-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+  }
+  .result-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .result-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  .topic-chip {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    background: var(--chip-bg);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .result-card h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .result-meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .result-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-mute); }
+  .result-quote {
+    font-size: 13px;
+    font-style: italic;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--rule);
+    padding: 4px 0 4px 12px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .result-why {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin: 0;
+  }
+  .result-why strong {
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-size: 10px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .result-source {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+    align-self: flex-start;
+  }
+  .result-source:hover { text-decoration: underline; }
+
+  /* ============ INTERACTIVE PANEL ============ */
+  .interactive-section {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    padding: 28px 32px 32px;
+    margin: 0 0 56px;
+    box-shadow: var(--shadow-sm);
+  }
+  .interactive-section .section-head { margin-top: 0; }
+
+  .planner-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    margin-top: 6px;
+  }
+  @media (max-width: 980px) {
+    .planner-grid { grid-template-columns: 1fr; }
+  }
+
+  /* MAP */
+  .map-wrap {
+    position: relative;
+    background: linear-gradient(180deg, #f0f4fa 0%, #e6ecf5 100%);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 18px;
+    overflow: hidden;
+  }
+  .map-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .map-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent-deep);
+  }
+  .map-total {
+    font-family: var(--mono); font-size: 11px;
+    background: var(--accent-soft); color: var(--accent-deep);
+    padding: 4px 10px; border-radius: 999px;
+    font-weight: 600;
+  }
+  .map-svg {
+    width: 100%;
+    aspect-ratio: 1.55 / 1;
+    display: block;
+  }
+  .city-dot {
+    fill: var(--accent);
+    stroke: #fff;
+    stroke-width: 3;
+    cursor: pointer;
+    transition: r 0.15s ease, fill 0.15s ease;
+  }
+  .city-dot:hover { fill: var(--accent-deep); }
+  .city-dot.active { fill: var(--show); r: 11; }
+  .city-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    fill: var(--ink);
+    font-weight: 700;
+    pointer-events: none;
+  }
+  .city-label-sub {
+    font-family: var(--mono);
+    font-size: 9px;
+    fill: var(--ink-mute);
+    pointer-events: none;
+  }
+  .route-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.4;
+    stroke-dasharray: 6 4;
+    opacity: 0.85;
+  }
+  .route-arrow {
+    fill: var(--accent);
+  }
+  .miles-label {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    fill: var(--accent-deep);
+    font-weight: 600;
+    pointer-events: none;
+  }
+  .miles-bg {
+    fill: rgba(255,255,255,0.92);
+    stroke: var(--accent-soft);
+    stroke-width: 0.6;
+  }
+
+  .city-detail {
+    margin-top: 12px;
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--show);
+    border-radius: var(--r-md);
+    padding: 12px 16px;
+    min-height: 70px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .city-detail .cd-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+  }
+  .city-detail .cd-row {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .city-detail .cd-row strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .city-detail .cd-deal {
+    align-self: flex-start;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #fff;
+    background: var(--accent);
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .city-detail .cd-deal.guarantee { background: var(--good); }
+  .city-detail .cd-deal.door { background: var(--accent); }
+  .city-detail .cd-deal.greater { background: #b06b6b; }
+
+  /* CALENDAR */
+  .cal-wrap {
+    background: linear-gradient(180deg, #f0f4fa 0%, #e6ecf5 100%);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 18px;
+  }
+  .cal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .cal-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--accent-deep);
+  }
+  .cal-legend {
+    display: flex; gap: 10px; align-items: center;
+    font-size: 10px; color: var(--ink-mute);
+    font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .cal-legend .lg {
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .cal-legend .sw {
+    width: 10px; height: 10px; border-radius: 3px;
+    border: 1px solid var(--rule);
+  }
+  .sw.show { background: var(--show); border-color: var(--show); }
+  .sw.drive { background: var(--drive); border-color: var(--drive); }
+  .sw.rest { background: var(--rest); }
+
+  .cal-dows {
+    display: grid;
+    grid-template-columns: 22px repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 4px;
+  }
+  .cal-dows span {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--ink-mute);
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: 22px repeat(7, 1fr);
+    gap: 5px;
+  }
+  .cal-week-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600;
+  }
+  .cal-cell {
+    aspect-ratio: 1 / 0.78;
+    border-radius: 5px;
+    border: 1px solid var(--rule);
+    background: var(--rest);
+    padding: 4px 5px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-mute);
+    position: relative;
+    transition: transform 0.1s ease;
+  }
+  .cal-cell.show {
+    background: var(--show);
+    border-color: var(--show);
+    color: #fff;
+  }
+  .cal-cell.drive {
+    background: var(--drive);
+    border-color: var(--drive);
+    color: #5a3f00;
+  }
+  .cal-cell .lbl {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    align-self: flex-start;
+  }
+  .cal-cell .city {
+    font-size: 8.5px;
+    font-weight: 700;
+    align-self: flex-end;
+    opacity: 0.92;
+  }
+  .cal-cell:hover { transform: scale(1.06); z-index: 2; box-shadow: var(--shadow-md); }
+
+  .cal-summary {
+    margin-top: 12px;
+    display: flex; gap: 14px; flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+  }
+  .cal-summary .pill {
+    background: #fff;
+    border: 1px solid var(--rule);
+    padding: 4px 10px; border-radius: 999px;
+    font-weight: 600;
+  }
+  .cal-summary .pill strong { color: var(--ink); }
+
+  /* DEAL LEDGER */
+  .ledger {
+    margin-top: 26px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 760px) {
+    .ledger { grid-template-columns: 1fr; }
+  }
+  .deal-card {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-top: 4px solid var(--accent);
+    border-radius: var(--r-md);
+    padding: 16px 18px 18px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .deal-card.guarantee { border-top-color: var(--good); }
+  .deal-card.door { border-top-color: var(--accent); }
+  .deal-card.greater { border-top-color: #b06b6b; }
+  .deal-card .dl-tag {
+    align-self: flex-start;
+    font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px;
+    color: #fff;
+  }
+  .deal-card.guarantee .dl-tag { background: var(--good); }
+  .deal-card.door .dl-tag { background: var(--accent); }
+  .deal-card.greater .dl-tag { background: #b06b6b; }
+  .deal-card h4 {
+    margin: 0;
+    font-size: 15px; font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .deal-card .dl-range {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-deep);
+    background: var(--accent-soft);
+    padding: 6px 10px;
+    border-radius: var(--r-sm);
+    align-self: flex-start;
+  }
+  .deal-card.guarantee .dl-range {
+    color: #1d6b4c;
+    background: #e6f5ee;
+  }
+  .deal-card.greater .dl-range {
+    color: #7a3838;
+    background: #f7e6e6;
+  }
+  .deal-card .dl-quote {
+    font-size: 12px;
+    font-style: italic;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--rule);
+    padding: 4px 0 4px 10px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .deal-card .dl-source {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    align-self: flex-start;
+  }
+
+  /* PROGRESSION RAIL */
+  .progression {
+    margin-top: 28px;
+    background: linear-gradient(180deg, #f7faff 0%, #eef2f8 100%);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 18px 20px 20px;
+  }
+  .progression-head {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent-deep);
+    margin-bottom: 14px;
+  }
+  .prog-rail {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    align-items: stretch;
+    position: relative;
+  }
+  @media (max-width: 760px) {
+    .prog-rail { grid-template-columns: 1fr 1fr; }
+  }
+  .prog-step {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 12px 12px 14px;
+    text-align: center;
+    position: relative;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .prog-step::after {
+    content: "→";
+    position: absolute;
+    right: -10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .prog-step:last-child::after { display: none; }
+  .prog-step .pn {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+  .prog-step .pt {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .prog-step .pd {
+    font-size: 10.5px;
+    color: var(--ink-mute);
+    font-family: var(--mono);
+    background: var(--accent-soft);
+    padding: 2px 6px;
+    border-radius: var(--r-sm);
+    align-self: center;
+    color: var(--accent-deep);
+    font-weight: 600;
+  }
+
+  /* ============ OUTLINE ============ */
+  .outline-section {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    padding: 28px 32px;
+    margin-top: 24px;
+  }
+  .outline-section .section-head { border-bottom: none; padding-bottom: 0; margin-bottom: 16px; }
+  .outline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 32px;
+    counter-reset: outline;
+  }
+  .outline-list li {
+    position: relative;
+    padding-left: 32px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    counter-increment: outline;
+  }
+  .outline-list li::before {
+    content: counter(outline, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 7px;
+    border-radius: var(--r-sm);
+    letter-spacing: 0.04em;
+  }
+  .outline-list li strong {
+    color: var(--ink);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+
+  /* ============ DIALOGS ============ */
+  dialog.example-dialog {
+    border: none;
+    background: transparent;
+    padding: 0;
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+  dialog.example-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.68);
+    backdrop-filter: blur(4px);
+  }
+  .dialog-shell {
+    background: var(--panel);
+    border-radius: var(--r-lg);
+    width: min(680px, 90vw);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+  }
+  .dialog-hero {
+    aspect-ratio: 16 / 7;
+    display: flex;
+    align-items: flex-end;
+    padding: 24px;
+    color: #fff;
+    position: relative;
+  }
+  .dialog-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--ink);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.12s ease;
+    z-index: 5;
+  }
+  .dialog-close:hover { transform: scale(1.08); }
+  .dialog-body { padding: 22px 28px 26px; }
+  .dialog-body h3 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .dialog-body .dialog-tag {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 14px;
+  }
+  .dialog-body p { font-size: 14px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 12px; }
+  .dialog-body ul { padding-left: 20px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
+  .dialog-body ul li { margin-bottom: 4px; }
+
+  /* ============ COMPLETE BAR ============ */
+  .complete-bar {
+    margin-top: 36px;
+    padding: 22px 26px;
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5fb 100%);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    box-shadow: var(--shadow-sm);
+  }
+  .complete-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    background: var(--good);
+    color: #fff;
+    border: 1px solid #1d6b4c;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(47,158,111,0.3);
+    transition: all 0.15s ease;
+  }
+  .complete-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(47,158,111,0.42); }
+  .complete-btn.done { background: var(--ink); border-color: var(--ink); }
+  .next-step {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--accent-deep);
+    transition: all 0.15s ease;
+  }
+  .next-step:hover { background: var(--accent-deep); transform: translateY(-1px); text-decoration: none; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 900px) {
+    .page-header { padding: 22px 24px 18px; flex-direction: column; gap: 16px; }
+    main { padding: 28px 24px 60px; }
+    .examples-grid { grid-template-columns: 1fr; }
+    .outline-list { grid-template-columns: 1fr; }
+    .page-title { font-size: 24px; }
+    .interactive-section { padding: 22px 18px; }
+  }
+</style>
+  <link rel="stylesheet" href="../_version-jumper.css">
+  <script src="../_version-jumper.js" defer></script>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="header-left">
+    <a class="back-link" href="step-8.html">← back to step 8</a>
+    <p class="eyebrow">Step 8 · Music Business Education</p>
+    <h1 class="page-title">Live Performance 101</h1>
+    <p class="page-subtitle">Live performance is simultaneously the most direct artist-to-fan connection and the most financially complex revenue stream in music — show deals range from simple door splits to guarantee-versus-percentage structures.</p>
+  </div>
+  <a href="#tour-planner" class="register-btn">Open Tour Planner</a>
+</header>
+
+<main>
+
+  <!-- 01 KEY CONCEPTS -->
+  <section class="examples-section">
+    <div class="section-head">
+      <span class="num">01</span>
+      <h2>Key Concepts — Reference Points</h2>
+      <span class="meta">click any tile to open spec</span>
+    </div>
+    <div class="examples-grid">
+
+      <article class="example-card" data-dialog="dlg-deals">
+        <div class="mock-thumb mock-thumb-deal">
+          <div class="mock-bars">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Deal Shapes</p>
+            <p class="tag">Guarantee · Door · Greater-Of</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>Three deal structures dominate live music: guarantee (fixed payment, promoter takes risk), door deal (artist takes 70–85% of door, shares risk), and "whichever is greater" (guaranteed floor + percentage upside).</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+      <article class="example-card" data-dialog="dlg-merch">
+        <div class="mock-thumb mock-thumb-merch">
+          <div class="mock-icons">
+            <div class="ic">T</div>
+            <div class="ic">$</div>
+            <div class="ic">✉</div>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Merch Lifeline</p>
+            <p class="tag">$15/fan · Often Margin = Profit</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>Merchandise sales at the show average $15 per attending fan and are often the difference between breaking even and going home in debt. T-shirts at $30–$45 signal value, not greed.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+      <article class="example-card" data-dialog="dlg-cost">
+        <div class="mock-thumb mock-thumb-cost">
+          <div class="mock-stack">
+            <div class="row"></div>
+            <div class="row"></div>
+            <div class="row"></div>
+            <div class="row"></div>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Cost Truth</p>
+            <p class="tag">$100 Ticket = $8–$15 Net</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>A $100 ticket nets roughly $8–$15 to the artist after venue, ticketing fees, production, crew and band. Van $100–$300/day, gas $200–$600/show, hotel $100–$250/night stack fast.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 02 ACADEMIC -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">02</span>
+      <h2>Academic Layer — Peer & Standards</h2>
+      <span class="meta">scholarly + industry-data sourcing</span>
+    </div>
+    <div class="research-grid">
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>Live Music Industry — Pollstar Year-End Data</h3>
+        <div class="result-meta"><span>Pollstar</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Building a sustainable touring career follows a clear progression: local shows → regional circuit → national club circuit → festival bookings → headline tours. Each stage requires demonstrating drawing power in the previous stage."</p>
+        <p class="result-why"><strong>Why relevant</strong>Anchors the 5-stage progression model used throughout this curriculum.</p>
+        <a class="result-source" href="https://www.pollstar.com/" target="_blank" rel="noopener">↗ source</a>
+      </article>
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>The Draw Metric — How Promoters Actually Pay Artists</h3>
+        <div class="result-meta"><span>IEBA · Industry Standard</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"The key metric promoters and booking agents use is the 'draw' — how many people will pay to see this artist in this specific market."</p>
+        <p class="result-why"><strong>Why relevant</strong>Defines the single number that gates every show offer an artist will ever receive.</p>
+        <a class="result-source" href="https://www.ieba.org/" target="_blank" rel="noopener">↗ source</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- 03 MAINSTREAM -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">03</span>
+      <h2>Mainstream Layer — Trade & Press</h2>
+      <span class="meta">Band Vans · gigmit · Arts Hacker</span>
+    </div>
+    <div class="research-grid">
+
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>The 5 Major Artist-Promoter Deal Models — Band Vans</h3>
+        <div class="result-meta"><span>Band-vans</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Guarantee deal: the artist receives a fixed payment regardless of ticket sales. The promoter assumes all financial risk. Common for established acts with proven draw. Typical club-level guarantees range from $200–$5,000…"</p>
+        <p class="result-why"><strong>Why relevant</strong>Defines the floor structure most independents will see at club level.</p>
+        <a class="result-source" href="https://band-vans.net/the-5-most-common-types-of-deals-between-artists-and-local-promoters/" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>What Makes the Door Split A Good Deal? — gigmit</h3>
+        <div class="result-meta"><span>Gigmit</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Door deal (percentage deal): the artist receives a percentage of ticket revenue — typically 70–85% of the door after the venue takes its cut. The artist shares financial risk with the promoter."</p>
+        <p class="result-why"><strong>Why relevant</strong>The default structure for emerging acts at independent venues.</p>
+        <a class="result-source" href="https://blog.gigmit.com/en/good-deal-door-split/" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>Common Deal Structures For Touring Groups — Arts Hacker</h3>
+        <div class="result-meta"><span>Artshacker</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Guarantee vs. percentage: the most common structure for established artists is 'whichever is greater' — a guaranteed floor plus the right to receive their percentage if ticket sales exceed what the guarantee would cover."</p>
+        <p class="result-why"><strong>Why relevant</strong>The aspirational structure — what artists negotiate for once they have draw.</p>
+        <a class="result-source" href="https://artshacker.com/common-deal-structures-for-touring-groups/" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- 04 BLOGS -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">04</span>
+      <h2>Blogs Layer — Operator Notes</h2>
+      <span class="meta">first-person workflows + practitioner deep dives</span>
+    </div>
+    <div class="research-grid">
+
+      <article class="result-card">
+        <span class="topic-chip">PRACTICE</span>
+        <h3>How to Book Your First Tour as an Independent Artist — Chartlex</h3>
+        <div class="result-meta"><span>Chartlex</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Building a sustainable touring career follows a clear progression: local shows, regional circuit, national club circuit, festival bookings, headline tours. Each stage requires demonstrating drawing power in the previous…"</p>
+        <p class="result-why"><strong>Why relevant</strong>Operational playbook for the first-tour artist.</p>
+        <a class="result-source" href="https://www.chartlex.com/blog/touring/how-to-book-your-first-tour-independent-artist-guide" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">MISTAKE</span>
+        <h3>Tour Routing and Booking Systems That Work — Orphiq</h3>
+        <div class="result-meta"><span>Orphiq</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Routing inefficiently — booking shows in order of which opportunities came first rather than geographic logic means driving 800 miles between two shows that could have been done in sequence with a third in between."</p>
+        <p class="result-why"><strong>Why relevant</strong>The single most expensive mistake on every first tour.</p>
+        <a class="result-source" href="https://orphiq.com/resources/tour-routing-booking-systems" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">MISTAKE</span>
+        <h3>How to Price Your Music Merchandise — Orphiq</h3>
+        <div class="result-meta"><span>Orphiq</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Underpricing merch to be accessible — fans who want to support their favorite artist will pay $30–$45 for a quality t-shirt. Underpriced merch signals low value and leaves significant revenue uncaptured."</p>
+        <p class="result-why"><strong>Why relevant</strong>The lever that turns a break-even tour into a profitable one.</p>
+        <a class="result-source" href="https://orphiq.com/resources/pricing-music-merchandise" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">MISTAKE</span>
+        <h3>Stop Playing Empty Venues — City of Angles</h3>
+        <div class="result-meta"><span>Cityofangles</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Touring before building a local fanbase — playing in markets where nobody knows you generates no draw, leads to empty rooms, and damages reputation with venues that won't rebook an act that fails to draw."</p>
+        <p class="result-why"><strong>Why relevant</strong>The order-of-operations rule that saves artists from a damaging early tour.</p>
+        <a class="result-source" href="https://www.cityofangles.co/en-us/city-of-angles-blog/stop-playing-empty-venues-a-strategic-approach-to-building-your-live-audience" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ◆ INTERACTIVE — TOUR PLANNER -->
+  <section class="interactive-section" id="tour-planner">
+    <div class="section-head">
+      <span class="num diamond">◆</span>
+      <h2>Interactive — Tour Route Map + Calendar Strip</h2>
+      <span class="meta">click any city · scan the 4-week strip · read the deal ledger</span>
+    </div>
+
+    <div class="planner-grid">
+
+      <!-- MAP -->
+      <div class="map-wrap">
+        <div class="map-head">
+          <span class="map-title">Southeast Loop · 8 cities</span>
+          <span class="map-total">~1,630 mi total</span>
+        </div>
+        <svg class="map-svg" viewBox="0 0 620 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- subtle background grid -->
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(74,109,167,0.08)" stroke-width="1"/>
+            </pattern>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" class="route-arrow"/>
+            </marker>
+          </defs>
+          <rect width="620" height="400" fill="url(#grid)"/>
+
+          <!-- Loop route: ATL → NSH → LOU → STL → IND → CHI → MEM → KC → back to ATL -->
+          <!-- City coords (geographic-ish loop) -->
+          <!-- ATL  (310, 320)
+               NSH  (260, 250)
+               LOU  (320, 195)
+               STL  (200, 175)
+               IND  (340, 145)
+               CHI  (290, 80)
+               MEM  (200, 280)
+               KC   (110, 195)  -->
+
+          <!-- arrows between cities -->
+          <line x1="305" y1="312" x2="265" y2="258" class="route-line" marker-end="url(#arrow)"/>
+          <line x1="266" y1="244" x2="316" y2="201" class="route-line" marker-end="url(#arrow)"/>
+          <line x1="313" y1="192" x2="208" y2="178" class="route-line" marker-end="url(#arrow)"/>
+          <line x1="207" y1="170" x2="332" y2="148" class="route-line" marker-end="url(#arrow)"/>
+          <line x1="338" y1="138" x2="295" y2="86" class="route-line" marker-end="url(#arrow)"/>
+          <line x1="282" y1="84" x2="207" y2="272" class="route-line" marker-end="url(#arrow)"/>
+          <line x1="195" y1="278" x2="118" y2="200" class="route-line" marker-end="url(#arrow)"/>
+          <line x1="118" y1="204" x2="302" y2="316" class="route-line" marker-end="url(#arrow)"/>
+
+          <!-- miles labels -->
+          <g>
+            <rect x="263" y="278" width="50" height="14" rx="4" class="miles-bg"/>
+            <text x="288" y="289" text-anchor="middle" class="miles-label">215 mi</text>
+
+            <rect x="278" y="218" width="48" height="14" rx="4" class="miles-bg"/>
+            <text x="302" y="229" text-anchor="middle" class="miles-label">175 mi</text>
+
+            <rect x="232" y="178" width="48" height="14" rx="4" class="miles-bg"/>
+            <text x="256" y="189" text-anchor="middle" class="miles-label">260 mi</text>
+
+            <rect x="248" y="155" width="48" height="14" rx="4" class="miles-bg"/>
+            <text x="272" y="166" text-anchor="middle" class="miles-label">240 mi</text>
+
+            <rect x="294" y="108" width="48" height="14" rx="4" class="miles-bg"/>
+            <text x="318" y="119" text-anchor="middle" class="miles-label">185 mi</text>
+
+            <rect x="220" y="170" width="48" height="14" rx="4" class="miles-bg"/>
+            <text x="244" y="181" text-anchor="middle" class="miles-label">540 mi</text>
+
+            <rect x="138" y="232" width="48" height="14" rx="4" class="miles-bg"/>
+            <text x="162" y="243" text-anchor="middle" class="miles-label">405 mi</text>
+
+            <rect x="180" y="262" width="48" height="14" rx="4" class="miles-bg"/>
+            <text x="204" y="273" text-anchor="middle" class="miles-label">735 mi</text>
+          </g>
+
+          <!-- City dots + labels -->
+          <g class="city" data-city="atl">
+            <circle cx="310" cy="320" r="9" class="city-dot"/>
+            <text x="310" y="345" text-anchor="middle" class="city-label">ATL</text>
+            <text x="310" y="358" text-anchor="middle" class="city-label-sub">START</text>
+          </g>
+          <g class="city" data-city="nsh">
+            <circle cx="260" cy="250" r="9" class="city-dot"/>
+            <text x="246" y="270" text-anchor="end" class="city-label">NSH</text>
+          </g>
+          <g class="city" data-city="lou">
+            <circle cx="320" cy="195" r="9" class="city-dot"/>
+            <text x="335" y="200" text-anchor="start" class="city-label">LOU</text>
+          </g>
+          <g class="city" data-city="stl">
+            <circle cx="200" cy="175" r="9" class="city-dot"/>
+            <text x="186" y="172" text-anchor="end" class="city-label">STL</text>
+          </g>
+          <g class="city" data-city="ind">
+            <circle cx="340" cy="145" r="9" class="city-dot"/>
+            <text x="355" y="148" text-anchor="start" class="city-label">IND</text>
+          </g>
+          <g class="city" data-city="chi">
+            <circle cx="290" cy="80" r="9" class="city-dot"/>
+            <text x="290" y="65" text-anchor="middle" class="city-label">CHI</text>
+          </g>
+          <g class="city" data-city="mem">
+            <circle cx="200" cy="280" r="9" class="city-dot"/>
+            <text x="186" y="298" text-anchor="end" class="city-label">MEM</text>
+          </g>
+          <g class="city" data-city="kc">
+            <circle cx="110" cy="195" r="9" class="city-dot"/>
+            <text x="96" y="192" text-anchor="end" class="city-label">KC</text>
+          </g>
+        </svg>
+
+        <div class="city-detail" id="city-detail">
+          <span class="cd-name">ATL · Atlanta, GA</span>
+          <span class="cd-deal door">DOOR DEAL · 75%</span>
+          <div class="cd-row"><strong>Venue:</strong> The Earl · 300 cap</div>
+          <div class="cd-row"><strong>Draw:</strong> ~210 paid · <strong>Net:</strong> ~$1,650</div>
+          <div class="cd-row" style="font-size:11.5px;color:var(--ink-mute);">↳ click another city dot to switch</div>
+        </div>
+      </div>
+
+      <!-- CALENDAR STRIP -->
+      <div class="cal-wrap">
+        <div class="cal-head">
+          <span class="cal-title">4-Week Tour Strip</span>
+          <div class="cal-legend">
+            <span class="lg"><span class="sw show"></span>Show</span>
+            <span class="lg"><span class="sw drive"></span>Drive</span>
+            <span class="lg"><span class="sw rest"></span>Rest</span>
+          </div>
+        </div>
+        <div class="cal-dows">
+          <span></span>
+          <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+        </div>
+        <div class="cal-grid" id="cal-grid">
+          <!-- Week 1 -->
+          <div class="cal-week-num">W1</div>
+          <div class="cal-cell"><span class="lbl">Rest</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→ATL</span></div>
+          <div class="cal-cell"><span class="lbl">Rest</span></div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">ATL</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→NSH</span></div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">NSH</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→LOU</span></div>
+
+          <!-- Week 2 -->
+          <div class="cal-week-num">W2</div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">LOU</span></div>
+          <div class="cal-cell"><span class="lbl">Rest</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→STL</span></div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">STL</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→IND</span></div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">IND</span></div>
+          <div class="cal-cell"><span class="lbl">Rest</span></div>
+
+          <!-- Week 3 -->
+          <div class="cal-week-num">W3</div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→CHI</span></div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">CHI</span></div>
+          <div class="cal-cell"><span class="lbl">Rest</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→MEM</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">cont.</span></div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">MEM</span></div>
+          <div class="cal-cell"><span class="lbl">Rest</span></div>
+
+          <!-- Week 4 -->
+          <div class="cal-week-num">W4</div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→KC</span></div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">KC</span></div>
+          <div class="cal-cell"><span class="lbl">Rest</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">→ATL</span></div>
+          <div class="cal-cell drive"><span class="lbl">Drive</span><span class="city">cont.</span></div>
+          <div class="cal-cell show"><span class="lbl">Show</span><span class="city">ATL home</span></div>
+          <div class="cal-cell"><span class="lbl">Rest</span></div>
+        </div>
+
+        <div class="cal-summary">
+          <span class="pill"><strong>9</strong> shows</span>
+          <span class="pill"><strong>11</strong> drive days</span>
+          <span class="pill"><strong>8</strong> rest days</span>
+          <span class="pill"><strong>~1,630</strong> mi</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DEAL LEDGER -->
+    <div class="ledger">
+
+      <div class="deal-card guarantee">
+        <span class="dl-tag">Guarantee</span>
+        <h4>Fixed Payment</h4>
+        <span class="dl-range">$200 – $5,000 / show</span>
+        <p class="dl-quote">"Guarantee deal: the artist receives a fixed payment regardless of ticket sales. The promoter assumes all financial risk. Common for established acts with proven draw. Typical club-level guarantees range from $200–$5,000…"</p>
+        <a class="dl-source" href="https://band-vans.net/the-5-most-common-types-of-deals-between-artists-and-local-promoters/" target="_blank" rel="noopener">↗ Band Vans</a>
+      </div>
+
+      <div class="deal-card door">
+        <span class="dl-tag">Door Deal</span>
+        <h4>Percentage of Door</h4>
+        <span class="dl-range">70% – 85% of door</span>
+        <p class="dl-quote">"Door deal (percentage deal): the artist receives a percentage of ticket revenue — typically 70–85% of the door after the venue takes its cut. The artist shares financial risk with the promoter."</p>
+        <a class="dl-source" href="https://blog.gigmit.com/en/good-deal-door-split/" target="_blank" rel="noopener">↗ gigmit</a>
+      </div>
+
+      <div class="deal-card greater">
+        <span class="dl-tag">Greater-Of</span>
+        <h4>Floor + Upside</h4>
+        <span class="dl-range">Guarantee OR % — whichever is higher</span>
+        <p class="dl-quote">"Guarantee vs. percentage: the most common structure for established artists is 'whichever is greater' — a guaranteed floor plus the right to receive their percentage if ticket sales exceed what the guarantee would cover."</p>
+        <a class="dl-source" href="https://artshacker.com/common-deal-structures-for-touring-groups/" target="_blank" rel="noopener">↗ Arts Hacker</a>
+      </div>
+
+    </div>
+
+    <!-- 5-STAGE PROGRESSION RAIL -->
+    <div class="progression">
+      <div class="progression-head">5-Stage Touring Progression · draw threshold per stage</div>
+      <div class="prog-rail">
+        <div class="prog-step">
+          <span class="pn">01</span>
+          <span class="pt">Local</span>
+          <span class="pd">25–75 draw</span>
+        </div>
+        <div class="prog-step">
+          <span class="pn">02</span>
+          <span class="pt">Regional</span>
+          <span class="pd">75–200 draw</span>
+        </div>
+        <div class="prog-step">
+          <span class="pn">03</span>
+          <span class="pt">National Club</span>
+          <span class="pd">200–500 draw</span>
+        </div>
+        <div class="prog-step">
+          <span class="pn">04</span>
+          <span class="pt">Festival</span>
+          <span class="pd">500–2K draw</span>
+        </div>
+        <div class="prog-step">
+          <span class="pn">05</span>
+          <span class="pt">Headline</span>
+          <span class="pd">2K+ draw</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- 05 OUTLINE -->
+  <section class="outline-section">
+    <div class="section-head">
+      <span class="num">05</span>
+      <h2>What an artist walks away with</h2>
+      <span class="meta">core takeaways</span>
+    </div>
+    <ul class="outline-list">
+      <li><strong>Three deal shapes</strong>Guarantee (fixed, promoter risk), door deal (70–85% of door, shared risk), and greater-of (floor + upside) — every show offer is one of these three.</li>
+      <li><strong>$100 ticket = $8–$15 net</strong>After venue, ticketing, production, crew and band, a $100 ticket nets the artist roughly $8–$15. Plan accordingly.</li>
+      <li><strong>Merch is the lifeline</strong>~$15/fan in merch is often the difference between break-even and going home in debt; t-shirts at $30–$45 signal value.</li>
+      <li><strong>Cost stack is brutal</strong>Van $100–$300/day, gas $200–$600/show, hotel $100–$250/night, food $50–$100/person/day stack fast — a 10-show regional tour can run $8K–$15K easily.</li>
+      <li><strong>Route as a loop, not a zigzag</strong>Geographic logic beats opportunity-order routing — avoid the 800-mile penalty Orphiq calls out by sequencing shows in a circular path.</li>
+      <li><strong>Build local before going national</strong>Touring before a local fanbase exists generates no draw, empty rooms, and venues that refuse to rebook — local first, every time.</li>
+      <li><strong>Email list at every show</strong>The in-person fan converts to streams, pre-saves, and future ticket buyers at rates far above cold digital advertising.</li>
+      <li><strong>Treat early tours as investment</strong>Expecting profit from a first national tour leads to financial stress — budget early tours as audience-building investment, not revenue.</li>
+    </ul>
+  </section>
+
+  <!-- COMPLETE BAR -->
+  <div class="complete-bar">
+    <button class="complete-btn" id="completeBtn">✓ Mark Step 8 complete</button>
+    <a class="next-step" href="step-9.html">Step 9 · Building Your Team →</a>
+  </div>
+
+</main>
+
+<!-- DIALOGS -->
+<dialog class="example-dialog" id="dlg-deals">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-deal">
+      <div class="mock-bars"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="mock-overlay">
+        <p class="name">Deal Shapes</p>
+        <p class="tag">Guarantee · Door · Greater-Of</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference · Key Concept</p>
+      <h3>Three structures, one offer sheet</h3>
+      <p>Every live show offer reduces to one of three structures. Knowing which one you're being offered — and which one you should be asking for — is the first negotiation skill of a touring artist.</p>
+      <ul>
+        <li><strong>Guarantee:</strong> "the artist receives a fixed payment regardless of ticket sales… typical club-level guarantees range from $200–$5,000 per show for independents." (Band Vans)</li>
+        <li><strong>Door deal:</strong> "70–85% of the door after the venue takes its cut. The artist shares financial risk with the promoter." (gigmit)</li>
+        <li><strong>Greater-of:</strong> "A guaranteed floor plus the right to receive their percentage if ticket sales exceed what the guarantee would cover." (Arts Hacker)</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="example-dialog" id="dlg-merch">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-merch">
+      <div class="mock-icons">
+        <div class="ic">T</div><div class="ic">$</div><div class="ic">✉</div>
+      </div>
+      <div class="mock-overlay">
+        <p class="name">Merch Lifeline</p>
+        <p class="tag">$15/fan · Often = profit</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference · Key Concept</p>
+      <h3>Why the merch table matters more than the door</h3>
+      <p>Merch is one of the few line items on a tour where the artist captures full margin. It's also the fastest path from break-even to profitable.</p>
+      <ul>
+        <li>"Merchandise sales at the show average $15 per attending fan and are often the difference between breaking even and going home in debt."</li>
+        <li>"Fans who want to support their favorite artist will pay $30–$45 for a quality t-shirt. Underpriced merch signals low value and leaves significant revenue uncaptured." (Orphiq)</li>
+        <li>"Every in-person fan is the most valuable fan in the ecosystem. An email list built at shows converts to streaming listeners, pre-save participants, and future ticket buyers at rates far above cold digital advertising."</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="example-dialog" id="dlg-cost">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-cost">
+      <div class="mock-stack"><div class="row"></div><div class="row"></div><div class="row"></div><div class="row"></div></div>
+      <div class="mock-overlay">
+        <p class="name">Cost Truth</p>
+        <p class="tag">$100 ticket = $8–$15 net</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference · Key Concept</p>
+      <h3>What a $100 ticket actually pays</h3>
+      <p>"Artist net from a $100 ticket: approximately $8–$15 after paying venue, ticketing fees, production costs, crew, and band members." Tour cost stacks compound this further:</p>
+      <ul>
+        <li>Van rental $100–$300/day</li>
+        <li>Gas $200–$600/show depending on routing distance</li>
+        <li>Lodging $100–$250/night</li>
+        <li>Food $50–$100/person/day</li>
+        <li>Equipment rental (if needed) $200–$800/show</li>
+        <li>"A 10-show regional tour" can easily cost $8K–$15K before merch.</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // Tile dialogs
+  document.querySelectorAll('.example-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-dialog');
+      const dlg = document.getElementById(id);
+      if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+    });
+  });
+  document.querySelectorAll('dialog.example-dialog').forEach(dlg => {
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  });
+
+  // City interactions
+  const cityData = {
+    atl: { name: 'ATL · Atlanta, GA',     venue: 'The Earl · 300 cap',          draw: '~210 paid', net: '~$1,650', deal: 'door',      dealLabel: 'DOOR DEAL · 75%' },
+    nsh: { name: 'NSH · Nashville, TN',   venue: 'The Basement East · 400 cap', draw: '~280 paid', net: '~$2,200', deal: 'door',      dealLabel: 'DOOR DEAL · 80%' },
+    lou: { name: 'LOU · Louisville, KY',  venue: 'Zanzabar · 250 cap',          draw: '~140 paid', net: '$800 floor', deal: 'guarantee', dealLabel: 'GUARANTEE · $800' },
+    stl: { name: 'STL · St. Louis, MO',   venue: 'Off Broadway · 300 cap',      draw: '~190 paid', net: '~$1,500', deal: 'door',      dealLabel: 'DOOR DEAL · 75%' },
+    ind: { name: 'IND · Indianapolis, IN',venue: 'HI-FI · 350 cap',             draw: '~220 paid', net: '$1,000 / 70%', deal: 'greater', dealLabel: 'GREATER-OF · $1K vs 70%' },
+    chi: { name: 'CHI · Chicago, IL',     venue: 'Schubas · 165 cap',           draw: '~165 sold-out', net: '$1,500 / 75%', deal: 'greater', dealLabel: 'GREATER-OF · $1.5K vs 75%' },
+    mem: { name: 'MEM · Memphis, TN',     venue: 'Hi Tone · 250 cap',           draw: '~120 paid', net: '$600 floor', deal: 'guarantee', dealLabel: 'GUARANTEE · $600' },
+    kc:  { name: 'KC · Kansas City, MO',  venue: 'recordBar · 350 cap',         draw: '~180 paid', net: '~$1,400', deal: 'door',      dealLabel: 'DOOR DEAL · 80%' }
+  };
+  const detail = document.getElementById('city-detail');
+  document.querySelectorAll('.city').forEach(g => {
+    g.addEventListener('click', () => {
+      const key = g.getAttribute('data-city');
+      const d = cityData[key];
+      if (!d) return;
+      document.querySelectorAll('.city-dot').forEach(dot => dot.classList.remove('active'));
+      g.querySelector('.city-dot').classList.add('active');
+      detail.innerHTML = `
+        <span class="cd-name">${d.name}</span>
+        <span class="cd-deal ${d.deal}">${d.dealLabel}</span>
+        <div class="cd-row"><strong>Venue:</strong> ${d.venue}</div>
+        <div class="cd-row"><strong>Draw:</strong> ${d.draw} · <strong>Net:</strong> ${d.net}</div>
+      `;
+    });
+  });
+
+  // Complete button
+  const btn = document.getElementById('completeBtn');
+  btn.addEventListener('click', () => {
+    btn.classList.toggle('done');
+    btn.textContent = btn.classList.contains('done') ? '✓ Step 8 marked complete' : '✓ Mark Step 8 complete';
+  });
+</script>
+
+
+<!-- ============ V3 RED DOOR BUTTON ============ -->
+<style>
+  .v3-door-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    background: #000000;
+    color: #c1121f;
+    border: 2px solid #8b0000;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px #1a0000, 0 0 24px rgba(139, 0, 0, 0.55), 0 0 44px rgba(193, 18, 31, 0.25);
+    transition: all 0.22s ease;
+    text-shadow: 0 0 6px rgba(193, 18, 31, 0.45);
+  }
+  .v3-door-btn::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c1121f;
+    box-shadow: 0 0 8px #c1121f, 0 0 16px rgba(193, 18, 31, 0.6);
+    animation: v3-pulse 1.6s ease-in-out infinite;
+  }
+  .v3-door-btn:hover {
+    background: #1a0000;
+    color: #ff1f1f;
+    border-color: #c1121f;
+    box-shadow: 0 0 0 1px #2a0000, 0 0 32px rgba(193, 18, 31, 0.85), 0 0 60px rgba(255, 31, 31, 0.4);
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+  @keyframes v3-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+  }
+</style>
+<a class="v3-door-btn" href="step-8-v3.html">▾ enter v3</a>
+
+</body>
+</html>

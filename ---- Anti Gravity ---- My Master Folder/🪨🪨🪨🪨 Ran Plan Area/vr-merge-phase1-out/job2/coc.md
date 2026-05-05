@@ -1,0 +1,13 @@
+# Cafe Vismo — Code of Conduct
+
+Welcome to Cafe Vismo Speed Dating. We are a Patreon-supported weekly event running inside VRChat, and the only reason we can keep this space warm, safe, and worth showing up for is because everyone who walks through the door agrees to the same handful of rules. Read these once, sit with them, and then react below to enter the rest of the server.
+
+**Respect is the floor, not the ceiling.** Everyone here is a real person, paying real money, sharing real time. Treat people the way you would in a quiet European cafe at dusk — softly, attentively, with curiosity. We strongly encourage sharing pronouns in your Discord nickname or in self-intros; if someone shares theirs, use them. Misgendering is corrected once and forgiven; repeated misgendering is treated as harassment. If you are not sure how to address someone, ask kindly. Avatars, voices, and presentation styles vary wildly inside VRChat — none of that is an invitation to comment on someone's body, voice, or identity.
+
+**Keep the conversation cafe-appropriate.** No NSFW content of any kind in voice, text, or avatar. No graphic descriptions of sex acts, no sexually suggestive avatars during events, no lewd nicknames. We are explicitly *not* an 18+ space — assume someone in the room is hearing this for the first time and may be young-adult new. Speed-dating prompts are romantic, not erotic. Save the rest for somewhere else.
+
+**The reveal flow is the only matchmaking channel.** Do not DM, friend-request, or pursue another attendee outside of the post-event reveal-form match pipeline. If two of you mutually opted in, the match-script will deliver you to each other on Saturday. Until that DM lands, treat anyone you met at the event as someone you'll see again next Friday — nothing more. Cold DMs to fellow attendees are an instant warning; persistent unwanted contact is an instant ban. Likewise: no asking for personal contact info (phone, real name, address, off-platform handles) inside the cafe instance.
+
+**Harassment of any kind is an instant ban.** Slurs, targeted insults, doxxing, threats, mic-spam, sexual harassment, and intentional griefing all fall here. The host's call is final — there is no appeals court inside a 90-minute event. If something feels off, ping `@Host` in `#staff-only` or whisper a host inside the world; we will pull you into a private voice channel and sort it. Disagreements with a host's call can be discussed by ticket *after* the event ends, never during.
+
+By staying in this server you agree to all of the above. **React with ✅ below to access `#welcome-readme` and the rest of the cafe.**

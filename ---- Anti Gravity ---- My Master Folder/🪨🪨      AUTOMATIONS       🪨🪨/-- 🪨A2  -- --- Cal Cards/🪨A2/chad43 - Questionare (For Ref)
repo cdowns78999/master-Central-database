@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ahead Artist Solutions — Dashboard Builder</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&amp;family=DM+Sans:wght@400;500;700&amp;display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --accent: #6366f1;
+            --bg: #f5f1eb;
+            --surface: rgba(255, 255, 255, 0.45);
+            --text: #0f172a;
+            --text-dim: rgba(15, 23, 42, 0.55);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+            position: relative;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── ANIMATED BACKGROUND BLOBS ── */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            top: -120px;
+            left: -100px;
+            animation: blobPulse1 12s ease-in-out infinite;
+        }
+
+        .blob-2 {
+            width: 450px;
+            height: 450px;
+            background: var(--accent);
+            bottom: -100px;
+            right: -80px;
+            animation: blobPulse2 15s ease-in-out infinite;
+        }
+
+        @keyframes blobPulse1 {
+
+            0%,
+            100% {
+                opacity: 0.10;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.18;
+                transform: scale(1.08);
+            }
+        }
+
+        @keyframes blobPulse2 {
+
+            0%,
+            100% {
+                opacity: 0.08;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.16;
+                transform: scale(1.1);
+            }
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 5rem;
+        }
+
+        /* ── BUILDER HEADER ── */
+        .builder-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .builder-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 2.6rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent), var(--primary));
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleShimmer 8s ease-in-out infinite;
+        }
+
+        .builder-header p {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            margin-top: 0.4rem;
+        }
+
+        @keyframes titleShimmer {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* ── GLASS CARD ── */
+        .glass-card {
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+        }
+
+        /* ── FORM STYLES ── */
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.82rem;
+            letter-spacing: 0.03em;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 0.45rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.6);
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 0.95rem;
+            color: var(--text);
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* ── TILE INPUT SECTIONS ── */
+        .tile-inputs-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tile-input-card {
+            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            animation: fadeUp 0.35s ease both;
+        }
+
+        .tile-input-card .tile-num {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 0.78rem;
+            color: var(--primary);
+            letter-spacing: 0.04em;
+            margin-bottom: 0.6rem;
+            text-transform: uppercase;
+        }
+
+        .tile-input-card .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 0.75rem;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── DIVIDER ── */
+        .section-divider {
+            height: 1px;
+            width: 80%;
+            margin: 3rem auto;
+            background: linear-gradient(90deg, transparent, var(--text-dim), transparent);
+            opacity: 0.3;
+        }
+
+        /* ══════════════════════════════════════ */
+        /*   PREVIEW / DASHBOARD STYLES          */
+        /* ══════════════════════════════════════ */
+
+        .dash-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 2.2rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--accent), var(--primary));
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleShimmer 8s ease-in-out infinite;
+            margin-bottom: 0.3rem;
+        }
+
+        .section-label {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+
+        /* ── BROAD OVERVIEW GRID ── */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        /* ── BROAD CARD (.p-btn) ── */
+        .p-btn {
+            position: relative;
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 18px;
+            padding: 1.4rem 1.3rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .p-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+            animation: shimmerFlow 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shimmerFlow {
+            0% {
+                transform: translateX(-50%);
+            }
+
+            100% {
+                transform: translateX(50%);
+            }
+        }
+
+        /* glow dot */
+        .p-btn .glow-dot {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.3);
+            }
+        }
+
+        .p-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .p-btn.active {
+            background: rgba(255, 255, 255, 0.65);
+            box-shadow: 0 0 24px rgba(14, 165, 233, 0.18);
+        }
+
+        .p-btn .card-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .p-btn .card-sub {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+        }
+
+        /* ── DETAIL BLOCKS ── */
+        .detail-block {
+            background: var(--surface);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 1.8rem;
+            margin-bottom: 1.2rem;
+            position: relative;
+            animation: fadeUp 0.5s ease both;
+            transition: background 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .detail-block.highlight {
+            background: rgba(255, 255, 255, 0.65);
+            box-shadow: 0 0 28px rgba(14, 165, 233, 0.16);
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .detail-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 1.15rem;
+            color: var(--text);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.04);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text-dim);
+            transition: all 0.25s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(15, 23, 42, 0.08);
+            transform: scale(1.1);
+        }
+
+        .sub-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .sub-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: rgba(14, 165, 233, 0.08);
+            border-radius: 100px;
+            padding: 0.45rem 1rem 0.45rem 0.55rem;
+            font-size: 0.82rem;
+            color: var(--text);
+        }
+
+        .sub-pill .pill-num {
+            background: var(--primary);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.65rem;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* ── OUTPUT / ACTION SECTION ── */
+        .output-section {
+            margin-top: 1rem;
+        }
+
+        .output-section .section-label {
+            margin-bottom: 0.75rem;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.4rem;
+            border: none;
+            border-radius: 14px;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+
+        .action-btn-copy {
+            background: rgba(0, 0, 0, 0.07);
+            color: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .action-btn-copy:hover {
+            background: rgba(0, 0, 0, 0.11);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-btn-copy:active {
+            transform: translateY(0);
+        }
+
+        .action-btn-copy.copied {
+            background: rgba(16, 185, 129, 0.12);
+            color: #059669;
+        }
+
+        .action-btn-download {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+        }
+
+        .action-btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 22px rgba(99, 102, 241, 0.35);
+        }
+
+        .action-btn-download:active {
+            transform: translateY(0);
+        }
+
+        /* ── CLEAR ALL BUTTON ── */
+        .clear-all-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1.1rem;
+            background: rgba(239, 68, 68, 0.08);
+            color: rgba(239, 68, 68, 0.75);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 10px;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-top: 1rem;
+        }
+
+        .clear-all-btn:hover {
+            background: rgba(239, 68, 68, 0.14);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .clear-all-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ── COPY FLASH PREVIEW ── */
+        .copy-flash {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            background: rgba(255, 255, 255, 0.97);
+            color: var(--text);
+            padding: 1.8rem 2.4rem;
+            border-radius: 16px;
+            border: 2px solid var(--primary);
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            max-width: 80%;
+            max-height: 70%;
+            overflow: auto;
+            box-shadow: 0 10px 50px rgba(14, 165, 233, 0.25);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-flash.show {
+            opacity: 1;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 600px) {
+            .overview-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .detail-num {
+                width: 34px;
+                height: 34px;
+                font-size: 0.85rem;
+            }
+
+            .page-wrap {
+                padding: 2rem 1rem 4rem;
+            }
+
+            .glass-card {
+                padding: 1.5rem;
+            }
+
+            .builder-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .tile-input-card .field-row {
+                grid-template-columns: 1fr;
+            }
+
+            .action-row {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                justify-content: center;
+            }
+        }
+    </style>
+    <script defer="" data-domain="chad43-quick-access.tiiny.site"
+        src="https://analytics.tiiny.site/js/plausible.js"></script>
+</head>
+
+<body>
+
+    <!-- Background blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="page-wrap">
+
+        <!-- ════════════════════════════════════ -->
+        <!-- BUILDER HEADER                       -->
+        <!-- ════════════════════════════════════ -->
+        <div class="builder-header">
+            <h1>Ahead Artist Solutions</h1>
+            <p>Recap</p>
+        </div>
+
+        <!-- ════════════════════════════════════ -->
+        <!-- INPUT FORM                            -->
+        <!-- ════════════════════════════════════ -->
+        <div id="builderForm" class="glass-card">
+
+            <div class="form-section">
+                <div class="row-2">
+                    <div>
+                        <label for="projectName" class="">Project Name</label>
+                        <input type="text" id="projectName" placeholder="e.g. Q1 Marketing Campaign">
+                    </div>
+                    <div>
+                        <label for="tileCount">Number of Tiles</label>
+                        <select id="tileCount">
+                            <option value="">Choose...</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic tile inputs -->
+            <div id="tileInputs" class="tile-inputs-wrap"></div>
+
+            <!-- Clear All -->
+            <button id="clearAllBtn" class="clear-all-btn" style="display:none;" onclick="clearAll()">Clear All</button>
+
+        </div>
+
+        <!-- ════════════════════════════════════ -->
+        <!-- LIVE PREVIEW — always present         -->
+        <!-- ════════════════════════════════════ -->
+        <div id="previewSection">
+            <div class="section-divider"></div>
+            <div id="top-anchor"></div>
+            <div id="previewContent"></div>
+
+            <!-- Output actions — copy + download -->
+            <div id="outputSection" class="output-section"></div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ═══════════════════════════════════════
+           SELF-PARSING PATTERN
+           Following chad12-offboarding architecture:
+           - Direct DOM queries (no cached refs)
+           - Centralized attachInputListeners()
+           - Preview always visible
+           - Instant copy + HTML download
+           ═══════════════════════════════════════ */
+
+        let tiles = [];
+
+        /* ═══════════════════════════════════════
+           ATTACH INPUT LISTENERS (centralized)
+           Called on page load + after tileCount rebuilds inputs
+           ═══════════════════════════════════════ */
+
+        function attachInputListeners() {
+            // Project name -> live preview
+            document.getElementById('projectName').removeEventListener('input', updatePreview);
+            document.getElementById('projectName').addEventListener('input', updatePreview);
+
+            // All tile inputs -> live preview
+            document.querySelectorAll('.tile-main').forEach(input => {
+                input.removeEventListener('input', updatePreview);
+                input.addEventListener('input', updatePreview);
+            });
+
+            document.querySelectorAll('.tile-details').forEach(input => {
+                input.removeEventListener('input', updatePreview);
+                input.addEventListener('input', updatePreview);
+            });
+        }
+
+        /* ═══════════════════════════════════════
+           TILE COUNT CHANGE (master trigger)
+           Rebuilds tile input cards -> re-attaches -> re-renders
+           ═══════════════════════════════════════ */
+
+        document.getElementById('tileCount').addEventListener('change', function () {
+            const count = parseInt(document.getElementById('tileCount').value) || 0;
+            const tileInputsEl = document.getElementById('tileInputs');
+
+            // Snapshot existing values before rebuilding
+            const existingMains = document.querySelectorAll('.tile-main');
+            const existingDetails = document.querySelectorAll('.tile-details');
+            const saved = [];
+            for (let i = 0; i < existingMains.length; i++) {
+                saved.push({
+                    main: existingMains[i].value,
+                    details: existingDetails[i].value
+                });
+            }
+
+            // Rebuild tile cards
+            tileInputsEl.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                const card = document.createElement('div');
+                card.className = 'tile-input-card';
+                card.style.animationDelay = (i * 0.06) + 's';
+                card.innerHTML = `
+                    <div class="tile-num">Tile ${i + 1}</div>
+                    <div class="field-row">
+                        <div>
+                            <label>Main Thing</label>
+                            <input type="text" class="tile-main" data-tile-num="${i + 1}" placeholder="e.g. Week ${i + 1}">
+                        </div>
+                        <div>
+                            <label>Details (comma-separated)</label>
+                            <input type="text" class="tile-details" data-tile-num="${i + 1}" placeholder="e.g. Outreach, Follow-ups, Send assets">
+                        </div>
+                    </div>
+                `;
+                tileInputsEl.appendChild(card);
+
+                // Restore saved data for tiles that existed before
+                if (i < saved.length) {
+                    card.querySelector('.tile-main').value = saved[i].main;
+                    card.querySelector('.tile-details').value = saved[i].details;
+                }
+            }
+
+            // Show/hide clear button
+            document.getElementById('clearAllBtn').style.display = count > 0 ? '' : 'none';
+
+            // Re-attach all listeners (new inputs exist now)
+            attachInputListeners();
+
+            // Re-render preview
+            updatePreview();
+        });
+
+        /* ═══════════════════════════════════════
+           CLEAR ALL
+           Resets project name, tile count, inputs, preview
+           ═══════════════════════════════════════ */
+
+        function clearAll() {
+            document.getElementById('projectName').value = '';
+            document.getElementById('tileCount').value = '';
+            document.getElementById('tileInputs').innerHTML = '';
+            document.getElementById('previewContent').innerHTML = '';
+            document.getElementById('outputSection').innerHTML = '';
+            document.getElementById('clearAllBtn').style.display = 'none';
+            tiles = [];
+            attachInputListeners();
+        }
+
+        /* ═══════════════════════════════════════
+           UPDATE PREVIEW
+           Reads all inputs fresh from the DOM each time.
+           Builds tiles[] array -> generates HTML -> injects.
+           Also updates the output action buttons.
+           ═══════════════════════════════════════ */
+
+        function updatePreview() {
+            const projectName = document.getElementById('projectName').value.trim() || 'Untitled Project';
+            const mains = document.querySelectorAll('.tile-main');
+            const details = document.querySelectorAll('.tile-details');
+
+            tiles = [];
+            for (let i = 0; i < mains.length; i++) {
+                const main = mains[i].value.trim() || `Card ${i + 1}`;
+                const dets = details[i].value.trim();
+                const subItems = dets ? dets.split(',').map(s => s.trim()).filter(Boolean) : [];
+                tiles.push({ main, subItems });
+            }
+
+            // Empty state — preview area stays visible, content is just empty
+            if (tiles.length === 0) {
+                document.getElementById('previewContent').innerHTML = '';
+                document.getElementById('outputSection').innerHTML = '';
+                return;
+            }
+
+            // Build the preview HTML — all cards visible
+            let html = '';
+            html += `<div class="dash-title">${esc(projectName)}</div>`;
+            html += `<div style="text-align:center;font-size:0.82rem;color:var(--text-dim);margin-bottom:2rem;">Project Dashboard</div>`;
+
+            // OVERVIEW section
+            html += `<div class="section-label">OVERVIEW</div>`;
+            html += `<div class="overview-grid">`;
+            for (let i = 0; i < tiles.length; i++) {
+                html += `
+                    <div class="p-btn card-slot" data-index="${i}" onclick="navToDetail(${i})">
+                        <div class="glow-dot"></div>
+                        <div class="card-title">${esc(tiles[i].main)}</div>
+                        <div class="card-sub">${tiles[i].subItems.length} item${tiles[i].subItems.length !== 1 ? 's' : ''}</div>
+                    </div>`;
+            }
+            html += `</div>`;
+
+            // Divider
+            html += `<div class="section-divider"></div>`;
+
+            // DETAILS section
+            html += `<div class="section-label">DETAILS</div>`;
+            for (let i = 0; i < tiles.length; i++) {
+                const subHTML = tiles[i].subItems.map((item, j) => {
+                    const label = `${i + 1}${String.fromCharCode(97 + j)}`;
+                    return `<span class="sub-pill"><span class="pill-num">${label}</span>${esc(item)}</span>`;
+                }).join('');
+
+                html += `
+                    <div class="detail-block detail-slot" data-index="${i}" id="detail-${i}">
+                        <div class="close-btn" onclick="closeDetail(${i})">&#10005;</div>
+                        <div class="detail-header">
+                            <div class="detail-num">${i + 1}</div>
+                            <div class="detail-title">${esc(tiles[i].main)}</div>
+                        </div>
+                        <div class="sub-items">${subHTML || '<span style="color:var(--text-dim);font-size:0.85rem;">No sub-items</span>'}</div>
+                    </div>`;
+            }
+
+            document.getElementById('previewContent').innerHTML = html;
+
+            // Update output actions
+            updateOutputActions();
+        }
+
+        /* ═══════════════════════════════════════
+           OUTPUT ACTIONS (copy + download)
+           ═══════════════════════════════════════ */
+
+        function updateOutputActions() {
+            if (tiles.length === 0) {
+                document.getElementById('outputSection').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('outputSection').innerHTML = `
+                <div class="section-divider"></div>
+                <div class="section-label">OUTPUT</div>
+                <div class="action-row">
+                    <button class="action-btn action-btn-copy" id="copyBtn" onclick="copyCompleteHTML()">Copy HTML</button>
+                    <button class="action-btn action-btn-download" id="downloadBtn" onclick="downloadHTML()">Download .html</button>
+                </div>
+            `;
+        }
+
+        /* ═══════════════════════════════════════
+           BUILD STANDALONE HTML
+           Generates a complete, self-contained HTML file
+           with all styles + navigation baked in.
+           ═══════════════════════════════════════ */
+
+        function buildStandaloneHTML() {
+            const projectName = document.getElementById('projectName').value.trim() || 'Untitled Project';
+
+            // Build overview cards
+            let overviewCards = '';
+            for (let i = 0; i < tiles.length; i++) {
+                overviewCards += `
+        <div class="p-btn card-slot" data-index="${i}" onclick="navToDetail(${i})">
+            <div class="glow-dot"></div>
+            <div class="card-title">${esc(tiles[i].main)}</div>
+            <div class="card-sub">${tiles[i].subItems.length} item${tiles[i].subItems.length !== 1 ? 's' : ''}</div>
+        </div>`;
+            }
+
+            // Build detail blocks
+            let detailBlocks = '';
+            for (let i = 0; i < tiles.length; i++) {
+                const subHTML = tiles[i].subItems.map((item, j) => {
+                    const label = `${i + 1}${String.fromCharCode(97 + j)}`;
+                    return `<span class="sub-pill"><span class="pill-num">${label}</span>${esc(item)}</span>`;
+                }).join('');
+
+                detailBlocks += `
+        <div class="detail-block detail-slot" data-index="${i}" id="detail-${i}">
+            <div class="close-btn" onclick="closeDetail(${i})">&#10005;</div>
+            <div class="detail-header">
+                <div class="detail-num">${i + 1}</div>
+                <div class="detail-title">${esc(tiles[i].main)}</div>
+            </div>
+            <div class="sub-items">${subHTML || '<span style="color:var(--text-dim);font-size:0.85rem;">No sub-items</span>'}</div>
+        </div>`;
+            }
+
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(projectName)} — Ahead Artist Solutions</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root { --primary: #0ea5e9; --accent: #6366f1; --bg: #f5f1eb; --surface: rgba(255,255,255,0.45); --text: #0f172a; --text-dim: rgba(15,23,42,0.55); }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); position: relative; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+.blob { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
+.blob-1 { width: 500px; height: 500px; background: var(--primary); top: -120px; left: -100px; animation: blobPulse1 12s ease-in-out infinite; }
+.blob-2 { width: 450px; height: 450px; background: var(--accent); bottom: -100px; right: -80px; animation: blobPulse2 15s ease-in-out infinite; }
+@keyframes blobPulse1 { 0%, 100% { opacity: 0.10; transform: scale(1); } 50% { opacity: 0.18; transform: scale(1.08); } }
+@keyframes blobPulse2 { 0%, 100% { opacity: 0.08; transform: scale(1); } 50% { opacity: 0.16; transform: scale(1.1); } }
+.page-wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+.dash-title { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 2.2rem; text-align: center; background: linear-gradient(135deg, var(--primary), var(--accent), var(--primary)); background-size: 300% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: titleShimmer 8s ease-in-out infinite; margin-bottom: 0.3rem; }
+@keyframes titleShimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.section-label { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 1rem; }
+.section-divider { height: 1px; width: 80%; margin: 3rem auto; background: linear-gradient(90deg, transparent, var(--text-dim), transparent); opacity: 0.3; }
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.p-btn { position: relative; background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.5); border-radius: 18px; padding: 1.4rem 1.3rem; cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; animation: fadeUp 0.5s ease both; }
+.p-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 200%; height: 100%; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%); animation: shimmerFlow 4s linear infinite; pointer-events: none; }
+@keyframes shimmerFlow { 0% { transform: translateX(-50%); } 100% { transform: translateX(50%); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.p-btn .glow-dot { position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 10px var(--primary); animation: glowPulse 3s ease-in-out infinite; }
+@keyframes glowPulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
+.p-btn:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,23,42,0.10); border-color: rgba(14,165,233,0.3); }
+.p-btn.active { background: rgba(255,255,255,0.65); box-shadow: 0 0 24px rgba(14,165,233,0.18); }
+.p-btn .card-title { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 1.05rem; color: var(--text); margin-bottom: 0.25rem; }
+.p-btn .card-sub { font-size: 0.78rem; color: var(--text-dim); }
+.detail-block { background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; padding: 1.8rem; margin-bottom: 1.2rem; position: relative; animation: fadeUp 0.5s ease both; transition: background 0.4s ease, box-shadow 0.4s ease; }
+.detail-block.highlight { background: rgba(255,255,255,0.65); box-shadow: 0 0 28px rgba(14,165,233,0.16); }
+.detail-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.detail-num { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; }
+.detail-title { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 1.15rem; color: var(--text); }
+.close-btn { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border-radius: 50%; background: rgba(15,23,42,0.04); border: 1px solid rgba(15,23,42,0.08); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; color: var(--text-dim); transition: all 0.25s ease; }
+.close-btn:hover { background: rgba(15,23,42,0.08); transform: scale(1.1); }
+.sub-items { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.sub-pill { display: inline-flex; align-items: center; gap: 0.45rem; background: rgba(14,165,233,0.08); border-radius: 100px; padding: 0.45rem 1rem 0.45rem 0.55rem; font-size: 0.82rem; color: var(--text); }
+.sub-pill .pill-num { background: var(--primary); color: #fff; font-weight: 700; font-size: 0.65rem; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+@media (max-width: 600px) { .overview-grid { grid-template-columns: repeat(2, 1fr); } .detail-num { width: 34px; height: 34px; font-size: 0.85rem; } .page-wrap { padding: 2rem 1rem 4rem; } }
+</style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="page-wrap">
+<div id="top-anchor"></div>
+<div class="dash-title">${esc(projectName)}</div>
+<div style="text-align:center;font-size:0.82rem;color:var(--text-dim);margin-bottom:2rem;">Project Dashboard</div>
+<div class="section-label">OVERVIEW</div>
+<div class="overview-grid">${overviewCards}</div>
+<div class="section-divider"></div>
+<div class="section-label">DETAILS</div>
+${detailBlocks}
+</div>
+<` + `script>
+function navToDetail(index) {
+    var detail = document.getElementById('detail-' + index);
+    if (!detail) return;
+    detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    detail.classList.add('highlight');
+    var cards = document.querySelectorAll('.card-slot');
+    if (cards[index]) cards[index].classList.add('active');
+    setTimeout(function() {
+        detail.classList.remove('highlight');
+        if (cards[index]) cards[index].classList.remove('active');
+    }, 3000);
+}
+function closeDetail(index) {
+    document.querySelectorAll('.detail-block.highlight').forEach(function(el) { el.classList.remove('highlight'); });
+    document.querySelectorAll('.p-btn.active').forEach(function(el) { el.classList.remove('active'); });
+    document.getElementById('top-anchor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+<` + `/script>
+</body>
+</html>`;
+        }
+
+        /* ═══════════════════════════════════════
+           COPY COMPLETE HTML
+           ═══════════════════════════════════════ */
+
+        function copyCompleteHTML() {
+            if (tiles.length === 0) return;
+
+            const html = buildStandaloneHTML();
+            const btn = document.getElementById('copyBtn');
+
+            navigator.clipboard.writeText(html).then(() => {
+                showCopyFlash(html);
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy HTML';
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = html;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy HTML';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function showCopyFlash(text) {
+            const existing = document.querySelector('.copy-flash');
+            if (existing) existing.remove();
+
+            const flash = document.createElement('div');
+            flash.className = 'copy-flash';
+
+            const preview = text.length > 600
+                ? text.substring(0, 600) + '\n\n... (' + text.length.toLocaleString() + ' chars copied)'
+                : text;
+            flash.textContent = preview;
+
+            document.body.appendChild(flash);
+            requestAnimationFrame(() => flash.classList.add('show'));
+
+            setTimeout(() => {
+                flash.classList.remove('show');
+                setTimeout(() => flash.remove(), 300);
+            }, 1500);
+        }
+
+        /* ═══════════════════════════════════════
+           DOWNLOAD HTML FILE
+           ═══════════════════════════════════════ */
+
+        function downloadHTML() {
+            if (tiles.length === 0) return;
+
+            const html = buildStandaloneHTML();
+            const projectName = document.getElementById('projectName').value.trim() || 'Untitled Project';
+            const slug = projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            const filename = slug + '-orbit-dashboard.html';
+
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /* ═══════════════════════════════════════
+           CARD NAVIGATION
+           ═══════════════════════════════════════ */
+
+        function navToDetail(index) {
+            const detail = document.getElementById('detail-' + index);
+            if (!detail) return;
+
+            detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            detail.classList.add('highlight');
+            const cards = document.querySelectorAll('.card-slot');
+            if (cards[index]) cards[index].classList.add('active');
+
+            setTimeout(() => {
+                detail.classList.remove('highlight');
+                if (cards[index]) cards[index].classList.remove('active');
+            }, 3000);
+        }
+
+        function closeDetail(index) {
+            document.querySelectorAll('.detail-block.highlight').forEach(el => el.classList.remove('highlight'));
+            document.querySelectorAll('.p-btn.active').forEach(el => el.classList.remove('active'));
+            document.getElementById('top-anchor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /* ═══════════════════════════════════════
+           UTILITY
+           ═══════════════════════════════════════ */
+
+        function esc(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        /* ═══════════════════════════════════════
+           INITIAL ATTACHMENT
+           ═══════════════════════════════════════ */
+
+        attachInputListeners();
+    </script>
+
+
+
+
+</body>
+
+</html>

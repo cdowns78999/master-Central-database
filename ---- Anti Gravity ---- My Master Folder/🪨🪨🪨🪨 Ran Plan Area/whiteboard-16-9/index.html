@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Whiteboard · 16:9</title>
+<style>
+  :root{
+    --bg:           #e7e5df;
+    --room-1:       #efece5;
+    --room-2:       #d9d5cb;
+    --frame-outer:  #b9bcc1;
+    --frame-mid:    #e3e5e8;
+    --frame-inner:  #8a8d92;
+    --frame-hi:     #fbfbfc;
+    --tray:         #9ea1a6;
+    --tray-shadow:  #6e7074;
+    --board:        #fcfcfa;
+    --board-tint:   #f3f5f1;
+    --ink:          #1a1a1a;
+    --smudge:       rgba(20,20,20,.06);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Inter, sans-serif;
+    color:#1a1a1a;
+    background:
+      radial-gradient(120% 80% at 50% 0%, var(--room-1) 0%, var(--room-2) 60%, #c8c4ba 100%);
+    min-height:100%;
+    display:grid;
+    place-items:center;
+    padding: 28px 24px;
+    overflow:hidden;
+  }
+
+  .stage{
+    width: min(92vw, 1500px);
+    aspect-ratio: 16 / 9;
+    position: relative;
+    filter: drop-shadow(0 40px 40px rgba(40,42,48,.22))
+            drop-shadow(0 8px 14px rgba(40,42,48,.18));
+  }
+
+  /* brushed aluminum frame */
+  .frame{
+    position:absolute; inset:0;
+    border-radius: 14px;
+    padding: 22px;
+    background:
+      linear-gradient(180deg, var(--frame-mid) 0%, var(--frame-outer) 55%, #9ea1a6 100%);
+    box-shadow:
+      inset 0 1px 0 var(--frame-hi),
+      inset 0 -2px 3px rgba(0,0,0,.25),
+      inset 0 0 0 1px rgba(255,255,255,.35);
+  }
+  .frame::before{
+    content:"";
+    position:absolute; inset:6px;
+    border-radius: 10px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(255,255,255,.0) 0px,
+        rgba(255,255,255,.28) 1px,
+        rgba(0,0,0,.05) 2px,
+        rgba(255,255,255,0) 4px);
+    opacity:.55;
+    pointer-events:none;
+  }
+  .frame::after{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:14px;
+    background:
+      radial-gradient(60% 40% at 20% 0%, rgba(255,255,255,.35), transparent 70%),
+      radial-gradient(60% 40% at 80% 100%, rgba(0,0,0,.25), transparent 70%);
+    pointer-events:none;
+  }
+
+  /* corner bolts */
+  .bolt{
+    position:absolute;
+    width:14px; height:14px;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 35% 30%, #fff 0%, #cfd2d6 35%, #6b6e73 85%);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.6),
+      inset 0 -1px 1px rgba(0,0,0,.5),
+      0 1px 1px rgba(0,0,0,.35);
+  }
+  .bolt.tl{ top:8px; left:8px }
+  .bolt.tr{ top:8px; right:8px }
+  .bolt.bl{ bottom:8px; left:8px }
+  .bolt.br{ bottom:8px; right:8px }
+
+  /* board surface */
+  .board-wrap{
+    position:absolute;
+    inset: 22px;
+    border-radius: 8px;
+    overflow:hidden;
+    background: var(--board);
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,.15),
+      inset 0 2px 6px rgba(0,0,0,.08);
+  }
+  .board-wrap::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(120% 80% at 30% -10%, #ffffff 0%, #f6f8f4 55%, #eceee7 100%);
+    mix-blend-mode: normal;
+  }
+  /* subtle smudges + grain */
+  .board-wrap::after{
+    content:"";
+    position:absolute; inset:0;
+    pointer-events:none;
+    background:
+      radial-gradient(220px 90px at 18% 22%, var(--smudge), transparent 70%),
+      radial-gradient(140px 60px at 78% 40%, var(--smudge), transparent 70%),
+      radial-gradient(300px 100px at 55% 82%, var(--smudge), transparent 70%),
+      radial-gradient(80px 40px at 35% 70%, var(--smudge), transparent 70%);
+  }
+  /* whisper of old ghost text */
+  .ghost{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    opacity:.09;
+    color:#223;
+    mix-blend-mode: multiply;
+  }
+  .ghost svg{ width:100%; height:100%; }
+
+  canvas{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    cursor: crosshair;
+    touch-action:none;
+  }
+
+  /* marker tray along the bottom inside frame */
+  .tray{
+    position:absolute;
+    left: 30px; right: 30px;
+    bottom: 4px;
+    height: 18px;
+    border-radius: 0 0 8px 8px;
+    background: linear-gradient(180deg, #c1c4c9, #8a8d92 60%, #686a6f);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.55),
+      inset 0 -2px 3px rgba(0,0,0,.4),
+      0 2px 4px rgba(0,0,0,.15);
+  }
+
+  /* tool dock */
+  .dock{
+    position:absolute;
+    top: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.78);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    box-shadow:
+      0 10px 30px rgba(20,22,28,.18),
+      inset 0 1px 0 rgba(255,255,255,.9),
+      0 0 0 1px rgba(0,0,0,.05);
+    z-index: 5;
+    user-select:none;
+  }
+  .swatch{
+    --c: #111;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--c);
+    border: 2px solid rgba(255,255,255,.85);
+    box-shadow: 0 2px 5px rgba(0,0,0,.2), inset 0 1px 2px rgba(255,255,255,.35);
+    cursor: pointer;
+    transition: transform .12s ease;
+  }
+  .swatch:hover{ transform: translateY(-1px) scale(1.05) }
+  .swatch.active{
+    outline: 2px solid #111;
+    outline-offset: 2px;
+  }
+
+  .divider{
+    width:1px; height:22px;
+    background: rgba(0,0,0,.14);
+    margin: 0 4px;
+  }
+
+  .tool{
+    appearance:none;
+    border:none;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #fff;
+    color:#222;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+    transition: transform .12s ease, background .12s ease;
+  }
+  .tool:hover{ transform: translateY(-1px) }
+  .tool.active{ background:#111; color:#fff }
+  .tool.danger:hover{ background:#fee; color:#b30; box-shadow: inset 0 0 0 1px #fbb }
+
+  .size{
+    display:flex; align-items:center; gap:6px;
+    padding: 0 4px;
+  }
+  .size input[type="range"]{
+    appearance:none;
+    width: 90px;
+    height: 4px;
+    background: linear-gradient(90deg, #111 0%, #111 var(--p,30%), #d9d9d9 var(--p,30%), #d9d9d9 100%);
+    border-radius: 999px;
+    outline:none;
+  }
+  .size input[type="range"]::-webkit-slider-thumb{
+    appearance:none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background:#fff;
+    border: 2px solid #111;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .size-dot{
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display:grid; place-items:center;
+  }
+  .size-dot i{
+    display:block;
+    background:#111;
+    border-radius:50%;
+    width: var(--d, 6px);
+    height: var(--d, 6px);
+  }
+
+  /* caption under board */
+  .caption{
+    position:absolute;
+    left:0; right:0;
+    bottom: -26px;
+    text-align:center;
+    font-size: 11px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: rgba(20,22,28,.45);
+  }
+
+  /* tiny hint */
+  .hint{
+    position:absolute;
+    top: 40px; right: 40px;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: rgba(20,22,28,.35);
+    pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="frame">
+    <span class="bolt tl"></span><span class="bolt tr"></span>
+    <span class="bolt bl"></span><span class="bolt br"></span>
+
+    <div class="board-wrap">
+      <div class="ghost" aria-hidden="true">
+        <svg viewBox="0 0 1600 900" preserveAspectRatio="none">
+          <text x="60" y="160" font-family="Caveat, cursive" font-size="64" fill="currentColor">mon · standup</text>
+          <text x="60" y="240" font-family="Caveat, cursive" font-size="40" fill="currentColor">— ship the thing</text>
+          <text x="980" y="820" font-family="Caveat, cursive" font-size="38" fill="currentColor">don't forget →</text>
+        </svg>
+      </div>
+
+      <canvas id="board"></canvas>
+    </div>
+
+    <div class="tray"></div>
+
+    <div class="dock" role="toolbar" aria-label="whiteboard tools">
+      <div class="swatch active" style="--c:#111" data-color="#111111"></div>
+      <div class="swatch" style="--c:#d92d20" data-color="#d92d20"></div>
+      <div class="swatch" style="--c:#1570ef" data-color="#1570ef"></div>
+      <div class="swatch" style="--c:#12b76a" data-color="#12b76a"></div>
+      <div class="swatch" style="--c:#f79009" data-color="#f79009"></div>
+      <div class="swatch" style="--c:#7a5af8" data-color="#7a5af8"></div>
+
+      <div class="divider"></div>
+
+      <div class="size" title="size">
+        <span class="size-dot"><i style="--d:4px"></i></span>
+        <input id="size" type="range" min="2" max="22" value="6" />
+        <span class="size-dot"><i style="--d:12px"></i></span>
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="tool" id="pen"     data-tool="pen">Marker</button>
+      <button class="tool" id="eraser"  data-tool="eraser">Eraser</button>
+      <button class="tool danger" id="clear">Clear</button>
+    </div>
+
+    <div class="hint">16 : 9</div>
+  </div>
+
+  <div class="caption">Whiteboard · 1600 × 900</div>
+</div>
+
+<script>
+  const canvas = document.getElementById("board");
+  const ctx    = canvas.getContext("2d", { willReadFrequently:false });
+
+  // internal resolution — crisp, 16:9
+  const W = 1600, H = 900;
+
+  function fitCanvas(){
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap  = "round";
+    ctx.lineJoin = "round";
+  }
+  fitCanvas();
+  window.addEventListener("resize", fitCanvas);
+
+  let tool = "pen";
+  let color = "#111111";
+  let size  = 6;
+  let drawing = false;
+  let last = null;
+
+  // tools
+  document.querySelectorAll(".swatch").forEach(s=>{
+    s.addEventListener("click", ()=>{
+      document.querySelectorAll(".swatch").forEach(x=>x.classList.remove("active"));
+      s.classList.add("active");
+      color = s.dataset.color;
+      setTool("pen");
+    });
+  });
+
+  function setTool(name){
+    tool = name;
+    document.getElementById("pen").classList.toggle("active", name==="pen");
+    document.getElementById("eraser").classList.toggle("active", name==="eraser");
+    canvas.style.cursor = name === "eraser" ? "cell" : "crosshair";
+  }
+  document.getElementById("pen").addEventListener("click", ()=>setTool("pen"));
+  document.getElementById("eraser").addEventListener("click", ()=>setTool("eraser"));
+  setTool("pen");
+
+  const sizeEl = document.getElementById("size");
+  function paintSizeTrack(){
+    const min = +sizeEl.min, max = +sizeEl.max;
+    const p = ((+sizeEl.value - min) / (max - min)) * 100;
+    sizeEl.style.setProperty("--p", p + "%");
+  }
+  sizeEl.addEventListener("input", ()=>{ size = +sizeEl.value; paintSizeTrack(); });
+  paintSizeTrack();
+
+  document.getElementById("clear").addEventListener("click", ()=>{
+    ctx.clearRect(0,0,W,H);
+  });
+
+  // map pointer to internal coords
+  function toBoard(evt){
+    const r = canvas.getBoundingClientRect();
+    return {
+      x: (evt.clientX - r.left) * (W / r.width),
+      y: (evt.clientY - r.top)  * (H / r.height)
+    };
+  }
+
+  function stroke(a, b){
+    ctx.save();
+    if(tool === "eraser"){
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.strokeStyle = "rgba(0,0,0,1)";
+      ctx.lineWidth = size * 3.2;
+    } else {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      // faint marker shadow
+      ctx.shadowColor = "rgba(0,0,0,0.08)";
+      ctx.shadowBlur  = 0.6;
+    }
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  canvas.addEventListener("pointerdown", e=>{
+    canvas.setPointerCapture(e.pointerId);
+    drawing = true;
+    last = toBoard(e);
+    // dot
+    stroke(last, { x: last.x + 0.01, y: last.y + 0.01 });
+  });
+  canvas.addEventListener("pointermove", e=>{
+    if(!drawing) return;
+    const p = toBoard(e);
+    stroke(last, p);
+    last = p;
+  });
+  const stop = e=>{
+    if(!drawing) return;
+    drawing = false;
+    last = null;
+  };
+  canvas.addEventListener("pointerup",   stop);
+  canvas.addEventListener("pointerleave",stop);
+  canvas.addEventListener("pointercancel",stop);
+
+  // keyboard
+  window.addEventListener("keydown", e=>{
+    if(e.key === "e" || e.key === "E") setTool("eraser");
+    else if(e.key === "p" || e.key === "P") setTool("pen");
+    else if((e.ctrlKey || e.metaKey) && (e.key === "Backspace" || e.key === "Delete")){
+      ctx.clearRect(0,0,W,H);
+    }
+  });
+</script>
+</body>
+</html>

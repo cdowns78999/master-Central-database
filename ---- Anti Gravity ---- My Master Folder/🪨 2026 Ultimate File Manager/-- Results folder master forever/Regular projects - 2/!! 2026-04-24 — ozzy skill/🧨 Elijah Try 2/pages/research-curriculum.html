@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sharon — Music-Business Cataloging Software Curriculum</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --ink: #1a2332;
+    --ink-soft: #4a5568;
+    --ink-mute: #7c8a9e;
+    --rule: #dde3ec;
+    --rule-soft: #eef1f6;
+    --accent: #4a6da7;
+    --accent-deep: #34507f;
+    --accent-soft: #e8eef8;
+    --chip-bg: #eef2f8;
+    --shadow-sm: 0 1px 2px rgba(20, 30, 50, 0.04), 0 1px 3px rgba(20, 30, 50, 0.06);
+    --shadow-md: 0 4px 12px rgba(20, 30, 50, 0.08), 0 2px 4px rgba(20, 30, 50, 0.04);
+    --shadow-lg: 0 12px 32px rgba(20, 30, 50, 0.14);
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ============ HEADER ============ */
+  .page-header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--rule);
+    padding: 28px 48px 24px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.92);
+  }
+  .header-left { flex: 1; min-width: 0; }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent-soft), transparent);
+    max-width: 180px;
+  }
+  .page-title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 720px;
+  }
+  .register-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    border: 1px solid var(--accent-deep);
+  }
+  .register-btn::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffd166;
+    box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.25);
+  }
+  .register-btn:hover {
+    background: var(--accent-deep);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+  }
+  .register-btn:active { transform: translateY(0); }
+
+  /* ============ MAIN ============ */
+  main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 40px 48px 80px;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-head h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0;
+  }
+  .section-head .meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  .section-head .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
+    letter-spacing: 0.05em;
+  }
+
+  /* ============ EXAMPLES ============ */
+  .examples-section { margin-bottom: 56px; }
+  .examples-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .example-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .example-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent);
+  }
+  .mock-thumb {
+    aspect-ratio: 16 / 10;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 18px;
+    color: #fff;
+  }
+  .mock-thumb::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+  .mock-thumb-1 {
+    background:
+      radial-gradient(circle at 20% 30%, #6e8ab8 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, #a4c2e0 0%, transparent 50%),
+      linear-gradient(135deg, #2d4570 0%, #4a6da7 100%);
+  }
+  .mock-thumb-2 {
+    background:
+      radial-gradient(circle at 70% 20%, #c8a96a 0%, transparent 50%),
+      linear-gradient(140deg, #1f2a44 0%, #3a4d75 60%, #5e7aa6 100%);
+  }
+  .mock-thumb-3 {
+    background:
+      radial-gradient(circle at 30% 80%, #8b9bc7 0%, transparent 45%),
+      linear-gradient(160deg, #344b73 0%, #6883b0 100%);
+  }
+  .mock-bars {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    height: 50%;
+    opacity: 0.75;
+  }
+  .mock-bars span {
+    flex: 1;
+    background: rgba(255,255,255,0.9);
+    border-radius: 2px 2px 0 0;
+  }
+  .mock-thumb-1 .mock-bars span:nth-child(1) { height: 35%; }
+  .mock-thumb-1 .mock-bars span:nth-child(2) { height: 65%; }
+  .mock-thumb-1 .mock-bars span:nth-child(3) { height: 45%; }
+  .mock-thumb-1 .mock-bars span:nth-child(4) { height: 80%; }
+  .mock-thumb-1 .mock-bars span:nth-child(5) { height: 55%; }
+  .mock-thumb-1 .mock-bars span:nth-child(6) { height: 70%; }
+  .mock-thumb-1 .mock-bars span:nth-child(7) { height: 40%; }
+
+  .mock-line {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    height: 50%;
+    opacity: 0.7;
+  }
+  .mock-line svg { width: 100%; height: 100%; }
+
+  .mock-grid-rows {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 50%;
+    opacity: 0.78;
+  }
+  .mock-grid-rows .row {
+    flex: 1;
+    background: rgba(255,255,255,0.85);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 6px;
+  }
+  .mock-grid-rows .row::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .mock-grid-rows .row::after {
+    content: "";
+    flex: 1;
+    height: 3px;
+    background: rgba(74, 109, 167, 0.4);
+    border-radius: 2px;
+  }
+
+  .mock-overlay {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+  }
+  .mock-overlay .name {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .mock-overlay .tag {
+    font-size: 11px;
+    opacity: 0.85;
+    margin: 2px 0 0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .example-body {
+    padding: 14px 18px 16px;
+  }
+  .example-body p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .example-body .open-hint {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ============ RESEARCH SECTIONS ============ */
+  .research-block { margin-bottom: 48px; }
+  .research-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+  }
+  .result-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .result-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  .topic-chip {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    background: var(--chip-bg);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .result-card h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .result-meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .result-meta .dot {
+    width: 3px; height: 3px; border-radius: 50%; background: var(--ink-mute);
+  }
+  .result-quote {
+    font-size: 13px;
+    font-style: italic;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--rule);
+    padding: 4px 0 4px 12px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .result-why {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin: 0;
+  }
+  .result-why strong {
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-size: 10px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .result-source {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+    align-self: flex-start;
+  }
+  .result-source:hover { text-decoration: underline; }
+
+  .placeholder {
+    grid-column: 1 / -1;
+    padding: 28px;
+    text-align: center;
+    background: var(--panel);
+    border: 1px dashed var(--rule);
+    border-radius: var(--r-md);
+    color: var(--ink-mute);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* ============ CURRICULUM OUTLINE ============ */
+  .outline-section {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    padding: 28px 32px;
+    margin-top: 24px;
+  }
+  .outline-section .section-head { border-bottom: none; padding-bottom: 0; margin-bottom: 16px; }
+  .outline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 32px;
+  }
+  .outline-list li {
+    position: relative;
+    padding-left: 32px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    counter-increment: outline;
+  }
+  .outline-list { counter-reset: outline; }
+  .outline-list li::before {
+    content: counter(outline, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 7px;
+    border-radius: var(--r-sm);
+    letter-spacing: 0.04em;
+  }
+  .outline-list li strong {
+    color: var(--ink);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+
+  /* ============ DIALOG OVERLAY ============ */
+  dialog.example-dialog {
+    border: none;
+    background: transparent;
+    padding: 0;
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+  dialog.example-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.68);
+    backdrop-filter: blur(4px);
+  }
+  .dialog-shell {
+    background: var(--panel);
+    border-radius: var(--r-lg);
+    width: min(680px, 90vw);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+  }
+  .dialog-hero {
+    aspect-ratio: 16 / 7;
+    display: flex;
+    align-items: flex-end;
+    padding: 24px;
+    color: #fff;
+    position: relative;
+  }
+  .dialog-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--ink);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.12s ease;
+    z-index: 5;
+  }
+  .dialog-close:hover { transform: scale(1.08); }
+  .dialog-body {
+    padding: 22px 28px 26px;
+  }
+  .dialog-body h3 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .dialog-body .dialog-tag {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 14px;
+  }
+  .dialog-body p { font-size: 14px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 12px; }
+  .dialog-body ul { padding-left: 20px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
+  .dialog-body ul li { margin-bottom: 4px; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 900px) {
+    .page-header { padding: 22px 24px 18px; flex-direction: column; gap: 16px; }
+    main { padding: 28px 24px 60px; }
+    .examples-grid { grid-template-columns: 1fr; }
+    .outline-list { grid-template-columns: 1fr; }
+    .page-title { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="header-left">
+    <p class="eyebrow">Sharon · Catalog Intelligence</p>
+    <h1 class="page-title">Music-Business Cataloging Software — Curriculum</h1>
+    <p class="page-subtitle">Research results from a chart-metric &amp; catalog-tech deep dive. Compiled study material on how the industry's biggest catalog platforms structure data, surface insights, and serve label runners.</p>
+  </div>
+  <a href="#register" class="register-btn">Register for Source</a>
+</header>
+
+<main>
+
+  <!-- EXAMPLES -->
+  <section class="examples-section">
+    <div class="section-head">
+      <span class="num">01</span>
+      <h2>Examples — Industry Reference Tools</h2>
+      <span class="meta">click any tile to open spec</span>
+    </div>
+    <div class="examples-grid">
+      <article class="example-card" data-dialog="dlg-1">
+        <div class="mock-thumb mock-thumb-1">
+          <div class="mock-bars">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Chartmetric</p>
+            <p class="tag">Streaming insights</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>The category leader for streaming-platform analytics across Spotify, Apple Music, YouTube, TikTok, Shazam, and radio.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+      <article class="example-card" data-dialog="dlg-2">
+        <div class="mock-thumb mock-thumb-2">
+          <div class="mock-line">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+              <polyline points="0,60 25,55 50,40 75,45 100,30 125,28 150,18 175,22 200,10"
+                fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+              <polyline points="0,70 25,65 50,58 75,55 100,50 125,48 150,40 175,42 200,32"
+                fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-dasharray="3,3"/>
+            </svg>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Soundcharts</p>
+            <p class="tag">Chart tracker</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>Cross-platform chart and trend monitoring used by major-label A&amp;R teams to spot artist momentum early.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+      <article class="example-card" data-dialog="dlg-3">
+        <div class="mock-thumb mock-thumb-3">
+          <div class="mock-grid-rows">
+            <div class="row"></div>
+            <div class="row"></div>
+            <div class="row"></div>
+            <div class="row"></div>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Spot On Track</p>
+            <p class="tag">Playlist monitoring</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>Editorial &amp; algorithmic playlist tracker — surfaces add/drop events for catalog tracks across DSPs in real time.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ACADEMIC -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">02</span>
+      <h2>Academic Layer — Peer Research &amp; Industry Reports</h2>
+      <span class="meta">scholarly + standards-body sourcing</span>
+    </div>
+    <div class="research-grid" id="mount-academic">
+      <div class="placeholder">Research still loading — refresh in a moment.</div>
+    </div>
+  </section>
+
+  <!-- MAINSTREAM -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">03</span>
+      <h2>Mainstream Layer — Trade &amp; Press Coverage</h2>
+      <span class="meta">Billboard · MBW · Variety · Hypebot</span>
+    </div>
+    <div class="research-grid" id="mount-mainstream">
+      <div class="placeholder">Research still loading — refresh in a moment.</div>
+    </div>
+  </section>
+
+  <!-- BLOGS -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">04</span>
+      <h2>Blogs Layer — Operator Notes &amp; Indie-Label Diaries</h2>
+      <span class="meta">first-person workflows + practitioner deep dives</span>
+    </div>
+    <div class="research-grid" id="mount-blogs">
+      <div class="placeholder">Research still loading — refresh in a moment.</div>
+    </div>
+  </section>
+
+  <!-- CURRICULUM OUTLINE -->
+  <section class="outline-section">
+    <div class="section-head">
+      <span class="num">05</span>
+      <h2>Curriculum Outline — What a Label Runner Walks Away With</h2>
+      <span class="meta">7 core competencies</span>
+    </div>
+    <ul class="outline-list">
+      <li><strong>Catalog Architecture</strong>How major platforms structure their data — tracks, releases, rights, splits, ISRCs and UPCs as the backbone of every query.</li>
+      <li><strong>UI That Feels Like a Tool</strong>What separates label-grade software from generic dashboards — density, keyboard surface, and consistent column logic.</li>
+      <li><strong>Metadata Standards</strong>Where the industry's catalog metadata standards came from (DDEX, MWN, ISNI) and why they still leak at the edges.</li>
+      <li><strong>Royalty &amp; Rights Integrations</strong>How royalty-tracking flows across providers — collection societies, neighboring rights, sync agencies, and DSP statements.</li>
+      <li><strong>DIY × Platform Stack</strong>How indie labels mix DIY tools with paid platforms — Notion + Disco + Chartmetric + spreadsheets — and where the seams show.</li>
+      <li><strong>Chart &amp; Trend Signals</strong>Reading playlist movement, Shazam velocity, and TikTok creates as forward indicators rather than rear-view metrics.</li>
+      <li><strong>Workflow Compression</strong>The iTunes-condensed pattern — moving operators from 6 tabs to 1 surface without flattening detail or losing context.</li>
+    </ul>
+  </section>
+
+</main>
+
+<!-- DIALOGS -->
+<dialog class="example-dialog" id="dlg-1">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-1">
+      <div class="mock-bars">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="mock-overlay">
+        <p class="name">Chartmetric</p>
+        <p class="tag">Streaming insights</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference tool · Category leader</p>
+      <h3>Why operators study this UI</h3>
+      <p>Chartmetric pioneered cross-DSP catalog intelligence — pulling Spotify, Apple Music, YouTube, TikTok, Shazam, and radio into one searchable surface. Its data model is the de facto reference for any modern label dashboard.</p>
+      <ul>
+        <li>Artist + track + playlist + audience as first-class objects</li>
+        <li>Time-series for every metric, not just current snapshots</li>
+        <li>Heavy use of saved views and side-by-side comparisons</li>
+        <li>Tag-based catalog grouping (genre, mood, deal status)</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="example-dialog" id="dlg-2">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-2">
+      <div class="mock-line">
+        <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+          <polyline points="0,60 25,55 50,40 75,45 100,30 125,28 150,18 175,22 200,10"
+            fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="mock-overlay">
+        <p class="name">Soundcharts</p>
+        <p class="tag">Chart tracker</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference tool · A&amp;R favorite</p>
+      <h3>Why operators study this UI</h3>
+      <p>Soundcharts compresses dozens of country-specific charts and platform leaderboards into one comparable view, with strong filtering for early-momentum signals A&amp;R teams pay for.</p>
+      <ul>
+        <li>Country &amp; chart filter chips above every table</li>
+        <li>Daily snapshots versus 28-day deltas as toggleable layers</li>
+        <li>Notification thresholds tied to artist watchlists</li>
+        <li>Playlist + radio + chart as a unified momentum stack</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="example-dialog" id="dlg-3">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-3">
+      <div class="mock-grid-rows">
+        <div class="row"></div>
+        <div class="row"></div>
+        <div class="row"></div>
+        <div class="row"></div>
+      </div>
+      <div class="mock-overlay">
+        <p class="name">Spot On Track</p>
+        <p class="tag">Playlist monitoring</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference tool · Playlist specialist</p>
+      <h3>Why operators study this UI</h3>
+      <p>Spot On Track is the narrowest of the three — laser-focused on playlist add/drop events. Its UI is a masterclass in dense row-based catalog tables that still feel readable.</p>
+      <ul>
+        <li>Catalog as the primary view — not artists or playlists</li>
+        <li>Add/drop events as a single chronological feed</li>
+        <li>Editorial vs. algorithmic playlist split, color-coded</li>
+        <li>Per-track follower delta as a default visible column</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // ============ DIALOG WIRING ============
+  document.querySelectorAll('.example-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-dialog');
+      const dlg = document.getElementById(id);
+      if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+    });
+  });
+  // backdrop click closes
+  document.querySelectorAll('dialog.example-dialog').forEach(dlg => {
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+  });
+
+  // ============ JSON LOADERS ============
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderCard(item) {
+    const topic = escapeHtml(item.topic || item.tag || 'Topic');
+    const title = escapeHtml(item.title || 'Untitled');
+    const author = escapeHtml(item.author || item.publication || '');
+    const pub = escapeHtml(item.publication || item.source || '');
+    const year = escapeHtml(item.year || item.date || '');
+    const quote = escapeHtml(item.quote || item.excerpt || '');
+    const why = escapeHtml(item.why || item.relevance || item.why_relevant || '');
+    const url = item.url || item.link || '#';
+    const safeUrl = String(url).startsWith('http') ? url : '#';
+
+    const meta = [author, pub && pub !== author ? pub : '', year]
+      .filter(Boolean)
+      .map(s => `<span>${s}</span>`)
+      .join('<span class="dot"></span>');
+
+    return `
+      <article class="result-card">
+        <span class="topic-chip">${topic}</span>
+        <h3>${title}</h3>
+        <div class="result-meta">${meta || '<span>—</span>'}</div>
+        ${quote ? `<p class="result-quote">"${quote}"</p>` : ''}
+        ${why ? `<p class="result-why"><strong>Why relevant</strong>${why}</p>` : ''}
+        <a class="result-source" href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener">↗ source</a>
+      </article>
+    `;
+  }
+
+  async function loadLayer(path, mountId) {
+    const mount = document.getElementById(mountId);
+    if (!mount) return;
+    try {
+      const res = await fetch(path, { cache: 'no-store' });
+      if (!res.ok) throw new Error('not-ready');
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data.items || data.results || []);
+      if (!items.length) {
+        mount.innerHTML = '<div class="placeholder">Research file is empty — pending agent output.</div>';
+        return;
+      }
+      mount.innerHTML = items.map(renderCard).join('');
+    } catch (e) {
+      mount.innerHTML = '<div class="placeholder">Research still loading — refresh in a moment.</div>';
+    }
+  }
+
+  loadLayer('../data/research-academic.json', 'mount-academic');
+  loadLayer('../data/research-mainstream.json', 'mount-mainstream');
+  loadLayer('../data/research-blogs.json', 'mount-blogs');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Budget — James Downs Command Center</title>
+  <style>
+    /* ─── CSS Variables ─────────────────────────────────────────── */
+    :root {
+      --bg:           #0a0f1e;
+      --card-bg:      #0d1526;
+      --card-bg-2:    #111d35;
+      --gold:         #c9a84c;
+      --gold-dim:     #a8873a;
+      --gold-glow:    rgba(201, 168, 76, 0.18);
+      --text:         #e8e0cc;
+      --text-muted:   #8a8070;
+      --income:       #2ecc71;
+      --income-bg:    rgba(46, 204, 113, 0.1);
+      --expense:      #e74c3c;
+      --expense-bg:   rgba(231, 76, 60, 0.1);
+      --border:       rgba(201, 168, 76, 0.15);
+      --border-hover: rgba(201, 168, 76, 0.4);
+      --input-bg:     #0a1020;
+      --radius:       10px;
+      --radius-sm:    6px;
+      --transition:   0.22s ease;
+    }
+
+    /* ─── Reset / Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    /* ─── Section Wrapper ───────────────────────────────────────── */
+    .budget-section {
+      width: 100%;
+      max-width: 760px;
+    }
+
+    /* ─── Section Header ────────────────────────────────────────── */
+    .section-header {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--text);
+      text-transform: uppercase;
+      display: inline-block;
+      padding-bottom: 8px;
+      position: relative;
+    }
+
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+    }
+
+    /* ─── Balance Card ──────────────────────────────────────────── */
+    .balance-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0.6;
+    }
+
+    .balance-glow {
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .balance-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .balance-amount {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--gold);
+      letter-spacing: 0.02em;
+      line-height: 1;
+      transition: color var(--transition);
+    }
+
+    .balance-amount.negative { color: var(--expense); }
+
+    .balance-stats {
+      display: flex;
+      gap: 28px;
+    }
+
+    .stat-item {
+      text-align: right;
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .stat-value.income  { color: var(--income); }
+    .stat-value.expense { color: var(--expense); }
+
+    /* ─── Add Transaction Form ──────────────────────────────────── */
+    .add-form {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 130px;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.88rem;
+      padding: 10px 13px;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="number"]::placeholder {
+      color: var(--text-muted);
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--gold-dim);
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1);
+    }
+
+    /* Custom select arrow */
+    .select-wrap {
+      position: relative;
+    }
+    .select-wrap::after {
+      content: '▾';
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gold-dim);
+      pointer-events: none;
+      font-size: 0.8rem;
+    }
+
+    select option { background: #0d1526; }
+
+    /* ─── Type Toggle ───────────────────────────────────────────── */
+    .type-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .type-toggle input[type="radio"] { display: none; }
+
+    .type-toggle label {
+      flex: 1;
+      margin: 0;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      color: var(--text-muted);
+      background: transparent;
+    }
+
+    .type-toggle input[type="radio"]:checked + label {
+      color: #fff;
+    }
+
+    #type-income:checked + label {
+      background: var(--income);
+      color: #fff;
+    }
+
+    #type-expense:checked + label {
+      background: var(--expense);
+      color: #fff;
+    }
+
+    /* ─── Add Button ────────────────────────────────────────────── */
+    .btn-add {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+      color: #0a0f1e;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 22px;
+      cursor: pointer;
+      transition: opacity var(--transition), transform var(--transition), box-shadow var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-add:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 18px rgba(201, 168, 76, 0.35);
+    }
+
+    .btn-add:active {
+      transform: translateY(0);
+    }
+
+    /* ─── Transactions List ─────────────────────────────────────── */
+    .transactions-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .transactions-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .tx-count {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 10px;
+    }
+
+    .transactions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ─── Transaction Row ───────────────────────────────────────── */
+    .tx-row {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: txSlideIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      transition: border-color var(--transition), background var(--transition);
+    }
+
+    .tx-row:hover {
+      border-color: var(--border-hover);
+      background: var(--card-bg-2);
+    }
+
+    .tx-row.removing {
+      animation: txSlideOut 0.25s ease forwards;
+    }
+
+    @keyframes txSlideIn {
+      from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes txSlideOut {
+      from { opacity: 1; transform: translateX(0); max-height: 100px; }
+      to   { opacity: 0; transform: translateX(30px); max-height: 0; padding: 0; margin: 0; }
+    }
+
+    /* type indicator bar */
+    .tx-bar {
+      width: 3px;
+      height: 36px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .tx-bar.income  { background: var(--income); }
+    .tx-bar.expense { background: var(--expense); }
+
+    .tx-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tx-desc {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+
+    .tx-cat-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .tx-amount {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+    .tx-amount.income  { color: var(--income); }
+    .tx-amount.expense { color: var(--expense); }
+
+    .btn-delete {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: color var(--transition), border-color var(--transition), background var(--transition);
+      flex-shrink: 0;
+    }
+
+    .btn-delete:hover {
+      color: var(--expense);
+      border-color: var(--expense);
+      background: var(--expense-bg);
+    }
+
+    /* ─── Empty State ───────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      opacity: 0.4;
+    }
+
+    /* ─── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 520px) {
+      .form-row   { grid-template-columns: 1fr; }
+      .form-row-2 { grid-template-columns: 1fr 1fr; }
+      .btn-add    { grid-column: 1 / -1; width: 100%; }
+      .balance-stats { flex-direction: column; gap: 8px; }
+      .stat-item  { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     BUDGET SECTION — James Downs Command Center
+     Self-contained. Merge into parent by lifting:
+       • <style> block  →  parent <head>
+       • .budget-section div  →  parent layout
+       • <script> block  →  before </body>
+═══════════════════════════════════════════════════════ -->
+<section class="budget-section" id="budget-section">
+
+  <!-- Header -->
+  <div class="section-header">
+    <h2 class="section-title">Budget</h2>
+  </div>
+
+  <!-- Balance Card -->
+  <div class="balance-card">
+    <div class="balance-glow"></div>
+    <div>
+      <div class="balance-label">Current Balance</div>
+      <div class="balance-amount" id="balance-display">$0.00</div>
+    </div>
+    <div class="balance-stats">
+      <div class="stat-item">
+        <div class="stat-label">Income</div>
+        <div class="stat-value income" id="total-income">$0.00</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Expenses</div>
+        <div class="stat-value expense" id="total-expense">$0.00</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Transaction Form -->
+  <div class="add-form">
+    <div class="form-row">
+      <div>
+        <label for="tx-desc">Description</label>
+        <input type="text" id="tx-desc" placeholder="e.g. Grocery run, Paycheck…" autocomplete="off" />
+      </div>
+      <div>
+        <label for="tx-amount">Amount ($)</label>
+        <input type="number" id="tx-amount" placeholder="0.00" min="0" step="0.01" />
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div>
+        <label>Type</label>
+        <div class="type-toggle">
+          <input type="radio" name="tx-type" id="type-income"  value="income"  checked />
+          <label for="type-income">Income</label>
+          <input type="radio" name="tx-type" id="type-expense" value="expense" />
+          <label for="type-expense">Expense</label>
+        </div>
+      </div>
+
+      <div>
+        <label for="tx-category">Category</label>
+        <div class="select-wrap">
+          <select id="tx-category">
+            <option value="Housing">Housing</option>
+            <option value="Food">Food</option>
+            <option value="Transport">Transport</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Health">Health</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="opacity:0;user-select:none;">Add</label>
+        <button class="btn-add" id="btn-add-tx">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions List -->
+  <div class="transactions-header">
+    <div class="transactions-title">Transactions</div>
+    <div class="tx-count" id="tx-count">0 entries</div>
+  </div>
+
+  <div class="transactions-list" id="tx-list">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">◈</div>
+      No transactions yet — add one above.
+    </div>
+  </div>
+
+</section>
+
+<script>
+  /* ─── Storage key ─────────────────────────────── */
+  const STORAGE_KEY = 'jd_budget';
+
+  /* ─── State ───────────────────────────────────── */
+  let transactions = loadFromStorage();
+
+  /* ─── DOM refs ────────────────────────────────── */
+  const descInput   = document.getElementById('tx-desc');
+  const amtInput    = document.getElementById('tx-amount');
+  const catSelect   = document.getElementById('tx-category');
+  const addBtn      = document.getElementById('btn-add-tx');
+  const txList      = document.getElementById('tx-list');
+  const emptyState  = document.getElementById('empty-state');
+  const balDisplay  = document.getElementById('balance-display');
+  const incDisplay  = document.getElementById('total-income');
+  const expDisplay  = document.getElementById('total-expense');
+  const countDisplay= document.getElementById('tx-count');
+
+  /* ─── Init ────────────────────────────────────── */
+  render();
+
+  /* ─── Add event ───────────────────────────────── */
+  addBtn.addEventListener('click', addTransaction);
+
+  descInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTransaction();
+  });
+  amtInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTransaction();
+  });
+
+  /* ─── Core functions ──────────────────────────── */
+  function addTransaction() {
+    const desc   = descInput.value.trim();
+    const amount = parseFloat(amtInput.value);
+    const type   = document.querySelector('input[name="tx-type"]:checked').value;
+    const cat    = catSelect.value;
+
+    if (!desc)      { shake(descInput);  return; }
+    if (!amount || amount <= 0) { shake(amtInput); return; }
+
+    const tx = {
+      id:     Date.now(),
+      desc,
+      amount,
+      type,
+      cat,
+      date:   new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
+
+    transactions.unshift(tx);
+    saveToStorage();
+    render();
+
+    descInput.value = '';
+    amtInput.value  = '';
+    descInput.focus();
+  }
+
+  function deleteTransaction(id) {
+    const row = document.querySelector(`[data-id="${id}"]`);
+    if (!row) return;
+
+    row.classList.add('removing');
+    row.addEventListener('animationend', () => {
+      transactions = transactions.filter(t => t.id !== id);
+      saveToStorage();
+      render();
+    }, { once: true });
+  }
+
+  /* ─── Render ──────────────────────────────────── */
+  function render() {
+    // Totals
+    let income  = 0;
+    let expense = 0;
+    transactions.forEach(t => {
+      if (t.type === 'income')  income  += t.amount;
+      else                      expense += t.amount;
+    });
+    const balance = income - expense;
+
+    balDisplay.textContent = fmt(balance);
+    balDisplay.className   = 'balance-amount' + (balance < 0 ? ' negative' : '');
+    incDisplay.textContent = fmt(income);
+    expDisplay.textContent = fmt(expense);
+
+    const n = transactions.length;
+    countDisplay.textContent = n === 0 ? '0 entries' : `${n} entr${n === 1 ? 'y' : 'ies'}`;
+
+    // List
+    if (n === 0) {
+      txList.innerHTML = '';
+      txList.appendChild(emptyState);
+      return;
+    }
+
+    // Remove empty state if present
+    if (emptyState.parentNode === txList) txList.removeChild(emptyState);
+
+    // Diff render — rebuild rows that changed
+    const existing = new Set([...txList.querySelectorAll('[data-id]')].map(el => +el.dataset.id));
+    const fresh    = new Set(transactions.map(t => t.id));
+
+    // Remove stale rows (not in removing animation)
+    txList.querySelectorAll('[data-id]').forEach(el => {
+      if (!fresh.has(+el.dataset.id) && !el.classList.contains('removing')) el.remove();
+    });
+
+    // Insert new rows at top
+    transactions.forEach((t, i) => {
+      if (!existing.has(t.id)) {
+        const row = buildRow(t);
+        const ref = txList.children[i];
+        txList.insertBefore(row, ref || null);
+      }
+    });
+  }
+
+  function buildRow(t) {
+    const row = document.createElement('div');
+    row.className = 'tx-row';
+    row.dataset.id = t.id;
+
+    const sign = t.type === 'income' ? '+' : '−';
+
+    row.innerHTML = `
+      <div class="tx-bar ${t.type}"></div>
+      <div class="tx-info">
+        <div class="tx-desc" title="${escHtml(t.desc)}">${escHtml(t.desc)}</div>
+        <span class="tx-cat-badge">${escHtml(t.cat)}</span>
+      </div>
+      <div class="tx-amount ${t.type}">${sign}${fmt(t.amount)}</div>
+      <button class="btn-delete" aria-label="Delete transaction" title="Remove">✕</button>
+    `;
+
+    row.querySelector('.btn-delete').addEventListener('click', () => deleteTransaction(t.id));
+    return row;
+  }
+
+  /* ─── Helpers ─────────────────────────────────── */
+  function fmt(n) {
+    return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function shake(el) {
+    el.style.animation = 'none';
+    el.offsetHeight; // reflow
+    el.style.animation = 'shakePulse 0.35s ease';
+    el.addEventListener('animationend', () => el.style.animation = '', { once: true });
+    el.style.borderColor = 'var(--expense)';
+    setTimeout(() => el.style.borderColor = '', 800);
+  }
+
+  function loadFromStorage() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch { return []; }
+  }
+
+  function saveToStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+  }
+
+  /* ─── Shake keyframe (injected) ───────────────── */
+  const shakeStyle = document.createElement('style');
+  shakeStyle.textContent = `
+    @keyframes shakePulse {
+      0%,100% { transform: translateX(0); }
+      20%     { transform: translateX(-5px); }
+      40%     { transform: translateX(5px); }
+      60%     { transform: translateX(-3px); }
+      80%     { transform: translateX(3px); }
+    }
+  `;
+  document.head.appendChild(shakeStyle);
+</script>
+</body>
+</html>

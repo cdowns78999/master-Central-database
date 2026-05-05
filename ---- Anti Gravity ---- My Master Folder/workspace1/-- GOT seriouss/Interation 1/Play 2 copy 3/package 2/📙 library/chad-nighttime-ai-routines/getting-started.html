@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Foundation Playbook — Getting Started</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           DESIGN TOKENS
+           ============================================================ */
+        :root {
+            --bg: #0a0a0a;
+            --bg-elevated: #141414;
+            --bg-float: #1a1a1a;
+            --bg-hover: #222;
+            --border: rgba(255,255,255,0.06);
+            --border-hover: rgba(99,102,241,0.25);
+            --text: #e8e8e8;
+            --text-dim: rgba(255,255,255,0.45);
+            --text-ghost: rgba(255,255,255,0.25);
+            --primary: #6366f1;
+            --primary-dim: rgba(99,102,241,0.15);
+            --primary-ghost: rgba(99,102,241,0.06);
+            --cyan: #22d3ee;
+            --amber: #f59e0b;
+            --green: #1ed760;
+            --blue: #3b82f6;
+            --purple: #a855f7;
+            --red: #ef4444;
+            --radius-card: 20px;
+            --radius-pill: 999px;
+            --radius-sm: 12px;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+            --transition: all 0.35s var(--ease);
+        }
+
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 15px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        ::selection {
+            background: var(--primary-dim);
+            color: #fff;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        a:hover {
+            color: #818cf8;
+        }
+
+        /* ============================================================
+           AMBIENT BACKGROUND
+           ============================================================ */
+        .ambient-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.08;
+            will-change: transform;
+        }
+
+        .orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--primary);
+            top: -150px;
+            left: -100px;
+            animation: orbFloat1 25s ease-in-out infinite alternate;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--cyan);
+            bottom: -100px;
+            right: -100px;
+            animation: orbFloat2 30s ease-in-out infinite alternate;
+        }
+
+        .orb-3 {
+            width: 400px;
+            height: 400px;
+            background: var(--amber);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: orbFloat3 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes orbFloat1 {
+            0%   { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(120px, 80px) scale(1.15); }
+        }
+
+        @keyframes orbFloat2 {
+            0%   { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-100px, -60px) scale(1.1); }
+        }
+
+        @keyframes orbFloat3 {
+            0%   { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-40%, -60%) scale(1.2); }
+        }
+
+        /* ============================================================
+           LAYOUT
+           ============================================================ */
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ============================================================
+           HERO SECTION
+           ============================================================ */
+        .hero {
+            text-align: center;
+            padding: 100px 0 80px;
+            position: relative;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse, var(--primary-dim) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            font-family: var(--font-body);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--primary);
+            background: var(--primary-dim);
+            border: 1px solid rgba(99,102,241,0.2);
+            padding: 6px 18px;
+            border-radius: var(--radius-pill);
+            margin-bottom: 32px;
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: clamp(2.2rem, 5vw, 3.6rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            color: var(--text);
+            margin-bottom: 24px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-title .highlight {
+            color: var(--primary);
+            position: relative;
+        }
+
+        .hero-title .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+            opacity: 0.3;
+        }
+
+        .hero-subtitle {
+            font-family: var(--font-body);
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text-dim);
+            line-height: 1.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ============================================================
+           SECTION HEADERS
+           ============================================================ */
+        .section {
+            margin-top: 80px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .section-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .dot-green  { background: var(--green); box-shadow: 0 0 12px rgba(30,215,96,0.4); }
+        .dot-blue   { background: var(--blue); box-shadow: 0 0 12px rgba(59,130,246,0.4); }
+        .dot-amber  { background: var(--amber); box-shadow: 0 0 12px rgba(245,158,11,0.4); }
+        .dot-purple { background: var(--purple); box-shadow: 0 0 12px rgba(168,85,247,0.4); }
+        .dot-cyan   { background: var(--cyan); box-shadow: 0 0 12px rgba(34,211,238,0.4); }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-family: var(--font-body);
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 32px;
+            padding-left: 22px;
+        }
+
+        /* ============================================================
+           TOOL CARDS (Section 1 - Large)
+           ============================================================ */
+        .tool-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tool-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 32px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-dim), transparent);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .tool-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            background: var(--bg-float);
+        }
+
+        .tool-card:hover::before {
+            opacity: 1;
+        }
+
+        .tool-card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .tool-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .tool-icon-green  { background: rgba(30,215,96,0.12); color: var(--green); }
+        .tool-icon-blue   { background: rgba(59,130,246,0.12); color: var(--blue); }
+        .tool-icon-amber  { background: rgba(245,158,11,0.12); color: var(--amber); }
+        .tool-icon-purple { background: rgba(168,85,247,0.12); color: var(--purple); }
+        .tool-icon-cyan   { background: rgba(34,211,238,0.12); color: var(--cyan); }
+        .tool-icon-primary { background: var(--primary-dim); color: var(--primary); }
+
+        .tool-name {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .tool-verified {
+            display: inline-block;
+            font-family: var(--font-body);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--green);
+            background: rgba(30,215,96,0.1);
+            border: 1px solid rgba(30,215,96,0.2);
+            padding: 2px 8px;
+            border-radius: var(--radius-pill);
+            margin-left: 10px;
+        }
+
+        .tool-description {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.75;
+        }
+
+        .tool-description strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .tool-example {
+            margin-top: 14px;
+            padding: 14px 18px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--green);
+            overflow-x: auto;
+        }
+
+        .tool-example .comment {
+            color: var(--text-ghost);
+        }
+
+        /* ============================================================
+           STEP CARDS (Numbered)
+           ============================================================ */
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            counter-reset: step-counter;
+        }
+
+        .step-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 28px 32px;
+            transition: var(--transition);
+            position: relative;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+            counter-increment: step-counter;
+        }
+
+        .step-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            background: var(--bg-float);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 800;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .step-number-green {
+            background: rgba(30,215,96,0.1);
+            color: var(--green);
+            border: 1px solid rgba(30,215,96,0.15);
+        }
+
+        .step-number-blue {
+            background: rgba(59,130,246,0.1);
+            color: var(--blue);
+            border: 1px solid rgba(59,130,246,0.15);
+        }
+
+        .step-number-amber {
+            background: rgba(245,158,11,0.1);
+            color: var(--amber);
+            border: 1px solid rgba(245,158,11,0.15);
+        }
+
+        .step-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .step-title {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .step-desc {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.75;
+        }
+
+        .step-desc code {
+            font-family: 'Courier New', monospace;
+            font-size: 12.5px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 2px 7px;
+            border-radius: 6px;
+            color: var(--primary);
+        }
+
+        .step-code-block {
+            margin-top: 12px;
+            padding: 14px 18px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Courier New', monospace;
+            font-size: 12.5px;
+            line-height: 1.7;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .step-code-block .cmd {
+            color: var(--green);
+        }
+
+        .step-code-block .flag {
+            color: var(--amber);
+        }
+
+        .step-code-block .path {
+            color: var(--cyan);
+        }
+
+        .step-code-block .comment {
+            color: var(--text-ghost);
+        }
+
+        .step-code-block .string {
+            color: var(--amber);
+        }
+
+        .step-code-block .keyword {
+            color: var(--purple);
+        }
+
+        /* ============================================================
+           PROGRESSION LADDER (Section 5)
+           ============================================================ */
+        .progression-ladder {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            position: relative;
+            padding-left: 28px;
+        }
+
+        .progression-ladder::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: 24px;
+            width: 2px;
+            background: linear-gradient(
+                to bottom,
+                var(--green),
+                var(--blue),
+                var(--amber),
+                var(--purple)
+            );
+            border-radius: 2px;
+            opacity: 0.3;
+        }
+
+        .ladder-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+            padding: 20px 0;
+            position: relative;
+        }
+
+        .ladder-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            left: -28px;
+            margin-right: -28px;
+        }
+
+        .ladder-dot-inner {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .ladder-dot-green .ladder-dot-inner {
+            background: var(--green);
+            box-shadow: 0 0 10px rgba(30,215,96,0.5);
+        }
+
+        .ladder-dot-blue .ladder-dot-inner {
+            background: var(--blue);
+            box-shadow: 0 0 10px rgba(59,130,246,0.5);
+        }
+
+        .ladder-dot-amber .ladder-dot-inner {
+            background: var(--amber);
+            box-shadow: 0 0 10px rgba(245,158,11,0.5);
+        }
+
+        .ladder-dot-purple .ladder-dot-inner {
+            background: var(--purple);
+            box-shadow: 0 0 10px rgba(168,85,247,0.5);
+        }
+
+        .ladder-content {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 24px 28px;
+            flex: 1;
+            transition: var(--transition);
+        }
+
+        .ladder-content:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+
+        .ladder-phase {
+            font-family: var(--font-body);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .ladder-phase-green  { color: var(--green); }
+        .ladder-phase-blue   { color: var(--blue); }
+        .ladder-phase-amber  { color: var(--amber); }
+        .ladder-phase-purple { color: var(--purple); }
+
+        .ladder-label {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .ladder-desc {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+
+        /* ============================================================
+           QUOTE CALLOUT
+           ============================================================ */
+        .quote-callout {
+            margin-top: 40px;
+            padding: 28px 32px;
+            background: var(--primary-ghost);
+            border: 1px solid rgba(99,102,241,0.12);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 var(--radius-card) var(--radius-card) 0;
+            position: relative;
+        }
+
+        .quote-callout::before {
+            content: '\201C';
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            font-family: var(--font-heading);
+            font-size: 48px;
+            color: var(--primary);
+            opacity: 0.2;
+            line-height: 1;
+        }
+
+        .quote-text {
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-style: italic;
+            color: var(--text);
+            line-height: 1.8;
+            padding-left: 24px;
+        }
+
+        /* ============================================================
+           CASE STUDY CARDS (Section 6)
+           ============================================================ */
+        .case-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .case-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 28px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .case-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            border-radius: 0 0 var(--radius-card) var(--radius-card);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .case-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            background: var(--bg-float);
+        }
+
+        .case-card:hover::after {
+            opacity: 1;
+        }
+
+        .case-card:nth-child(1)::after { background: var(--cyan); }
+        .case-card:nth-child(2)::after { background: var(--amber); }
+        .case-card:nth-child(3)::after { background: var(--green); }
+        .case-card:nth-child(4)::after { background: var(--purple); }
+
+        .case-tag {
+            font-family: var(--font-body);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: var(--radius-pill);
+            display: inline-block;
+            margin-bottom: 14px;
+        }
+
+        .case-tag-cyan {
+            color: var(--cyan);
+            background: rgba(34,211,238,0.1);
+            border: 1px solid rgba(34,211,238,0.15);
+        }
+
+        .case-tag-amber {
+            color: var(--amber);
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.15);
+        }
+
+        .case-tag-green {
+            color: var(--green);
+            background: rgba(30,215,96,0.1);
+            border: 1px solid rgba(30,215,96,0.15);
+        }
+
+        .case-tag-purple {
+            color: var(--purple);
+            background: rgba(168,85,247,0.1);
+            border: 1px solid rgba(168,85,247,0.15);
+        }
+
+        .case-name {
+            font-family: var(--font-heading);
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .case-desc {
+            font-size: 13.5px;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+
+        .case-stat {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            font-family: var(--font-body);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .case-stat-cyan   { color: var(--cyan); }
+        .case-stat-amber  { color: var(--amber); }
+        .case-stat-green  { color: var(--green); }
+        .case-stat-purple { color: var(--purple); }
+
+        /* ============================================================
+           BOTTOM NAV
+           ============================================================ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10,10,10,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 0;
+        }
+
+        .bottom-nav-inner {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: stretch;
+            justify-content: space-around;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 12px 8px;
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+            border-top: 2px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .nav-item.active {
+            border-top-color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+            opacity: 0.45;
+            transition: var(--transition);
+        }
+
+        .nav-item:hover .nav-icon,
+        .nav-item.active .nav-icon {
+            opacity: 1;
+        }
+
+        .nav-label {
+            font-family: var(--font-body);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--text-ghost);
+            transition: var(--transition);
+        }
+
+        .nav-item:hover .nav-label {
+            color: var(--text-dim);
+        }
+
+        .nav-item.active .nav-label {
+            color: var(--primary);
+        }
+
+        /* ============================================================
+           SCROLL PROGRESS BAR
+           ============================================================ */
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--cyan));
+            z-index: 200;
+            transition: width 0.1s linear;
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* ============================================================
+           SECTION DIVIDER
+           ============================================================ */
+        .section-divider {
+            width: 60px;
+            height: 1px;
+            background: var(--border);
+            margin: 60px auto 0;
+        }
+
+        /* ============================================================
+           FADE-IN ANIMATIONS
+           ============================================================ */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fade-in-delay-1 { transition-delay: 0.08s; }
+        .fade-in-delay-2 { transition-delay: 0.16s; }
+        .fade-in-delay-3 { transition-delay: 0.24s; }
+        .fade-in-delay-4 { transition-delay: 0.32s; }
+        .fade-in-delay-5 { transition-delay: 0.40s; }
+
+        /* ============================================================
+           FILE PATH INDICATOR
+           ============================================================ */
+        .file-path-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--text-ghost);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            margin-top: 8px;
+        }
+
+        .file-path-tag .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 768px) {
+            .page-wrapper {
+                padding: 0 16px;
+            }
+
+            .hero {
+                padding: 80px 0 60px;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .case-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step-card {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .tool-card {
+                padding: 24px;
+            }
+
+            .step-card {
+                padding: 24px;
+            }
+
+            .bottom-nav-inner {
+                max-width: 100%;
+            }
+
+            .nav-label {
+                font-size: 9px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 1.7rem;
+            }
+
+            .hero-subtitle {
+                font-size: 14px;
+            }
+
+            .section-title {
+                font-size: 18px;
+            }
+
+            .tool-name {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Background Layer -->
+    <div class="ambient-layer">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+    </div>
+
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- ============================================================
+         PAGE CONTENT
+         ============================================================ -->
+    <div class="page-wrapper">
+
+        <!-- ========================================================
+             HERO SECTION
+             ======================================================== -->
+        <section class="hero fade-in" id="hero">
+            <div class="hero-glow"></div>
+            <div class="hero-badge">YOUR STARTING POINT</div>
+            <h1 class="hero-title">
+                Hey. You're not behind.<br>You're <span class="highlight">building</span>.
+            </h1>
+            <p class="hero-subtitle">
+                Every overnight automation master started exactly where you are. This playbook gives you the exact steps &mdash; from zero to your first autonomous night.
+            </p>
+            <div class="file-path-tag">
+                <span class="dot"></span>
+                the-foundation-playbook / getting-started
+            </div>
+        </section>
+
+
+        <!-- ========================================================
+             SECTION 1: WHAT YOU CAN USE RIGHT NOW
+             ======================================================== -->
+        <section class="section fade-in" id="section-tools">
+            <div class="section-header">
+                <span class="section-dot dot-green"></span>
+                <h2 class="section-title">What You Can Use Right Now</h2>
+            </div>
+            <p class="section-subtitle">3 Free Tools. Zero Setup Cost.</p>
+
+            <div class="tool-grid">
+                <!-- Tool 1: CLAUDE.md -->
+                <div class="tool-card fade-in fade-in-delay-1">
+                    <div class="tool-card-header">
+                        <div class="tool-icon tool-icon-green">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="tool-name">CLAUDE.md</span>
+                            <span class="tool-verified">VERIFIED #1</span>
+                        </div>
+                    </div>
+                    <p class="tool-description">
+                        Your AI constitution. Drop this file in any project root and Claude Code reads it <strong>every single session</strong>. It's the backbone of overnight automation &mdash; persistent instructions that survive across sessions. This is the #1 pattern across all overnight workflows. Define your coding standards, project context, forbidden files, and preferred patterns. Claude remembers everything you put here.
+                    </p>
+                    <div class="tool-example">
+                        <span class="comment"># /your-project/CLAUDE.md</span><br>
+                        <br>
+                        <span style="color: var(--text)">## Project: My SaaS App</span><br>
+                        <span style="color: var(--text-dim)">- Stack: Next.js 14, TypeScript, Tailwind</span><br>
+                        <span style="color: var(--text-dim)">- Never modify: /config/production.ts</span><br>
+                        <span style="color: var(--text-dim)">- Always run tests after changes</span><br>
+                        <span style="color: var(--text-dim)">- Prefer server components over client</span>
+                    </div>
+                </div>
+
+                <!-- Tool 2: Slash Commands -->
+                <div class="tool-card fade-in fade-in-delay-2">
+                    <div class="tool-card-header">
+                        <div class="tool-icon tool-icon-blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="4 17 10 11 4 5"/>
+                                <line x1="12" y1="19" x2="20" y2="19"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="tool-name">Slash Commands</span>
+                        </div>
+                    </div>
+                    <p class="tool-description">
+                        Store repetitive prompts as <code>.claude/commands/your-command.md</code>. Type <code>/your-command</code> and it executes. No memorization. No copy-paste. Build a library of overnight-ready prompts that you can invoke with a single slash. This is how you go from "thinking about what to type" to "launching a workflow in one keystroke."
+                    </p>
+                    <div class="tool-example">
+                        <span class="comment"># .claude/commands/overnight-review.md</span><br>
+                        <br>
+                        <span style="color: var(--text)">Review the entire codebase. Check for:</span><br>
+                        <span style="color: var(--text-dim)">- Unused imports</span><br>
+                        <span style="color: var(--text-dim)">- Type errors</span><br>
+                        <span style="color: var(--text-dim)">- Missing tests</span><br>
+                        <span style="color: var(--text-dim)">- Security issues</span><br>
+                        <span style="color: var(--text)">Write a report to MORNING_REPORT.md</span>
+                    </div>
+                </div>
+
+                <!-- Tool 3: SHARED_TASK_NOTES.md -->
+                <div class="tool-card fade-in fade-in-delay-3">
+                    <div class="tool-card-header">
+                        <div class="tool-icon tool-icon-amber">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                                <line x1="8" y1="7" x2="16" y2="7"/>
+                                <line x1="8" y1="11" x2="16" y2="11"/>
+                                <line x1="8" y1="15" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="tool-name">SHARED_TASK_NOTES.md</span>
+                        </div>
+                    </div>
+                    <p class="tool-description">
+                        External memory between iterations. Every loop reads this, every loop writes to it. This is what makes the difference between a dumb loop and an <strong>intelligent overnight agent</strong>. The agent logs what it did, what it learned, what failed, and what to try next. Used by continuous-claude, Ralph loops, and every serious overnight setup. Think of it as the agent's journal.
+                    </p>
+                    <div class="tool-example">
+                        <span class="comment"># SHARED_TASK_NOTES.md (auto-generated)</span><br>
+                        <br>
+                        <span style="color: var(--text)">## Iteration 3 &mdash; 02:47 AM</span><br>
+                        <span style="color: var(--text-dim)">- Fixed 12 type errors in /src/api</span><br>
+                        <span style="color: var(--text-dim)">- Tests passing: 94/97 (3 flaky)</span><br>
+                        <span style="color: var(--green)">- NEXT: investigate flaky test in auth.spec.ts</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+
+        <!-- ========================================================
+             SECTION 2: PHASE 1 — MANUAL FOUNDATION
+             ======================================================== -->
+        <section class="section fade-in" id="section-manual">
+            <div class="section-header">
+                <span class="section-dot dot-green"></span>
+                <h2 class="section-title">Phase 1 &mdash; Manual Foundation</h2>
+            </div>
+            <p class="section-subtitle">Build Your First Overnight Prompt</p>
+
+            <div class="steps-list">
+                <!-- Step 1 -->
+                <div class="step-card fade-in fade-in-delay-1">
+                    <div class="step-number step-number-green">1</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Create CLAUDE.md</h3>
+                        <p class="step-desc">
+                            In your project root. This is the file Claude Code reads automatically at the start of every session. Include: a brief project description, your coding standards, which files matter most, and what to never touch. Keep it under 200 instructions &mdash; concise and clear beats long and vague. This single file transforms Claude from a generic assistant into your project-specific co-pilot.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># Create it in your project root</span>
+<span class="cmd">touch</span> <span class="path">CLAUDE.md</span>
+
+<span class="comment"># Minimum viable content:</span>
+<span class="string">## Project: [Your Project Name]</span>
+<span class="string">## Stack: [Your Tech Stack]</span>
+<span class="string">## Rules:</span>
+<span class="string">- Never modify production config files</span>
+<span class="string">- Always write tests for new functions</span>
+<span class="string">- Use TypeScript strict mode</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card fade-in fade-in-delay-2">
+                    <div class="step-number step-number-green">2</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Create Your First Overnight Command</h3>
+                        <p class="step-desc">
+                            Create <code>.claude/commands/overnight-review.md</code> &mdash; your first slash command. This is a reusable prompt file. When you type <code>/overnight-review</code> in Claude Code, it reads and executes this entire file. Write it like you're giving instructions to a meticulous junior developer at 2AM.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># .claude/commands/overnight-review.md</span>
+
+<span class="string">Review the entire codebase. Check for:</span>
+<span class="string">- Unused imports and dead code</span>
+<span class="string">- Type errors and type safety issues</span>
+<span class="string">- Missing or inadequate test coverage</span>
+<span class="string">- Security vulnerabilities (exposed keys, SQL injection)</span>
+<span class="string">- Performance anti-patterns</span>
+
+<span class="string">Write a detailed report to MORNING_REPORT.md</span>
+<span class="string">Include: file paths, severity, suggested fixes.</span>
+<span class="string">Sort by severity (critical first).</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card fade-in fade-in-delay-3">
+                    <div class="step-number step-number-green">3</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Create a Daily Brief Command</h3>
+                        <p class="step-desc">
+                            Create <code>.claude/commands/daily-brief.md</code>. This is your morning intelligence report. It searches for the latest news on topics you care about, summarizes into bullet points, and saves it with today's date. Wake up to curated information instead of scrolling.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># .claude/commands/daily-brief.md</span>
+
+<span class="string">Search for the latest news and developments on:</span>
+<span class="string">- [Topic 1: e.g., AI automation tools]</span>
+<span class="string">- [Topic 2: e.g., your industry news]</span>
+<span class="string">- [Topic 3: e.g., competitor updates]</span>
+
+<span class="string">Summarize into bullet points.</span>
+<span class="string">Save to DAILY_BRIEF.md with today's date as header.</span>
+<span class="string">Max 20 bullets. Only include genuinely new info.</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-card fade-in fade-in-delay-4">
+                    <div class="step-number step-number-green">4</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Create Modular Rules</h3>
+                        <p class="step-desc">
+                            Create <code>.claude/rules/</code> with individual rule files. One per topic: <code>code_conventions.md</code>, <code>testing_rules.md</code>, <code>review_checklist.md</code>. Claude loads these automatically alongside CLAUDE.md. This keeps your instructions modular, organized, and easy to update without touching the main config.
+                        </p>
+                        <div class="step-code-block"><span class="cmd">mkdir</span> <span class="flag">-p</span> <span class="path">.claude/rules</span>
+
+<span class="comment"># .claude/rules/code_conventions.md</span>
+<span class="string">- Use camelCase for variables, PascalCase for components</span>
+<span class="string">- Max function length: 40 lines</span>
+<span class="string">- Always destructure props</span>
+
+<span class="comment"># .claude/rules/testing_rules.md</span>
+<span class="string">- Every new function needs a unit test</span>
+<span class="string">- Use describe/it blocks, not test()</span>
+<span class="string">- Mock external APIs, never hit real endpoints</span>
+
+<span class="comment"># .claude/rules/review_checklist.md</span>
+<span class="string">- Check for console.log statements</span>
+<span class="string">- Verify error handling on all async calls</span>
+<span class="string">- Ensure no hardcoded secrets</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="step-card fade-in fade-in-delay-5">
+                    <div class="step-number step-number-green">5</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Test Manually</h3>
+                        <p class="step-desc">
+                            Run <code>claude</code> in your terminal. Type <code>/overnight-review</code>. Watch it work. Review the output. Refine the prompt. This step is crucial &mdash; you need to see the agent work before you automate it. Iterate on the prompts until the output matches what you'd actually want to wake up to. <strong>This is your foundation.</strong> Everything else builds on this.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># Launch Claude Code in your project</span>
+<span class="cmd">cd</span> <span class="path">/your/project</span>
+<span class="cmd">claude</span>
+
+<span class="comment"># Type your slash command</span>
+<span class="string">/overnight-review</span>
+
+<span class="comment"># Review the output in MORNING_REPORT.md</span>
+<span class="comment"># Refine the prompt. Repeat until it's solid.</span>
+<span class="comment"># This manual loop IS the foundation.</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+
+        <!-- ========================================================
+             SECTION 3: PHASE 2 — SCHEDULED AUTOMATION
+             ======================================================== -->
+        <section class="section fade-in" id="section-scheduled">
+            <div class="section-header">
+                <span class="section-dot dot-blue"></span>
+                <h2 class="section-title">Phase 2 &mdash; Scheduled Automation</h2>
+            </div>
+            <p class="section-subtitle">Set It and Forget It</p>
+
+            <div class="steps-list">
+                <!-- Step 1 -->
+                <div class="step-card fade-in fade-in-delay-1">
+                    <div class="step-number step-number-blue">1</div>
+                    <div class="step-content">
+                        <h3 class="step-title">The Simple Cron Job</h3>
+                        <p class="step-desc">
+                            The most straightforward path. One line in your crontab, and Claude Code runs your overnight review at 2AM every single night. No dependencies, no frameworks, no overhead. Just a scheduled command that produces a report while you sleep. Start here before reaching for anything more complex.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># Edit your crontab</span>
+<span class="cmd">crontab</span> <span class="flag">-e</span>
+
+<span class="comment"># Add this line (runs at 2AM every night)</span>
+<span class="string">0 2 * * * cd /your/project && claude --prompt .claude/commands/overnight-review.md</span>
+
+<span class="comment"># Save and exit. That's it.</span>
+<span class="comment"># Check it's registered:</span>
+<span class="cmd">crontab</span> <span class="flag">-l</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card fade-in fade-in-delay-2">
+                    <div class="step-number step-number-blue">2</div>
+                    <div class="step-content">
+                        <h3 class="step-title">GitHub Actions Schedule</h3>
+                        <p class="step-desc">
+                            Create <code>.github/workflows/overnight.yml</code> with a cron schedule trigger. Uses <code>anthropics/claude-code-action</code>. Free for public repos. Runs in the cloud, so your machine can be off. The output appears as a GitHub Actions run you can check in the morning. Perfect for teams.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># .github/workflows/overnight.yml</span>
+<span class="keyword">name:</span> <span class="string">Overnight Review</span>
+<span class="keyword">on:</span>
+  <span class="keyword">schedule:</span>
+    <span class="string">- cron: '0 2 * * *'</span>  <span class="comment"># 2AM UTC daily</span>
+
+<span class="keyword">jobs:</span>
+  <span class="keyword">review:</span>
+    <span class="keyword">runs-on:</span> <span class="string">ubuntu-latest</span>
+    <span class="keyword">steps:</span>
+      <span class="string">- uses: actions/checkout@v4</span>
+      <span class="string">- uses: anthropics/claude-code-action@v1</span>
+        <span class="keyword">with:</span>
+          <span class="keyword">prompt:</span> <span class="string">"Run overnight review per .claude/commands/overnight-review.md"</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card fade-in fade-in-delay-3">
+                    <div class="step-number step-number-blue">3</div>
+                    <div class="step-content">
+                        <h3 class="step-title">runCLAUDErun</h3>
+                        <p class="step-desc">
+                            Free macOS native app. Point it at your project folder, set a schedule, and you're done. No terminal required. It provides a clean GUI for managing your overnight runs, viewing logs, and checking outputs. The easiest entry point for scheduled automation if you're on a Mac.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step-card fade-in fade-in-delay-4">
+                    <div class="step-number step-number-blue">4</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Windows Task Scheduler</h3>
+                        <p class="step-desc">
+                            For Windows users: open Task Scheduler, create a basic task, set the trigger to 2AM daily, and point the action at a batch script that launches Claude Code. Same concept as cron, different OS. Write a simple <code>.bat</code> file that navigates to your project and runs the command.
+                        </p>
+                        <div class="step-code-block"><span class="comment">:: overnight-review.bat</span>
+<span class="cmd">cd</span> <span class="path">C:\Users\you\projects\your-project</span>
+<span class="cmd">claude</span> <span class="flag">--prompt</span> <span class="path">.claude\commands\overnight-review.md</span>
+
+<span class="comment">:: Task Scheduler Settings:</span>
+<span class="comment">:: Trigger: Daily, 2:00 AM</span>
+<span class="comment">:: Action: Start a program -> overnight-review.bat</span>
+<span class="comment">:: Conditions: Wake computer to run this task</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="step-card fade-in fade-in-delay-5">
+                    <div class="step-number step-number-blue">5</div>
+                    <div class="step-content">
+                        <h3 class="step-title">The Morning Delivery</h3>
+                        <p class="step-desc">
+                            Set up a second scheduled task at 7AM that sends <code>MORNING_REPORT.md</code> to your Slack channel or email. Now you wake up to results &mdash; not tasks. The overnight agent works while you sleep, and the morning delivery puts the summary in front of you before your first coffee. Chain the two and the loop is closed.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># Morning delivery cron (7AM)</span>
+<span class="string">0 7 * * * cat /your/project/MORNING_REPORT.md | mail -s "Overnight Report" you@email.com</span>
+
+<span class="comment"># Or send to Slack via webhook:</span>
+<span class="string">0 7 * * * curl -X POST -H 'Content-type: application/json' \</span>
+  <span class="string">--data "{\"text\":\"$(cat /your/project/MORNING_REPORT.md)\"}" \</span>
+  <span class="string">https://hooks.slack.com/services/YOUR/WEBHOOK/URL</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+
+        <!-- ========================================================
+             SECTION 4: PHASE 3 — AUTONOMOUS ROUTINES
+             ======================================================== -->
+        <section class="section fade-in" id="section-autonomous">
+            <div class="section-header">
+                <span class="section-dot dot-amber"></span>
+                <h2 class="section-title">Phase 3 &mdash; Autonomous Routines</h2>
+            </div>
+            <p class="section-subtitle">The Loop That Never Stops</p>
+
+            <div class="steps-list">
+                <!-- Step 1: Ralph Loop -->
+                <div class="step-card fade-in fade-in-delay-1">
+                    <div class="step-number step-number-amber">1</div>
+                    <div class="step-content">
+                        <h3 class="step-title">The Ralph Loop</h3>
+                        <p class="step-desc">
+                            The most famous pattern in overnight Claude automation. Create a <code>task.md</code> with your objective and clear success criteria. Then run it in a while loop. Claude iterates &mdash; reading, coding, testing, fixing &mdash; until the task is done. Geoffrey Huntley ran this pattern for 3 months straight. The key is <strong>tight success criteria</strong> so the agent knows when to stop.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># task.md &mdash; define what "done" looks like</span>
+<span class="string">Objective: Migrate all API routes from Express to Hono</span>
+<span class="string">Success Criteria:</span>
+<span class="string">  - All routes in /src/api use Hono syntax</span>
+<span class="string">  - All tests pass</span>
+<span class="string">  - No Express imports remain</span>
+<span class="string">  - Type checking passes with zero errors</span>
+
+<span class="comment"># The loop</span>
+<span class="keyword">while</span> <span class="cmd">true</span>; <span class="keyword">do</span>
+  <span class="cmd">claude</span> <span class="flag">--prompt</span> <span class="path">task.md</span> <span class="flag">--output-format</span> <span class="string">json</span> 2>/dev/null
+<span class="keyword">done</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 2: continuous-claude -->
+                <div class="step-card fade-in fade-in-delay-2">
+                    <div class="step-number step-number-amber">2</div>
+                    <div class="step-content">
+                        <h3 class="step-title">continuous-claude</h3>
+                        <p class="step-desc">
+                            A purpose-built tool for autonomous overnight work. Install it globally, point it at your repo, and run <code>continuous-claude start</code>. It creates branches, writes code, pushes PRs, waits for CI to pass, merges on green, and repeats. One user reported 20 PRs created over a single weekend with zero intervention. The PRs are reviewable, the CI is the guardrail, and you control what merges.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># Install</span>
+<span class="cmd">npm</span> <span class="flag">install -g</span> <span class="string">continuous-claude</span>
+
+<span class="comment"># Configure (creates .continuous-claude.json)</span>
+<span class="cmd">continuous-claude</span> <span class="flag">init</span>
+
+<span class="comment"># Run</span>
+<span class="cmd">continuous-claude</span> <span class="flag">start</span>
+
+<span class="comment"># What it does:</span>
+<span class="comment"># 1. Reads PLAN.md for next task</span>
+<span class="comment"># 2. Creates feature branch</span>
+<span class="comment"># 3. Writes code + tests</span>
+<span class="comment"># 4. Pushes PR</span>
+<span class="comment"># 5. Waits for CI</span>
+<span class="comment"># 6. Merges on green</span>
+<span class="comment"># 7. Picks up next task. Repeat.</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Multi-Agent Swarm -->
+                <div class="step-card fade-in fade-in-delay-3">
+                    <div class="step-number step-number-amber">3</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Multi-Agent Swarm</h3>
+                        <p class="step-desc">
+                            The advanced tier. Tools like <code>claude-flow</code> or <code>ccswarm</code> let you run multiple Claude agents simultaneously. Each agent gets its own worktree &mdash; an isolated copy of your repo &mdash; so they can't conflict. A coordinator agent dispatches tasks, and workers execute in parallel. 12 agents can rebuild an entire frontend overnight, producing 10,000+ lines of coordinated changes.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># claude-flow: orchestrated multi-agent</span>
+<span class="cmd">npx</span> <span class="string">claude-flow</span> <span class="flag">start</span> <span class="string">"Rebuild the dashboard with 6 agents"</span>
+
+<span class="comment"># ccswarm: parallel worktree agents</span>
+<span class="cmd">npx</span> <span class="string">ccswarm</span> <span class="flag">--agents 12</span> <span class="flag">--task</span> <span class="path">tasks/</span>
+
+<span class="comment"># Each agent gets:</span>
+<span class="comment"># - Its own git worktree (isolated branch)</span>
+<span class="comment"># - A specific task from the coordinator</span>
+<span class="comment"># - Access to shared context via SHARED_TASK_NOTES.md</span>
+<span class="comment"># - Automatic PR creation when done</span></div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Heartbeat Pattern -->
+                <div class="step-card fade-in fade-in-delay-4">
+                    <div class="step-number step-number-amber">4</div>
+                    <div class="step-content">
+                        <h3 class="step-title">The Heartbeat Pattern</h3>
+                        <p class="step-desc">
+                            The agent wakes every hour. Checks a task queue (a simple file or database). Executes the top-priority task. Reports status. Goes back to sleep. Repeat. Perfect for business operations that need continuous monitoring &mdash; like checking for new support tickets, scanning for price changes, or processing incoming data. Low overhead, high reliability.
+                        </p>
+                        <div class="step-code-block"><span class="comment"># Heartbeat: run every hour</span>
+<span class="string">0 * * * * cd /your/project && claude --prompt .claude/commands/heartbeat.md</span>
+
+<span class="comment"># .claude/commands/heartbeat.md</span>
+<span class="string">1. Read TASK_QUEUE.md</span>
+<span class="string">2. Execute the top uncompleted task</span>
+<span class="string">3. Mark it as done with timestamp</span>
+<span class="string">4. Log results to HEARTBEAT_LOG.md</span>
+<span class="string">5. If errors, add to ERRORS.md with context</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+
+        <!-- ========================================================
+             SECTION 5: THE COMPOUND EFFECT
+             ======================================================== -->
+        <section class="section fade-in" id="section-compound">
+            <div class="section-header">
+                <span class="section-dot dot-purple"></span>
+                <h2 class="section-title">The Compound Effect</h2>
+            </div>
+            <p class="section-subtitle">How Each Phase Builds on the Last</p>
+
+            <div class="progression-ladder">
+                <!-- Phase 1 -->
+                <div class="ladder-step fade-in fade-in-delay-1">
+                    <div class="ladder-dot ladder-dot-green">
+                        <div class="ladder-dot-inner"></div>
+                    </div>
+                    <div class="ladder-content">
+                        <div class="ladder-phase ladder-phase-green">Phase 1 &mdash; Manual</div>
+                        <div class="ladder-label">You Learn What Works</div>
+                        <p class="ladder-desc">
+                            Refine your prompts. Build muscle memory. Discover which instructions produce great output and which need iteration. Every manual run teaches you something about how to communicate with the agent. This phase is where you build the intuition that makes everything else work.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Phase 2 -->
+                <div class="ladder-step fade-in fade-in-delay-2">
+                    <div class="ladder-dot ladder-dot-blue">
+                        <div class="ladder-dot-inner"></div>
+                    </div>
+                    <div class="ladder-content">
+                        <div class="ladder-phase ladder-phase-blue">Phase 2 &mdash; Scheduled</div>
+                        <div class="ladder-label">Consistency Compounds</div>
+                        <p class="ladder-desc">
+                            Every night, something runs. Results accumulate. Your codebase gets cleaner, your briefs get sharper, your morning workflow gets faster. The power isn't in any single run &mdash; it's in the compounding effect of running every single night without fail. Consistency is the multiplier.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Phase 3 -->
+                <div class="ladder-step fade-in fade-in-delay-3">
+                    <div class="ladder-dot ladder-dot-amber">
+                        <div class="ladder-dot-inner"></div>
+                    </div>
+                    <div class="ladder-content">
+                        <div class="ladder-phase ladder-phase-amber">Phase 3 &mdash; Autonomous</div>
+                        <div class="ladder-label">The Machine Works for You</div>
+                        <p class="ladder-desc">
+                            You design the objective. The agent executes. PRs appear in your inbox. Reports land in your Slack. Code gets written, tested, and merged while you're asleep. You shift from doing the work to designing the systems that do the work. That's the real leverage.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Phase 4 -->
+                <div class="ladder-step fade-in fade-in-delay-4">
+                    <div class="ladder-dot ladder-dot-purple">
+                        <div class="ladder-dot-inner"></div>
+                    </div>
+                    <div class="ladder-content">
+                        <div class="ladder-phase ladder-phase-purple">Phase 4 &mdash; Ecosystem</div>
+                        <div class="ladder-label">The Compound Machine</div>
+                        <p class="ladder-desc">
+                            Multiple routines running in parallel. Morning brief + overnight code review + research aggregation + content generation. Each routine feeds the others. The research agent discovers a new library; the code agent integrates it; the review agent checks it; the brief agent reports it. An ecosystem, not a tool.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quote Callout -->
+            <div class="quote-callout fade-in">
+                <p class="quote-text">
+                    The best overnight workflows are tightly bounded, have clear success criteria, and use existing review mechanisms (PRs, CI) as guardrails. The technology works &mdash; the challenge is designing the right handoff.
+                </p>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+
+        <!-- ========================================================
+             SECTION 6: REAL EXAMPLES THAT WORK
+             ======================================================== -->
+        <section class="section fade-in" id="section-examples">
+            <div class="section-header">
+                <span class="section-dot dot-cyan"></span>
+                <h2 class="section-title">Real Examples That Work</h2>
+            </div>
+            <p class="section-subtitle">Verified Case Studies from the Community</p>
+
+            <div class="case-grid">
+                <!-- Case 1: NERIAH Pattern -->
+                <div class="case-card fade-in fade-in-delay-1">
+                    <span class="case-tag case-tag-cyan">INTELLIGENCE</span>
+                    <h3 class="case-name">NERIAH Pattern</h3>
+                    <p class="case-desc">
+                        Daily brief agent that scans 40+ sources, filters for relevance based on pre-defined topics and keywords, and outputs a curated intelligence brief. Runs overnight, ready by morning. Replaces hours of manual scanning with a single automated pipeline.
+                    </p>
+                    <div class="case-stat case-stat-cyan">Saves 2+ hours daily</div>
+                </div>
+
+                <!-- Case 2: Wiz Agent -->
+                <div class="case-card fade-in fade-in-delay-2">
+                    <span class="case-tag case-tag-amber">DEPLOYMENT</span>
+                    <h3 class="case-name">Wiz Agent</h3>
+                    <p class="case-desc">
+                        Three-phase overnight cycle. Plans at 10PM &mdash; reviewing the task queue and prioritizing. Executes 11PM to 4AM &mdash; writing code, running tests, fixing failures. Reports at 5AM &mdash; summarizing everything accomplished. Deploys to production before sunrise.
+                    </p>
+                    <div class="case-stat case-stat-amber">10PM plan &rarr; 5AM deploy</div>
+                </div>
+
+                <!-- Case 3: Weekend Refactor -->
+                <div class="case-card fade-in fade-in-delay-3">
+                    <span class="case-tag case-tag-green">REFACTOR</span>
+                    <h3 class="case-name">Weekend Refactor</h3>
+                    <p class="case-desc">
+                        continuous-claude created 20 pull requests from Friday night to Monday morning. Each PR had CI passing. Full codebase modernization &mdash; migrating patterns, updating dependencies, improving types &mdash; completed autonomously over a single weekend with zero human intervention.
+                    </p>
+                    <div class="case-stat case-stat-green">20 PRs &middot; 1 weekend &middot; 0 intervention</div>
+                </div>
+
+                <!-- Case 4: HackerNews Bot -->
+                <div class="case-card fade-in fade-in-delay-4">
+                    <span class="case-tag case-tag-purple">CONTENT</span>
+                    <h3 class="case-name">HackerNews Bot</h3>
+                    <p class="case-desc">
+                        Fetches the top story from HackerNews, writes a concise summary, generates a cover image via the Ideogram API, and publishes to X (Twitter). Runs every night, fully automated. Builds an audience while you sleep. The entire pipeline is a single overnight routine.
+                    </p>
+                    <div class="case-stat case-stat-purple">Fetch &rarr; Summarize &rarr; Image &rarr; Publish</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom spacer for fixed nav -->
+        <div style="height: 80px;"></div>
+
+    </div><!-- end page-wrapper -->
+
+
+    <!-- ============================================================
+         FIXED BOTTOM NAV
+         ============================================================ -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="index.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        <line x1="11" y1="8" x2="11" y2="14"/>
+                        <line x1="8" y1="11" x2="14" y2="11"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Intelligence</span>
+            </a>
+            <a href="getting-started.html" class="nav-item active">
+                <span class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Playbook</span>
+            </a>
+            <a href="routine-cards.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Routines</span>
+            </a>
+            <a href="the-complete-path.html" class="nav-item">
+                <span class="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                    </svg>
+                </span>
+                <span class="nav-label">Zero to Auto</span>
+            </a>
+        </div>
+    </nav>
+
+
+    <!-- ============================================================
+         JAVASCRIPT
+         ============================================================ -->
+    <script>
+        /* ===========================================================
+           SCROLL PROGRESS BAR
+           =========================================================== */
+        (function initScrollProgress() {
+            const bar = document.getElementById('scrollProgress');
+            if (!bar) return;
+
+            function updateProgress() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+                bar.style.width = progress + '%';
+            }
+
+            window.addEventListener('scroll', updateProgress, { passive: true });
+            updateProgress();
+        })();
+
+
+        /* ===========================================================
+           INTERSECTION OBSERVER — FADE-IN ANIMATIONS
+           =========================================================== */
+        (function initFadeInObserver() {
+            const elements = document.querySelectorAll('.fade-in');
+            if (!elements.length) return;
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px 0px -60px 0px',
+                threshold: 0.1
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            elements.forEach(function(el) {
+                observer.observe(el);
+            });
+        })();
+
+
+        /* ===========================================================
+           SMOOTH SCROLL FOR INTERNAL LINKS
+           =========================================================== */
+        (function initSmoothScroll() {
+            document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const target = document.getElementById(targetId);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+        })();
+
+
+        /* ===========================================================
+           CARD HOVER TILT EFFECT (subtle)
+           =========================================================== */
+        (function initCardTilt() {
+            const cards = document.querySelectorAll('.tool-card, .step-card, .case-card, .ladder-content');
+
+            cards.forEach(function(card) {
+                card.addEventListener('mousemove', function(e) {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -1.5;
+                    const rotateY = ((x - centerX) / centerX) * 1.5;
+
+                    card.style.transform = 'perspective(1000px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) translateY(-2px)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+                });
+            });
+        })();
+
+
+        /* ===========================================================
+           KEYBOARD NAVIGATION BETWEEN SECTIONS
+           =========================================================== */
+        (function initKeyboardNav() {
+            const sections = [
+                'hero',
+                'section-tools',
+                'section-manual',
+                'section-scheduled',
+                'section-autonomous',
+                'section-compound',
+                'section-examples'
+            ];
+            let currentSection = 0;
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown' || e.key === 'j') {
+                    e.preventDefault();
+                    currentSection = Math.min(currentSection + 1, sections.length - 1);
+                    const el = document.getElementById(sections[currentSection]);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else if (e.key === 'ArrowUp' || e.key === 'k') {
+                    e.preventDefault();
+                    currentSection = Math.max(currentSection - 1, 0);
+                    const el = document.getElementById(sections[currentSection]);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+
+            /* Update currentSection based on scroll position */
+            window.addEventListener('scroll', function() {
+                const scrollPos = window.pageYOffset + 200;
+                for (let i = sections.length - 1; i >= 0; i--) {
+                    const el = document.getElementById(sections[i]);
+                    if (el && el.offsetTop <= scrollPos) {
+                        currentSection = i;
+                        break;
+                    }
+                }
+            }, { passive: true });
+        })();
+
+
+        /* ===========================================================
+           DYNAMIC CODE BLOCK COPY ON CLICK
+           =========================================================== */
+        (function initCodeCopy() {
+            const codeBlocks = document.querySelectorAll('.step-code-block, .tool-example');
+
+            codeBlocks.forEach(function(block) {
+                block.style.cursor = 'pointer';
+                block.title = 'Click to copy';
+
+                block.addEventListener('click', function() {
+                    const text = block.innerText || block.textContent;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(function() {
+                            showCopyToast(block);
+                        });
+                    }
+                });
+            });
+
+            function showCopyToast(element) {
+                const toast = document.createElement('div');
+                toast.textContent = 'Copied';
+                toast.style.cssText = [
+                    'position: absolute',
+                    'top: 8px',
+                    'right: 12px',
+                    'font-family: var(--font-body)',
+                    'font-size: 11px',
+                    'font-weight: 600',
+                    'color: var(--green)',
+                    'background: rgba(30,215,96,0.1)',
+                    'border: 1px solid rgba(30,215,96,0.2)',
+                    'padding: 3px 10px',
+                    'border-radius: 999px',
+                    'z-index: 10',
+                    'pointer-events: none',
+                    'animation: toastFade 1.5s ease forwards'
+                ].join(';');
+
+                element.style.position = 'relative';
+                element.appendChild(toast);
+
+                setTimeout(function() {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 1600);
+            }
+
+            /* Add toast animation */
+            const style = document.createElement('style');
+            style.textContent = '@keyframes toastFade { 0% { opacity: 0; transform: translateY(4px); } 20% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-4px); } }';
+            document.head.appendChild(style);
+        })();
+
+
+        /* ===========================================================
+           NAV HIGHLIGHT ON SCROLL
+           =========================================================== */
+        (function initNavHighlight() {
+            /* The active state is static for this page since
+               bottom-nav links to other pages. The "Playbook" tab
+               stays active. No dynamic updating needed. */
+        })();
+
+
+        /* ===========================================================
+           PREFERS-REDUCED-MOTION RESPECT
+           =========================================================== */
+        (function respectReducedMotion() {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelectorAll('.ambient-orb').forEach(function(orb) {
+                    orb.style.animation = 'none';
+                });
+                document.querySelectorAll('.fade-in').forEach(function(el) {
+                    el.classList.add('visible');
+                    el.style.transition = 'none';
+                });
+            }
+        })();
+
+
+        /* ===========================================================
+           CONSOLE EASTER EGG
+           =========================================================== */
+        (function consoleGreeting() {
+            console.log(
+                '%c The Foundation Playbook %c Nighttime AI Routines ',
+                'background: #6366f1; color: #fff; padding: 4px 8px; border-radius: 4px 0 0 4px; font-weight: bold;',
+                'background: #1a1a1a; color: #e8e8e8; padding: 4px 8px; border-radius: 0 4px 4px 0;'
+            );
+            console.log('Built for overnight automation mastery.');
+        })();
+    </script>
+
+</body>
+</html>

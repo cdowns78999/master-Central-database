@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<!-- Agent B will inject overlay.css + overlay.js linked references. Tile click → fullscreen overlay of the emulated sample + white X to close. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sharon — Sample Gallery</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --line: #e1e4ea;
+    --tile: #ffffff;
+    --accent: #4a6da7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 32px;
+  }
+  header.gallery-head {
+    max-width: 1200px;
+    margin: 0 auto 24px;
+  }
+  header.gallery-head h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  header.gallery-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .gallery-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .tile {
+    background: var(--tile);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(20, 30, 50, 0.08);
+    border-color: var(--accent);
+  }
+  .thumb {
+    height: 160px;
+    background: linear-gradient(135deg, #e9ecf2 0%, #d6dbe5 100%);
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .thumb-inner {
+    position: absolute;
+    inset: 12px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
+    transform: scale(0.85);
+    transform-origin: top left;
+  }
+  .tile-meta {
+    padding: 12px 14px 14px;
+  }
+  .tile-meta .num {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .tile-meta h3 {
+    margin: 2px 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .tile-meta p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .emulated {
+    display: none;
+  }
+  .tile.open .emulated {
+    display: block;
+  }
+
+  /* ---------- shared emulated frame ---------- */
+  .emu {
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    font-size: 12px;
+    color: #1f2430;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ---------- Sample 1: Sidebar Library Browser ---------- */
+  .sample-1 .emu { background: #fbfbfd; }
+  .sample-1 .s1-wrap { display: flex; flex: 1; }
+  .sample-1 .s1-side { width: 180px; background: #ececf1; border-right: 1px solid #d6d8de; padding: 10px 0; font-size: 11px; }
+  .sample-1 .s1-section { padding: 4px 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; font-size: 9px; margin-top: 8px; }
+  .sample-1 .s1-item { padding: 4px 14px; cursor: pointer; }
+  .sample-1 .s1-item.active { background: #4a6da7; color: #fff; }
+  .sample-1 .s1-main { flex: 1; padding: 0; overflow: hidden; }
+  .sample-1 .s1-row { display: grid; grid-template-columns: 24px 2fr 1.4fr 1fr 60px; padding: 6px 14px; border-bottom: 1px solid #eef0f4; font-size: 11px; }
+  .sample-1 .s1-row.head { background: #f4f5f7; color: #6b7280; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #d6d8de; }
+  .sample-1 .s1-row:nth-child(odd):not(.head) { background: #fafbfd; }
+
+  /* ---------- Sample 2: Grid Card Collection ---------- */
+  .sample-2 .emu { background: #f7f7f9; }
+  .sample-2 .s2-wrap { display: flex; flex: 1; }
+  .sample-2 .s2-side { width: 160px; background: #2c2e36; color: #c8cad1; padding: 12px 0; font-size: 11px; }
+  .sample-2 .s2-side .lbl { padding: 3px 14px; cursor: pointer; }
+  .sample-2 .s2-side .lbl.active { background: #3b3e48; color: #fff; border-left: 2px solid #c89b5a; padding-left: 12px; }
+  .sample-2 .s2-side .group { padding: 10px 14px 4px; color: #7a7d86; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sample-2 .s2-main { flex: 1; padding: 14px; overflow: hidden; }
+  .sample-2 .s2-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .sample-2 .s2-card { background: #fff; border: 1px solid #e1e4ea; border-radius: 6px; padding: 8px; }
+  .sample-2 .s2-cover { aspect-ratio: 1; background: linear-gradient(135deg, #c89b5a, #8a6238); border-radius: 3px; margin-bottom: 6px; }
+  .sample-2 .s2-card:nth-child(2) .s2-cover { background: linear-gradient(135deg, #4a6da7, #2c4570); }
+  .sample-2 .s2-card:nth-child(3) .s2-cover { background: linear-gradient(135deg, #6e8f6e, #3f5f3f); }
+  .sample-2 .s2-card:nth-child(4) .s2-cover { background: linear-gradient(135deg, #a85d5d, #6e3838); }
+  .sample-2 .s2-card:nth-child(6) .s2-cover { background: linear-gradient(135deg, #8a7da7, #5a4d77); }
+  .sample-2 .s2-card:nth-child(7) .s2-cover { background: linear-gradient(135deg, #5a6770, #2e353c); }
+  .sample-2 .s2-title { font-size: 10px; font-weight: 600; }
+  .sample-2 .s2-sub { font-size: 9px; color: #6b7280; }
+
+  /* ---------- Sample 3: Split-Pane Detail View ---------- */
+  .sample-3 .emu { background: #fff; }
+  .sample-3 .s3-wrap { display: flex; flex: 1; }
+  .sample-3 .s3-side { width: 140px; background: #f0f1f5; border-right: 1px solid #d6d8de; padding: 10px 0; font-size: 11px; }
+  .sample-3 .s3-side .it { padding: 4px 12px; }
+  .sample-3 .s3-side .it.on { background: #d8dde7; font-weight: 600; }
+  .sample-3 .s3-list { width: 220px; border-right: 1px solid #d6d8de; overflow: hidden; }
+  .sample-3 .s3-listrow { padding: 8px 12px; border-bottom: 1px solid #eef0f4; font-size: 11px; }
+  .sample-3 .s3-listrow.on { background: #4a6da7; color: #fff; }
+  .sample-3 .s3-listrow .sub { font-size: 10px; opacity: 0.7; }
+  .sample-3 .s3-detail { flex: 1; padding: 14px; }
+  .sample-3 .s3-detail h2 { margin: 0 0 4px; font-size: 16px; }
+  .sample-3 .s3-detail .meta { color: #6b7280; font-size: 11px; margin-bottom: 10px; }
+  .sample-3 .s3-detail .field { display: flex; padding: 4px 0; border-bottom: 1px dotted #e1e4ea; font-size: 11px; }
+  .sample-3 .s3-detail .field b { width: 90px; color: #6b7280; font-weight: 500; }
+
+  /* ---------- Sample 4: Top Nav + Table ---------- */
+  .sample-4 .emu { background: #fafbfc; }
+  .sample-4 .s4-tabs { display: flex; background: #2a2d36; padding: 0 12px; border-bottom: 1px solid #1d1f26; }
+  .sample-4 .s4-tab { padding: 8px 14px; color: #9ea2ab; font-size: 11px; cursor: pointer; border-bottom: 2px solid transparent; }
+  .sample-4 .s4-tab.on { color: #fff; border-bottom-color: #d99e3a; }
+  .sample-4 .s4-tools { padding: 8px 12px; background: #f0f1f5; border-bottom: 1px solid #d6d8de; font-size: 10px; color: #6b7280; }
+  .sample-4 .s4-tbl { flex: 1; overflow: hidden; }
+  .sample-4 .s4-row { display: grid; grid-template-columns: 30px 2fr 1.2fr 1fr 80px 70px; padding: 5px 12px; font-size: 11px; border-bottom: 1px solid #edeff3; }
+  .sample-4 .s4-row.head { background: #fff; color: #6b7280; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #d6d8de; padding: 7px 12px; }
+  .sample-4 .s4-row:nth-child(even):not(.head) { background: #f4f5f8; }
+  .sample-4 .s4-tag { display: inline-block; background: #e1e8f3; color: #4a6da7; padding: 1px 6px; border-radius: 3px; font-size: 9px; }
+  .sample-4 .s4-star { color: #d99e3a; }
+
+  /* ---------- Sample 5: Mini-Player Dashboard ---------- */
+  .sample-5 .emu { background: #f5f6f9; }
+  .sample-5 .s5-bar { background: linear-gradient(180deg, #3a3e4a, #2a2d36); color: #fff; padding: 8px 14px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #1d1f26; }
+  .sample-5 .s5-controls { display: flex; gap: 6px; }
+  .sample-5 .s5-btn { width: 22px; height: 22px; background: #4a4e5a; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; }
+  .sample-5 .s5-now { flex: 1; background: rgba(255,255,255,0.08); border-radius: 4px; padding: 4px 10px; font-size: 11px; }
+  .sample-5 .s5-now .lbl { font-size: 9px; color: #9ea2ab; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sample-5 .s5-search { background: rgba(255,255,255,0.12); padding: 4px 10px; border-radius: 4px; font-size: 11px; color: #c8cad1; width: 160px; }
+  .sample-5 .s5-body { display: flex; flex: 1; }
+  .sample-5 .s5-left { width: 220px; padding: 10px; border-right: 1px solid #d6d8de; background: #fff; }
+  .sample-5 .s5-leftrow { padding: 5px 8px; font-size: 11px; border-radius: 3px; }
+  .sample-5 .s5-leftrow.on { background: #e1e8f3; color: #4a6da7; }
+  .sample-5 .s5-right { flex: 1; padding: 14px; }
+  .sample-5 .s5-card { background: #fff; border: 1px solid #e1e4ea; border-radius: 6px; padding: 12px; margin-bottom: 8px; font-size: 11px; }
+  .sample-5 .s5-card h4 { margin: 0 0 4px; font-size: 12px; }
+
+  /* ---------- Sample 6: Stacked Sections with Covers ---------- */
+  .sample-6 .emu { background: #fbfbfd; }
+  .sample-6 .s6-top { padding: 10px 16px; border-bottom: 1px solid #e1e4ea; background: #fff; font-size: 13px; font-weight: 600; }
+  .sample-6 .s6-scroll { flex: 1; overflow-y: auto; padding: 8px 16px 16px; }
+  .sample-6 .s6-section { margin-bottom: 14px; }
+  .sample-6 .s6-shead { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 0; }
+  .sample-6 .s6-shead h4 { margin: 0; font-size: 12px; }
+  .sample-6 .s6-shead a { font-size: 10px; color: #6e8f6e; }
+  .sample-6 .s6-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .sample-6 .s6-item { font-size: 10px; }
+  .sample-6 .s6-cover { aspect-ratio: 1; background: linear-gradient(135deg, #6e8f6e, #3f5f3f); border-radius: 4px; margin-bottom: 4px; }
+  .sample-6 .s6-section:nth-child(2) .s6-cover { background: linear-gradient(135deg, #4a6da7, #2c4570); }
+  .sample-6 .s6-section:nth-child(3) .s6-cover { background: linear-gradient(135deg, #c89b5a, #8a6238); }
+  .sample-6 .s6-section:nth-child(4) .s6-cover { background: linear-gradient(135deg, #a85d5d, #6e3838); }
+  .sample-6 .s6-title { font-weight: 600; }
+  .sample-6 .s6-sub { color: #6b7280; font-size: 9px; }
+</style>
+</head>
+<body>
+
+<header class="gallery-head">
+  <h1>Sharon — Sample Gallery</h1>
+  <p>iTunes-inspired condensed cataloging dashboard layouts. Click a tile to open the fullscreen preview.</p>
+</header>
+
+<div class="gallery-grid">
+
+  <!-- ============ Sample 1 ============ -->
+  <div class="tile sample-1" data-sample-id="sample-1">
+    <div class="thumb"><div class="thumb-inner"><div class="emu">
+      <div class="s1-wrap">
+        <div class="s1-side">
+          <div class="s1-section">Library</div>
+          <div class="s1-item active">Albums</div>
+          <div class="s1-item">Artists</div>
+          <div class="s1-item">Genres</div>
+        </div>
+        <div class="s1-main">
+          <div class="s1-row head"><div></div><div>Title</div><div>Artist</div><div>Genre</div><div>Year</div></div>
+          <div class="s1-row"><div></div><div>Blackwater</div><div>K. Holm</div><div>Jazz</div><div>1998</div></div>
+          <div class="s1-row"><div></div><div>Pale Light</div><div>Anders</div><div>Folk</div><div>2002</div></div>
+        </div>
+      </div>
+    </div></div></div>
+    <div class="tile-meta">
+      <div class="num">Sample 01</div>
+      <h3>Sidebar Library Browser</h3>
+      <p>Left sections (Albums / Artists / Genres / Collections) feed a dense right-pane list.</p>
+    </div>
+    <div class="emulated"><div class="emu">
+      <div class="s1-wrap">
+        <div class="s1-side">
+          <div class="s1-section">Library</div>
+          <div class="s1-item active">Albums</div>
+          <div class="s1-item">Artists</div>
+          <div class="s1-item">Genres</div>
+          <div class="s1-item">Composers</div>
+          <div class="s1-section">Collections</div>
+          <div class="s1-item">Recently Added</div>
+          <div class="s1-item">Needs Tags</div>
+          <div class="s1-item">Archive</div>
+          <div class="s1-section">Smart Lists</div>
+          <div class="s1-item">High Rating</div>
+          <div class="s1-item">Unfiled</div>
+        </div>
+        <div class="s1-main">
+          <div class="s1-row head"><div>#</div><div>Title</div><div>Artist</div><div>Genre</div><div>Year</div></div>
+          <div class="s1-row"><div>1</div><div>Blackwater Bend</div><div>K. Holm</div><div>Jazz</div><div>1998</div></div>
+          <div class="s1-row"><div>2</div><div>Pale Light Returning</div><div>Anders Volk</div><div>Folk</div><div>2002</div></div>
+          <div class="s1-row"><div>3</div><div>Quiet Engine Room</div><div>Ferns</div><div>Ambient</div><div>2011</div></div>
+          <div class="s1-row"><div>4</div><div>Steeplejack</div><div>The Mendel Co.</div><div>Indie</div><div>2017</div></div>
+          <div class="s1-row"><div>5</div><div>Honest Mile</div><div>O. Vaughn</div><div>Folk</div><div>2019</div></div>
+          <div class="s1-row"><div>6</div><div>Slowburn Holiday</div><div>Cassia</div><div>Pop</div><div>2020</div></div>
+          <div class="s1-row"><div>7</div><div>Cold Cathedral</div><div>Petros</div><div>Classical</div><div>1989</div></div>
+          <div class="s1-row"><div>8</div><div>Driftwood Theatre</div><div>R. Maes</div><div>Jazz</div><div>2003</div></div>
+          <div class="s1-row"><div>9</div><div>The Long Garage</div><div>Lowlands</div><div>Rock</div><div>2014</div></div>
+          <div class="s1-row"><div>10</div><div>Hollow Whistle</div><div>K. Holm</div><div>Jazz</div><div>2001</div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ Sample 2 ============ -->
+  <div class="tile sample-2" data-sample-id="sample-2">
+    <div class="thumb"><div class="thumb-inner"><div class="emu">
+      <div class="s2-wrap">
+        <div class="s2-side">
+          <div class="group">Library</div>
+          <div class="lbl active">All Items</div>
+          <div class="lbl">Recent</div>
+        </div>
+        <div class="s2-main"><div class="s2-grid">
+          <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Atlas</div></div>
+          <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Dune</div></div>
+          <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Fern</div></div>
+          <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Iron</div></div>
+        </div></div>
+      </div>
+    </div></div></div>
+    <div class="tile-meta">
+      <div class="num">Sample 02</div>
+      <h3>Grid Card Collection</h3>
+      <p>Sidebar plus a grid of cover-cards with title and subtitle below — visual-first cataloging.</p>
+    </div>
+    <div class="emulated"><div class="emu">
+      <div class="s2-wrap">
+        <div class="s2-side">
+          <div class="group">Library</div>
+          <div class="lbl active">All Items</div>
+          <div class="lbl">Recently Added</div>
+          <div class="lbl">Favorites</div>
+          <div class="lbl">Needs Review</div>
+          <div class="group">Tags</div>
+          <div class="lbl">Vinyl</div>
+          <div class="lbl">Imports</div>
+          <div class="lbl">Demos</div>
+          <div class="group">Status</div>
+          <div class="lbl">Cataloged</div>
+          <div class="lbl">Pending</div>
+        </div>
+        <div class="s2-main">
+          <div class="s2-grid">
+            <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Atlas</div><div class="s2-sub">K. Holm · 1998</div></div>
+            <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Dune Sketches</div><div class="s2-sub">Anders · 2002</div></div>
+            <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Fern Hours</div><div class="s2-sub">Ferns · 2011</div></div>
+            <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Iron Coast</div><div class="s2-sub">Mendel · 2017</div></div>
+            <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Pale Houses</div><div class="s2-sub">Vaughn · 2019</div></div>
+            <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Slowburn</div><div class="s2-sub">Cassia · 2020</div></div>
+            <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Cold Cathedral</div><div class="s2-sub">Petros · 1989</div></div>
+            <div class="s2-card"><div class="s2-cover"></div><div class="s2-title">Driftwood</div><div class="s2-sub">R. Maes · 2003</div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ Sample 3 ============ -->
+  <div class="tile sample-3" data-sample-id="sample-3">
+    <div class="thumb"><div class="thumb-inner"><div class="emu">
+      <div class="s3-wrap">
+        <div class="s3-side"><div class="it on">Albums</div><div class="it">Artists</div></div>
+        <div class="s3-list">
+          <div class="s3-listrow on">Atlas <div class="sub">K. Holm</div></div>
+          <div class="s3-listrow">Dune <div class="sub">Anders</div></div>
+        </div>
+        <div class="s3-detail"><h2>Atlas</h2><div class="meta">K. Holm · 1998</div></div>
+      </div>
+    </div></div></div>
+    <div class="tile-meta">
+      <div class="num">Sample 03</div>
+      <h3>Split-Pane Detail View</h3>
+      <p>Three columns: section nav, item list, full record detail — old browser-mode lineage.</p>
+    </div>
+    <div class="emulated"><div class="emu">
+      <div class="s3-wrap">
+        <div class="s3-side">
+          <div class="it on">Albums</div>
+          <div class="it">Artists</div>
+          <div class="it">Genres</div>
+          <div class="it">Tags</div>
+          <div class="it">Sources</div>
+          <div class="it">Trash</div>
+        </div>
+        <div class="s3-list">
+          <div class="s3-listrow on">Atlas<div class="sub">K. Holm · 12 tracks</div></div>
+          <div class="s3-listrow">Dune Sketches<div class="sub">Anders · 9 tracks</div></div>
+          <div class="s3-listrow">Fern Hours<div class="sub">Ferns · 14 tracks</div></div>
+          <div class="s3-listrow">Iron Coast<div class="sub">Mendel · 11 tracks</div></div>
+          <div class="s3-listrow">Pale Houses<div class="sub">Vaughn · 10 tracks</div></div>
+          <div class="s3-listrow">Slowburn<div class="sub">Cassia · 8 tracks</div></div>
+          <div class="s3-listrow">Cold Cathedral<div class="sub">Petros · 16 tracks</div></div>
+        </div>
+        <div class="s3-detail">
+          <h2>Atlas</h2>
+          <div class="meta">K. Holm · 1998 · Jazz · 12 tracks · 47 min</div>
+          <div class="field"><b>Catalog ID</b><span>SH-1998-0042</span></div>
+          <div class="field"><b>Label</b><span>Northwind Records</span></div>
+          <div class="field"><b>Producer</b><span>L. Verniers</span></div>
+          <div class="field"><b>Format</b><span>Vinyl LP, CD</span></div>
+          <div class="field"><b>Source</b><span>Personal Import</span></div>
+          <div class="field"><b>Condition</b><span>Excellent</span></div>
+          <div class="field"><b>Tags</b><span>cool jazz, live, archive</span></div>
+          <div class="field"><b>Added</b><span>2023-11-04</span></div>
+          <div class="field"><b>Last Played</b><span>2026-04-12</span></div>
+          <div class="field"><b>Notes</b><span>Liner notes scanned, p. 3 missing.</span></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ Sample 4 ============ -->
+  <div class="tile sample-4" data-sample-id="sample-4">
+    <div class="thumb"><div class="thumb-inner"><div class="emu">
+      <div class="s4-tabs"><div class="s4-tab on">All</div><div class="s4-tab">Recent</div><div class="s4-tab">Starred</div></div>
+      <div class="s4-tools">347 items · sorted by Title</div>
+      <div class="s4-tbl">
+        <div class="s4-row head"><div></div><div>Title</div><div>Artist</div><div>Tag</div><div>Added</div><div>Year</div></div>
+        <div class="s4-row"><div class="s4-star">★</div><div>Atlas</div><div>K. Holm</div><div><span class="s4-tag">jazz</span></div><div>2023-11</div><div>1998</div></div>
+        <div class="s4-row"><div></div><div>Dune Sketches</div><div>Anders</div><div><span class="s4-tag">folk</span></div><div>2024-03</div><div>2002</div></div>
+      </div>
+    </div></div></div>
+    <div class="tile-meta">
+      <div class="num">Sample 04</div>
+      <h3>Top Nav + Table</h3>
+      <p>Tab bar across the top (All / Recent / Starred / Tags) feeding a dense sortable table.</p>
+    </div>
+    <div class="emulated"><div class="emu">
+      <div class="s4-tabs">
+        <div class="s4-tab on">All Items</div>
+        <div class="s4-tab">Recent</div>
+        <div class="s4-tab">Starred</div>
+        <div class="s4-tab">By Tag</div>
+        <div class="s4-tab">Needs Review</div>
+        <div class="s4-tab">Archive</div>
+      </div>
+      <div class="s4-tools">347 items · sorted by Title · filter: none · 12 selected</div>
+      <div class="s4-tbl">
+        <div class="s4-row head"><div></div><div>Title</div><div>Artist</div><div>Tag</div><div>Added</div><div>Year</div></div>
+        <div class="s4-row"><div class="s4-star">★</div><div>Atlas</div><div>K. Holm</div><div><span class="s4-tag">jazz</span></div><div>2023-11-04</div><div>1998</div></div>
+        <div class="s4-row"><div></div><div>Blackwater Bend</div><div>K. Holm</div><div><span class="s4-tag">jazz</span></div><div>2023-11-04</div><div>1998</div></div>
+        <div class="s4-row"><div class="s4-star">★</div><div>Cold Cathedral</div><div>Petros</div><div><span class="s4-tag">classical</span></div><div>2024-01-22</div><div>1989</div></div>
+        <div class="s4-row"><div></div><div>Driftwood Theatre</div><div>R. Maes</div><div><span class="s4-tag">jazz</span></div><div>2024-02-10</div><div>2003</div></div>
+        <div class="s4-row"><div></div><div>Dune Sketches</div><div>Anders Volk</div><div><span class="s4-tag">folk</span></div><div>2024-03-08</div><div>2002</div></div>
+        <div class="s4-row"><div class="s4-star">★</div><div>Fern Hours</div><div>Ferns</div><div><span class="s4-tag">ambient</span></div><div>2024-04-15</div><div>2011</div></div>
+        <div class="s4-row"><div></div><div>Honest Mile</div><div>O. Vaughn</div><div><span class="s4-tag">folk</span></div><div>2024-06-30</div><div>2019</div></div>
+        <div class="s4-row"><div></div><div>Iron Coast</div><div>The Mendel Co.</div><div><span class="s4-tag">indie</span></div><div>2024-08-19</div><div>2017</div></div>
+        <div class="s4-row"><div></div><div>Pale Light Returning</div><div>Anders Volk</div><div><span class="s4-tag">folk</span></div><div>2024-09-02</div><div>2002</div></div>
+        <div class="s4-row"><div class="s4-star">★</div><div>Slowburn Holiday</div><div>Cassia</div><div><span class="s4-tag">pop</span></div><div>2025-01-14</div><div>2020</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ Sample 5 ============ -->
+  <div class="tile sample-5" data-sample-id="sample-5">
+    <div class="thumb"><div class="thumb-inner"><div class="emu">
+      <div class="s5-bar">
+        <div class="s5-controls"><div class="s5-btn">‹</div><div class="s5-btn">▸</div><div class="s5-btn">›</div></div>
+        <div class="s5-now"><div class="lbl">Currently Viewing</div>Atlas — K. Holm</div>
+        <div class="s5-search">Search library…</div>
+      </div>
+      <div class="s5-body">
+        <div class="s5-left"><div class="s5-leftrow on">Albums</div><div class="s5-leftrow">Artists</div></div>
+        <div class="s5-right"><div class="s5-card"><h4>Atlas</h4>K. Holm · 1998</div></div>
+      </div>
+    </div></div></div>
+    <div class="tile-meta">
+      <div class="num">Sample 05</div>
+      <h3>Mini-Player Dashboard</h3>
+      <p>Compact dark top bar adapts playback chrome to "currently viewing" cataloging context.</p>
+    </div>
+    <div class="emulated"><div class="emu">
+      <div class="s5-bar">
+        <div class="s5-controls"><div class="s5-btn">‹</div><div class="s5-btn">▸</div><div class="s5-btn">›</div></div>
+        <div class="s5-now"><div class="lbl">Currently Viewing</div>Atlas — K. Holm · Jazz · 1998 · 12 tracks</div>
+        <div class="s5-search">Search library…</div>
+      </div>
+      <div class="s5-body">
+        <div class="s5-left">
+          <div class="s5-leftrow on">Albums</div>
+          <div class="s5-leftrow">Artists</div>
+          <div class="s5-leftrow">Genres</div>
+          <div class="s5-leftrow">Tags</div>
+          <div class="s5-leftrow">Recently Added</div>
+          <div class="s5-leftrow">Needs Review</div>
+          <div class="s5-leftrow">Archive</div>
+        </div>
+        <div class="s5-right">
+          <div class="s5-card"><h4>Atlas</h4>K. Holm · 1998 · 12 tracks · Northwind Records · Vinyl + CD</div>
+          <div class="s5-card"><h4>Dune Sketches</h4>Anders Volk · 2002 · 9 tracks · Self-released · Digital only</div>
+          <div class="s5-card"><h4>Fern Hours</h4>Ferns · 2011 · 14 tracks · Quiet Cargo · Cassette + Digital</div>
+          <div class="s5-card"><h4>Iron Coast</h4>The Mendel Co. · 2017 · 11 tracks · Lowlands Imp. · Vinyl</div>
+          <div class="s5-card"><h4>Slowburn Holiday</h4>Cassia · 2020 · 8 tracks · Cassia Music · Digital</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ============ Sample 6 ============ -->
+  <div class="tile sample-6" data-sample-id="sample-6">
+    <div class="thumb"><div class="thumb-inner"><div class="emu">
+      <div class="s6-top">Library</div>
+      <div class="s6-scroll">
+        <div class="s6-section">
+          <div class="s6-shead"><h4>Recently Added</h4><a>See All</a></div>
+          <div class="s6-row">
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Atlas</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Dune</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Fern</div></div>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
+    <div class="tile-meta">
+      <div class="num">Sample 06</div>
+      <h3>Stacked Sections with Covers</h3>
+      <p>Horizontal-feeling row sections (Recently Added / Needs Review / Tagged) stacked vertically.</p>
+    </div>
+    <div class="emulated"><div class="emu">
+      <div class="s6-top">Library — All Sections</div>
+      <div class="s6-scroll">
+        <div class="s6-section">
+          <div class="s6-shead"><h4>Recently Added</h4><a>See All ›</a></div>
+          <div class="s6-row">
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Atlas</div><div class="s6-sub">K. Holm</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Dune Sketches</div><div class="s6-sub">Anders</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Fern Hours</div><div class="s6-sub">Ferns</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Iron Coast</div><div class="s6-sub">Mendel</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Pale Houses</div><div class="s6-sub">Vaughn</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Slowburn</div><div class="s6-sub">Cassia</div></div>
+          </div>
+        </div>
+        <div class="s6-section">
+          <div class="s6-shead"><h4>Needs Review</h4><a>See All ›</a></div>
+          <div class="s6-row">
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Cold Cathedral</div><div class="s6-sub">Petros</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Driftwood</div><div class="s6-sub">R. Maes</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Hollow Whistle</div><div class="s6-sub">K. Holm</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Long Garage</div><div class="s6-sub">Lowlands</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Steeplejack</div><div class="s6-sub">Mendel Co.</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Quiet Engine</div><div class="s6-sub">Ferns</div></div>
+          </div>
+        </div>
+        <div class="s6-section">
+          <div class="s6-shead"><h4>Tagged: Imports</h4><a>See All ›</a></div>
+          <div class="s6-row">
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Honest Mile</div><div class="s6-sub">Vaughn</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Blackwater</div><div class="s6-sub">K. Holm</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Pale Light</div><div class="s6-sub">Anders</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Slowburn</div><div class="s6-sub">Cassia</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Iron Coast</div><div class="s6-sub">Mendel</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Atlas</div><div class="s6-sub">K. Holm</div></div>
+          </div>
+        </div>
+        <div class="s6-section">
+          <div class="s6-shead"><h4>High Rating</h4><a>See All ›</a></div>
+          <div class="s6-row">
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Atlas</div><div class="s6-sub">★★★★★</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Cold Cathedral</div><div class="s6-sub">★★★★★</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Fern Hours</div><div class="s6-sub">★★★★☆</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Slowburn</div><div class="s6-sub">★★★★☆</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Iron Coast</div><div class="s6-sub">★★★★☆</div></div>
+            <div class="s6-item"><div class="s6-cover"></div><div class="s6-title">Driftwood</div><div class="s6-sub">★★★★☆</div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+</body>
+</html>

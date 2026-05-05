@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Firebase Push Notification Setup — Wings Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 48px 24px 80px;
+    }
+
+    .page-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .header-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #0ea5e9;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.25;
+    }
+
+    .header p {
+      margin-top: 10px;
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── Steps ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .step-card {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 24px 28px;
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 0 20px;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .step-card:hover {
+      border-color: #0ea5e920;
+      background: #131c2e;
+    }
+
+    .step-card.done {
+      border-color: #10b98130;
+      background: #0b1a14;
+    }
+
+    /* Number column */
+    .step-num {
+      grid-row: 1 / 3;
+      align-self: start;
+      font-size: 42px;
+      font-weight: 900;
+      color: #0ea5e9;
+      line-height: 1;
+      letter-spacing: -2px;
+      opacity: 0.9;
+      user-select: none;
+    }
+
+    .step-card.done .step-num {
+      color: #10b981;
+    }
+
+    /* Content column */
+    .step-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .step-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.35;
+    }
+
+    /* Checkbox */
+    .step-checkbox {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid #334155;
+      background: transparent;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      margin-top: 1px;
+    }
+
+    .step-checkbox:checked {
+      background: #10b981;
+      border-color: #10b981;
+    }
+
+    .step-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 7px;
+      height: 11px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .step-checkbox:hover:not(:checked) {
+      border-color: #10b981;
+    }
+
+    /* Description */
+    .step-desc {
+      margin-top: 8px;
+      font-size: 13.5px;
+      color: #94a3b8;
+      line-height: 1.65;
+    }
+
+    /* Code block */
+    .code-block {
+      margin-top: 12px;
+      background: #0a0f1a;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+      color: #7dd3fc;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .code-block .key { color: #818cf8; }
+    .code-block .val { color: #34d399; }
+    .code-block .str { color: #fbbf24; }
+    .code-block .cmd { color: #f472b6; }
+    .code-block .comment { color: #475569; }
+
+    /* ── Footer CTA ── */
+    .footer-cta {
+      margin-top: 40px;
+      background: linear-gradient(135deg, #0ea5e910 0%, #10b98110 100%);
+      border: 1px solid #10b98130;
+      border-radius: 14px;
+      padding: 26px 30px;
+    }
+
+    .footer-cta-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .footer-cta h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #10b981;
+      margin-bottom: 6px;
+    }
+
+    .footer-cta p {
+      font-size: 13.5px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .footer-cta strong {
+      color: #e2e8f0;
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      margin-bottom: 36px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+
+    .progress-label span:last-child {
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .progress-bar-bg {
+      height: 4px;
+      background: #1e293b;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0ea5e9, #10b981);
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-eyebrow">Wings Dashboard · Firebase Setup</div>
+      <h1>Push Notification Setup — 7 Steps</h1>
+      <p>Complete these steps in order. Check each one off as you go.</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Progress</span>
+        <span id="progress-text">0 / 7 complete</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+
+      <!-- Step 1 -->
+      <div class="step-card" data-step="1">
+        <div class="step-num">1</div>
+        <div class="step-header">
+          <div class="step-title">Create the Firebase Project</div>
+          <input type="checkbox" class="step-checkbox" />
+        </div>
+        <div class="step-desc">
+          Go to <strong>console.firebase.google.com</strong> → click <strong>"Add project"</strong> → name it <strong>Wings Dashboard</strong> → disable Google Analytics → hit Create.
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-card" data-step="2">
+        <div class="step-num">2</div>
+        <div class="step-header">
+          <div class="step-title">Register the Web App & Copy firebaseConfig</div>
+          <input type="checkbox" class="step-checkbox" />
+        </div>
+        <div class="step-desc">
+          Inside the project → click <strong>"Add app"</strong> (web &lt;/&gt; icon) → register app name <strong>"Wing Dashboard"</strong> → copy the full <code style="color:#7dd3fc;font-size:12px;">firebaseConfig</code> object shown on screen.
+        </div>
+        <div class="code-block"><span class="comment">// firebaseConfig example — yours will have real values</span>
+<span class="key">const</span> firebaseConfig = {
+  <span class="key">apiKey</span>:            <span class="str">"AIzaSy..."</span>,
+  <span class="key">authDomain</span>:        <span class="str">"wings-dashboard.firebaseapp.com"</span>,
+  <span class="key">projectId</span>:         <span class="str">"wings-dashboard"</span>,
+  <span class="key">storageBucket</span>:     <span class="str">"wings-dashboard.appspot.com"</span>,
+  <span class="key">messagingSenderId</span>: <span class="str">"1234567890"</span>,
+  <span class="key">appId</span>:             <span class="str">"1:123:web:abc..."</span>
+};</div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-card" data-step="3">
+        <div class="step-num">3</div>
+        <div class="step-header">
+          <div class="step-title">Generate the VAPID Public Key</div>
+          <input type="checkbox" class="step-checkbox" />
+        </div>
+        <div class="step-desc">
+          Project Settings (⚙️ gear icon) → <strong>Cloud Messaging</strong> tab → <strong>Web Push Certificates</strong> section → click <strong>"Generate key pair"</strong> → copy the VAPID public key string.
+        </div>
+        <div class="code-block"><span class="comment">// VAPID key looks like this (save it — you'll need it in step 5)</span>
+<span class="val">vapidKey</span>: <span class="str">"BLc3J8X7...long base64 string..."</span></div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step-card" data-step="4">
+        <div class="step-num">4</div>
+        <div class="step-header">
+          <div class="step-title">Download the Service Account JSON</div>
+          <input type="checkbox" class="step-checkbox" />
+        </div>
+        <div class="step-desc">
+          Project Settings → <strong>Service Accounts</strong> tab → click <strong>"Generate new private key"</strong> → save the downloaded JSON to your Wing Dashboard folder at the path below.
+        </div>
+        <div class="code-block"><span class="cmd">ADMIN/tools/firebase-service-account.json</span>
+<span class="comment">↑ drop the downloaded file here (rename it if needed)</span></div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step-card" data-step="5">
+        <div class="step-num">5</div>
+        <div class="step-header">
+          <div class="step-title">Populate firebase-config.json</div>
+          <input type="checkbox" class="step-checkbox" />
+        </div>
+        <div class="step-desc">
+          Open <strong>ADMIN/tools/firebase-config.json</strong> → paste in all values from steps 2–4.
+        </div>
+        <div class="code-block">{
+  <span class="key">"projectId"</span>:          <span class="str">"wings-dashboard"</span>,
+  <span class="key">"apiKey"</span>:             <span class="str">"AIzaSy..."</span>,
+  <span class="key">"appId"</span>:              <span class="str">"1:123:web:abc..."</span>,
+  <span class="key">"messagingSenderId"</span>:  <span class="str">"1234567890"</span>,
+  <span class="key">"vapidKey"</span>:           <span class="str">"BLc3J8X7..."</span>,
+  <span class="key">"serviceAccountPath"</span>: <span class="str">"ADMIN/tools/firebase-service-account.json"</span>
+}</div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step-card" data-step="6">
+        <div class="step-num">6</div>
+        <div class="step-header">
+          <div class="step-title">Replace Placeholders in Homebase Files</div>
+          <input type="checkbox" class="step-checkbox" />
+        </div>
+        <div class="step-desc">
+          Open both files below and swap every <code style="color:#7dd3fc;font-size:12px;">YOUR_*</code> placeholder with the real firebaseConfig values from step 2.
+        </div>
+        <div class="code-block"><span class="cmd">ADMIN/homebases/thennow/index.html</span>
+<span class="cmd">ADMIN/homebases/thennow/firebase-messaging-sw.js</span>
+
+<span class="comment">// Search for and replace all of these:</span>
+<span class="val">YOUR_API_KEY</span>           → real apiKey
+<span class="val">YOUR_AUTH_DOMAIN</span>       → real authDomain
+<span class="val">YOUR_PROJECT_ID</span>        → real projectId
+<span class="val">YOUR_MESSAGING_SENDER_ID</span> → real messagingSenderId
+<span class="val">YOUR_APP_ID</span>            → real appId
+<span class="val">YOUR_VAPID_KEY</span>         → real vapidKey</div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step-card" data-step="7">
+        <div class="step-num">7</div>
+        <div class="step-header">
+          <div class="step-title">Redeploy Homebase & Start Push Server</div>
+          <input type="checkbox" class="step-checkbox" />
+        </div>
+        <div class="step-desc">
+          Deploy the updated homebase to Netlify, then start the push server — two commands in terminal.
+        </div>
+        <div class="code-block"><span class="comment"># 1. Deploy homebase to Netlify (production)</span>
+<span class="cmd">netlify deploy --prod --dir=ADMIN/homebases/thennow</span>
+
+<span class="comment"># 2. Start the push notification server</span>
+<span class="cmd">python ADMIN/tools/push-server.py</span></div>
+      </div>
+
+    </div>
+
+    <!-- Footer CTA -->
+    <div class="footer-cta">
+      <div class="footer-cta-icon">🔔</div>
+      <h2>All 7 steps done? You're live.</h2>
+      <p>
+        Head to the <strong>Wing Dashboard</strong> → find any client card → click the <strong>🔔 bell icon</strong> on it.
+        A real push notification will fire to that client's device — Firebase handles the delivery end-to-end.
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    const checkboxes = document.querySelectorAll('.step-checkbox');
+    const progressText = document.getElementById('progress-text');
+    const progressFill = document.getElementById('progress-fill');
+    const total = checkboxes.length;
+
+    // Load saved state
+    checkboxes.forEach((cb, i) => {
+      const saved = localStorage.getItem(`firebase-step-${i}`);
+      if (saved === 'true') {
+        cb.checked = true;
+        cb.closest('.step-card').classList.add('done');
+      }
+    });
+
+    function updateProgress() {
+      const done = [...checkboxes].filter(cb => cb.checked).length;
+      progressText.textContent = `${done} / ${total} complete`;
+      progressFill.style.width = `${(done / total) * 100}%`;
+    }
+
+    updateProgress();
+
+    checkboxes.forEach((cb, i) => {
+      cb.addEventListener('change', () => {
+        const card = cb.closest('.step-card');
+        card.classList.toggle('done', cb.checked);
+        localStorage.setItem(`firebase-step-${i}`, cb.checked);
+        updateProgress();
+      });
+    });
+  </script>
+</body>
+</html>

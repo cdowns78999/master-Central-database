@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<!-- ============================================================
+     STEP 4 · STREAMING 101 — v2
+     SHAPE PRIMITIVE: REVENUE POOL PIE + share-split bar calculator
+     LIGHT curriculum theme (cat-1.html style reference)
+     ============================================================ -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Step 4 — Streaming 101 (v2)</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --ink: #1a2332;
+    --ink-soft: #4a5568;
+    --ink-mute: #7c8a9e;
+    --rule: #dde3ec;
+    --rule-soft: #eef1f6;
+    --accent: #4a6da7;
+    --accent-deep: #34507f;
+    --accent-soft: #e8eef8;
+    --chip-bg: #eef2f8;
+    --gate-red: #d92d20;
+    --gate-red-soft: #fde8e8;
+    --green: #10b981;
+    --green-soft: #e6f7f1;
+    --amber: #f59e0b;
+    --shadow-sm: 0 1px 2px rgba(20, 30, 50, 0.04), 0 1px 3px rgba(20, 30, 50, 0.06);
+    --shadow-md: 0 4px 12px rgba(20, 30, 50, 0.08), 0 2px 4px rgba(20, 30, 50, 0.04);
+    --shadow-lg: 0 12px 32px rgba(20, 30, 50, 0.14);
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ============ HEADER ============ */
+  .page-header {
+    background: rgba(255,255,255,0.92);
+    border-bottom: 1px solid var(--rule);
+    padding: 22px 48px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(8px);
+  }
+  .header-left {
+    flex: 1; min-width: 0;
+    display: flex; align-items: center; gap: 18px;
+    flex-wrap: wrap;
+  }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--ink-mute);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .back-link:hover { color: var(--accent); text-decoration: none; }
+  .step-pill {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 4px 10px; border-radius: 999px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    border: 1px solid var(--accent-soft);
+  }
+  .header-titles { display: flex; flex-direction: column; gap: 2px; }
+  .eyebrow {
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.16em; color: var(--accent);
+    text-transform: uppercase; margin: 0;
+  }
+  .page-title {
+    font-size: 22px; font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0; color: var(--ink);
+  }
+  .page-sub {
+    font-size: 12.5px; color: var(--ink-soft);
+    margin: 2px 0 0; max-width: 540px;
+  }
+  .calc-jump-btn {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 20px;
+    background: var(--accent); color: #fff;
+    border-radius: 999px;
+    font-size: 12.5px; font-weight: 600;
+    letter-spacing: 0.04em;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--accent-deep);
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .calc-jump-btn::before {
+    content: "";
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ffd166;
+    box-shadow: 0 0 0 3px rgba(255,209,102,0.25);
+  }
+  .calc-jump-btn:hover {
+    background: var(--accent-deep);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+  }
+
+  /* ============ MAIN ============ */
+  main {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 36px 48px 80px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-head h2 {
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink); margin: 0;
+  }
+  .section-head .meta {
+    font-size: 12px; color: var(--ink-mute); font-style: italic;
+  }
+  .section-head .num {
+    font-family: var(--mono);
+    font-size: 11px; color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 8px; border-radius: var(--r-sm);
+    letter-spacing: 0.05em;
+  }
+
+  /* ============ KEY CONCEPTS TILES ============ */
+  .examples-section { margin-bottom: 48px; }
+  .examples-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .example-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    display: flex; flex-direction: column;
+  }
+  .example-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent);
+  }
+  .mock-thumb {
+    aspect-ratio: 16 / 10;
+    position: relative; overflow: hidden;
+    display: flex; align-items: flex-end;
+    padding: 18px; color: #fff;
+  }
+  .mock-thumb::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+  .mock-thumb-pool {
+    background:
+      radial-gradient(circle at 25% 30%, #6e8ab8 0%, transparent 45%),
+      radial-gradient(circle at 80% 70%, #a4c2e0 0%, transparent 50%),
+      linear-gradient(135deg, #2d4570 0%, #4a6da7 100%);
+  }
+  .mock-thumb-gate {
+    background:
+      radial-gradient(circle at 70% 25%, #f8c8c0 0%, transparent 50%),
+      linear-gradient(140deg, #6b1010 0%, #a01818 60%, #c84545 100%);
+  }
+  .mock-thumb-prem {
+    background:
+      radial-gradient(circle at 30% 80%, #c8a96a 0%, transparent 45%),
+      linear-gradient(160deg, #344b73 0%, #6883b0 100%);
+  }
+  .mock-pie {
+    position: absolute; top: 14px; right: 14px;
+    width: 70px; height: 70px;
+    background: conic-gradient(#fff 0 25%, rgba(255,255,255,0.7) 25% 55%, rgba(255,255,255,0.45) 55% 80%, rgba(255,255,255,0.25) 80% 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.4);
+  }
+  .mock-gate-line {
+    position: absolute; left: 18px; right: 18px; bottom: 70px;
+    height: 3px; background: #ffd166;
+    box-shadow: 0 0 10px rgba(255, 209, 102, 0.6);
+  }
+  .mock-gate-line::before {
+    content: "1,000-stream gate";
+    position: absolute; top: -18px; right: 0;
+    font-size: 9px; color: #ffd166;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  .mock-bars {
+    position: absolute; inset: auto 18px 60px 18px;
+    display: flex; gap: 6px;
+    align-items: flex-end; height: 50%;
+    opacity: 0.78;
+  }
+  .mock-bars span {
+    flex: 1; background: rgba(255,255,255,0.9);
+    border-radius: 2px 2px 0 0;
+  }
+  .mock-overlay { position: relative; z-index: 2; width: 100%; }
+  .mock-overlay .name {
+    font-size: 16px; font-weight: 700;
+    letter-spacing: -0.01em; margin: 0;
+  }
+  .mock-overlay .tag {
+    font-size: 10.5px; opacity: 0.85; margin: 2px 0 0;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .example-body { padding: 14px 18px 16px; }
+  .example-body p {
+    margin: 0; font-size: 13px;
+    color: var(--ink-soft); line-height: 1.5;
+  }
+  .example-body .open-hint {
+    margin-top: 10px; font-size: 11px;
+    color: var(--accent); font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  /* ============ RESEARCH BLOCKS ============ */
+  .research-block { margin-bottom: 48px; }
+  .research-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+  }
+  .result-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .result-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  .topic-chip {
+    display: inline-block; align-self: flex-start;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent-deep); background: var(--chip-bg);
+    padding: 4px 10px; border-radius: 999px;
+  }
+  .result-card h3 {
+    margin: 0; font-size: 15px; font-weight: 600;
+    line-height: 1.35; color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .result-meta {
+    font-size: 12px; color: var(--ink-mute);
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+  }
+  .result-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-mute); }
+  .result-quote {
+    font-size: 13px; font-style: italic;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--rule);
+    padding: 4px 0 4px 12px;
+    margin: 0; line-height: 1.5;
+  }
+  .result-source {
+    font-size: 12px; color: var(--accent);
+    font-weight: 500; align-self: flex-start;
+  }
+  .result-source:hover { text-decoration: underline; }
+  .placeholder {
+    background: var(--panel); border: 1px dashed var(--rule);
+    border-radius: var(--r-md); padding: 20px;
+    color: var(--ink-mute); font-style: italic;
+    font-size: 13px; text-align: center;
+    grid-column: 1 / -1;
+  }
+
+  /* ============ CALCULATOR ============ */
+  .calc-section {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    padding: 32px 36px;
+    margin-bottom: 48px;
+    box-shadow: var(--shadow-sm);
+  }
+  .calc-head {
+    display: flex; align-items: baseline; gap: 14px;
+    margin: 0 0 6px;
+  }
+  .calc-head h2 {
+    font-size: 20px; font-weight: 700;
+    color: var(--ink); margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .calc-head .calc-mark {
+    font-family: var(--mono);
+    font-size: 14px; color: var(--accent);
+    background: var(--accent-soft);
+    padding: 4px 10px; border-radius: var(--r-sm);
+  }
+  .calc-sub {
+    font-size: 13px; color: var(--ink-soft);
+    margin: 0 0 24px; max-width: 720px;
+  }
+
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* PIE */
+  .pie-wrap {
+    background: var(--rule-soft);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 22px;
+    display: flex; flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .pie-wrap h3 {
+    margin: 0 0 4px; font-size: 13px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--ink); font-weight: 700;
+    align-self: flex-start;
+  }
+  .pie-wrap p.pie-sub {
+    margin: 0; font-size: 12px;
+    color: var(--ink-mute); align-self: flex-start;
+  }
+  .pie-svg-wrap {
+    position: relative;
+    width: 280px; height: 280px;
+  }
+  .pie-svg {
+    width: 100%; height: 100%;
+    filter: drop-shadow(0 4px 10px rgba(20,30,50,0.08));
+  }
+  .pie-slice {
+    cursor: pointer;
+    transition: transform 0.18s ease, filter 0.18s ease;
+    transform-origin: 100px 100px;
+  }
+  .pie-slice:hover {
+    transform: scale(1.04);
+    filter: brightness(1.08);
+  }
+  .pie-callout {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 8px 12px;
+    box-shadow: var(--shadow-md);
+    text-align: center;
+    min-width: 130px;
+    pointer-events: none;
+  }
+  .pie-callout .label {
+    font-size: 10.5px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .pie-callout .rate {
+    font-family: var(--mono);
+    font-size: 18px; font-weight: 700;
+    color: var(--ink); margin-top: 2px;
+  }
+  .pie-callout .rate-sub {
+    font-size: 10.5px; color: var(--ink-mute);
+    margin-top: 1px;
+  }
+  .pie-legend {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px 16px; width: 100%;
+    margin-top: 4px;
+  }
+  .pie-legend-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--ink-soft);
+  }
+  .pie-legend-row .swatch {
+    width: 12px; height: 12px; border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .pie-legend-row .name { font-weight: 600; color: var(--ink); }
+  .pie-legend-row .rate { font-family: var(--mono); color: var(--ink-mute); margin-left: auto; }
+
+  /* CALCULATOR PANEL */
+  .calc-panel {
+    background: var(--rule-soft);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 22px;
+  }
+  .calc-panel h3 {
+    margin: 0 0 16px; font-size: 13px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--ink); font-weight: 700;
+  }
+  .calc-inputs {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 18px;
+  }
+  .calc-field { display: flex; flex-direction: column; gap: 5px; }
+  .calc-field label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .calc-field input,
+  .calc-field select {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-sm);
+    padding: 10px 12px;
+    font-size: 14px; color: var(--ink);
+    font-family: var(--font);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .calc-field input:focus,
+  .calc-field select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .calc-field input[type="number"] { font-family: var(--mono); }
+
+  .calc-bars { display: flex; flex-direction: column; gap: 12px; }
+  .calc-bar-row { display: flex; flex-direction: column; gap: 4px; }
+  .calc-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--ink-soft);
+  }
+  .calc-bar-label .name { font-weight: 600; color: var(--ink); }
+  .calc-bar-label .val {
+    font-family: var(--mono); color: var(--ink-soft);
+  }
+  .calc-bar-track {
+    height: 10px; background: #e3e8f0;
+    border-radius: 999px; overflow: hidden;
+    position: relative;
+  }
+  .calc-bar-fill {
+    height: 100%; border-radius: 999px;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .fill-dsp { background: linear-gradient(90deg, #94a3b8, #64748b); }
+  .fill-rh { background: linear-gradient(90deg, #4a6da7, #34507f); }
+  .fill-distro { background: linear-gradient(90deg, #f59e0b, #d97706); }
+  .fill-net { background: linear-gradient(90deg, #10b981, #059669); }
+
+  .calc-result {
+    margin-top: 18px;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 16px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+  }
+  .calc-result.is-gated {
+    background: var(--gate-red-soft);
+    border-color: var(--gate-red);
+  }
+  .calc-result .result-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .calc-result.is-gated .result-label { color: var(--gate-red); }
+  .calc-result .result-name {
+    font-size: 14px; font-weight: 600;
+    color: var(--ink); margin-top: 2px;
+  }
+  .calc-result .result-val {
+    font-family: var(--mono);
+    font-size: 28px; font-weight: 700;
+    color: var(--green);
+    letter-spacing: -0.02em;
+  }
+  .calc-result.is-gated .result-val { color: var(--gate-red); }
+
+  .gate-banner {
+    margin-top: 14px;
+    background: var(--gate-red-soft);
+    border: 1px solid var(--gate-red);
+    border-left: 4px solid var(--gate-red);
+    border-radius: var(--r-sm);
+    padding: 12px 14px;
+    display: none;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .gate-banner.is-show { display: flex; }
+  .gate-banner .gate-ico {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--gate-red); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+  }
+  .gate-banner .gate-msg {
+    font-size: 12.5px; color: var(--gate-red);
+    line-height: 1.45;
+  }
+  .gate-banner .gate-msg strong { font-weight: 700; }
+
+  /* ============ WALK-AWAY ============ */
+  .outline-section {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    padding: 28px 32px;
+    margin-top: 24px;
+  }
+  .outline-section .section-head { border-bottom: none; padding-bottom: 0; margin-bottom: 16px; }
+  .outline-list {
+    list-style: none; padding: 0; margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 32px;
+    counter-reset: outline;
+  }
+  .outline-list li {
+    position: relative; padding-left: 32px;
+    font-size: 14px; color: var(--ink-soft);
+    line-height: 1.5;
+    counter-increment: outline;
+  }
+  .outline-list li::before {
+    content: counter(outline, decimal-leading-zero);
+    position: absolute; left: 0; top: 1px;
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 700;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 3px 7px; border-radius: var(--r-sm);
+    letter-spacing: 0.04em;
+  }
+  .outline-list li strong {
+    color: var(--ink); font-weight: 600;
+    display: block; margin-bottom: 2px;
+    font-size: 13px;
+  }
+
+  /* ============ FOOTER ============ */
+  .footer-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 36px; gap: 16px; flex-wrap: wrap;
+  }
+  .complete-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px;
+    background: var(--green); color: #fff;
+    border: 1px solid #059669;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.04em;
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.28);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .complete-btn:hover {
+    background: #059669; transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(16, 185, 129, 0.42);
+  }
+  .complete-btn.is-done { background: #6b7280; border-color: #4b5563; box-shadow: none; }
+  .next-arrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    background: var(--accent); color: #fff;
+    border: 1px solid var(--accent-deep);
+    border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.04em;
+    box-shadow: var(--shadow-md);
+    transition: all 0.15s ease;
+  }
+  .next-arrow:hover {
+    background: var(--accent-deep);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+  }
+
+  /* ============ DIALOG ============ */
+  dialog.example-dialog {
+    border: none; background: transparent;
+    padding: 0; max-width: 90vw; max-height: 90vh;
+  }
+  dialog.example-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.68);
+    backdrop-filter: blur(4px);
+  }
+  .dialog-shell {
+    background: var(--panel);
+    border-radius: var(--r-lg);
+    width: min(680px, 90vw);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+  }
+  .dialog-hero {
+    aspect-ratio: 16 / 7;
+    display: flex; align-items: flex-end;
+    padding: 24px; color: #fff; position: relative;
+  }
+  .dialog-close {
+    position: absolute; top: 14px; right: 14px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #fff; color: var(--ink);
+    border: none; cursor: pointer;
+    font-size: 16px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-md);
+    z-index: 5;
+  }
+  .dialog-body { padding: 22px 28px 26px; }
+  .dialog-body h3 { margin: 0 0 6px; font-size: 20px; color: var(--ink); }
+  .dialog-body .dialog-tag {
+    color: var(--accent); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin: 0 0 14px;
+  }
+  .dialog-body p { font-size: 14px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 12px; }
+  .dialog-body ul { padding-left: 20px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
+  .dialog-body ul li { margin-bottom: 4px; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 980px) {
+    .calc-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .page-header { padding: 18px 24px 14px; flex-direction: column; align-items: flex-start; }
+    main { padding: 28px 24px 60px; }
+    .examples-grid { grid-template-columns: 1fr; }
+    .outline-list { grid-template-columns: 1fr; }
+    .calc-section { padding: 22px; }
+    .calc-inputs { grid-template-columns: 1fr; }
+  }
+</style>
+  <link rel="stylesheet" href="../_version-jumper.css">
+  <script src="../_version-jumper.js" defer></script>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="header-left">
+    <a class="back-link" href="../index.html">← back</a>
+    <span class="step-pill">Step 04 · Music Business Education</span>
+    <div class="header-titles">
+      <p class="eyebrow">Streaming 101</p>
+      <p class="page-sub">How DSPs actually pay — pool math, the 1,000-stream gate, and what an artist nets.</p>
+    </div>
+  </div>
+  <a href="#calculator" class="calc-jump-btn">Open Calculator</a>
+</header>
+
+<main>
+
+  <!-- 01 KEY CONCEPTS -->
+  <section class="examples-section">
+    <div class="section-head">
+      <span class="num">01</span>
+      <h2>Key Concepts — Streaming Pool Math</h2>
+      <span class="meta">click any tile to open spec</span>
+    </div>
+    <div class="examples-grid">
+      <article class="example-card" data-dialog="dlg-pool">
+        <div class="mock-thumb mock-thumb-pool">
+          <div class="mock-pie"></div>
+          <div class="mock-overlay">
+            <p class="name">Pool Math</p>
+            <p class="tag">MSPS · Pro-Rata</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>The market-share payment system (MSPS) pools all subscription + ad revenue, then distributes based on each artist's share of total streams in that period.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+      <article class="example-card" data-dialog="dlg-gate">
+        <div class="mock-thumb mock-thumb-gate">
+          <div class="mock-gate-line"></div>
+          <div class="mock-overlay">
+            <p class="name">1,000-Stream Gate</p>
+            <p class="tag">Annual Threshold</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>A track must hit at least 1,000 streams in a 12-month period to generate any royalties on Spotify. Below this threshold, earnings are pooled and distributed to popular artists.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+      <article class="example-card" data-dialog="dlg-prem">
+        <div class="mock-thumb mock-thumb-prem">
+          <div class="mock-bars">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Premium &gt; Ad</p>
+            <p class="tag">Tier Matters</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>A stream is counted after 30 seconds of playback. Premium subscriber streams generate more royalty value than ad-supported streams due to higher revenue per user.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 02 ACADEMIC -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">02</span>
+      <h2>Academic Layer — Peer & Standards</h2>
+      <span class="meta">scholarly + standards-body sourcing</span>
+    </div>
+    <div class="research-grid">
+      <div class="placeholder">No peer-reviewed sources logged for this step yet.</div>
+    </div>
+  </section>
+
+  <!-- 03 MAINSTREAM -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">03</span>
+      <h2>Mainstream Layer — Trade & Press</h2>
+      <span class="meta">Ditto Music · Music Ally · DJ Mag</span>
+    </div>
+    <div class="research-grid">
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>How Much Does Spotify Pay Per Stream in 2026 — Ditto Music</h3>
+        <div class="result-meta"><span>Dittomusic</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Spotify pays approximately $0.003-$0.004 per stream; Apple Music pays roughly double at $0.006-$0.008. Amazon Music leads at ~$0.0088."</p>
+        <a class="result-source" href="https://dittomusic.com/en/blog/how-much-does-spotify-pay-per-stream" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>Spotify defends 1,000-stream royalties threshold after critical report — Music Ally</h3>
+        <div class="result-meta"><span>Musically</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"A track must hit at least 1,000 streams in a 12-month period to generate any royalties on Spotify. Below this threshold, earnings are pooled and distributed to popular artists."</p>
+        <a class="result-source" href="https://musically.com/2025/12/16/spotify-defends-1000-stream-royalties-threshold-after-critical-report/" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>Apple Music demonetised two billion "fraudulent" streams in 2025 — DJ Mag</h3>
+        <div class="result-meta"><span>Djmag</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Apple Music flagged and demonetized 2 billion fraudulent streams in 2025. Spotify removed over 75 million AI-generated tracks in 2025."</p>
+        <a class="result-source" href="https://djmag.com/news/apple-music-demonetised-two-billion-fraudulent-streams-2025-vp-reveals" target="_blank" rel="noopener">↗ source</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- 04 BLOGS -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">04</span>
+      <h2>Blogs Layer — Operator Notes</h2>
+      <span class="meta">Royalty Exchange · Streaming Calculator · Sounds.co · Spotify Official</span>
+    </div>
+    <div class="research-grid">
+      <article class="result-card">
+        <span class="topic-chip">PRACTICE</span>
+        <h3>Royalty Distribution: Who Collects What For Who? — Royalty Exchange</h3>
+        <div class="result-meta"><span>Royaltyexchange</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Streaming platforms collect subscription fees and ad revenue, then distribute approximately 65-70% as royalties. The DSP pays the rights holder (label or distributor), not the artist directly."</p>
+        <a class="result-source" href="https://royaltyexchange.com/blog/royalty-distribution-who-collects-what-for-who" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>Understanding Streaming Royalties: Pro-Rata Model — Sounds.co</h3>
+        <div class="result-meta"><span>Sounds</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"The market-share payment system (MSPS) pools all subscription + ad revenue, then distributes based on each artist's share of total streams in that period."</p>
+        <a class="result-source" href="https://www.sounds.co/en/post/royalties-streaming-pro-rata-model" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">FACT</span>
+        <h3>How your streams are counted — Spotify Official</h3>
+        <div class="result-meta"><span>Spotify</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"A stream is counted after 30 seconds of playback. Premium subscriber streams generate more royalty value than ad-supported streams due to higher revenue per user."</p>
+        <a class="result-source" href="https://support.spotify.com/us/artists/article/how-your-streams-are-counted/" target="_blank" rel="noopener">↗ source</a>
+      </article>
+
+      <article class="result-card">
+        <span class="topic-chip">MISTAKE</span>
+        <h3>Spotify Royalties Explained — Streaming Calculator</h3>
+        <div class="result-meta"><span>Streamingcalculator</span><span class="dot"></span><span>2026</span></div>
+        <p class="result-quote">"Expecting a fixed per-stream rate -- the actual rate fluctuates every month based on the total size of the royalty pool and total platform streams during that period."</p>
+        <a class="result-source" href="https://streamingcalculator.com/blog/spotify-royalties-explained" target="_blank" rel="noopener">↗ source</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- ◆ INTERACTIVE — REVENUE POOL PIE + CALCULATOR -->
+  <section class="calc-section" id="calculator">
+    <div class="calc-head">
+      <span class="calc-mark">◆</span>
+      <h2>Interactive · Revenue Pool Pie + Share-Split Calculator</h2>
+    </div>
+    <p class="calc-sub">Hover any pie slice to see the per-stream rate. Then enter your stream count and DSP — the bars will split the pool: DSP keeps 30%, rights holder gets 70%, distro takes its cut, and the artist's net lands at the bottom.</p>
+
+    <div class="calc-grid">
+
+      <!-- LEFT: PIE -->
+      <div class="pie-wrap">
+        <h3>Per-Stream Rate · Pie</h3>
+        <p class="pie-sub">Slice size scales to gross $/stream paid by each DSP.</p>
+        <div class="pie-svg-wrap" id="pieWrap">
+          <svg class="pie-svg" viewBox="0 0 200 200" id="pieSvg" aria-label="DSP per-stream rate pie">
+            <!-- slices injected by JS -->
+          </svg>
+          <div class="pie-callout" id="pieCallout">
+            <div class="label">Hover a slice</div>
+            <div class="rate">$0.0000</div>
+            <div class="rate-sub">per stream</div>
+          </div>
+        </div>
+        <div class="pie-legend" id="pieLegend"></div>
+      </div>
+
+      <!-- RIGHT: CALC -->
+      <div class="calc-panel">
+        <h3>Share-Split Calculator</h3>
+        <div class="calc-inputs">
+          <div class="calc-field">
+            <label for="streamsInput">Streams</label>
+            <input type="number" id="streamsInput" min="0" step="100" value="50000" />
+          </div>
+          <div class="calc-field">
+            <label for="dspSelect">DSP</label>
+            <select id="dspSelect">
+              <option value="spotify">Spotify ($0.0035 avg)</option>
+              <option value="apple">Apple Music ($0.007 avg)</option>
+              <option value="amazon">Amazon Music ($0.0088 avg)</option>
+              <option value="youtube">YouTube Music ($0.002 avg)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="calc-bars">
+          <div class="calc-bar-row">
+            <div class="calc-bar-label">
+              <span class="name">Gross pool revenue</span>
+              <span class="val" id="grossVal">$0.00</span>
+            </div>
+            <div class="calc-bar-track"><div class="calc-bar-fill fill-rh" id="grossFill" style="width: 100%;"></div></div>
+          </div>
+          <div class="calc-bar-row">
+            <div class="calc-bar-label">
+              <span class="name">DSP keeps (30%)</span>
+              <span class="val" id="dspVal">$0.00</span>
+            </div>
+            <div class="calc-bar-track"><div class="calc-bar-fill fill-dsp" id="dspFill" style="width: 30%;"></div></div>
+          </div>
+          <div class="calc-bar-row">
+            <div class="calc-bar-label">
+              <span class="name">Rights holder (70%)</span>
+              <span class="val" id="rhVal">$0.00</span>
+            </div>
+            <div class="calc-bar-track"><div class="calc-bar-fill fill-rh" id="rhFill" style="width: 70%;"></div></div>
+          </div>
+          <div class="calc-bar-row">
+            <div class="calc-bar-label">
+              <span class="name">Distro cut (9%)</span>
+              <span class="val" id="distroVal">$0.00</span>
+            </div>
+            <div class="calc-bar-track"><div class="calc-bar-fill fill-distro" id="distroFill" style="width: 9%;"></div></div>
+          </div>
+        </div>
+
+        <div class="calc-result" id="calcResult">
+          <div>
+            <div class="result-label">Net to artist</div>
+            <div class="result-name" id="resultName">After DSP cut, distro fee — pre-tax</div>
+          </div>
+          <div class="result-val" id="netVal">$0.00</div>
+        </div>
+
+        <div class="gate-banner" id="gateBanner">
+          <div class="gate-ico">!</div>
+          <div class="gate-msg">
+            <strong>Below the 1,000-stream gate.</strong> Per Spotify's policy: tracks under 1,000 annual streams collect <strong>$0</strong> — that revenue is pooled and redistributed to top artists.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 05 WHAT AN ARTIST WALKS AWAY WITH -->
+  <section class="outline-section">
+    <div class="section-head">
+      <span class="num">05</span>
+      <h2>What an Artist Walks Away With</h2>
+      <span class="meta">core takeaways</span>
+    </div>
+    <ul class="outline-list">
+      <li><strong>Per-stream rates are averages, not contracts</strong>Spotify ~$0.003–$0.004, Apple ~$0.006–$0.008, Amazon ~$0.0088. Your actual cut depends on the pool size that month.</li>
+      <li><strong>The pool moves every month</strong>MSPS recalculates each period — your share = your streams ÷ total platform streams × payable pool.</li>
+      <li><strong>Below 1,000 streams = $0</strong>Spotify's annual gate sweeps sub-threshold tracks into the pool. Get past 1,000 streams in a 12-month window.</li>
+      <li><strong>30 seconds = 1 stream</strong>Anything shorter doesn't count. Build hooks early so the count actually triggers.</li>
+      <li><strong>The DSP pays your rights holder, not you</strong>Label or distributor receives the wire. Your contract decides what trickles down.</li>
+      <li><strong>Premium tier streams pay more than ad-supported</strong>Same artist, same song — premium ARPU is higher, so the pool slice is bigger.</li>
+      <li><strong>Distros take 0–15% off the top</strong>Most "free" tiers cap at 9–15%, paid tiers (DistroKid, TuneCore) keep all royalties for a flat fee.</li>
+      <li><strong>Don't game it — fraud detection is fast</strong>Apple killed 2B streams in 2025; Spotify removed 75M AI tracks. Royalty clawback + removal is the price.</li>
+    </ul>
+  </section>
+
+  <div class="footer-row">
+    <button class="complete-btn" id="completeBtn">✓ Mark Step 4 complete</button>
+    <a href="step-5.html" class="next-arrow">Next: Step 5 · Royalties →</a>
+  </div>
+
+</main>
+
+<!-- DIALOGS -->
+<dialog class="example-dialog" id="dlg-pool">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-pool">
+      <div class="mock-pie"></div>
+      <div class="mock-overlay">
+        <p class="name">Pool Math</p>
+        <p class="tag">MSPS · Pro-Rata</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Concept · Pool Math</p>
+      <h3>Why this matters</h3>
+      <p>The market-share payment system (MSPS) pools all subscription + ad revenue, then distributes based on each artist's share of total streams in that period. Your rate fluctuates monthly with the size of the pool.</p>
+      <ul>
+        <li>Pool = 65–70% of total DSP revenue (Royalty Exchange)</li>
+        <li>Your share = your streams ÷ total platform streams</li>
+        <li>Per-stream rate is a backwards-calculated average, not a contract</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="example-dialog" id="dlg-gate">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-gate">
+      <div class="mock-gate-line"></div>
+      <div class="mock-overlay">
+        <p class="name">1,000-Stream Gate</p>
+        <p class="tag">Annual Threshold</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Concept · The Gate</p>
+      <h3>Why this matters</h3>
+      <p>A track must hit at least 1,000 streams in a 12-month period to generate any royalties on Spotify. Below this threshold, earnings are pooled and distributed to popular artists.</p>
+      <ul>
+        <li>Gate is per-track, not per-artist</li>
+        <li>Resets on a 12-month rolling window</li>
+        <li>Sub-1k revenue is redistributed to the top of the pool — it doesn't disappear, but you don't see it</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="example-dialog" id="dlg-prem">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-prem">
+      <div class="mock-bars">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="mock-overlay">
+        <p class="name">Premium &gt; Ad</p>
+        <p class="tag">Tier Matters</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Concept · Tier Math</p>
+      <h3>Why this matters</h3>
+      <p>A stream is counted after 30 seconds of playback. Premium subscriber streams generate more royalty value than ad-supported streams due to higher revenue per user.</p>
+      <ul>
+        <li>Premium ARPU is multiples higher than ad ARPU</li>
+        <li>Same song, same artist — premium listeners feed a richer pool</li>
+        <li>Territory matters too: US/UK/EU pools pay more per stream than developing markets</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // ============ DIALOGS ============
+  document.querySelectorAll('.example-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-dialog');
+      const dlg = document.getElementById(id);
+      if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+    });
+  });
+  document.querySelectorAll('dialog.example-dialog').forEach(dlg => {
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  });
+
+  // ============ DSP DATA ============
+  const DSPS = [
+    { key: 'spotify',  name: 'Spotify',       rate: 0.0035, color: '#1DB954' },
+    { key: 'apple',    name: 'Apple Music',   rate: 0.0070, color: '#fa243c' },
+    { key: 'amazon',   name: 'Amazon Music',  rate: 0.0088, color: '#00A8E1' },
+    { key: 'youtube',  name: 'YouTube Music', rate: 0.0020, color: '#FF0000' }
+  ];
+  // Pool model knobs
+  const DSP_KEEPS_PCT = 0.30;  // DSP keeps 30%, distributes 70% to rights holder
+  const RH_PCT = 0.70;
+  const DISTRO_PCT = 0.09;     // typical distro cut on net royalties
+  const GATE_THRESHOLD = 1000;
+
+  // ============ RENDER PIE ============
+  // Slice size = proportional to per-stream rate (sum normalized to 100%)
+  const totalRate = DSPS.reduce((s, d) => s + d.rate, 0);
+  const svg = document.getElementById('pieSvg');
+  const callout = document.getElementById('pieCallout');
+  const calloutLabel = callout.querySelector('.label');
+  const calloutRate = callout.querySelector('.rate');
+  const calloutSub = callout.querySelector('.rate-sub');
+  const legend = document.getElementById('pieLegend');
+
+  let cum = 0;
+  const cx = 100, cy = 100, r = 90;
+  DSPS.forEach((dsp) => {
+    const frac = dsp.rate / totalRate;
+    const startAngle = cum * 2 * Math.PI - Math.PI / 2;
+    const endAngle = (cum + frac) * 2 * Math.PI - Math.PI / 2;
+    cum += frac;
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+    const largeArc = frac > 0.5 ? 1 : 0;
+    const d = `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc} 1 ${x2},${y2} Z`;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', dsp.color);
+    path.setAttribute('stroke', '#ffffff');
+    path.setAttribute('stroke-width', '2');
+    path.classList.add('pie-slice');
+    path.dataset.key = dsp.key;
+    path.addEventListener('mouseenter', () => {
+      calloutLabel.textContent = dsp.name;
+      calloutRate.textContent = '$' + dsp.rate.toFixed(4);
+      calloutSub.textContent = (frac * 100).toFixed(1) + '% of pie · per stream';
+    });
+    svg.appendChild(path);
+
+    // 1,000-stream gate ring (red)
+    // Drawn as red dashed circle below pie radius — visually marks the gate threshold
+    // Legend row
+    const row = document.createElement('div');
+    row.className = 'pie-legend-row';
+    row.innerHTML = `<span class="swatch" style="background:${dsp.color};"></span><span class="name">${dsp.name}</span><span class="rate">$${dsp.rate.toFixed(4)}</span>`;
+    legend.appendChild(row);
+  });
+
+  // Add a red gate ring overlay on the pie center to mark the 1,000-stream gate
+  const gateRing = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  gateRing.setAttribute('cx', cx);
+  gateRing.setAttribute('cy', cy);
+  gateRing.setAttribute('r', 38);
+  gateRing.setAttribute('fill', 'none');
+  gateRing.setAttribute('stroke', '#d92d20');
+  gateRing.setAttribute('stroke-width', '3');
+  gateRing.setAttribute('stroke-dasharray', '4 4');
+  gateRing.setAttribute('id', 'gateRing');
+  gateRing.style.opacity = '0';
+  gateRing.style.transition = 'opacity 0.25s ease';
+  svg.appendChild(gateRing);
+
+  // ============ CALCULATOR ============
+  const streamsInput = document.getElementById('streamsInput');
+  const dspSelect = document.getElementById('dspSelect');
+  const grossVal = document.getElementById('grossVal');
+  const dspVal = document.getElementById('dspVal');
+  const rhVal = document.getElementById('rhVal');
+  const distroVal = document.getElementById('distroVal');
+  const netVal = document.getElementById('netVal');
+  const calcResult = document.getElementById('calcResult');
+  const resultName = document.getElementById('resultName');
+  const gateBanner = document.getElementById('gateBanner');
+  const callOutDefault = () => {
+    calloutLabel.textContent = 'Hover a slice';
+    calloutRate.textContent = '$0.0000';
+    calloutSub.textContent = 'per stream';
+  };
+
+  function fmt(n) {
+    return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function recalc() {
+    const streams = Math.max(0, parseInt(streamsInput.value || 0, 10));
+    const dsp = DSPS.find(d => d.key === dspSelect.value);
+    const gross = streams * dsp.rate;       // gross payable from this DSP at avg rate
+    const dspKeeps = gross * DSP_KEEPS_PCT; // 30% to DSP
+    const rh = gross * RH_PCT;              // 70% to rights holder
+    const distro = rh * DISTRO_PCT;         // distro takes their cut from RH share
+    const net = rh - distro;                // net to artist (pre label split, pre tax)
+
+    grossVal.textContent = fmt(gross);
+    dspVal.textContent = fmt(dspKeeps);
+    rhVal.textContent = fmt(rh);
+    distroVal.textContent = fmt(distro);
+
+    if (streams < GATE_THRESHOLD) {
+      // 1,000-stream gate: $0 net
+      netVal.textContent = '$0.00';
+      calcResult.classList.add('is-gated');
+      resultName.textContent = 'Below the 1,000-stream gate · pooled to top artists';
+      gateBanner.classList.add('is-show');
+      gateRing.style.opacity = '1';
+    } else {
+      netVal.textContent = fmt(net);
+      calcResult.classList.remove('is-gated');
+      resultName.textContent = 'After DSP cut, distro fee — pre-tax';
+      gateBanner.classList.remove('is-show');
+      gateRing.style.opacity = '0';
+    }
+
+    // Update callout to show selected DSP's rate when no hover
+    if (calloutLabel.textContent === 'Hover a slice' || calloutLabel.textContent === dsp.name) {
+      calloutLabel.textContent = dsp.name;
+      calloutRate.textContent = '$' + dsp.rate.toFixed(4);
+      calloutSub.textContent = 'per stream · selected';
+    }
+  }
+
+  streamsInput.addEventListener('input', recalc);
+  dspSelect.addEventListener('change', recalc);
+
+  // Reset callout on mouseleave from pie wrap
+  document.getElementById('pieWrap').addEventListener('mouseleave', () => {
+    const dsp = DSPS.find(d => d.key === dspSelect.value);
+    calloutLabel.textContent = dsp.name;
+    calloutRate.textContent = '$' + dsp.rate.toFixed(4);
+    calloutSub.textContent = 'per stream · selected';
+  });
+
+  // Initial render
+  recalc();
+
+  // ============ COMPLETE BUTTON ============
+  const completeBtn = document.getElementById('completeBtn');
+  const STORAGE_KEY = 'elijah-step-4-complete';
+  if (localStorage.getItem(STORAGE_KEY) === '1') {
+    completeBtn.textContent = '✓ Step 4 complete';
+    completeBtn.classList.add('is-done');
+  }
+  completeBtn.addEventListener('click', () => {
+    if (completeBtn.classList.contains('is-done')) {
+      localStorage.removeItem(STORAGE_KEY);
+      completeBtn.textContent = '✓ Mark Step 4 complete';
+      completeBtn.classList.remove('is-done');
+    } else {
+      localStorage.setItem(STORAGE_KEY, '1');
+      completeBtn.textContent = '✓ Step 4 complete';
+      completeBtn.classList.add('is-done');
+    }
+  });
+</script>
+
+
+<!-- ============ V3 RED DOOR BUTTON ============ -->
+<style>
+  .v3-door-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    background: #000000;
+    color: #c1121f;
+    border: 2px solid #8b0000;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px #1a0000, 0 0 24px rgba(139, 0, 0, 0.55), 0 0 44px rgba(193, 18, 31, 0.25);
+    transition: all 0.22s ease;
+    text-shadow: 0 0 6px rgba(193, 18, 31, 0.45);
+  }
+  .v3-door-btn::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c1121f;
+    box-shadow: 0 0 8px #c1121f, 0 0 16px rgba(193, 18, 31, 0.6);
+    animation: v3-pulse 1.6s ease-in-out infinite;
+  }
+  .v3-door-btn:hover {
+    background: #1a0000;
+    color: #ff1f1f;
+    border-color: #c1121f;
+    box-shadow: 0 0 0 1px #2a0000, 0 0 32px rgba(193, 18, 31, 0.85), 0 0 60px rgba(255, 31, 31, 0.4);
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+  @keyframes v3-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+  }
+</style>
+<a class="v3-door-btn" href="step-4-v3.html">▾ enter v3</a>
+
+</body>
+</html>

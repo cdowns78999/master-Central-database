@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voices Who've Been There</title>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/army-modern.css" />
+</head>
+<body class="subpage">
+  <header class="topbar">
+    <a class="back-link" href="index.html">&larr; Back to Index</a>
+    <h1 class="page-title">Voices Who've Been There</h1>
+  </header>
+
+  <main class="page-main">
+    <div class="page-note">
+      These are people who served, lived it, and have something honest to say about the experience. Quotes are pulled verbatim and linked back to the source.
+    </div>
+
+    <div id="voice-mount">
+      <div class="loading">Loading voices…</div>
+    </div>
+
+    <section class="sources-foot" id="sources-foot" hidden>
+      <h4>Sources</h4>
+      <ul id="sources-list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const mountEl = document.getElementById('voice-mount');
+    const footEl = document.getElementById('sources-foot');
+    const sourcesList = document.getElementById('sources-list');
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function renderEmpty() {
+      mountEl.innerHTML = `
+        <div class="empty-state">
+          <strong>Data not yet loaded</strong>
+          data/burned-voices.json is missing or empty. Drop it in to populate this page.
+        </div>`;
+    }
+
+    function renderVoices(list) {
+      if (!Array.isArray(list) || list.length === 0) {
+        renderEmpty();
+        return;
+      }
+
+      const stack = document.createElement('div');
+      stack.className = 'voice-stack';
+
+      list.forEach(v => {
+        const card = document.createElement('article');
+        card.className = 'voice-card';
+
+        const site  = escapeHtml(v.site || v.source_name || v.name || 'Unnamed source');
+        const vibe  = escapeHtml(v.vibe || v.tag || '');
+        const blurb = escapeHtml(v.blurb || v.summary || '');
+        const quote = escapeHtml(v.quote || '');
+        const link  = v.link || v.source || v.url || '';
+
+        card.innerHTML = `
+          <div class="voice-head">
+            <span class="voice-site">${site}</span>
+            ${vibe ? `<span class="voice-vibe">${vibe}</span>` : ''}
+          </div>
+          ${blurb ? `<p style="margin:0;color:var(--muted);font-size:14px;">${blurb}</p>` : ''}
+          ${quote ? `<blockquote class="voice-quote">${quote}</blockquote>` : ''}
+          ${link ? `<a class="voice-link" href="${escapeHtml(link)}" target="_blank" rel="noopener">Read the source &rarr;</a>` : ''}
+        `;
+        stack.appendChild(card);
+      });
+
+      mountEl.innerHTML = '';
+      mountEl.appendChild(stack);
+
+      const urls = new Set();
+      list.forEach(v => {
+        const u = v.link || v.source || v.url;
+        if (u) urls.add(u);
+      });
+      if (urls.size > 0) {
+        sourcesList.innerHTML = '';
+        [...urls].forEach(u => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${u}" target="_blank" rel="noopener">${u}</a>`;
+          sourcesList.appendChild(li);
+        });
+        footEl.hidden = false;
+      }
+    }
+
+    fetch('data/burned-voices.json')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(json => {
+        const list = Array.isArray(json) ? json : (json.items || json.voices || []);
+        renderVoices(list);
+      })
+      .catch(renderEmpty);
+  </script>
+</body>
+</html>

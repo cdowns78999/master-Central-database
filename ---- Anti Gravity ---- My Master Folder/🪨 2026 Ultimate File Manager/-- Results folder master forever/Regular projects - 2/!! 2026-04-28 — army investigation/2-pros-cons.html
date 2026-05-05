@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pros &amp; Cons — Same MOS List</title>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/army-modern.css" />
+</head>
+<body class="subpage">
+  <header class="topbar">
+    <a class="back-link" href="index.html">&larr; Back to Index</a>
+    <h1 class="page-title">Pros &amp; Cons — Same MOS List</h1>
+  </header>
+
+  <main class="page-main">
+    <div class="page-note">
+      Pros/cons inferred for educational purposes — discuss with multiple sources before deciding. Each card pairs the MOS profile with three honest upsides and three honest downsides.
+    </div>
+
+    <div id="carousel-mount">
+      <div class="loading">Loading MOS list…</div>
+    </div>
+
+    <section class="sources-foot" id="sources-foot" hidden>
+      <h4>Sources</h4>
+      <ul id="sources-list"></ul>
+    </section>
+  </main>
+
+  <script type="module">
+    import { mountCarousel, inferPros, inferCons } from './js/carousel.js';
+
+    const mountEl = document.getElementById('carousel-mount');
+    const footEl = document.getElementById('sources-foot');
+    const sourcesList = document.getElementById('sources-list');
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function bullets(list) {
+      return (list || []).map(b => `<li>${escapeHtml(b)}</li>`).join('');
+    }
+
+    function renderPcCard(item) {
+      const card = document.createElement('div');
+      card.className = 'mos-card';
+      const code = escapeHtml(item.code || item.mos || '—');
+      const name = escapeHtml(item.name || item.title || 'Untitled');
+      const cat  = escapeHtml(item.category || 'General');
+      const desc = escapeHtml(item.description || item.desc || '');
+
+      // honor explicit pros/cons in the JSON if present, otherwise infer
+      const pros = Array.isArray(item.pros) && item.pros.length ? item.pros : inferPros(item);
+      const cons = Array.isArray(item.cons) && item.cons.length ? item.cons : inferCons(item);
+
+      card.innerHTML = `
+        <span class="mos-code">${code}</span>
+        <h2 class="mos-name">${name}</h2>
+        <div class="mos-cat">${cat}</div>
+        ${desc ? `<p class="mos-desc">${desc}</p>` : ''}
+        <div class="pc-grid">
+          <div class="pc-col pros">
+            <h4>Pros</h4>
+            <ul>${bullets(pros)}</ul>
+          </div>
+          <div class="pc-col cons">
+            <h4>Cons</h4>
+            <ul>${bullets(cons)}</ul>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    function renderSources(list) {
+      const urls = new Set();
+      (list || []).forEach(it => { if (it.source) urls.add(it.source); });
+      if (urls.size === 0) return;
+      sourcesList.innerHTML = '';
+      [...urls].forEach(u => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${u}" target="_blank" rel="noopener">${u}</a>`;
+        sourcesList.appendChild(li);
+      });
+      footEl.hidden = false;
+    }
+
+    fetch('data/mos-classifications.json')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(json => {
+        const list = Array.isArray(json) ? json : (json.items || json.mos || []);
+        mountCarousel({ container: mountEl, data: list, renderCard: renderPcCard });
+        renderSources(list);
+      })
+      .catch(() => {
+        mountEl.innerHTML = `
+          <div class="empty-state">
+            <strong>Data not yet loaded</strong>
+            data/mos-classifications.json is missing or empty. Drop it in to populate this page.
+          </div>`;
+      });
+  </script>
+</body>
+</html>

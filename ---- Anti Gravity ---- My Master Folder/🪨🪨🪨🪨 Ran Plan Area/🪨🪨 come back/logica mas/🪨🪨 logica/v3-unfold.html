@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Campaign Dashboard — Card Unfold</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --accent: #0084ff;
+    --bg: #fff;
+    --border: #e4e4e4;
+    --text: #111;
+    --secondary: #888;
+    --green: #22c55e;
+    --red: #ef4444;
+    --radius: 14px;
+    --transition: 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 100;
+    gap: 16px;
+  }
+
+  .back-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .back-btn.visible { opacity: 1; pointer-events: auto; }
+
+  .breadcrumb {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--secondary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .breadcrumb span { color: var(--text); font-weight: 600; }
+  .breadcrumb .sep { color: var(--border); margin: 0 6px; }
+
+  .header-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-left: auto;
+  }
+
+  /* ─── Main canvas ─── */
+  .canvas {
+    position: fixed;
+    top: 56px; left: 0; right: 0; bottom: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 32px 24px 40px;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--secondary);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  /* ─── Client Grid ─── */
+  .client-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+  }
+
+  .client-card {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color var(--transition), box-shadow var(--transition), transform 0.15s;
+    user-select: none;
+    position: relative;
+  }
+  .client-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,132,255,0.08);
+    transform: translateY(-1px);
+  }
+  .client-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,132,255,0.12);
+  }
+  .client-card .emoji { font-size: 48px; line-height: 1; }
+  .client-card .name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* ─── Expansion Panel ─── */
+  .expansion-wrap {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .expansion-wrap.open { max-height: 500px; }
+
+  .expansion-inner {
+    border: 1.5px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-top: 4px;
+    background: #f7fbff;
+  }
+
+  .expansion-client-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .expansion-client-info .big-emoji { font-size: 36px; }
+  .expansion-client-info .client-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .path-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .path-btn {
+    flex: 1;
+    min-width: 160px;
+    padding: 18px 20px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .path-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,132,255,0.08);
+  }
+  .path-btn .path-icon { font-size: 26px; }
+  .path-btn .path-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .path-btn .path-sub {
+    font-size: 12px;
+    color: var(--secondary);
+  }
+
+  /* ─── Overlays (slide from right) ─── */
+  .overlay {
+    position: fixed;
+    top: 56px; right: 0; bottom: 0;
+    width: 100%;
+    max-width: 680px;
+    background: var(--bg);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform var(--transition);
+    z-index: 50;
+    overflow-y: auto;
+    padding: 32px 28px 40px;
+    will-change: transform;
+  }
+  .overlay.active { transform: translateX(0); }
+
+  .overlay-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .overlay-sub {
+    font-size: 13px;
+    color: var(--secondary);
+    margin-bottom: 28px;
+  }
+
+  /* ─── Services Grid ─── */
+  .services-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .service-tile {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color var(--transition), box-shadow var(--transition), transform 0.15s;
+    background: var(--bg);
+  }
+  .service-tile:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,132,255,0.08);
+    transform: translateY(-2px);
+  }
+  .service-tile .svc-emoji { font-size: 40px; }
+  .service-tile .svc-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  /* ─── Budget Grid ─── */
+  .budget-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .budget-tile {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 18px;
+    cursor: pointer;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    background: var(--bg);
+  }
+  .budget-tile:hover, .budget-tile.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,132,255,0.10);
+  }
+  .budget-tile .b-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .budget-tile .b-tier {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .custom-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+  .custom-input-row input {
+    flex: 1;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .custom-input-row input:focus { border-color: var(--accent); }
+  .custom-input-row input::placeholder { color: var(--secondary); }
+
+  .cta-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .cta-btn:hover { background: #006fd6; }
+  .cta-btn:active { transform: scale(0.98); }
+
+  /* ─── Existing Campaigns ─── */
+  .campaign-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+
+  .campaign-row {
+    display: flex;
+    align-items: center;
+    padding: 16px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    gap: 12px;
+    background: var(--bg);
+  }
+  .campaign-row .c-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .c-dot.active { background: var(--green); }
+  .c-dot.done   { background: var(--secondary); }
+  .c-dot.draft  { background: var(--red); }
+
+  .campaign-row .c-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .campaign-row .c-badge {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .c-badge.active { background: #dcfce7; color: #16a34a; }
+  .c-badge.done   { background: #f3f4f6; color: var(--secondary); }
+  .c-badge.draft  { background: #fee2e2; color: #dc2626; }
+
+  /* ─── Stripe placeholder ─── */
+  .stripe-box {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    color: var(--secondary);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 20px;
+  }
+  .stripe-box strong { display: block; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+
+  /* ─── Complete screen ─── */
+  .complete-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+    gap: 16px;
+    text-align: center;
+  }
+  .complete-screen .big-check { font-size: 64px; }
+  .complete-screen .done-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .complete-screen .done-sub {
+    font-size: 14px;
+    color: var(--secondary);
+    max-width: 320px;
+  }
+  .see-campaign-btn {
+    margin-top: 8px;
+    padding: 14px 28px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--secondary);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  /* Dim backdrop */
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.18);
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .backdrop.active { opacity: 1; pointer-events: auto; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <button class="back-btn" id="backBtn">← Back</button>
+  <div class="breadcrumb" id="breadcrumb">Campaign Dashboard</div>
+  <div class="header-title">v3 · Card Unfold</div>
+</header>
+
+<!-- Dim backdrop -->
+<div class="backdrop" id="backdrop"></div>
+
+<!-- Main canvas -->
+<main class="canvas" id="canvas">
+  <div class="section-label">Select a Client</div>
+  <div class="client-grid" id="clientGrid"></div>
+</main>
+
+<!-- Overlay: New Campaign → Services -->
+<div class="overlay" id="overlayServices">
+  <div class="overlay-title">Choose a Service</div>
+  <div class="overlay-sub" id="servicesSub">Select what you'd like to campaign</div>
+  <div class="services-grid" id="servicesGrid"></div>
+</div>
+
+<!-- Overlay: Budget -->
+<div class="overlay" id="overlayBudget">
+  <div class="overlay-title">Set Your Budget</div>
+  <div class="overlay-sub" id="budgetSub">Choose a tier or enter a custom amount</div>
+  <div class="budget-grid" id="budgetGrid"></div>
+  <div class="custom-input-row">
+    <input type="number" id="customBudget" placeholder="Custom amount ($)" />
+  </div>
+  <div class="stripe-box">
+    <strong>💳 Stripe Payment</strong>
+    Stripe Payment — wired soon
+  </div>
+  <button class="cta-btn" id="budgetCta">Create Campaign →</button>
+</div>
+
+<!-- Overlay: Existing Campaigns -->
+<div class="overlay" id="overlayExisting">
+  <div class="overlay-title">Existing Campaigns</div>
+  <div class="overlay-sub" id="existingSub">Campaigns for this client</div>
+  <div class="campaign-list" id="campaignList"></div>
+  <button class="cta-btn" id="newFromExisting">+ New Campaign</button>
+</div>
+
+<!-- Overlay: Complete -->
+<div class="overlay" id="overlayComplete">
+  <div class="complete-screen">
+    <div class="big-check">✅</div>
+    <div class="done-title">Campaign Created!</div>
+    <div class="done-sub" id="completeSub">Your campaign has been set up and is ready to go.</div>
+    <button class="see-campaign-btn">See Campaign →</button>
+  </div>
+</div>
+
+<script>
+// ─── Data ───
+const clients = [
+  { id: 1,  emoji: "🧔",  name: "Chad Downs" },
+  { id: 2,  emoji: "👨",  name: "Ray Downs" },
+  { id: 3,  emoji: "👩👦", name: "Family Chat" },
+  { id: 4,  emoji: "👨👩", name: "Ray & Kim" },
+  { id: 5,  emoji: "🎸",  name: "Randy Engineersski" },
+  { id: 6,  emoji: "🧑",  name: "James Poddubny" },
+  { id: 7,  emoji: "👩‍🦱", name: "Jenna Bodley" },
+  { id: 8,  emoji: "👩",  name: "Kim Downs" },
+  { id: 9,  emoji: "👩‍🦳", name: "Linda-Brooke Thompson" },
+  { id: 10, emoji: "👨‍🦳", name: "Ed Adkins Sr." },
+  { id: 11, emoji: "🧕",  name: "Kayla Amber" },
+  { id: 12, emoji: "🧑‍💼", name: "Ari Aloush" },
+];
+
+const services = [
+  { emoji: "📰", label: "Press" },
+  { emoji: "🎵", label: "Spotify" },
+  { emoji: "🎧", label: "Soundcloud" },
+  { emoji: "📱", label: "Social Media" },
+];
+
+const budgets = [
+  { amount: "$500",   tier: "Starter" },
+  { amount: "$1,500", tier: "Pro" },
+  { amount: "$5,000", tier: "Premium" },
+  { amount: "Custom", tier: "Custom" },
+];
+
+const campaigns = [
+  { name: "Summer Drop 2025", status: "active", badge: "🟢 Active" },
+  { name: "Spring Launch",    status: "done",   badge: "✅ Done" },
+  { name: "Q1 Ads",           status: "draft",  badge: "🔴 Draft" },
+];
+
+// ─── State ───
+let selectedClient = null;
+let selectedService = null;
+let selectedBudget = null;
+let openExpansionWrap = null;
+let overlayStack = []; // track open overlays
+
+// ─── Build Client Grid ───
+const grid = document.getElementById('clientGrid');
+
+clients.forEach(client => {
+  // Card
+  const card = document.createElement('div');
+  card.className = 'client-card';
+  card.dataset.id = client.id;
+  card.innerHTML = `<div class="emoji">${client.emoji}</div><div class="name">${client.name}</div>`;
+
+  // Expansion wrapper (inserted after card in DOM flow)
+  const expWrap = document.createElement('div');
+  expWrap.className = 'expansion-wrap';
+  expWrap.innerHTML = `
+    <div class="expansion-inner">
+      <div class="expansion-client-info">
+        <span class="big-emoji">${client.emoji}</span>
+        <span class="client-name">${client.name}</span>
+      </div>
+      <div class="path-row">
+        <button class="path-btn" data-action="new" data-client="${client.id}">
+          <span class="path-icon">✨</span>
+          <span class="path-label">New Campaign</span>
+          <span class="path-sub">Start something fresh</span>
+        </button>
+        <button class="path-btn" data-action="existing" data-client="${client.id}">
+          <span class="path-icon">📂</span>
+          <span class="path-label">Existing (${campaigns.length})</span>
+          <span class="path-sub">View active & past campaigns</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  card.addEventListener('click', () => toggleCard(card, expWrap, client));
+  expWrap.addEventListener('click', handleExpansionClick);
+
+  grid.appendChild(card);
+  grid.appendChild(expWrap);
+});
+
+// ─── Toggle card expansion ───
+function toggleCard(card, expWrap, client) {
+  const isOpen = expWrap.classList.contains('open');
+
+  // Close any other open expansion
+  if (openExpansionWrap && openExpansionWrap !== expWrap) {
+    openExpansionWrap.classList.remove('open');
+    const prevCard = grid.querySelector('.client-card.selected');
+    if (prevCard) prevCard.classList.remove('selected');
+  }
+
+  if (isOpen) {
+    expWrap.classList.remove('open');
+    card.classList.remove('selected');
+    openExpansionWrap = null;
+    selectedClient = null;
+    updateBreadcrumb();
+    updateBackBtn();
+  } else {
+    expWrap.classList.add('open');
+    card.classList.add('selected');
+    openExpansionWrap = expWrap;
+    selectedClient = client;
+    updateBreadcrumb();
+    updateBackBtn();
+    // Scroll into view
+    setTimeout(() => expWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+}
+
+function handleExpansionClick(e) {
+  const btn = e.target.closest('.path-btn');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'new') openServicesOverlay();
+  if (action === 'existing') openExistingOverlay();
+}
+
+// ─── Services Overlay ───
+const servicesGrid = document.getElementById('servicesGrid');
+services.forEach(svc => {
+  const tile = document.createElement('div');
+  tile.className = 'service-tile';
+  tile.innerHTML = `<div class="svc-emoji">${svc.emoji}</div><div class="svc-label">${svc.label}</div>`;
+  tile.addEventListener('click', () => {
+    selectedService = svc;
+    updateBreadcrumb();
+    openBudgetOverlay();
+  });
+  servicesGrid.appendChild(tile);
+});
+
+function openServicesOverlay() {
+  document.getElementById('servicesSub').textContent = `For ${selectedClient.name}`;
+  showOverlay('overlayServices');
+}
+
+// ─── Budget Overlay ───
+const budgetGrid = document.getElementById('budgetGrid');
+budgets.forEach(b => {
+  const tile = document.createElement('div');
+  tile.className = 'budget-tile';
+  tile.innerHTML = `<div class="b-amount">${b.amount}</div><div class="b-tier">${b.tier}</div>`;
+  tile.addEventListener('click', () => {
+    budgetGrid.querySelectorAll('.budget-tile').forEach(t => t.classList.remove('selected'));
+    tile.classList.add('selected');
+    selectedBudget = b;
+    updateBreadcrumb();
+  });
+  budgetGrid.appendChild(tile);
+});
+
+document.getElementById('budgetCta').addEventListener('click', () => {
+  const custom = document.getElementById('customBudget').value;
+  if (!selectedBudget && !custom) {
+    alert('Please select or enter a budget.');
+    return;
+  }
+  openCompleteOverlay();
+});
+
+function openBudgetOverlay() {
+  document.getElementById('budgetSub').textContent =
+    `${selectedClient.name} · ${selectedService.label}`;
+  showOverlay('overlayBudget');
+}
+
+// ─── Existing Campaigns Overlay ───
+const campaignList = document.getElementById('campaignList');
+campaigns.forEach(c => {
+  const row = document.createElement('div');
+  row.className = 'campaign-row';
+  row.innerHTML = `
+    <div class="c-dot ${c.status}"></div>
+    <div class="c-name">${c.name}</div>
+    <div class="c-badge ${c.status}">${c.badge}</div>
+  `;
+  campaignList.appendChild(row);
+});
+
+document.getElementById('newFromExisting').addEventListener('click', () => {
+  openServicesOverlay();
+});
+
+function openExistingOverlay() {
+  document.getElementById('existingSub').textContent = `Campaigns for ${selectedClient.name}`;
+  showOverlay('overlayExisting');
+}
+
+// ─── Complete Overlay ───
+function openCompleteOverlay() {
+  const budget = document.getElementById('customBudget').value
+    ? `$${document.getElementById('customBudget').value}`
+    : (selectedBudget ? selectedBudget.amount : '');
+  document.getElementById('completeSub').textContent =
+    `${selectedClient.name} · ${selectedService ? selectedService.label : ''} · ${budget}`;
+  showOverlay('overlayComplete');
+}
+
+// ─── Overlay Stack Management ───
+function showOverlay(id) {
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  overlayStack.push(id);
+  document.getElementById('backdrop').classList.add('active');
+  updateBackBtn();
+}
+
+function closeTopOverlay() {
+  if (overlayStack.length === 0) return;
+  const id = overlayStack.pop();
+  document.getElementById(id).classList.remove('active');
+  if (overlayStack.length === 0) {
+    document.getElementById('backdrop').classList.remove('active');
+  }
+  updateBackBtn();
+  updateBreadcrumb();
+}
+
+document.getElementById('backdrop').addEventListener('click', closeTopOverlay);
+
+// ─── Back Button ───
+const backBtn = document.getElementById('backBtn');
+backBtn.addEventListener('click', () => {
+  if (overlayStack.length > 0) {
+    closeTopOverlay();
+  } else if (openExpansionWrap) {
+    openExpansionWrap.classList.remove('open');
+    const prevCard = grid.querySelector('.client-card.selected');
+    if (prevCard) prevCard.classList.remove('selected');
+    openExpansionWrap = null;
+    selectedClient = null;
+    updateBreadcrumb();
+    updateBackBtn();
+  }
+});
+
+function updateBackBtn() {
+  const visible = overlayStack.length > 0 || openExpansionWrap !== null;
+  backBtn.classList.toggle('visible', visible);
+}
+
+// ─── Breadcrumb ───
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  const parts = ['Campaign Dashboard'];
+  if (selectedClient) parts.push(`<span>${selectedClient.name}</span>`);
+  if (overlayStack.includes('overlayServices')) parts.push('<span>New Campaign</span>');
+  if (overlayStack.includes('overlayExisting')) parts.push('<span>Existing</span>');
+  if (selectedService) parts.push(`<span>${selectedService.label}</span>`);
+  if (overlayStack.includes('overlayComplete')) parts.push('<span>Done</span>');
+  bc.innerHTML = parts.join('<span class="sep">›</span>');
+}
+</script>
+</body>
+</html>

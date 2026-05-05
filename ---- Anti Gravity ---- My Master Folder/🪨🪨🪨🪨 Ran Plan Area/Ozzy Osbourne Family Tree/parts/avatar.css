@@ -1,0 +1,273 @@
+/* ==========================================================================
+   SPINNING AVATAR — 3D Polaroid / Mugshot Placeholder
+   Matches Ozzy Detective File aesthetic
+   (wood-dark shadow, manila/aged-paper faces, masking tape, paperclip,
+    Special Elite typewriter font, sepia/grain vignette)
+   ========================================================================== */
+
+/* Design tokens — mirrors Detective File :root so the component is
+   portable into any page that has (or doesn't have) those vars defined. */
+.avatar-slot {
+  --av-size: 140px;
+  --av-wood-dark: #3b2416;
+  --av-aged-paper: #e8dcc0;
+  --av-aged-paper-deep: #c9b790;
+  --av-polaroid-cream: #f7f0dc;
+  --av-typewriter-ink: #1a1512;
+  --av-stamp-red: #a8231a;
+  --av-masking-tape: #e8d9a8;
+  --av-paperclip-silver: #9ca3af;
+  --av-faded-blue-ink: #3a5878;
+  --av-manila-folder: #d4a853;
+
+  /* Sizing + perspective */
+  position: relative;
+  display: inline-block;
+  width: var(--av-size);
+  height: var(--av-size);
+  perspective: 900px;
+  perspective-origin: 50% 40%;
+  margin: 14px;
+  /* Font fallbacks so demo page works even without Google Fonts loaded */
+  font-family: 'Special Elite', 'Courier Prime', 'Courier New', monospace;
+  color: var(--av-typewriter-ink);
+}
+
+/* The spinning card */
+.avatar-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: avatarSpin 7s linear infinite;
+  transition: transform 420ms cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+}
+
+@keyframes avatarSpin {
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
+/* Hover: pause + zoom */
+.avatar-slot:hover .avatar-card {
+  animation-play-state: paused;
+  transform: scale(1.08);
+}
+
+/* Shared face styling */
+.avatar-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.45),
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========== FRONT FACE — polaroid photo placeholder ========== */
+.avatar-front {
+  background: var(--av-polaroid-cream);
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(139,100,60,0.10) 0%, transparent 45%),
+    radial-gradient(circle at 80% 80%, rgba(0,0,0,0.08) 0%, transparent 55%),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="g"><feTurbulence baseFrequency="0.9" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(%23g)" opacity="0.10"/></svg>');
+  padding: 10px 10px 26px;
+  transform: translateZ(1px);
+}
+
+/* Photo window (where the eventual <img> sits) */
+.avatar-photo-window {
+  width: 100%;
+  flex: 1;
+  background: linear-gradient(160deg, #d9cdad 0%, #b9a77e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(0,0,0,0.12);
+}
+
+.avatar-photo-window img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: sepia(0.25) saturate(0.82) contrast(1.06) brightness(0.97);
+}
+
+/* Silhouette fallback icon */
+.avatar-silhouette {
+  width: 56%;
+  height: 56%;
+  opacity: 0.55;
+  fill: rgba(26, 21, 18, 0.7);
+}
+
+/* Grain / vignette overlay on photo window */
+.avatar-photo-window::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.35) 100%),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><filter id="n"><feTurbulence baseFrequency="0.85" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.12"/></svg>');
+  mix-blend-mode: multiply;
+}
+
+/* Caption strip at bottom of polaroid */
+.avatar-caption {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Permanent Marker', 'Special Elite', cursive;
+  color: var(--av-faded-blue-ink);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Masking tape across the top of the front face */
+.avatar-tape {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 72%;
+  height: 20px;
+  background: var(--av-masking-tape);
+  opacity: 0.82;
+  mix-blend-mode: multiply;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.22);
+  z-index: 3;
+  pointer-events: none;
+}
+.avatar-tape::before,
+.avatar-tape::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 8px;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.08));
+}
+.avatar-tape::before { left: 0; clip-path: polygon(0 25%, 100% 0, 100% 100%, 0 75%); }
+.avatar-tape::after  { right: 0; transform: scaleX(-1); clip-path: polygon(0 25%, 100% 0, 100% 100%, 0 75%); }
+
+/* Paperclip — small SVG pinned in the corner */
+.avatar-clip {
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  width: 18px;
+  height: 40px;
+  border: 2px solid var(--av-paperclip-silver);
+  border-radius: 10px 10px 3px 3px;
+  border-bottom: none;
+  transform: rotate(8deg);
+  filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.45));
+  z-index: 4;
+  pointer-events: none;
+}
+.avatar-clip::before {
+  content: '';
+  position: absolute;
+  top: 5px; left: 3px;
+  width: 10px; height: 28px;
+  border: 1.5px solid var(--av-paperclip-silver);
+  border-radius: 6px 6px 2px 2px;
+  border-bottom: none;
+}
+
+/* ========== BACK FACE — evidence tag ========== */
+.avatar-back {
+  background: var(--av-aged-paper);
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(139,100,60,0.12) 0%, transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(139,100,60,0.10) 0%, transparent 55%),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="p"><feTurbulence baseFrequency="0.85" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(%23p)" opacity="0.12"/></svg>');
+  transform: rotateY(180deg) translateZ(1px);
+  padding: 14px 12px;
+  text-align: center;
+  justify-content: flex-start;
+}
+
+.avatar-back-header {
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--av-stamp-red);
+  border: 2px solid var(--av-stamp-red);
+  padding: 3px 8px;
+  margin-bottom: 10px;
+  opacity: 0.82;
+  mix-blend-mode: multiply;
+  transform: rotate(-2deg);
+}
+
+.avatar-back-name {
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--av-typewriter-ink);
+  font-weight: 700;
+  margin-bottom: 6px;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.avatar-back-rel {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  font-size: 9px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  color: var(--av-typewriter-ink);
+  opacity: 0.78;
+  padding: 0 4px;
+}
+
+.avatar-back-id {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  font-family: 'Courier Prime', monospace;
+  font-size: 7px;
+  letter-spacing: 0.18em;
+  color: var(--av-typewriter-ink);
+  opacity: 0.45;
+  text-transform: uppercase;
+}
+
+/* Wood-dark cast shadow beneath the spinning card */
+.avatar-slot::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -8px;
+  height: 12px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.5), transparent 70%);
+  filter: blur(3px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .avatar-card { animation: none; transform: rotateY(-18deg); }
+  .avatar-slot:hover .avatar-card { transform: rotateY(-18deg) scale(1.08); }
+}

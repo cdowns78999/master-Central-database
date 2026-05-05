@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wing Dashboard — Outbox Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-deep:    #0f1117;
+    --bg-card:    #1a1d27;
+    --bg-input:   #232633;
+    --border:     rgba(255,255,255,0.08);
+    --text:       #e8e6e3;
+    --text-dim:   #8a8d9b;
+    --lamp-warm:  #f59e0b;
+    --lamp-mid:   #d97706;
+    --lamp-deep:  #92400e;
+    --green:      #10b981;
+    --green-deep: #065f46;
+    --red:        #ef4444;
+    --blue:       #0ea5e9;
+    --purple:     #6366f1;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px;
+}
+.back-link {
+    color: var(--text-dim); text-decoration: none; font-size: 0.85rem;
+    padding: 6px 14px; border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+}
+.back-link:hover { color: var(--lamp-warm); border-color: var(--lamp-warm); }
+.header h1 {
+    font-size: 1.4rem; font-weight: 600;
+    background: linear-gradient(135deg, var(--lamp-warm), var(--green));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* ── Lanes grid ─────────────────────────────────────────────── */
+.lanes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+.lane {
+    background: var(--bg-card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 12px;
+}
+.lane-header {
+    display: flex; align-items: center; justify-content: space-between;
+}
+.lane-title {
+    font-size: 0.95rem; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+}
+.lane-dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+}
+.lane-gmail .lane-dot    { background: var(--red); }
+.lane-imessage .lane-dot { background: var(--blue); }
+.lane-whatsapp .lane-dot { background: var(--green); }
+.lane-other .lane-dot    { background: #1877F2; }
+
+/* ── Pending channel lanes (not set up yet) ── */
+.lane-pending {
+    opacity: 0.45;
+    filter: grayscale(0.3);
+    position: relative;
+}
+.lane-pending:hover { opacity: 0.6; }
+.lane-pending-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+.lane-count {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+    color: var(--text-dim); background: rgba(255,255,255,0.05);
+    padding: 2px 8px; border-radius: 6px;
+}
+
+.draft-btn {
+    font-family: 'Outfit', sans-serif; font-size: 0.75rem; font-weight: 600;
+    color: var(--lamp-warm); background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.2); border-radius: 8px;
+    padding: 6px 14px; cursor: pointer; transition: all 0.15s;
+}
+.draft-btn:hover { background: rgba(245,158,11,0.18); border-color: var(--lamp-warm); }
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.card-list { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+.card-empty {
+    font-size: 0.75rem; color: var(--text-dim); text-align: center;
+    padding: 16px; font-style: italic;
+}
+.card {
+    background: var(--bg-input); border-radius: 10px;
+    padding: 12px; border: 1px solid var(--border);
+    position: relative; transition: all 0.3s;
+}
+.card.sending { opacity: 0.6; }
+.card.sent { border-color: var(--green); }
+.card.failed { border-color: var(--red); }
+.card .card-to {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+    color: var(--lamp-warm); margin-bottom: 4px;
+}
+.card .card-msg {
+    font-size: 0.78rem; color: var(--text); line-height: 1.4;
+    max-height: 60px; overflow: hidden;
+}
+.card .card-status {
+    font-size: 0.65rem; margin-top: 6px; font-weight: 600;
+}
+.card .card-status.status-sent { color: var(--green); }
+.card .card-status.status-failed { color: var(--red); }
+.card .card-remove {
+    position: absolute; top: 8px; right: 8px;
+    background: none; border: none; color: var(--text-dim);
+    cursor: pointer; font-size: 0.8rem; padding: 2px 6px;
+    border-radius: 4px; transition: all 0.15s;
+}
+.card .card-remove:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+
+/* ── Compose form ───────────────────────────────────────────── */
+.compose {
+    background: var(--bg-input); border-radius: 10px;
+    padding: 12px; border: 1px solid rgba(245,158,11,0.15);
+    display: flex; flex-direction: column; gap: 8px;
+}
+.compose input, .compose textarea {
+    font-family: 'Outfit', sans-serif; font-size: 0.78rem;
+    background: var(--bg-deep); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; outline: none; resize: vertical;
+}
+.compose input:focus, .compose textarea:focus { border-color: var(--lamp-warm); }
+.compose textarea { min-height: 60px; }
+.compose-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.compose-actions button {
+    font-family: 'Outfit', sans-serif; font-size: 0.72rem; font-weight: 600;
+    padding: 6px 16px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); transition: all 0.15s;
+}
+.btn-queue {
+    background: rgba(16,185,129,0.12); color: var(--green);
+    border-color: rgba(16,185,129,0.25);
+}
+.btn-queue:hover { background: rgba(16,185,129,0.25); }
+.btn-cancel {
+    background: transparent; color: var(--text-dim);
+}
+.btn-cancel:hover { color: var(--text); }
+
+/* ── Type toggle pills ─────────────────────────────────────── */
+.type-toggle-wrap {
+    display: flex; gap: 6px; align-items: center;
+}
+.type-toggle-wrap .type-label {
+    font-size: 0.68rem; color: var(--text-dim); margin-right: 2px;
+}
+.type-pill {
+    font-family: 'Outfit', sans-serif; font-size: 0.68rem; font-weight: 600;
+    padding: 3px 12px; border-radius: 20px; cursor: pointer;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-dim); transition: all 0.15s; line-height: 1.3;
+}
+.type-pill.active-client {
+    background: rgba(14,165,233,0.15); color: var(--blue);
+    border-color: rgba(14,165,233,0.4);
+}
+.type-pill.active-supplier {
+    background: rgba(245,158,11,0.15); color: var(--lamp-warm);
+    border-color: rgba(245,158,11,0.4);
+}
+
+/* ── Card type badge ───────────────────────────────────────── */
+.card-type-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.63rem; font-weight: 500; color: var(--text-dim);
+    margin-bottom: 4px;
+}
+.card-type-badge .badge-dot {
+    width: 7px; height: 7px; border-radius: 50%; display: inline-block;
+    flex-shrink: 0;
+}
+.card-type-badge.badge-client .badge-dot  { background: #0ea5e9; }
+.card-type-badge.badge-client .badge-text { color: #0ea5e9; }
+.card-type-badge.badge-supplier .badge-dot  { background: #f59e0b; }
+.card-type-badge.badge-supplier .badge-text { color: #f59e0b; }
+
+/* ── Send All button ────────────────────────────────────────── */
+.send-all-wrap { text-align: center; margin: 32px 0; }
+.send-all-btn {
+    font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700;
+    padding: 16px 48px; border-radius: 14px; cursor: pointer;
+    background: linear-gradient(135deg, var(--lamp-warm), var(--green));
+    color: #fff; border: none;
+    box-shadow: 0 4px 24px rgba(245,158,11,0.3);
+    transition: all 0.2s; letter-spacing: 0.02em;
+}
+.send-all-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(245,158,11,0.4);
+}
+.send-all-btn:disabled {
+    opacity: 0.4; cursor: not-allowed; transform: none;
+    box-shadow: none;
+}
+.send-status {
+    margin-top: 12px; font-size: 0.8rem; color: var(--text-dim);
+}
+
+/* ── Sent log ───────────────────────────────────────────────── */
+.sent-log-section {
+    margin-top: 36px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+}
+.sent-log-toggle {
+    font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 600;
+    color: var(--text-dim); background: none; border: none;
+    cursor: pointer; padding: 4px 0; transition: color 0.15s;
+}
+.sent-log-toggle:hover { color: var(--text); }
+.sent-log-list {
+    margin-top: 12px; display: none;
+    max-height: 400px; overflow-y: auto;
+}
+.sent-log-list.open { display: block; }
+.log-entry {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    font-size: 0.73rem;
+}
+.log-entry .log-ch {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(255,255,255,0.05); color: var(--text-dim);
+    min-width: 70px; text-align: center;
+}
+.log-entry .log-to { color: var(--lamp-warm); min-width: 140px; }
+.log-entry .log-msg { color: var(--text-dim); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-entry .log-time { color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 0.63rem; }
+.log-entry .log-status-sent { color: var(--green); }
+.log-entry .log-status-failed { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-link">← Dashboard</a>
+    <h1>Outbox Manager</h1>
+</div>
+
+<div class="lanes" id="lanesGrid">
+    <!-- Gmail Lane -->
+    <div class="lane lane-gmail" data-channel="gmail">
+        <div class="lane-header">
+            <span class="lane-title"><span class="lane-dot"></span> Gmail</span>
+            <span class="lane-count" data-count>0</span>
+        </div>
+        <button class="draft-btn" data-draft-btn>+ Draft</button>
+        <div class="card-list" data-card-list>
+            <div class="card-empty">No messages queued</div>
+        </div>
+    </div>
+
+    <!-- iMessage Lane -->
+    <div class="lane lane-imessage lane-pending" data-channel="imessage">
+        <div class="lane-header">
+            <span class="lane-title"><span class="lane-dot"></span> iMessage <span class="lane-pending-badge">🚧 not set up</span></span>
+            <span class="lane-count" data-count>0</span>
+        </div>
+        <button class="draft-btn" data-draft-btn>+ Draft</button>
+        <div class="card-list" data-card-list>
+            <div class="card-empty">No messages queued</div>
+        </div>
+    </div>
+
+    <!-- WhatsApp Lane -->
+    <div class="lane lane-whatsapp" data-channel="whatsapp">
+        <div class="lane-header">
+            <span class="lane-title"><span class="lane-dot"></span> WhatsApp</span>
+            <span class="lane-count" data-count>0</span>
+        </div>
+        <button class="draft-btn" data-draft-btn>+ Draft</button>
+        <div class="card-list" data-card-list>
+            <div class="card-empty">No messages queued</div>
+        </div>
+    </div>
+
+    <!-- Other Lane (Messenger) -->
+    <div class="lane lane-other lane-pending" data-channel="other">
+        <div class="lane-header">
+            <span class="lane-title"><span class="lane-dot"></span> Messenger <span class="lane-pending-badge">🚧 not set up</span></span>
+            <span class="lane-count" data-count>0</span>
+        </div>
+        <button class="draft-btn" data-draft-btn>+ Draft</button>
+        <div class="card-list" data-card-list>
+            <div class="card-empty">No messages queued</div>
+        </div>
+    </div>
+</div>
+
+<!-- Send All -->
+<div class="send-all-wrap">
+    <button class="send-all-btn" id="sendAllBtn">Send All →</button>
+    <div class="send-status" id="sendStatus"></div>
+</div>
+
+<!-- Sent Log -->
+<div class="sent-log-section">
+    <button class="sent-log-toggle" id="sentLogToggle">▸ Recent Sent Messages</button>
+    <div class="sent-log-list" id="sentLogList"></div>
+</div>
+
+<script>
+(function() {
+    var API = 'http://localhost:3003';
+
+    /* ── State ────────────────────────────────────────────────── */
+    var outbox = { gmail: [], imessage: [], whatsapp: [], other: [] };
+    var sending = false;
+
+    /* ── DOM refs ─────────────────────────────────────────────── */
+    var lanes = document.querySelectorAll('.lane');
+    var sendAllBtn = document.getElementById('sendAllBtn');
+    var sendStatus = document.getElementById('sendStatus');
+    var sentLogToggle = document.getElementById('sentLogToggle');
+    var sentLogList = document.getElementById('sentLogList');
+
+    /* ── Fetch helpers ────────────────────────────────────────── */
+    function fetchJSON(method, path, body) {
+        var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        return fetch(API + path, opts).then(function(r) { return r.json(); });
+    }
+
+    /* ── Render ───────────────────────────────────────────────── */
+    function renderLanes() {
+        lanes.forEach(function(lane) {
+            var ch = lane.getAttribute('data-channel');
+            var list = lane.querySelector('[data-card-list]');
+            var countEl = lane.querySelector('[data-count]');
+            var items = outbox[ch] || [];
+
+            countEl.textContent = items.length;
+
+            if (items.length === 0) {
+                list.innerHTML = '<div class="card-empty">No messages queued</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            items.forEach(function(item, idx) {
+                var card = document.createElement('div');
+                card.className = 'card';
+                var itemType = item.type || 'client';
+                var badgeCls = itemType === 'supplier' ? 'badge-supplier' : 'badge-client';
+                var badgeLabel = itemType === 'supplier' ? 'Supplier' : 'Client';
+                card.innerHTML =
+                    '<button class="card-remove" data-idx="' + idx + '" data-ch="' + ch + '">&times;</button>' +
+                    '<div class="card-type-badge ' + badgeCls + '"><span class="badge-dot"></span><span class="badge-text">' + badgeLabel + '</span></div>' +
+                    '<div class="card-to">' + esc(item.contactName || item.to) + '</div>' +
+                    '<div class="card-msg">' + esc(item.message) + '</div>';
+                list.appendChild(card);
+            });
+        });
+
+        // Enable/disable send all
+        var total = 0;
+        for (var ch in outbox) total += (outbox[ch] || []).length;
+        sendAllBtn.disabled = total === 0 || sending;
+    }
+
+    function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+    }
+
+    /* ── Load outbox from server ──────────────────────────────── */
+    function loadOutbox() {
+        fetchJSON('GET', '/outbox').then(function(data) {
+            outbox = data;
+            renderLanes();
+        }).catch(function(err) {
+            sendStatus.textContent = 'Cannot reach outbox server on port 3003';
+        });
+    }
+
+    /* ── Draft compose ────────────────────────────────────────── */
+    function showCompose(lane) {
+        var ch = lane.getAttribute('data-channel');
+        // Remove existing compose form in this lane
+        var existing = lane.querySelector('.compose');
+        if (existing) { existing.remove(); return; }
+
+        var form = document.createElement('div');
+        form.className = 'compose';
+        form.innerHTML =
+            '<input type="text" placeholder="To (email, phone, handle)" data-field="to">' +
+            '<input type="text" placeholder="Contact name (optional)" data-field="contactName">' +
+            '<textarea placeholder="Message..." data-field="message"></textarea>' +
+            '<input type="text" placeholder="Thread ID (optional)" data-field="threadId">' +
+            '<div class="type-toggle-wrap">' +
+            '  <span class="type-label">Type</span>' +
+            '  <button class="type-pill active-client" data-type-pill="client">Client</button>' +
+            '  <button class="type-pill" data-type-pill="supplier">Supplier</button>' +
+            '</div>' +
+            '<div class="compose-actions">' +
+            '  <button class="btn-cancel" data-cancel>Cancel</button>' +
+            '  <button class="btn-queue" data-queue>Queue →</button>' +
+            '</div>';
+
+        lane.appendChild(form);
+
+        // Type toggle pill logic
+        var typePills = form.querySelectorAll('[data-type-pill]');
+        typePills.forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                typePills.forEach(function(p) {
+                    p.className = 'type-pill';
+                });
+                var val = pill.getAttribute('data-type-pill');
+                pill.classList.add(val === 'supplier' ? 'active-supplier' : 'active-client');
+            });
+        });
+
+        form.querySelector('[data-cancel]').addEventListener('click', function() { form.remove(); });
+        form.querySelector('[data-queue]').addEventListener('click', function() {
+            var to      = form.querySelector('[data-field="to"]').value.trim();
+            var msg     = form.querySelector('[data-field="message"]').value.trim();
+            var name    = form.querySelector('[data-field="contactName"]').value.trim();
+            var tid     = form.querySelector('[data-field="threadId"]').value.trim();
+            var activePill = form.querySelector('.type-pill.active-client, .type-pill.active-supplier');
+            var type    = activePill ? activePill.getAttribute('data-type-pill') : 'client';
+
+            if (!to || !msg) { alert('To and Message are required.'); return; }
+
+            fetchJSON('POST', '/outbox/add', {
+                channel: ch, to: to, message: msg,
+                contactName: name || to, threadId: tid,
+                type: type
+            }).then(function() {
+                form.remove();
+                loadOutbox();
+            }).catch(function(e) { alert('Failed to queue: ' + e.message); });
+        });
+    }
+
+    /* ── Remove from queue (local file edit via server not supported — remove from local state) ── */
+    function removeFromQueue(ch, idx) {
+        // Re-load, splice, re-save by re-adding all except this one
+        // Since we don't have a delete endpoint, we'll rebuild locally
+        // For now, just reload — the server is the source of truth
+        // TODO: add DELETE endpoint to outbox-server
+        // Workaround: post an empty outbox? No — just visually remove for now
+        outbox[ch].splice(idx, 1);
+        renderLanes();
+    }
+
+    /* ── Send All ─────────────────────────────────────────────── */
+    function sendAll() {
+        if (sending) return;
+        sending = true;
+        sendAllBtn.disabled = true;
+        sendStatus.textContent = 'Sending...';
+
+        // Mark all cards as sending
+        document.querySelectorAll('.card').forEach(function(c) { c.classList.add('sending'); });
+
+        fetchJSON('POST', '/outbox/send-all').then(function(results) {
+            sending = false;
+            var summary = [];
+
+            for (var ch in results) {
+                var r = results[ch];
+                if (r.status === 'empty') continue;
+
+                // Update cards visually
+                var lane = document.querySelector('[data-channel="' + ch + '"]');
+                var cards = lane ? lane.querySelectorAll('.card') : [];
+
+                if (r.status === 'done') {
+                    summary.push(ch + ': sent');
+                    cards.forEach(function(c) {
+                        c.classList.remove('sending');
+                        c.classList.add('sent');
+                        var s = document.createElement('div');
+                        s.className = 'card-status status-sent';
+                        s.textContent = 'Sent';
+                        c.appendChild(s);
+                    });
+                } else {
+                    summary.push(ch + ': ' + (r.status || 'error'));
+                    cards.forEach(function(c) {
+                        c.classList.remove('sending');
+                        c.classList.add('failed');
+                        var s = document.createElement('div');
+                        s.className = 'card-status status-failed';
+                        s.textContent = 'Failed';
+                        c.appendChild(s);
+                    });
+                }
+            }
+
+            sendStatus.textContent = summary.join('  |  ') || 'Nothing to send';
+
+            // Reload after a beat to clear sent items
+            setTimeout(function() { loadOutbox(); loadSentLog(); }, 2000);
+        }).catch(function(err) {
+            sending = false;
+            sendStatus.textContent = 'Send failed: ' + err.message;
+            sendAllBtn.disabled = false;
+        });
+    }
+
+    /* ── Sent log ─────────────────────────────────────────────── */
+    function loadSentLog() {
+        fetchJSON('GET', '/outbox/status').then(function(data) {
+            var all = [];
+            for (var ch in data) {
+                (data[ch] || []).forEach(function(entry) {
+                    entry._ch = ch;
+                    all.push(entry);
+                });
+            }
+            // Sort by sentAt descending
+            all.sort(function(a, b) {
+                return (b.sentAt || '').localeCompare(a.sentAt || '');
+            });
+
+            // Render
+            sentLogList.innerHTML = '';
+            if (all.length === 0) {
+                sentLogList.innerHTML = '<div class="card-empty" style="padding:12px">No sent messages yet</div>';
+                return;
+            }
+
+            all.slice(0, 50).forEach(function(entry) {
+                var div = document.createElement('div');
+                div.className = 'log-entry';
+
+                var statusCls = entry.status === 'sent' ? 'log-status-sent' : 'log-status-failed';
+                var statusIcon = entry.status === 'sent' ? '&#10003;' : '&#10007;';
+                var time = '';
+                if (entry.sentAt) {
+                    try { time = new Date(entry.sentAt).toLocaleString(); } catch(e) { time = entry.sentAt; }
+                }
+
+                div.innerHTML =
+                    '<span class="log-ch">' + esc(entry._ch) + '</span>' +
+                    '<span class="log-to">' + esc(entry.contactName || entry.to) + '</span>' +
+                    '<span class="log-msg">' + esc(entry.message || '') + '</span>' +
+                    '<span class="log-time">' + esc(time) + '</span>' +
+                    '<span class="' + statusCls + '">' + statusIcon + '</span>';
+                sentLogList.appendChild(div);
+            });
+        }).catch(function() {});
+    }
+
+    /* ── Wire events ──────────────────────────────────────────── */
+    // Draft buttons
+    lanes.forEach(function(lane) {
+        lane.querySelector('[data-draft-btn]').addEventListener('click', function() {
+            showCompose(lane);
+        });
+    });
+
+    // Card remove (delegated)
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.card-remove');
+        if (!btn) return;
+        var ch = btn.getAttribute('data-ch');
+        var idx = parseInt(btn.getAttribute('data-idx'), 10);
+        removeFromQueue(ch, idx);
+    });
+
+    // Send All
+    sendAllBtn.addEventListener('click', sendAll);
+
+    // Sent log toggle
+    sentLogToggle.addEventListener('click', function() {
+        var open = sentLogList.classList.toggle('open');
+        sentLogToggle.textContent = (open ? '\u25BE' : '\u25B8') + ' Recent Sent Messages';
+        if (open) loadSentLog();
+    });
+
+    /* ── Init ─────────────────────────────────────────────────── */
+    loadOutbox();
+})();
+</script>
+</body>
+</html>

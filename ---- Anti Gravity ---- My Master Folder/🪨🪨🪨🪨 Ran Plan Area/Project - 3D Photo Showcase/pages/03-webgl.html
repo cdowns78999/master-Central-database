@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>03 · WebGL Carousel — 3D Photo Showcase</title>
+
+  <link rel="stylesheet" href="../assets/tokens.css" />
+  <link rel="stylesheet" href="../assets/base.css" />
+  <link rel="stylesheet" href="../nav/nav.css" />
+
+  <style>
+    /* ============================================================
+       03 — WebGL Carousel — scoped to .webgl-page
+       ============================================================ */
+
+    html, body {
+      overflow: hidden;                    /* WebGL stage fills the viewport */
+    }
+
+    body.drag .webgl-page__canvas-wrap {
+      cursor: grabbing;
+    }
+
+    .webgl-page {
+      position: fixed;
+      inset: 0;
+      padding-left: 220px;                 /* matches .has-left-nav offset */
+      overflow: hidden;
+    }
+    @media (max-width: 720px) {
+      .webgl-page { padding-left: 64px; }
+    }
+
+    /* ---- Canvas stage ---- */
+    .webgl-page__canvas-wrap {
+      position: absolute;
+      inset: 0;
+      cursor: grab;
+      z-index: var(--z-base, 1);
+    }
+    .webgl-page__canvas-wrap canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    /* ---- Title overlay (HTML on top of canvas) ---- */
+    .webgl-page__overlay {
+      position: absolute;
+      left: calc(220px + clamp(28px, 5vw, 72px));
+      top: clamp(40px, 7vh, 84px);
+      z-index: var(--z-card, 10);
+      pointer-events: none;                /* let drag pass through */
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 540px;
+    }
+    @media (max-width: 720px) {
+      .webgl-page__overlay { left: calc(64px + 20px); top: 28px; }
+    }
+
+    .webgl-page__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+    }
+    .webgl-page__eyebrow::before {
+      content: "";
+      width: 28px;
+      height: var(--line-w);
+      min-height: 1px;
+      background: var(--line-yellow);
+      box-shadow: 0 0 8px rgba(255, 212, 0, 0.55);
+    }
+
+    .webgl-page__title {
+      font-size: clamp(2rem, 5vw, 3.75rem);
+      font-weight: 700;
+      letter-spacing: -0.012em;
+      line-height: 0.98;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 2px 30px rgba(0, 0, 0, 0.6);
+    }
+    .webgl-page__title .accent {
+      color: var(--line-yellow);
+      text-shadow: 0 0 22px rgba(255, 212, 0, 0.3);
+    }
+
+    .webgl-page__subtitle {
+      font-size: clamp(0.85rem, 1.05vw, 1rem);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+    }
+    .webgl-page__subtitle .dot {
+      display: inline-block;
+      margin: 0 0.55em;
+      color: var(--line-yellow);
+      transform: translateY(-1px);
+    }
+
+    /* ---- Hint footer (bottom of stage) ---- */
+    .webgl-page__hint {
+      position: absolute;
+      left: calc(220px + clamp(28px, 5vw, 72px));
+      bottom: clamp(28px, 5vh, 48px);
+      z-index: var(--z-card, 10);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--ink-30);
+    }
+    @media (max-width: 720px) {
+      .webgl-page__hint { left: calc(64px + 20px); bottom: 22px; }
+    }
+    .webgl-page__hint-line {
+      width: 54px;
+      height: var(--line-w);
+      min-height: 1px;
+      background: var(--line-yellow);
+      box-shadow: 0 0 6px rgba(255, 212, 0, 0.55);
+    }
+    .webgl-page__hint-key {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1px solid rgba(255, 212, 0, 0.35);
+      color: var(--ink-60);
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      margin: 0 2px;
+    }
+  </style>
+</head>
+<body class="has-left-nav">
+
+  <div id="nav-mount"></div>
+
+  <main class="webgl-page" aria-label="WebGL Carousel">
+
+    <div class="webgl-page__canvas-wrap" id="stage"></div>
+
+    <header class="webgl-page__overlay">
+      <span class="webgl-page__eyebrow">Approach · 03</span>
+      <h1 class="webgl-page__title">WebGL <span class="accent">Carousel</span></h1>
+      <p class="webgl-page__subtitle">
+        shader-lit ring<span class="dot">·</span>drag inertia<span class="dot">·</span>razor accent
+      </p>
+    </header>
+
+    <footer class="webgl-page__hint">
+      <span class="webgl-page__hint-line" aria-hidden="true"></span>
+      <span>
+        drag
+        <span class="webgl-page__hint-key">&larr;</span>
+        <span class="webgl-page__hint-key">&rarr;</span>
+        or wheel to spin
+      </span>
+    </footer>
+
+  </main>
+
+  <!-- Inject shared nav (page lives in /pages/, nav paths already use ../) -->
+  <script>
+    (function () {
+      fetch('../nav/nav.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          var mount = document.getElementById('nav-mount');
+          if (mount) mount.innerHTML = html;
+          var s = document.createElement('script');
+          s.src = '../nav/nav.js';
+          document.body.appendChild(s);
+        })
+        .catch(function () { /* fail silent */ });
+    })();
+  </script>
+
+  <!-- Three.js via ESM CDN (import map) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    /* ================================================================
+       03 — WebGL Carousel
+       Recipe: research/03-webgl-carousel.md
+       ================================================================ */
+
+    const PHOTO_FILES = [
+      '01.jpg','02.jpg','03.jpg','04.jpg','05.jpg','06.jpg',
+      '07.jpg','08.jpg','09.jpg','10.jpg','11.jpg','12.jpg'
+    ];
+    const PHOTOS = PHOTO_FILES.map(f => '../photos/' + f);
+
+    const N       = PHOTOS.length;
+    const RADIUS  = 4.2;
+    const TILE_W  = 2.4;
+    const TILE_H  = TILE_W * 9 / 16;
+
+    const stageEl = document.getElementById('stage');
+
+    const REDUCED_MOTION = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ---- Renderer ---- */
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(stageEl.clientWidth, stageEl.clientHeight);
+    stageEl.appendChild(renderer.domElement);
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      stageEl.clientWidth / stageEl.clientHeight,
+      0.1,
+      100
+    );
+    camera.position.set(0, 0.2, 7.5);
+
+    /* ============================================================
+       Dark radial-gradient background plane (clip-space z=0.999)
+       Matches tokens --bg-gradient mood
+       ============================================================ */
+    const bgMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uRes: { value: new THREE.Vector2(stageEl.clientWidth, stageEl.clientHeight) }
+      },
+      vertexShader: /* glsl */`
+        void main() {
+          gl_Position = vec4(position.xy, 0.999, 1.0);
+        }
+      `,
+      fragmentShader: /* glsl */`
+        precision highp float;
+        uniform vec2 uRes;
+        void main() {
+          vec2 uv = gl_FragCoord.xy / uRes;
+          float d = distance(uv, vec2(0.5, 0.55));
+          // tokens: radial-gradient(ellipse at top, #1a1a1a 0%, #050505 70%, #000 100%)
+          vec3 a = vec3(0.102, 0.102, 0.102); // #1a1a1a
+          vec3 b = vec3(0.020, 0.020, 0.020); // #050505
+          vec3 c = vec3(0.000, 0.000, 0.000); // #000
+          vec3 col = mix(a, b, smoothstep(0.0, 0.70, d));
+          col      = mix(col, c, smoothstep(0.70, 1.00, d));
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `,
+      depthTest:  false,
+      depthWrite: false
+    });
+    const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bgMat);
+    bgMesh.frustumCulled = false;
+    bgMesh.renderOrder = -1;
+    scene.add(bgMesh);
+
+    /* ============================================================
+       Tile shaders — photo, thin yellow edge, hover glow, vignette
+       ============================================================ */
+    const tileVert = /* glsl */`
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+
+    const tileFrag = /* glsl */`
+      precision highp float;
+      uniform sampler2D uTex;
+      uniform vec2 uImgSize;
+      uniform vec2 uPlaneSize;
+      uniform float uHover;
+      varying vec2 vUv;
+
+      void main() {
+        // aspect-preserving cover UVs
+        vec2 r = vec2(
+          min((uPlaneSize.x / uPlaneSize.y) / (uImgSize.x / uImgSize.y), 1.0),
+          min((uPlaneSize.y / uPlaneSize.x) / (uImgSize.y / uImgSize.x), 1.0)
+        );
+        vec2 uv = vUv * r + (1.0 - r) * 0.5;
+        vec3 col = texture2D(uTex, uv).rgb;
+
+        // distance to nearest edge in plane UV space
+        float edge = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+
+        // razor-thin yellow accent line (~1.5px at 1080p) — dual smoothstep
+        float line =
+          smoothstep(0.006, 0.004, edge) -
+          smoothstep(0.004, 0.002, edge);
+        col = mix(col, vec3(1.0, 0.831, 0.0), line); // #FFD400
+
+        // soft hover glow (inner bloom from edge, gated by uHover)
+        float glow = smoothstep(0.22, 0.0, edge) * uHover * 0.35;
+        col += vec3(1.0, 0.88, 0.25) * glow;
+
+        // vignette
+        float v = smoothstep(0.85, 0.2, length(vUv - 0.5));
+        col *= mix(0.78, 1.0, v);
+
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `;
+
+    /* ============================================================
+       Fallback texture — dark gradient canvas (used when load fails)
+       ============================================================ */
+    function makeFallbackTexture(index) {
+      const c = document.createElement('canvas');
+      c.width  = 512;
+      c.height = 288;                       // 16:9
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(
+        c.width * 0.5, c.height * 0.45, 40,
+        c.width * 0.5, c.height * 0.55, c.width * 0.7
+      );
+      g.addColorStop(0.00, '#1a1a1a');
+      g.addColorStop(0.70, '#050505');
+      g.addColorStop(1.00, '#000000');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      // thin yellow inner frame echo
+      ctx.strokeStyle = 'rgba(255, 212, 0, 0.55)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(12, 12, c.width - 24, c.height - 24);
+
+      // index stamp
+      ctx.fillStyle = 'rgba(245, 245, 245, 0.55)';
+      ctx.font = '600 48px system-ui, -apple-system, "Segoe UI", sans-serif';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      const label = String(index + 1).padStart(2, '0');
+      ctx.fillText(label, c.width / 2, c.height / 2);
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      return tex;
+    }
+
+    /* ============================================================
+       Build the ring
+       ============================================================ */
+    const loader = new THREE.TextureLoader();
+    const geo    = new THREE.PlaneGeometry(TILE_W, TILE_H, 1, 1);
+    const tiles  = [];
+
+    PHOTOS.forEach((url, i) => {
+      const mat = new THREE.ShaderMaterial({
+        vertexShader:   tileVert,
+        fragmentShader: tileFrag,
+        uniforms: {
+          uTex:       { value: null },
+          uImgSize:   { value: new THREE.Vector2(1, 1) },
+          uPlaneSize: { value: new THREE.Vector2(TILE_W, TILE_H) },
+          uHover:     { value: 0 }
+        }
+      });
+
+      // seed with fallback so tiles render immediately, even before load
+      const fallback = makeFallbackTexture(i);
+      mat.uniforms.uTex.value = fallback;
+      if (fallback.image) {
+        mat.uniforms.uImgSize.value.set(fallback.image.width, fallback.image.height);
+      }
+
+      loader.load(
+        url,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy
+            ? renderer.capabilities.getMaxAnisotropy()
+            : 1;
+          mat.uniforms.uTex.value = tex;
+          if (tex.image) {
+            mat.uniforms.uImgSize.value.set(tex.image.width, tex.image.height);
+          }
+        },
+        undefined,
+        () => {
+          // onError — keep the fallback texture
+          // console.warn('[03-webgl] failed to load', url);
+        }
+      );
+
+      const m = new THREE.Mesh(geo, mat);
+      const a = (i / N) * Math.PI * 2;
+      m.position.set(Math.sin(a) * RADIUS, 0, Math.cos(a) * RADIUS);
+      m.rotation.y = a;
+      m.userData = { baseAngle: a, hoverTarget: 0 };
+      scene.add(m);
+      tiles.push(m);
+    });
+
+    /* ============================================================
+       Drag inertia — target / current / velocity tri-state
+       ============================================================ */
+    const state = {
+      current:  0,
+      target:   0,
+      vel:      0,
+      dragging: false,
+      lastX:    0,
+      lastT:    0,
+      autoDrift: REDUCED_MOTION ? 0 : 0.00025  // gentle idle rotation
+    };
+
+    const raycaster = new THREE.Raycaster();
+    const ndc       = new THREE.Vector2();
+
+    function canvasCoords(e) {
+      const r = renderer.domElement.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top, w: r.width, h: r.height };
+    }
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      state.dragging = true;
+      state.lastX    = e.clientX;
+      state.lastT    = performance.now();
+      state.vel      = 0;
+      document.body.classList.add('drag');
+      try { renderer.domElement.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (!state.dragging) return;
+      state.dragging = false;
+      document.body.classList.remove('drag');
+      try { renderer.domElement.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+
+      // Snap-to-nearest base angle after release.
+      // Tile i is "front" when (baseAngle + current) ≡ 0 (mod 2π),
+      // i.e. current ≡ -baseAngle. Pick k = round(current * N / 2π).
+      const step = (Math.PI * 2) / N;
+      const k = Math.round(state.target / step);
+      const snapped = k * step;
+      // Only snap if inertia will settle soon; otherwise let velocity ride.
+      // We nudge target toward snapped; the lerp does the rest.
+      state.target = snapped;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (state.dragging) {
+        const now = performance.now();
+        const dt  = Math.max(1, now - state.lastT);
+        const dx  = e.clientX - state.lastX;
+        state.lastX = e.clientX;
+        state.lastT = now;
+
+        const d = dx * 0.005;
+        state.target += d;
+        // velocity in "rotation units per frame @ 60fps"
+        state.vel = (dx * 0.005) * (16.6667 / dt);
+      }
+
+      // hover picking
+      const c = canvasCoords(e);
+      ndc.set((c.x / c.w) * 2 - 1, -(c.y / c.h) * 2 + 1);
+      raycaster.setFromCamera(ndc, camera);
+      const hit = raycaster.intersectObjects(tiles, false)[0];
+      tiles.forEach(t => {
+        t.userData.hoverTarget = (hit && hit.object === t) ? 1 : 0;
+      });
+    });
+
+    /* ---- Wheel parity ---- */
+    renderer.domElement.addEventListener('wheel', (e) => {
+      // horizontal or vertical wheel both count
+      const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY)) ? e.deltaX : e.deltaY;
+      state.target += delta * 0.002;
+      state.vel     = delta * 0.002;
+      e.preventDefault();
+    }, { passive: false });
+
+    /* ---- Keyboard arrow parity ---- */
+    window.addEventListener('keydown', (e) => {
+      const step = (Math.PI * 2) / N;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        state.target += step;
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        state.target -= step;
+      }
+    });
+
+    /* ============================================================
+       Loop
+       ============================================================ */
+    let prevT = performance.now();
+    function tick() {
+      const now = performance.now();
+      const dt  = Math.min(0.05, (now - prevT) / 1000); // seconds, clamp spikes
+      prevT = now;
+
+      if (!state.dragging) {
+        // velocity decay: v *= 0.9^(dt*60)  — frame-rate independent
+        state.target += state.vel;
+        state.vel    *= Math.pow(0.9, dt * 60);
+        if (Math.abs(state.vel) < 0.0002) state.vel = 0;
+
+        // auto-drift when idle (disabled if reduced motion)
+        if (state.autoDrift && Math.abs(state.vel) < 0.0005) {
+          state.target += state.autoDrift;
+        }
+      }
+
+      // ease current → target
+      state.current += (state.target - state.current) * 0.08;
+
+      // position tiles on ring
+      for (let i = 0; i < tiles.length; i++) {
+        const t = tiles[i];
+        const a = t.userData.baseAngle + state.current;
+        t.position.set(Math.sin(a) * RADIUS, 0, Math.cos(a) * RADIUS);
+        t.rotation.y = a;
+
+        // hover uniform lerp
+        const u = t.material.uniforms.uHover;
+        u.value += (t.userData.hoverTarget - u.value) * 0.12;
+      }
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
+
+    /* ============================================================
+       Resize
+       ============================================================ */
+    function onResize() {
+      const w = stageEl.clientWidth;
+      const h = stageEl.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      bgMat.uniforms.uRes.value.set(w, h);
+    }
+    window.addEventListener('resize', onResize);
+
+    // Prevent context menu on long-press / right-click over canvas (cleaner drag UX)
+    renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+  </script>
+</body>
+</html>

@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Generator — Standalone</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;600;800;900&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            width: 100%; height: 100%;
+            background: #0f172a;
+            color: #e8e8e8;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+
+        /* ── App Shell ── */
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+        .app-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+        .app-subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: rgba(255,255,255,0.25);
+            letter-spacing: 0.04em;
+        }
+        .app-nav {
+            display: flex;
+            gap: 4px;
+        }
+        .app-nav-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255,255,255,0.4);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .app-nav-btn:hover { border-color: rgba(56, 189, 248, 0.25); color: #e8e8e8; }
+        .app-nav-btn.active { background: rgba(56, 189, 248, 0.1); border-color: #38bdf8; color: #38bdf8; }
+
+        .app-body {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        .app-view {
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            padding: 24px 28px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .app-view.active { display: block; opacity: 1; }
+        .app-view::-webkit-scrollbar { width: 6px; }
+        .app-view::-webkit-scrollbar-track { background: transparent; }
+        .app-view::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+        /* ══════════════════════════════════════════════════
+           VIEW 1: LABEL DATABASE (Label Generator port)
+           ══════════════════════════════════════════════════ */
+
+        /* Toggle */
+        .lg-toggle-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 0 0 24px; }
+        .lg-toggle-label { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.45); transition: color 0.25s ease; cursor: pointer; user-select: none; }
+        .lg-toggle-label.active { color: #e8e8e8; }
+        .lg-toggle-track { position: relative; width: 51px; height: 31px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 999px; cursor: pointer; transition: background 0.3s cubic-bezier(.4,0,.2,1), border-color 0.3s cubic-bezier(.4,0,.2,1); }
+        .lg-toggle-track:hover { border-color: rgba(56, 189, 248, 0.25); }
+        .lg-toggle-track.on { background: rgba(56, 189, 248, 0.3); border-color: rgba(56, 189, 248, 0.3); }
+        .lg-toggle-thumb { position: absolute; top: 3px; left: 3px; width: 23px; height: 23px; background: #e8e8e8; border-radius: 50%; transition: transform 0.3s cubic-bezier(.68,-.55,.27,1.55); box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+        .lg-toggle-track.on .lg-toggle-thumb { transform: translateX(20px); background: #38bdf8; }
+        /* Views */
+        .lg-view { transition: opacity 0.25s ease; }
+        .lg-view.hidden { display: none; opacity: 0; }
+        .lg-view.visible { display: block; opacity: 1; }
+        /* Search */
+        .lg-search-bar-wrap { position: relative; max-width: 560px; margin: 0 auto 24px; width: 100%; }
+        .lg-search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: rgba(255,255,255,0.25); pointer-events: none; }
+        .lg-search-bar { width: 100%; padding: 1rem 2rem 1rem 48px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 100px; color: #e8e8e8; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500; outline: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .lg-search-bar::placeholder { color: rgba(255,255,255,0.25); }
+        .lg-search-bar:focus { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.08); }
+        .lg-suggestions { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #0f172a; border: 1px solid #38bdf8; border-radius: 16px; overflow: hidden; z-index: 100; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .lg-suggestions.open { display: block; }
+        .lg-suggestion-item { padding: 12px 18px; font-size: 14px; color: rgba(255,255,255,0.45); cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .lg-suggestion-item:last-child { border-bottom: none; }
+        .lg-suggestion-item:hover { background: rgba(56, 189, 248, 0.08); color: #e8e8e8; }
+        .lg-suggestion-item .lg-match { color: #38bdf8; font-weight: 600; }
+        /* Label Cards Grid */
+        .lg-label-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding-bottom: 24px; }
+        .lg-label-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 24px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: default; animation: posItemIn 0.4s ease-out forwards; }
+        .lg-label-card:hover { transform: translateY(-4px); border-color: rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.08); box-shadow: 0 0 20px rgba(56, 189, 248, 0.15); }
+        .lg-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+        .lg-card-name { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: #e8e8e8; letter-spacing: -0.01em; }
+        .lg-card-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
+        .lg-card-status.active { background: #1ed760; box-shadow: 0 0 8px rgba(30,215,96,0.5); }
+        .lg-card-status.inactive { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+        .lg-card-status.pending { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+        .lg-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+        .lg-card-tag { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; letter-spacing: 0.3px; text-transform: uppercase; }
+        .lg-card-tag.genre { background: rgba(56, 189, 248, 0.12); color: #38bdf8; }
+        .lg-card-tag.sub { background: rgba(59,130,246,0.12); color: #3b82f6; }
+        .lg-card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .lg-stat { display: flex; flex-direction: column; gap: 2px; }
+        .lg-stat-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: rgba(255, 255, 255, 0.4); }
+        .lg-stat-value { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.45); }
+        .lg-empty-state { text-align: center; padding: 48px 24px; grid-column: 1 / -1; }
+        .lg-empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+        .lg-empty-title { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+        .lg-empty-sub { font-size: 14px; color: rgba(255,255,255,0.25); }
+        /* Bracket View */
+        .lg-bracket-filters { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; }
+        .lg-gen-pill { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; padding: 8px 20px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); color: rgba(255,255,255,0.45); cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none; }
+        .lg-gen-pill:hover { border-color: rgba(56, 189, 248, 0.25); color: #e8e8e8; }
+        .lg-gen-pill.active { background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.3); color: #38bdf8; }
+        .lg-bracket-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; padding-bottom: 24px; }
+        .lg-bracket-column { display: flex; flex-direction: column; gap: 12px; }
+        .lg-bracket-header { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 10px 16px; border-radius: 10px; text-align: center; }
+        .lg-bracket-header.edm { background: rgba(100, 210, 255, 0.12); color: #64D2FF; }
+        .lg-bracket-header.bass { background: rgba(56, 189, 248, 0.12); color: #38bdf8; }
+        .lg-bracket-header.techhouse { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+        .lg-bracket-header.dubstep { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .lg-bracket-header.techno { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .lg-bracket-nodes { display: flex; flex-direction: column; gap: 12px; position: relative; padding-left: 20px; }
+        .lg-bracket-nodes::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: rgba(255, 255, 255, 0.1); border-radius: 1px; }
+        .lg-bracket-node { position: relative; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto; gap: 6px 12px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); animation: posItemIn 0.4s ease-out forwards; }
+        .lg-bracket-node::before { content: ''; position: absolute; left: -20px; top: 50%; width: 14px; height: 2px; background: rgba(255, 255, 255, 0.1); }
+        .lg-bracket-node:hover { border-color: rgba(56, 189, 248, 0.3); box-shadow: 0 0 20px rgba(56, 189, 248, 0.15); }
+        .lg-node-name { grid-column: 1 / -1; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: #e8e8e8; letter-spacing: -0.01em; }
+        .lg-node-stat { display: flex; flex-direction: column; gap: 1px; }
+        .lg-node-stat-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: rgba(255, 255, 255, 0.4); }
+        .lg-node-stat-value { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.45); }
+        .lg-bracket-empty { padding: 32px 16px; text-align: center; color: rgba(255,255,255,0.25); font-size: 13px; font-style: italic; }
+
+        /* ══════════════════════════════════════════════════
+           VIEW 2: LABEL ANALYZER (Social Climate port)
+           ══════════════════════════════════════════════════ */
+        .la-wrap {
+            --la-bg: rgba(15, 23, 42, 0.95);
+            --la-bg-elevated: rgba(255, 255, 255, 0.03);
+            --la-purple: #38bdf8;
+            --la-purple-dim: rgba(56, 189, 248, 0.15);
+            --la-purple-glow: rgba(56, 189, 248, 0.25);
+            --la-green: #22c55e;
+            --la-green-dim: rgba(34, 197, 94, 0.15);
+            --la-text: rgba(255, 255, 255, 0.9);
+            --la-text-dim: rgba(255, 255, 255, 0.45);
+            --la-text-muted: rgba(255, 255, 255, 0.25);
+            --la-border: rgba(255, 255, 255, 0.1);
+            --la-border-hover: rgba(255, 255, 255, 0.14);
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        /* Section Headers */
+        .la-section { margin-bottom: 28px; }
+        .la-section-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+        .la-section-title { font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--la-text); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
+        .la-section-subtitle { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; color: var(--la-text-dim); letter-spacing: 0.04em; }
+        /* Search Bar */
+        .la-search-bar-wrap { display: flex; gap: 10px; align-items: center; }
+        .la-search-input-wrap { flex: 1; position: relative; display: flex; align-items: center; }
+        .la-search-icon { position: absolute; left: 12px; width: 16px; height: 16px; opacity: 0.3; pointer-events: none; transition: opacity 0.2s; color: #fff; }
+        .la-search-input-wrap:focus-within .la-search-icon { opacity: 0.6; }
+        .la-search-input-wrap input { width: 100%; background: var(--la-bg-elevated); border: 1px solid var(--la-border); border-radius: 10px; padding: 10px 14px 10px 36px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--la-text); outline: none; transition: border-color 0.3s, box-shadow 0.3s; }
+        .la-search-input-wrap input:focus { border-color: var(--la-purple); box-shadow: 0 0 0 3px var(--la-purple-dim), 0 0 20px rgba(56, 189, 248, 0.08); }
+        .la-search-input-wrap input::placeholder { color: var(--la-text-muted); }
+        .la-search-suggestions { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #0f172a; border: 1px solid #38bdf8; border-radius: 16px; overflow: hidden; z-index: 100; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .la-search-suggestions.open { display: block; }
+        .la-search-suggestions .la-sug-item { padding: 10px 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: rgba(255,255,255,0.45); cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .la-search-suggestions .la-sug-item:last-child { border-bottom: none; }
+        .la-search-suggestions .la-sug-item:hover { background: rgba(56, 189, 248, 0.08); color: #e8e8e8; }
+        .la-search-suggestions .la-sug-match { color: #38bdf8; font-weight: 600; }
+        .la-verify-btn { background: linear-gradient(135deg, var(--la-purple), #6366f1); color: #fff; border: none; border-radius: 10px; padding: 10px 24px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0; }
+        .la-verify-btn:hover { transform: scale(1.04); box-shadow: 0 0 20px var(--la-purple-glow); }
+        .la-verify-btn:active { transform: scale(0.97); }
+        .la-verify-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+        /* Platform Cards */
+        .la-channels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .la-channel-card { position: relative; border-radius: 14px; border: 1.5px solid var(--la-border); background: var(--la-bg-elevated); overflow: hidden; transition: border-color 0.4s, box-shadow 0.4s, background 0.4s; }
+        .la-channel-card[data-state="idle"] { opacity: 0.5; }
+        .la-channel-card[data-state="searching"] { border-color: var(--la-purple); box-shadow: 0 0 18px var(--la-purple-dim), inset 0 0 10px rgba(56,189,248,0.05); animation: laCardPulse 1.4s ease-in-out infinite; opacity: 1; }
+        .la-channel-card[data-state="found"] { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.03); box-shadow: 0 0 14px var(--la-green-dim); opacity: 1; }
+        @keyframes laCardPulse { 0%, 100% { box-shadow: 0 0 18px var(--la-purple-dim); } 50% { box-shadow: 0 0 28px var(--la-purple-glow); } }
+        .la-channel-card-header { display: flex; align-items: center; gap: 10px; padding: 16px 16px 12px; cursor: pointer; user-select: none; }
+        .la-channel-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+        .la-channel-icon.la-bp { background: rgba(0,210,110,0.12); }
+        .la-channel-icon.la-sp { background: rgba(30,215,96,0.12); }
+        .la-channel-icon.la-sc { background: rgba(255,85,0,0.12); }
+        .la-channel-icon.la-bc { background: rgba(29,161,242,0.12); }
+        .la-channel-info { flex: 1; }
+        .la-channel-name { font-family: 'Outfit', sans-serif; font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em; }
+        .la-channel-card[data-state="found"] .la-channel-name { color: rgba(255,255,255,0.9); }
+        .la-channel-status { font-family: 'JetBrains Mono', monospace; font-size: 0.52rem; color: var(--la-text-muted); letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.3s; margin-top: 2px; }
+        .la-channel-card[data-state="searching"] .la-channel-status { color: var(--la-purple); }
+        .la-channel-card[data-state="found"] .la-channel-status { color: rgba(34,197,94,0.7); }
+        .la-channel-status-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
+        .la-channel-card[data-state="searching"] .la-channel-status-dot { background: var(--la-purple); box-shadow: 0 0 8px var(--la-purple-glow); }
+        .la-channel-card[data-state="found"] .la-channel-status-dot { background: var(--la-green); box-shadow: 0 0 8px var(--la-green-dim); }
+        .la-channel-chevron { font-size: 0.6rem; color: var(--la-text-dim); transition: transform 0.3s; flex-shrink: 0; }
+        .la-channel-card.la-expanded .la-channel-chevron { transform: rotate(180deg); }
+        .la-channel-details { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; padding: 0 16px; }
+        .la-channel-card.la-expanded .la-channel-details { max-height: 200px; padding: 0 16px 14px; }
+        .la-channel-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .la-channel-detail-row:last-child { border-bottom: none; }
+        .la-channel-detail-label { font-family: 'JetBrains Mono', monospace; font-size: 0.54rem; color: var(--la-text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+        .la-channel-detail-value { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; color: var(--la-text); font-weight: 600; }
+
+        /* Hero Report */
+        .la-report-section { display: none; flex-direction: column; opacity: 0; transform: translateY(10px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .la-report-section.la-visible { display: flex; opacity: 1; transform: translateY(0); }
+        .la-hero-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+        .la-hero-card { position: relative; padding: 18px 16px 14px; border-radius: 14px; border: 1.5px solid var(--la-border); background: var(--la-bg-elevated); overflow: hidden; }
+        .la-hero-card::before { content: ''; position: absolute; inset: 0; border-radius: 14px; padding: 1.5px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(34,197,94,0.1)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+        .la-hero-label { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 800; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+        .la-hero-value { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 900; color: #38bdf8; -webkit-text-fill-color: #38bdf8; background: none; -webkit-background-clip: unset; background-clip: unset; line-height: 1.1; margin-bottom: 6px; }
+        .la-hero-card:nth-child(2) .la-hero-value { background: linear-gradient(135deg, #22c55e, #86efac); -webkit-background-clip: text; background-clip: text; }
+        .la-hero-card:nth-child(3) .la-hero-value { background: linear-gradient(135deg, #f59e0b, #fbbf24); -webkit-background-clip: text; background-clip: text; }
+        .la-hero-card:nth-child(4) .la-hero-value { background: linear-gradient(135deg, #3b82f6, #60a5fa); -webkit-background-clip: text; background-clip: text; }
+        .la-heat-bar-container { width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+        .la-heat-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+        .la-heat-bar-fill.la-score-high { background: linear-gradient(90deg, #38bdf8, #22c55e); }
+        .la-heat-bar-fill.la-score-mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .la-hero-sublabel { font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; color: var(--la-text-muted); margin-top: 6px; }
+
+        /* Rankings Table */
+        .la-rankings-wrap { margin-top: 4px; }
+        .la-sort-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+        .la-sort-btn { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; font-weight: 600; color: var(--la-text-dim); background: var(--la-bg-elevated); border: 1px solid var(--la-border); border-radius: 8px; padding: 6px 14px; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; text-transform: uppercase; letter-spacing: 0.06em; }
+        .la-sort-btn:hover { border-color: var(--la-border-hover); color: var(--la-text); }
+        .la-sort-btn.la-sort-active { border-color: var(--la-purple); color: var(--la-purple); background: var(--la-purple-dim); }
+        .la-rankings-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; }
+        .la-rankings-table thead th { text-align: left; padding: 8px 10px; font-size: 0.52rem; font-weight: 700; color: var(--la-text-dim); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--la-border); }
+        .la-rankings-table tbody tr { cursor: pointer; transition: background 0.2s; }
+        .la-rankings-table tbody tr:hover { background: rgba(56, 189, 248, 0.04); }
+        .la-rankings-table td { padding: 10px 10px; color: var(--la-text); border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+        .la-platform-cell { display: flex; align-items: center; gap: 8px; }
+        .la-platform-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .la-expanded-row { display: none; }
+        .la-expanded-row.la-visible { display: table-row; }
+        .la-expanded-row td { padding: 12px 16px; background: rgba(56, 189, 248, 0.03); border-bottom: 1px solid var(--la-border); }
+        .la-expanded-content { display: flex; flex-wrap: wrap; gap: 8px; }
+        .la-stat-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; background: var(--la-bg-elevated); border: 1px solid var(--la-border); font-family: 'JetBrains Mono', monospace; font-size: 0.52rem; color: var(--la-text); }
+        .la-stat-pill-label { color: var(--la-text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+        .la-stat-pill-value { font-weight: 700; }
+        .la-trend-up { color: #22c55e; }
+        .la-trend-down { color: #ef4444; }
+        .la-trend-steady { color: #f59e0b; }
+
+        /* Quick Actions */
+        .la-actions-section { display: none; opacity: 0; transform: translateY(10px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .la-actions-section.la-visible { display: block; opacity: 1; transform: translateY(0); }
+        .la-actions-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+        .la-action-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; border: 1.5px solid var(--la-border); background: var(--la-bg-elevated); font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; font-weight: 600; color: var(--la-text); cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s; text-transform: uppercase; letter-spacing: 0.06em; }
+        .la-action-btn:hover { border-color: var(--la-purple); background: var(--la-purple-dim); transform: scale(1.03); box-shadow: 0 0 16px rgba(56, 189, 248, 0.1); }
+        .la-action-btn:active { transform: scale(0.97); }
+        .la-action-btn .la-action-icon { font-size: 0.8rem; }
+
+        /* ══════════════════════════════════════════════════
+           CHART REFERENCE GRID (bottom panel)
+           ══════════════════════════════════════════════════ */
+        .chart-ref-panel {
+            border-top: 2px solid #38bdf8;
+            flex-shrink: 0;
+            max-height: 38vh;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .chart-ref-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 28px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .chart-ref-header:hover { background: rgba(255,255,255,0.02); }
+        .chart-ref-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .chart-ref-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: rgba(56, 189, 248, 0.7);
+            background: rgba(56, 189, 248, 0.08);
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+        .chart-ref-chevron {
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            transition: transform 0.3s;
+        }
+        .chart-ref-panel.open .chart-ref-chevron { transform: rotate(180deg); }
+        .chart-ref-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .chart-ref-panel.open .chart-ref-body {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .chart-ref-body::-webkit-scrollbar { width: 5px; }
+        .chart-ref-body::-webkit-scrollbar-track { background: transparent; }
+        .chart-ref-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+        .chart-ref-search {
+            padding: 8px 28px;
+            position: sticky;
+            top: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+        .chart-ref-search input {
+            width: 100%;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e8e8e8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .chart-ref-search input:focus { border-color: rgba(56, 189, 248, 0.3); }
+        .chart-ref-search input::placeholder { color: rgba(255,255,255,0.2); }
+        .chart-ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+        .chart-ref-table thead th {
+            position: sticky;
+            top: 44px;
+            background: rgba(0, 0, 0, 0.2);
+            text-align: left;
+            padding: 6px 12px;
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+        .chart-ref-table tbody tr { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .chart-ref-table tbody tr:hover { background: rgba(56, 189, 248, 0.03); }
+        .chart-ref-table td {
+            padding: 8px 12px;
+            color: rgba(255,255,255,0.6);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .chart-ref-table td:first-child { color: rgba(255,255,255,0.85); font-weight: 600; }
+        .chart-ref-table .cr-subgenre {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.1);
+            color: rgba(56, 189, 248, 0.7);
+        }
+        .chart-ref-table .cr-social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.35);
+            text-decoration: none;
+            font-size: 10px;
+            margin-right: 3px;
+            transition: background 0.15s, color 0.15s;
+        }
+        .chart-ref-table .cr-social-link:hover { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+
+        /* ── Animation ── */
+        @keyframes posItemIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .lg-label-grid { grid-template-columns: repeat(2, 1fr); }
+            .la-hero-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .lg-label-grid { grid-template-columns: 1fr; }
+            .la-channels-grid { grid-template-columns: 1fr; }
+            .la-hero-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <div class="app-header">
+            <div>
+                <div class="app-title">Label Generator</div>
+                <div class="app-subtitle">Bass / Dubstep / Tech / Tech House / Chart Labels</div>
+            </div>
+            <div class="app-nav">
+                <button class="app-nav-btn active" data-view="database">Database</button>
+                <button class="app-nav-btn" data-view="analyzer">Analyzer</button>
+            </div>
+        </div>
+
+        <div class="app-body">
+
+            <!-- ═══ VIEW 1: DATABASE ═══ -->
+            <div class="app-view active" id="viewDatabase">
+                <div class="lg-toggle-wrap">
+                    <span class="lg-toggle-label active" id="lgToggleSearch">Search</span>
+                    <div class="lg-toggle-track" id="lgToggleTrack"><div class="lg-toggle-thumb"></div></div>
+                    <span class="lg-toggle-label" id="lgToggleBracket">Bracket</span>
+                </div>
+                <div class="lg-view visible" id="lgSearchView">
+                    <div class="lg-search-bar-wrap">
+                        <svg class="lg-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" class="lg-search-bar" id="lgSearchInput" placeholder="Search labels by name, genre, or tag..." autocomplete="off">
+                        <div class="lg-suggestions" id="lgSuggestions"></div>
+                    </div>
+                    <div class="lg-label-grid" id="lgLabelGrid"></div>
+                </div>
+                <div class="lg-view hidden" id="lgBracketView">
+                    <div class="lg-bracket-filters">
+                        <button class="lg-gen-pill active" data-lg-filter="all">All</button>
+                        <button class="lg-gen-pill" data-lg-filter="bass">Bass / Dubstep</button>
+                        <button class="lg-gen-pill" data-lg-filter="tech">Tech / Tech House</button>
+                        <button class="lg-gen-pill" data-lg-filter="chart">Chart Labels</button>
+                    </div>
+                    <div class="lg-bracket-container" id="lgBracketContainer"></div>
+                </div>
+            </div>
+
+            <!-- ═══ VIEW 2: ANALYZER ═══ -->
+            <div class="app-view" id="viewAnalyzer">
+                <div class="la-wrap">
+                    <!-- S1: Search -->
+                    <div class="la-section">
+                        <div class="la-section-header">
+                            <h2 class="la-section-title">Label Lookup</h2>
+                            <span class="la-section-subtitle">Search &amp; Analyze Record Labels</span>
+                        </div>
+                        <div class="la-search-bar-wrap">
+                            <div class="la-search-input-wrap">
+                                <svg class="la-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <input type="text" id="laSearchInput" placeholder="enter label name to analyze..." />
+                                <div class="la-search-suggestions" id="laSuggestions"></div>
+                            </div>
+                            <button class="la-verify-btn" id="laGoBtn">Analyze</button>
+                        </div>
+                    </div>
+
+                    <!-- S2: Platform Scan -->
+                    <div class="la-section">
+                        <div class="la-section-header">
+                            <h2 class="la-section-title">Platform Scan</h2>
+                            <span class="la-section-subtitle">4 platforms</span>
+                        </div>
+                        <div class="la-channels-grid" id="laChannelsGrid">
+                            <div class="la-channel-card" id="laChBP" data-channel="beatport" data-state="idle">
+                                <div class="la-channel-card-header" onclick="laToggleCard('laChBP')">
+                                    <div class="la-channel-icon la-bp">&#127925;</div>
+                                    <div class="la-channel-info"><div class="la-channel-name">Beatport</div><div class="la-channel-status">waiting</div></div>
+                                    <div class="la-channel-status-dot"></div>
+                                    <div class="la-channel-chevron">&#9660;</div>
+                                </div>
+                                <div class="la-channel-details"></div>
+                            </div>
+                            <div class="la-channel-card" id="laChSP" data-channel="spotify" data-state="idle">
+                                <div class="la-channel-card-header" onclick="laToggleCard('laChSP')">
+                                    <div class="la-channel-icon la-sp">&#127911;</div>
+                                    <div class="la-channel-info"><div class="la-channel-name">Spotify</div><div class="la-channel-status">waiting</div></div>
+                                    <div class="la-channel-status-dot"></div>
+                                    <div class="la-channel-chevron">&#9660;</div>
+                                </div>
+                                <div class="la-channel-details"></div>
+                            </div>
+                            <div class="la-channel-card" id="laChSC" data-channel="soundcloud" data-state="idle">
+                                <div class="la-channel-card-header" onclick="laToggleCard('laChSC')">
+                                    <div class="la-channel-icon la-sc">&#9729;</div>
+                                    <div class="la-channel-info"><div class="la-channel-name">SoundCloud</div><div class="la-channel-status">waiting</div></div>
+                                    <div class="la-channel-status-dot"></div>
+                                    <div class="la-channel-chevron">&#9660;</div>
+                                </div>
+                                <div class="la-channel-details"></div>
+                            </div>
+                            <div class="la-channel-card" id="laChBC" data-channel="bandcamp" data-state="idle">
+                                <div class="la-channel-card-header" onclick="laToggleCard('laChBC')">
+                                    <div class="la-channel-icon la-bc">&#128191;</div>
+                                    <div class="la-channel-info"><div class="la-channel-name">Bandcamp</div><div class="la-channel-status">waiting</div></div>
+                                    <div class="la-channel-status-dot"></div>
+                                    <div class="la-channel-chevron">&#9660;</div>
+                                </div>
+                                <div class="la-channel-details"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- S3: Report Dashboard -->
+                    <div class="la-section la-report-section" id="laReportSection">
+                        <div class="la-section-header">
+                            <h2 class="la-section-title">Label Report</h2>
+                            <span class="la-section-subtitle">Cross-Platform Analysis</span>
+                        </div>
+                        <div class="la-hero-grid" id="laHeroGrid">
+                            <div class="la-hero-card"><div class="la-hero-label">Total Artists</div><div class="la-hero-value" id="laHeroArtists">&mdash;</div><div class="la-heat-bar-container"><div class="la-heat-bar-fill la-score-high" style="width:0%"></div></div><div class="la-hero-sublabel">roster size</div></div>
+                            <div class="la-hero-card"><div class="la-hero-label">Avg Releases</div><div class="la-hero-value" id="laHeroReleases">&mdash;</div><div class="la-heat-bar-container"><div class="la-heat-bar-fill la-score-mid" style="width:0%"></div></div><div class="la-hero-sublabel">per year (est.)</div></div>
+                            <div class="la-hero-card"><div class="la-hero-label">Label Score</div><div class="la-hero-value" id="laHeroScore">&mdash;</div><div class="la-heat-bar-container"><div class="la-heat-bar-fill la-score-high" style="width:0%"></div></div><div class="la-hero-sublabel">presence rating</div></div>
+                            <div class="la-hero-card"><div class="la-hero-label">Activity Level</div><div class="la-hero-value" id="laHeroActivity">&mdash;</div><div class="la-heat-bar-container"><div class="la-heat-bar-fill la-score-mid" style="width:0%"></div></div><div class="la-hero-sublabel">release frequency</div></div>
+                        </div>
+                        <div class="la-rankings-wrap">
+                            <div class="la-sort-bar">
+                                <button class="la-sort-btn la-sort-active" data-sort="releases">Releases</button>
+                                <button class="la-sort-btn" data-sort="followers">Followers</button>
+                                <button class="la-sort-btn" data-sort="alpha">A&ndash;Z</button>
+                            </div>
+                            <table class="la-rankings-table">
+                                <thead><tr><th>Platform</th><th>Handle</th><th>Releases</th><th>Followers</th><th>Engagement</th><th>Trend</th></tr></thead>
+                                <tbody id="laRankingsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- S4: Quick Actions -->
+                    <div class="la-section la-actions-section" id="laActionsSection">
+                        <div class="la-section-header">
+                            <h2 class="la-section-title">Quick Actions</h2>
+                        </div>
+                        <div class="la-actions-grid">
+                            <button class="la-action-btn" id="laOpenAll"><span class="la-action-icon">&#128279;</span> Open All Profiles</button>
+                            <button class="la-action-btn" id="laExport"><span class="la-action-icon">&#128196;</span> Export Report</button>
+                            <button class="la-action-btn" id="laNewLookup"><span class="la-action-icon">&#128269;</span> New Lookup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CHART REFERENCE GRID (collapsible bottom panel) ═══ -->
+        <div class="chart-ref-panel open" id="chartRefPanel">
+            <div class="chart-ref-header" id="chartRefToggle">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span class="chart-ref-title">Chart Reference Grid</span>
+                    <span class="chart-ref-count" id="chartRefCount">0 labels</span>
+                </div>
+                <span class="chart-ref-chevron">&#9660;</span>
+            </div>
+            <div class="chart-ref-body">
+                <div class="chart-ref-search">
+                    <input type="text" id="chartRefSearch" placeholder="Filter chart labels..." />
+                </div>
+                <table class="chart-ref-table">
+                    <thead><tr><th>Label</th><th>Source Track</th><th>Chart</th><th>Sub-Genre</th><th>Country</th><th>Socials</th></tr></thead>
+                    <tbody id="chartRefBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* ═══════════════════════════════════════════════════════════════
+       LABEL DATABASE — 15 Bass/Dubstep + 15 Tech/Tech House + 50 Chart
+       ═══════════════════════════════════════════════════════════════ */
+    var BASS_LABELS = [
+        { name: "Never Say Die", genre: "EDM", subGenre: "Bass / Dubstep", status: "active", founded: 2009, roster: 50, country: "United Kingdom", tags: ["dubstep", "bass", "heavy"] },
+        { name: "Disciple", genre: "EDM", subGenre: "Dubstep", status: "active", founded: 2014, roster: 30, country: "United States", tags: ["dubstep", "riddim", "heavy"] },
+        { name: "Subsidia", genre: "EDM", subGenre: "Bass", status: "active", founded: 2020, roster: 80, country: "United States", tags: ["bass", "dubstep", "excision"] },
+        { name: "Deadbeats", genre: "EDM", subGenre: "Bass", status: "active", founded: 2016, roster: 35, country: "Canada", tags: ["bass", "experimental", "zeds dead"] },
+        { name: "WAKAAN", genre: "EDM", subGenre: "Experimental Bass", status: "active", founded: 2015, roster: 40, country: "United States", tags: ["experimental", "bass", "weird"] },
+        { name: "Circus Records", genre: "EDM", subGenre: "Bass / Dubstep", status: "active", founded: 2010, roster: 45, country: "United Kingdom", tags: ["dubstep", "bass", "doctor p"] },
+        { name: "Deep Dark & Dangerous", genre: "EDM", subGenre: "Deep Dubstep", status: "active", founded: 2014, roster: 20, country: "United Kingdom", tags: ["deep dubstep", "140", "dark"] },
+        { name: "Bassrush", genre: "EDM", subGenre: "Bass", status: "active", founded: 2001, roster: 60, country: "United States", tags: ["bass", "dubstep", "insomniac"] },
+        { name: "Rottun Recordings", genre: "EDM", subGenre: "Dubstep", status: "active", founded: 2009, roster: 25, country: "United States", tags: ["dubstep", "heavy", "excision"] },
+        { name: "Kannibalen Records", genre: "EDM", subGenre: "Bass / Electro", status: "active", founded: 2011, roster: 30, country: "Canada", tags: ["bass", "electro", "dark"] },
+        { name: "Dim Mak Records", genre: "EDM", subGenre: "Bass / Electro", status: "active", founded: 1996, roster: 100, country: "United States", tags: ["bass", "electro", "steve aoki"] },
+        { name: "Monstercat", genre: "EDM", subGenre: "Bass / Multi-genre", status: "active", founded: 2011, roster: 200, country: "Canada", tags: ["bass", "dubstep", "diverse"] },
+        { name: "UKF", genre: "EDM", subGenre: "Drum & Bass / Dubstep", status: "active", founded: 2009, roster: 50, country: "United Kingdom", tags: ["dnb", "dubstep", "media"] },
+        { name: "Gud Vibrations", genre: "EDM", subGenre: "Bass", status: "active", founded: 2017, roster: 25, country: "United States", tags: ["bass", "nghtmre", "slander"] },
+        { name: "Ophelia Records", genre: "EDM", subGenre: "Melodic Bass", status: "active", founded: 2018, roster: 20, country: "United States", tags: ["melodic", "bass", "seven lions"] }
+    ];
+
+    var TECH_LABELS = [
+        { name: "Drumcode", genre: "EDM", subGenre: "Techno", status: "active", founded: 1996, roster: 40, country: "Sweden", tags: ["techno", "dark", "adam beyer"] },
+        { name: "Toolroom Records", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2003, roster: 60, country: "United Kingdom", tags: ["tech house", "house", "mark knight"] },
+        { name: "Dirtybird", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2005, roster: 40, country: "United States", tags: ["tech house", "booty", "claude vonstroke"] },
+        { name: "Defected Records", genre: "EDM", subGenre: "House / Tech House", status: "active", founded: 1999, roster: 80, country: "United Kingdom", tags: ["house", "tech house", "classic"] },
+        { name: "Relief Records", genre: "EDM", subGenre: "Tech House", status: "active", founded: 1996, roster: 30, country: "United States", tags: ["tech house", "chicago", "green velvet"] },
+        { name: "Truesoul", genre: "EDM", subGenre: "Techno", status: "active", founded: 2004, roster: 25, country: "Sweden", tags: ["techno", "deep", "adam beyer"] },
+        { name: "Afterlife", genre: "EDM", subGenre: "Melodic Techno", status: "active", founded: 2016, roster: 30, country: "Italy", tags: ["melodic techno", "progressive", "tale of us"] },
+        { name: "Kompakt", genre: "EDM", subGenre: "Minimal / Techno", status: "active", founded: 1998, roster: 50, country: "Germany", tags: ["minimal", "techno", "cologne"] },
+        { name: "Turbo Recordings", genre: "EDM", subGenre: "Tech House / Techno", status: "active", founded: 1998, roster: 35, country: "Canada", tags: ["tech house", "techno", "tiga"] },
+        { name: "Hot Creations", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2010, roster: 30, country: "United Kingdom", tags: ["tech house", "groovy", "jamie jones"] },
+        { name: "Knee Deep In Sound", genre: "EDM", subGenre: "Tech House / Techno", status: "active", founded: 2014, roster: 20, country: "United States", tags: ["tech house", "techno", "hot since 82"] },
+        { name: "Terminal M", genre: "EDM", subGenre: "Techno", status: "active", founded: 2008, roster: 25, country: "Germany", tags: ["techno", "peak time", "monika kruse"] },
+        { name: "Suara", genre: "EDM", subGenre: "Tech House / Techno", status: "active", founded: 2007, roster: 45, country: "Spain", tags: ["tech house", "techno", "coyu"] },
+        { name: "Sola", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2016, roster: 35, country: "United Kingdom", tags: ["tech house", "underground", "solardo"] },
+        { name: "Repopulate Mars", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2017, roster: 25, country: "United States", tags: ["tech house", "funky", "lee foss"] }
+    ];
+
+    /* ═══════════════════════════════════════════════════════
+       CHART LABELS — 50 labels sourced from US electronic charts
+       ═══════════════════════════════════════════════════════ */
+    var CHART_LABELS = [
+        { name: "Spinnin' Records", genre: "EDM", subGenre: "Dance / House", status: "active", founded: 1999, roster: 300, country: "Netherlands", tags: ["dance", "house", "mainstream"], sourceTrack: "Tattoo", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "spinninrecords", spotify: "spotify:label:Spinnin%27+Records", soundcloud: "spinninrecords", twitter: "SpinninRecords" }, followers: 12000000 },
+        { name: "Armada Music", genre: "EDM", subGenre: "Trance / Progressive", status: "active", founded: 2003, roster: 200, country: "Netherlands", tags: ["trance", "progressive", "armin"], sourceTrack: "Blah Blah Blah", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "armadamusic", spotify: "spotify:label:Armada+Music", soundcloud: "armadamusic", twitter: "armaborism" }, followers: 8500000 },
+        { name: "Ultra Records", genre: "EDM", subGenre: "Dance / Electronic", status: "active", founded: 1995, roster: 150, country: "United States", tags: ["dance", "electronic", "major"], sourceTrack: "Body", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "ultrarecords", spotify: "spotify:label:Ultra+Records", soundcloud: "ultrarecords", twitter: "UltraRecords" }, followers: 3200000 },
+        { name: "Astralwerks", genre: "EDM", subGenre: "Electronic / Indie Dance", status: "active", founded: 1993, roster: 80, country: "United States", tags: ["electronic", "indie", "capitol"], sourceTrack: "Clarity", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "astralwerks", spotify: "spotify:label:Astralwerks", soundcloud: "astralwerks", twitter: "Astralwerks" }, followers: 950000 },
+        { name: "STMPD RCRDS", genre: "EDM", subGenre: "Progressive House", status: "active", founded: 2016, roster: 45, country: "Netherlands", tags: ["progressive", "big room", "martin garrix"], sourceTrack: "In The Name Of Love", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "staborecords", spotify: "spotify:label:STMPD+RCRDS", soundcloud: "stmpdrcrds", twitter: "STMPDRCRDS" }, followers: 2800000 },
+        { name: "Musical Freedom", genre: "EDM", subGenre: "Progressive / Electro", status: "active", founded: 2009, roster: 35, country: "Netherlands", tags: ["progressive", "electro", "tiesto"], sourceTrack: "The Business", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "musicalfreedom", spotify: "spotify:label:Musical+Freedom", soundcloud: "musicalfreedom", twitter: "musabordom" }, followers: 1500000 },
+        { name: "Revealed Recordings", genre: "EDM", subGenre: "Big Room / Progressive", status: "active", founded: 2010, roster: 50, country: "Netherlands", tags: ["big room", "progressive", "hardwell"], sourceTrack: "Spaceman", sourceChart: "Beatport Top 100", socials: { instagram: "revealedrecordings", spotify: "spotify:label:Revealed+Recordings", soundcloud: "revealed", twitter: "RevealedRec" }, followers: 4200000 },
+        { name: "mau5trap", genre: "EDM", subGenre: "Progressive / Electro", status: "active", founded: 2007, roster: 30, country: "Canada", tags: ["progressive", "electro", "deadmau5"], sourceTrack: "Strobe", sourceChart: "Beatport Top 100", socials: { instagram: "mau5trap", spotify: "spotify:label:mau5trap", soundcloud: "maborap", twitter: "mau5trap" }, followers: 1800000 },
+        { name: "Anjunabeats", genre: "EDM", subGenre: "Trance / Progressive", status: "active", founded: 2000, roster: 40, country: "United Kingdom", tags: ["trance", "progressive", "above & beyond"], sourceTrack: "Sun & Moon", sourceChart: "Beatport Top 100", socials: { instagram: "anjunabeats", spotify: "spotify:label:Anjunabeats", soundcloud: "anjunabeats", twitter: "Anjunabeats" }, followers: 2100000 },
+        { name: "Anjunadeep", genre: "EDM", subGenre: "Deep House / Organic", status: "active", founded: 2005, roster: 35, country: "United Kingdom", tags: ["deep house", "organic", "melodic"], sourceTrack: "Northern Soul", sourceChart: "Beatport Top 100", socials: { instagram: "anjunadeep", spotify: "spotify:label:Anjunadeep", soundcloud: "anjunadeep", twitter: "Anjunadeep" }, followers: 1900000 },
+        { name: "Protocol Recordings", genre: "EDM", subGenre: "Progressive House", status: "active", founded: 2012, roster: 30, country: "Netherlands", tags: ["progressive", "electro", "nicky romero"], sourceTrack: "Toulouse", sourceChart: "Beatport Top 100", socials: { instagram: "protocolrecordings", spotify: "spotify:label:Protocol+Recordings", soundcloud: "protocolrecordings", twitter: "ProtocolRec" }, followers: 1200000 },
+        { name: "Owsla", genre: "EDM", subGenre: "Bass / Electronic", status: "active", founded: 2011, roster: 25, country: "United States", tags: ["bass", "electronic", "skrillex"], sourceTrack: "Bangarang", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "owsla", spotify: "spotify:label:OWSLA", soundcloud: "owsla", twitter: "OWSLA" }, followers: 2400000 },
+        { name: "Mad Decent", genre: "EDM", subGenre: "Bass / Trap", status: "active", founded: 2006, roster: 60, country: "United States", tags: ["bass", "trap", "diplo"], sourceTrack: "Lean On", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "maddecent", spotify: "spotify:label:Mad+Decent", soundcloud: "maddecent", twitter: "maborecent" }, followers: 3500000 },
+        { name: "Monstercat", genre: "EDM", subGenre: "Multi-Genre", status: "active", founded: 2011, roster: 200, country: "Canada", tags: ["diverse", "indie", "community"], sourceTrack: "Alone", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "monstercat", spotify: "spotify:label:Monstercat", soundcloud: "monstercat", twitter: "Monstercat" }, followers: 9500000 },
+        { name: "Hexagon", genre: "EDM", subGenre: "Future House", status: "active", founded: 2015, roster: 25, country: "Netherlands", tags: ["future house", "bass house", "don diablo"], sourceTrack: "On My Mind", sourceChart: "Beatport Top 100", socials: { instagram: "hexaborecords", spotify: "spotify:label:Hexagon", soundcloud: "hexaborecords", twitter: "hexaborecords" }, followers: 800000 },
+        { name: "Confession", genre: "EDM", subGenre: "Bass House", status: "active", founded: 2016, roster: 20, country: "United States", tags: ["bass house", "tech house", "tchami"], sourceTrack: "Adieu", sourceChart: "Beatport Top 100", socials: { instagram: "confessionlabel", spotify: "spotify:label:Confession", soundcloud: "confession", twitter: "confaborabel" }, followers: 450000 },
+        { name: "Heldeep Records", genre: "EDM", subGenre: "Future House / House", status: "active", founded: 2015, roster: 30, country: "Netherlands", tags: ["future house", "groovy", "oliver heldens"], sourceTrack: "Gecko", sourceChart: "Shazam Electronic Top 200", socials: { instagram: "heldeeprecords", spotify: "spotify:label:Heldeep+Records", soundcloud: "heldeeprecords", twitter: "HeldeepRecords" }, followers: 700000 },
+        { name: "Dharma Worldwide", genre: "EDM", subGenre: "Big Room / Electro", status: "active", founded: 2017, roster: 20, country: "Netherlands", tags: ["big room", "electro", "kshmr"], sourceTrack: "Secrets", sourceChart: "Beatport Top 100", socials: { instagram: "dharmaworldwide", spotify: "spotify:label:Dharma+Worldwide", soundcloud: "dharmaworldwide", twitter: "DharmaWW" }, followers: 600000 },
+        { name: "Enhanced Music", genre: "EDM", subGenre: "Trance / Progressive", status: "active", founded: 2008, roster: 35, country: "United Kingdom", tags: ["trance", "progressive", "tritonal"], sourceTrack: "Now Or Never", sourceChart: "Beatport Top 100", socials: { instagram: "enhancedmusic", spotify: "spotify:label:Enhanced+Music", soundcloud: "enhancedmusic", twitter: "EnhancedMusic" }, followers: 500000 },
+        { name: "Insomniac Records", genre: "EDM", subGenre: "House / Techno", status: "active", founded: 2014, roster: 40, country: "United States", tags: ["house", "techno", "insomniac"], sourceTrack: "Losing It", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "insomniacrecords", spotify: "spotify:label:Insomniac+Records", soundcloud: "insomniacrecords", twitter: "InsomniacRecs" }, followers: 1200000 },
+        { name: "Sony Music / RCA", genre: "EDM", subGenre: "Dance Pop", status: "active", founded: 1900, roster: 500, country: "United States", tags: ["pop", "dance", "major"], sourceTrack: "Don't You Worry Child", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "sonymusic", spotify: "spotify:label:RCA+Records", soundcloud: "sonymusic", twitter: "SonyMusic" }, followers: 15000000 },
+        { name: "Atlantic Records", genre: "EDM", subGenre: "Dance / Pop", status: "active", founded: 1947, roster: 400, country: "United States", tags: ["pop", "dance", "major"], sourceTrack: "Happier", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "atlanticrecords", spotify: "spotify:label:Atlantic+Records", soundcloud: "atlanticrecords", twitter: "AtlanticRecords" }, followers: 8000000 },
+        { name: "Interscope Records", genre: "EDM", subGenre: "Dance / Electronic", status: "active", founded: 1990, roster: 350, country: "United States", tags: ["electronic", "pop", "major"], sourceTrack: "Scary Monsters and Nice Sprites", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "interscope", spotify: "spotify:label:Interscope+Records", soundcloud: "interscope", twitter: "Interscope" }, followers: 6500000 },
+        { name: "Columbia Records", genre: "EDM", subGenre: "Dance Pop", status: "active", founded: 1887, roster: 400, country: "United States", tags: ["pop", "dance", "legacy"], sourceTrack: "Electricity", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "columbiarecords", spotify: "spotify:label:Columbia+Records", soundcloud: "columbiarecords", twitter: "ColumbiaRecords" }, followers: 7000000 },
+        { name: "Big Beat Records", genre: "EDM", subGenre: "Electronic / Dance", status: "active", founded: 1987, roster: 30, country: "United States", tags: ["electronic", "dance", "atlantic"], sourceTrack: "Something Just Like This", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "bigbeatrecords", spotify: "spotify:label:Big+Beat+Records", soundcloud: "bigbeatrecords", twitter: "BigBeat" }, followers: 500000 },
+        { name: "Black Hole Recordings", genre: "EDM", subGenre: "Trance", status: "active", founded: 1997, roster: 60, country: "Netherlands", tags: ["trance", "uplifting", "classic"], sourceTrack: "Adagio For Strings", sourceChart: "Beatport Top 100", socials: { instagram: "blackholerecordings", spotify: "spotify:label:Black+Hole+Recordings", soundcloud: "blackholerecordings", twitter: "BlackHoleRec" }, followers: 400000 },
+        { name: "Axtone", genre: "EDM", subGenre: "Progressive House", status: "active", founded: 2005, roster: 25, country: "Sweden", tags: ["progressive", "house", "axwell"], sourceTrack: "Barricade", sourceChart: "Beatport Top 100", socials: { instagram: "axtone", spotify: "spotify:label:Axtone", soundcloud: "axtone", twitter: "Axtone" }, followers: 350000 },
+        { name: "SIZE Records", genre: "EDM", subGenre: "Progressive / Tech", status: "active", founded: 2003, roster: 20, country: "Sweden", tags: ["progressive", "tech", "steve angello"], sourceTrack: "Yeah", sourceChart: "Beatport Top 100", socials: { instagram: "sizerecords", spotify: "spotify:label:SIZE+Records", soundcloud: "sizerecords", twitter: "SIZERecords" }, followers: 300000 },
+        { name: "Proximity", genre: "EDM", subGenre: "Future Bass / Electronic", status: "active", founded: 2012, roster: 40, country: "United States", tags: ["future bass", "chill", "youtube"], sourceTrack: "Faded", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "proximity", spotify: "spotify:label:Proximity", soundcloud: "proximity", twitter: "ProximityM" }, followers: 15000000 },
+        { name: "NCS (NoCopyrightSounds)", genre: "EDM", subGenre: "Multi-Genre", status: "active", founded: 2011, roster: 100, country: "United Kingdom", tags: ["free", "diverse", "youtube"], sourceTrack: "Fade", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "nocopyrightsounds", spotify: "spotify:label:NCS", soundcloud: "nocopyrightsounds", twitter: "NCSounds" }, followers: 35000000 },
+        { name: "Trap Nation", genre: "EDM", subGenre: "Trap / Bass", status: "active", founded: 2012, roster: 30, country: "United States", tags: ["trap", "bass", "youtube"], sourceTrack: "Roses", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "trapnation", spotify: "spotify:label:Trap+Nation", soundcloud: "alltrapnation", twitter: "TrapNation" }, followers: 20000000 },
+        { name: "Lowly", genre: "EDM", subGenre: "Chill / Electronic", status: "active", founded: 2016, roster: 25, country: "United States", tags: ["chill", "lo-fi", "electronic"], sourceTrack: "Are We Still Friends", sourceChart: "Apple Music Electronic Top 100", socials: { instagram: "lowly", spotify: "spotify:label:Lowly", soundcloud: "lowly", twitter: "LowlyPalace" }, followers: 3000000 },
+        { name: "Dim Mak Records", genre: "EDM", subGenre: "Electro / Bass", status: "active", founded: 1996, roster: 100, country: "United States", tags: ["electro", "bass", "steve aoki"], sourceTrack: "Turbulence", sourceChart: "Beatport Top 100", socials: { instagram: "dimmak", spotify: "spotify:label:Dim+Mak", soundcloud: "dimmak", twitter: "dimmak" }, followers: 2500000 },
+        { name: "KSHMR Records / Dharma", genre: "EDM", subGenre: "Big Room", status: "active", founded: 2017, roster: 15, country: "United States", tags: ["big room", "indian", "kshmr"], sourceTrack: "Power", sourceChart: "1001Tracklists Top Tracks", socials: { instagram: "kshmr", spotify: "spotify:label:Dharma+Worldwide", soundcloud: "kshmr", twitter: "KSHMRmusic" }, followers: 4000000 },
+        { name: "Ophelia Records", genre: "EDM", subGenre: "Melodic Bass", status: "active", founded: 2018, roster: 20, country: "United States", tags: ["melodic", "bass", "seven lions"], sourceTrack: "Rush Over Me", sourceChart: "Beatport Top 100", socials: { instagram: "opheliarecords", spotify: "spotify:label:Ophelia+Records", soundcloud: "opheliarecords", twitter: "OpheliaRecs" }, followers: 600000 },
+        { name: "Seeking Blue", genre: "EDM", subGenre: "Melodic / Progressive", status: "active", founded: 2020, roster: 15, country: "United States", tags: ["melodic", "progressive", "jason ross"], sourceTrack: "Only For You", sourceChart: "Beatport Top 100", socials: { instagram: "seekingblue", spotify: "spotify:label:Seeking+Blue", soundcloud: "seekingblue", twitter: "SeekingBlue" }, followers: 150000 },
+        { name: "Elliptical Sun", genre: "EDM", subGenre: "Progressive Trance", status: "active", founded: 2013, roster: 20, country: "United States", tags: ["progressive", "trance", "melodic"], sourceTrack: "Parallels", sourceChart: "Beatport Top 100", socials: { instagram: "ellipticalsun", spotify: "spotify:label:Elliptical+Sun", soundcloud: "ellipticalsunrecordings", twitter: "EllipticalSun" }, followers: 80000 },
+        { name: "Future House Music", genre: "EDM", subGenre: "Future House", status: "active", founded: 2014, roster: 20, country: "Netherlands", tags: ["future house", "bass house", "groovy"], sourceTrack: "Badam", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "futurehousemusic", spotify: "spotify:label:Future+House+Music", soundcloud: "futurehousemusic", twitter: "FutureHouseMusic" }, followers: 4500000 },
+        { name: "Tomorrowland Music", genre: "EDM", subGenre: "Multi-Genre", status: "active", founded: 2021, roster: 30, country: "Belgium", tags: ["festival", "mainstream", "diverse"], sourceTrack: "The Hymn", sourceChart: "1001Tracklists Top Tracks", socials: { instagram: "tomorrowland", spotify: "spotify:label:Tomorrowland+Music", soundcloud: "tomorrowland", twitter: "tomorrowland" }, followers: 18000000 },
+        { name: "Ultra Music", genre: "EDM", subGenre: "Dance / Pop", status: "active", founded: 1995, roster: 100, country: "United States", tags: ["dance", "pop", "crossover"], sourceTrack: "Titanium", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "ultramusic", spotify: "spotify:label:Ultra+Music", soundcloud: "ultramusic", twitter: "UltraMusic" }, followers: 4000000 },
+        { name: "Armind", genre: "EDM", subGenre: "Trance", status: "active", founded: 2003, roster: 20, country: "Netherlands", tags: ["trance", "uplifting", "armin"], sourceTrack: "This Is What It Feels Like", sourceChart: "Beatport Top 100", socials: { instagram: "armindrecordings", spotify: "spotify:label:Armind", soundcloud: "armind", twitter: "Armind" }, followers: 300000 },
+        { name: "Statement!", genre: "EDM", subGenre: "Trance / Progressive", status: "active", founded: 2017, roster: 15, country: "Netherlands", tags: ["trance", "progressive", "armin"], sourceTrack: "Wild Wild Son", sourceChart: "1001Tracklists Top Tracks", socials: { instagram: "statementmusic", spotify: "spotify:label:Statement", soundcloud: "statementmusic", twitter: "STATEMENT_HQ" }, followers: 100000 },
+        { name: "Bitbird", genre: "EDM", subGenre: "Future Bass / Organic", status: "active", founded: 2016, roster: 20, country: "Netherlands", tags: ["future bass", "organic", "san holo"], sourceTrack: "Light", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "bitbird", spotify: "spotify:label:bitbird", soundcloud: "bitbird", twitter: "bitabordsongs" }, followers: 600000 },
+        { name: "Foreign Family Collective", genre: "EDM", subGenre: "Chill / Electronic", status: "active", founded: 2015, roster: 20, country: "United States", tags: ["chill", "electronic", "odesza"], sourceTrack: "A Moment Apart", sourceChart: "Apple Music Electronic Top 100", socials: { instagram: "foreignfamilycollective", spotify: "spotify:label:Foreign+Family+Collective", soundcloud: "foreignfamilycollective", twitter: "ffcollective" }, followers: 500000 },
+        { name: "Counter Records", genre: "EDM", subGenre: "Organic / Downtempo", status: "active", founded: 2016, roster: 15, country: "United Kingdom", tags: ["organic", "downtempo", "ninja tune"], sourceTrack: "Dissolve", sourceChart: "Apple Music Electronic Top 100", socials: { instagram: "counterrecords", spotify: "spotify:label:Counter+Records", soundcloud: "counterrecords", twitter: "CounterRecords" }, followers: 200000 },
+        { name: "Silk Music", genre: "EDM", subGenre: "Progressive / Deep", status: "active", founded: 2008, roster: 30, country: "United States", tags: ["progressive", "deep", "melodic"], sourceTrack: "Waterfall", sourceChart: "Beatport Hype Top 100", socials: { instagram: "silkmusic", spotify: "spotify:label:Silk+Music", soundcloud: "silkmusic", twitter: "SilkMusic" }, followers: 150000 },
+        { name: "Zerothree", genre: "EDM", subGenre: "Progressive House", status: "active", founded: 2013, roster: 15, country: "United States", tags: ["progressive", "house", "lane 8"], sourceTrack: "Rise", sourceChart: "Beatport Top 100", socials: { instagram: "zerothreemusic", spotify: "spotify:label:Zerothree", soundcloud: "zerothreemusic", twitter: "Zerothree" }, followers: 120000 },
+        { name: "Colorize", genre: "EDM", subGenre: "Progressive / Deep", status: "active", founded: 2013, roster: 20, country: "United Kingdom", tags: ["progressive", "deep", "enhanced"], sourceTrack: "Afterglow", sourceChart: "Beatport Hype Top 100", socials: { instagram: "colorizemusic", spotify: "spotify:label:Colorize", soundcloud: "colorizemusic", twitter: "ColorizeMusic" }, followers: 90000 },
+        { name: "Pandra", genre: "EDM", subGenre: "Melodic House", status: "active", founded: 2019, roster: 10, country: "Germany", tags: ["melodic", "house", "indie"], sourceTrack: "Echoes", sourceChart: "Beatport Hype Top 100", socials: { instagram: "pandramusic", spotify: "spotify:label:Pandra", soundcloud: "pandramusic", twitter: "pandramusic" }, followers: 40000 },
+        { name: "Gemstone Records", genre: "EDM", subGenre: "Future Rave / House", status: "active", founded: 2022, roster: 10, country: "Netherlands", tags: ["future rave", "big room", "morten"], sourceTrack: "Element", sourceChart: "1001Tracklists Top Tracks", socials: { instagram: "gemstonerecords", spotify: "spotify:label:Gemstone+Records", soundcloud: "gemstonerecords", twitter: "GemstoneRec" }, followers: 200000 }
+    ];
+
+    var LG_LABELS = BASS_LABELS.concat(TECH_LABELS).concat(CHART_LABELS);
+
+    /* ═══════════════════════════════════
+       NAV — View Switching
+       ═══════════════════════════════════ */
+    (function() {
+        var navBtns = document.querySelectorAll('.app-nav-btn');
+        var views = document.querySelectorAll('.app-view');
+        navBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var target = btn.dataset.view;
+                navBtns.forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                views.forEach(function(v) { v.classList.remove('active'); });
+                document.getElementById('view' + target.charAt(0).toUpperCase() + target.slice(1)).classList.add('active');
+            });
+        });
+    })();
+
+    /* ═══════════════════════════════════
+       VIEW 1: LABEL DATABASE
+       ═══════════════════════════════════ */
+    (function() {
+        var lgIsBracketView = false;
+        var lgSearchQuery = '';
+        var lgBracketFilter = 'all';
+
+        var lgSearchView = document.getElementById('lgSearchView');
+        var lgBracketViewEl = document.getElementById('lgBracketView');
+        var lgToggleTrack = document.getElementById('lgToggleTrack');
+        var lgToggleSearchLabel = document.getElementById('lgToggleSearch');
+        var lgToggleBracketLabel = document.getElementById('lgToggleBracket');
+        var lgSearchInput = document.getElementById('lgSearchInput');
+        var lgSuggestionsEl = document.getElementById('lgSuggestions');
+        var lgLabelGrid = document.getElementById('lgLabelGrid');
+        var lgBracketContainer = document.getElementById('lgBracketContainer');
+
+        function lgApplyView() {
+            lgToggleTrack.classList.toggle('on', lgIsBracketView);
+            lgToggleSearchLabel.classList.toggle('active', !lgIsBracketView);
+            lgToggleBracketLabel.classList.toggle('active', lgIsBracketView);
+            if (lgIsBracketView) {
+                lgSearchView.classList.remove('visible'); lgSearchView.classList.add('hidden');
+                lgBracketViewEl.classList.remove('hidden'); lgBracketViewEl.classList.add('visible');
+            } else {
+                lgBracketViewEl.classList.remove('visible'); lgBracketViewEl.classList.add('hidden');
+                lgSearchView.classList.remove('hidden'); lgSearchView.classList.add('visible');
+            }
+        }
+
+        lgToggleTrack.addEventListener('click', function() { lgIsBracketView = !lgIsBracketView; lgApplyView(); });
+        lgToggleSearchLabel.addEventListener('click', function() { lgIsBracketView = false; lgApplyView(); });
+        lgToggleBracketLabel.addEventListener('click', function() { lgIsBracketView = true; lgApplyView(); });
+
+        function lgFilterLabels(q) {
+            if (!q) return LG_LABELS;
+            var lower = q.toLowerCase();
+            return LG_LABELS.filter(function(l) {
+                return l.name.toLowerCase().includes(lower) || l.genre.toLowerCase().includes(lower) ||
+                    l.subGenre.toLowerCase().includes(lower) || l.tags.some(function(t) { return t.toLowerCase().includes(lower); }) ||
+                    l.country.toLowerCase().includes(lower);
+            });
+        }
+
+        function lgRenderSuggestions(q) {
+            if (!q || LG_LABELS.length === 0) { lgSuggestionsEl.classList.remove('open'); return; }
+            var matches = lgFilterLabels(q).slice(0, 6);
+            if (matches.length === 0) { lgSuggestionsEl.classList.remove('open'); return; }
+            var lower = q.toLowerCase();
+            lgSuggestionsEl.innerHTML = matches.map(function(l) {
+                var idx = l.name.toLowerCase().indexOf(lower);
+                var display = l.name;
+                if (idx > -1) {
+                    display = l.name.slice(0, idx) + '<span class="lg-match">' + l.name.slice(idx, idx + q.length) + '</span>' + l.name.slice(idx + q.length);
+                }
+                return '<div class="lg-suggestion-item" data-name="' + l.name + '">' + display +
+                    ' <span style="color:rgba(255,255,255,0.25);font-size:12px;margin-left:6px">' + l.subGenre + '</span></div>';
+            }).join('');
+            lgSuggestionsEl.classList.add('open');
+            lgSuggestionsEl.querySelectorAll('.lg-suggestion-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    lgSearchInput.value = item.dataset.name;
+                    lgSearchQuery = item.dataset.name;
+                    lgSuggestionsEl.classList.remove('open');
+                    lgRenderCards(lgFilterLabels(lgSearchQuery));
+                });
+            });
+        }
+
+        lgSearchInput.addEventListener('input', function(e) {
+            lgSearchQuery = e.target.value.trim();
+            lgRenderSuggestions(lgSearchQuery);
+            lgRenderCards(lgFilterLabels(lgSearchQuery));
+        });
+        lgSearchInput.addEventListener('focus', function() { if (lgSearchQuery) lgRenderSuggestions(lgSearchQuery); });
+        document.addEventListener('click', function(e) { if (!e.target.closest('.lg-search-bar-wrap')) lgSuggestionsEl.classList.remove('open'); });
+
+        function lgStatusClass(s) { return s === 'active' ? 'active' : s === 'inactive' ? 'inactive' : 'pending'; }
+
+        function lgRenderCards(labels) {
+            if (labels.length === 0) {
+                lgLabelGrid.innerHTML = '<div class="lg-empty-state"><div class="lg-empty-icon">&#9835;</div>' +
+                    '<div class="lg-empty-title">No results found</div>' +
+                    '<div class="lg-empty-sub">Try a different search term</div></div>';
+                return;
+            }
+            lgLabelGrid.innerHTML = labels.map(function(l) {
+                return '<div class="lg-label-card"><div class="lg-card-header"><div class="lg-card-name">' + l.name +
+                    '</div><div class="lg-card-status ' + lgStatusClass(l.status) + '" title="' + l.status + '"></div></div>' +
+                    '<div class="lg-card-tags"><span class="lg-card-tag genre">' + l.genre + '</span>' +
+                    (l.subGenre ? '<span class="lg-card-tag sub">' + l.subGenre + '</span>' : '') +
+                    l.tags.slice(0, 2).map(function(t) { return '<span class="lg-card-tag sub">' + t + '</span>'; }).join('') +
+                    '</div><div class="lg-card-stats">' +
+                    '<div class="lg-stat"><span class="lg-stat-label">Roster</span><span class="lg-stat-value">' + (l.roster > 0 ? l.roster : '\u2014') + '</span></div>' +
+                    '<div class="lg-stat"><span class="lg-stat-label">Founded</span><span class="lg-stat-value">' + (l.founded || '\u2014') + '</span></div>' +
+                    '<div class="lg-stat"><span class="lg-stat-label">Country</span><span class="lg-stat-value">' + (l.country || '\u2014') + '</span></div>' +
+                    '<div class="lg-stat"><span class="lg-stat-label">Status</span><span class="lg-stat-value" style="text-transform:capitalize">' + l.status + '</span></div>' +
+                    '</div></div>';
+            }).join('');
+        }
+
+        /* Bracket grouping by subGenre category */
+        var BRACKET_GROUPS = [
+            { key: 'bass', label: 'Bass / Dubstep', cls: 'bass', filter: function(l) { return BASS_LABELS.indexOf(l) > -1; } },
+            { key: 'tech', label: 'Tech / Tech House', cls: 'techhouse', filter: function(l) { return TECH_LABELS.indexOf(l) > -1; } },
+            { key: 'chart', label: 'Chart Labels', cls: 'edm', filter: function(l) { return CHART_LABELS.indexOf(l) > -1; } }
+        ];
+
+        function lgRenderBrackets() {
+            var groups = BRACKET_GROUPS;
+            if (lgBracketFilter === 'bass') groups = [BRACKET_GROUPS[0]];
+            if (lgBracketFilter === 'tech') groups = [BRACKET_GROUPS[1]];
+            if (lgBracketFilter === 'chart') groups = [BRACKET_GROUPS[2]];
+
+            lgBracketContainer.innerHTML = groups.map(function(g) {
+                var labels = LG_LABELS.filter(g.filter);
+                var nodesHtml = labels.length > 0
+                    ? labels.map(function(l) {
+                        return '<div class="lg-bracket-node"><div class="lg-node-name">' + l.name + '</div>' +
+                            '<div class="lg-node-stat"><span class="lg-node-stat-label">Roster</span><span class="lg-node-stat-value">' + (l.roster > 0 ? l.roster : '\u2014') + '</span></div>' +
+                            '<div class="lg-node-stat"><span class="lg-node-stat-label">Founded</span><span class="lg-node-stat-value">' + (l.founded || '\u2014') + '</span></div>' +
+                            '<div class="lg-node-stat"><span class="lg-node-stat-label">Country</span><span class="lg-node-stat-value">' + (l.country || '\u2014') + '</span></div></div>';
+                    }).join('')
+                    : '<div class="lg-bracket-empty">No labels yet</div>';
+                return '<div class="lg-bracket-column"><div class="lg-bracket-header ' + g.cls + '">' + g.label +
+                    '</div><div class="lg-bracket-nodes">' + nodesHtml + '</div></div>';
+            }).join('');
+        }
+
+        document.querySelectorAll('.lg-gen-pill').forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                document.querySelectorAll('.lg-gen-pill').forEach(function(p) { p.classList.remove('active'); });
+                pill.classList.add('active');
+                lgBracketFilter = pill.dataset.lgFilter;
+                lgRenderBrackets();
+            });
+        });
+
+        lgApplyView();
+        lgRenderCards(LG_LABELS);
+        lgRenderBrackets();
+    })();
+
+    /* ═══════════════════════════════════
+       VIEW 2: LABEL ANALYZER
+       ═══════════════════════════════════ */
+    (function() {
+        'use strict';
+
+        var searchInput = document.getElementById('laSearchInput');
+        var goBtn = document.getElementById('laGoBtn');
+        var suggestionsEl = document.getElementById('laSuggestions');
+        var reportSection = document.getElementById('laReportSection');
+        var heroGrid = document.getElementById('laHeroGrid');
+        var rankingsBody = document.getElementById('laRankingsBody');
+        var actionsSection = document.getElementById('laActionsSection');
+        var openAllBtn = document.getElementById('laOpenAll');
+        var exportBtn = document.getElementById('laExport');
+        var newLookupBtn = document.getElementById('laNewLookup');
+
+        /* Platform channels — for labels */
+        var channels = [
+            { id: 'laChBP', key: 'beatport', icon: '\ud83c\udfb5', name: 'Beatport',
+              color: '#00d26e', dotClass: 'la-bp',
+              searchUrl: function(n) { return 'https://www.beatport.com/search?q=' + encodeURIComponent(n); },
+              demo: { handle: '{slug}', releases: '342', releasesNum: 342, followers: '18.2K', followersNum: 18200, engagement: '4.1%', engNum: 4.1, growth: '+3.2%', trend: 'up' } },
+            { id: 'laChSP', key: 'spotify', icon: '\ud83c\udfa7', name: 'Spotify',
+              color: '#1ed760', dotClass: 'la-sp',
+              searchUrl: function(n) { return 'https://open.spotify.com/search/' + encodeURIComponent(n); },
+              demo: { handle: '{name}', releases: '287', releasesNum: 287, followers: '45.6K', followersNum: 45600, engagement: '2.8%', engNum: 2.8, growth: '+5.1%', trend: 'up' } },
+            { id: 'laChSC', key: 'soundcloud', icon: '\u2601', name: 'SoundCloud',
+              color: '#ff5500', dotClass: 'la-sc',
+              searchUrl: function(n) { return 'https://soundcloud.com/search?q=' + encodeURIComponent(n); },
+              demo: { handle: '{slug}', releases: '512', releasesNum: 512, followers: '28.3K', followersNum: 28300, engagement: '3.5%', engNum: 3.5, growth: '+1.8%', trend: 'steady' } },
+            { id: 'laChBC', key: 'bandcamp', icon: '\ud83d\udcbf', name: 'Bandcamp',
+              color: '#1da1f2', dotClass: 'la-bc',
+              searchUrl: function(n) { return 'https://bandcamp.com/search?q=' + encodeURIComponent(n); },
+              demo: { handle: '{slug}', releases: '156', releasesNum: 156, followers: '8.4K', followersNum: 8400, engagement: '5.2%', engNum: 5.2, growth: '+0.9%', trend: 'steady' } }
+        ];
+
+        var laCurrentSort = 'releases';
+        var laLastName = '';
+        var laLastLabel = null;
+
+        /* Suggestions with autocomplete from database */
+        function laRenderSuggestions(q) {
+            if (!q) { suggestionsEl.classList.remove('open'); return; }
+            var lower = q.toLowerCase();
+            var matches = LG_LABELS.filter(function(l) {
+                return l.name.toLowerCase().includes(lower) || l.subGenre.toLowerCase().includes(lower) ||
+                    l.tags.some(function(t) { return t.toLowerCase().includes(lower); });
+            }).slice(0, 6);
+            if (matches.length === 0) { suggestionsEl.classList.remove('open'); return; }
+            suggestionsEl.innerHTML = matches.map(function(l) {
+                var idx = l.name.toLowerCase().indexOf(lower);
+                var display = l.name;
+                if (idx > -1) display = l.name.slice(0, idx) + '<span class="la-sug-match">' + l.name.slice(idx, idx + q.length) + '</span>' + l.name.slice(idx + q.length);
+                return '<div class="la-sug-item" data-name="' + l.name + '">' + display +
+                    ' <span style="color:rgba(255,255,255,0.2);font-size:10px;margin-left:6px">' + l.subGenre + '</span></div>';
+            }).join('');
+            suggestionsEl.classList.add('open');
+            suggestionsEl.querySelectorAll('.la-sug-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    searchInput.value = item.dataset.name;
+                    suggestionsEl.classList.remove('open');
+                });
+            });
+        }
+
+        searchInput.addEventListener('input', function() { laRenderSuggestions(searchInput.value.trim()); });
+        searchInput.addEventListener('focus', function() { if (searchInput.value.trim()) laRenderSuggestions(searchInput.value.trim()); });
+        document.addEventListener('click', function(e) { if (!e.target.closest('.la-search-input-wrap')) suggestionsEl.classList.remove('open'); });
+
+        /* Helpers */
+        function slugify(name) { return name.replace(/\s+/g, '').toLowerCase(); }
+        function setCardState(card, state) { card.setAttribute('data-state', state); }
+        function getTrendHTML(trend) {
+            if (trend === 'up') return '<span class="la-trend-up">\u2191</span>';
+            if (trend === 'down') return '<span class="la-trend-down">\u2193</span>';
+            return '<span class="la-trend-steady">\u2194</span>';
+        }
+        function formatNum(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return String(n);
+        }
+
+        window.laToggleCard = function(cardId) {
+            var card = document.getElementById(cardId);
+            if (card) card.classList.toggle('la-expanded');
+        };
+
+        function fillCardDetails(card, ch, name) {
+            var slug = slugify(name);
+            var handle = ch.demo.handle.replace('{slug}', slug).replace('{name}', name);
+            var details = card.querySelector('.la-channel-details');
+            details.innerHTML =
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Handle</span><span class="la-channel-detail-value">' + handle + '</span></div>' +
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Releases</span><span class="la-channel-detail-value">' + ch.demo.releases + '</span></div>' +
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Followers</span><span class="la-channel-detail-value">' + ch.demo.followers + '</span></div>' +
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Engagement</span><span class="la-channel-detail-value">' + ch.demo.engagement + '</span></div>' +
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Growth</span><span class="la-channel-detail-value">' + ch.demo.growth + '</span></div>';
+        }
+
+        function fillCard(card, ch, name) {
+            card.querySelector('.la-channel-status').textContent = 'found \u2713';
+            setCardState(card, 'found');
+            fillCardDetails(card, ch, name);
+        }
+
+        /* Analyze flow */
+        function runAnalyze() {
+            var name = searchInput.value.trim();
+            if (!name) return;
+            laLastName = name;
+            laLastLabel = LG_LABELS.find(function(l) { return l.name.toLowerCase() === name.toLowerCase(); }) || null;
+            suggestionsEl.classList.remove('open');
+
+            goBtn.disabled = true;
+            searchInput.disabled = true;
+
+            /* Reset */
+            channels.forEach(function(ch) {
+                var card = document.getElementById(ch.id);
+                setCardState(card, 'idle');
+                card.classList.remove('la-expanded');
+                card.querySelector('.la-channel-status').textContent = 'waiting';
+                card.querySelector('.la-channel-details').innerHTML = '';
+            });
+            reportSection.classList.remove('la-visible');
+            actionsSection.classList.remove('la-visible');
+
+            /* Stagger scan */
+            channels.forEach(function(ch, idx) {
+                var card = document.getElementById(ch.id);
+                var searchDelay = idx * 700;
+                var foundDelay = searchDelay + 1200 + Math.random() * 800;
+                setTimeout(function() {
+                    setCardState(card, 'searching');
+                    card.querySelector('.la-channel-status').textContent = 'scanning...';
+                }, searchDelay);
+                setTimeout(function() {
+                    fillCard(card, ch, name);
+                    if (idx === channels.length - 1) {
+                        setTimeout(function() { showResults(name); }, 400);
+                    }
+                }, foundDelay);
+            });
+        }
+
+        /* Hero cards */
+        function populateHeroCards(name) {
+            var label = laLastLabel;
+            var totalArtists = label ? label.roster : 35;
+            var totalReleases = 0;
+            var totalEng = 0;
+            channels.forEach(function(ch) {
+                totalReleases += ch.demo.releasesNum;
+                totalEng += ch.demo.engNum;
+            });
+            var avgReleases = Math.round(totalReleases / channels.length);
+            var score = Math.min(100, Math.round((totalArtists * 0.5) + (avgReleases * 0.1) + (totalEng * 5)));
+            var activity = avgReleases > 250 ? 'High' : avgReleases > 150 ? 'Medium' : 'Low';
+
+            document.getElementById('laHeroArtists').textContent = totalArtists;
+            document.getElementById('laHeroReleases').textContent = avgReleases;
+            document.getElementById('laHeroScore').textContent = score + '/100';
+            document.getElementById('laHeroActivity').textContent = activity;
+
+            var bars = heroGrid.querySelectorAll('.la-heat-bar-fill');
+            var widths = [
+                Math.min(100, (totalArtists / 100) * 100),
+                Math.min(100, (avgReleases / 500) * 100),
+                score,
+                avgReleases > 250 ? 90 : avgReleases > 150 ? 60 : 30
+            ];
+            bars.forEach(function(bar, i) {
+                setTimeout(function() { bar.style.width = widths[i] + '%'; }, i * 150);
+            });
+        }
+
+        /* Rankings */
+        function getSortedChannels() {
+            var arr = channels.slice();
+            if (laCurrentSort === 'releases') arr.sort(function(a, b) { return b.demo.releasesNum - a.demo.releasesNum; });
+            else if (laCurrentSort === 'followers') arr.sort(function(a, b) { return b.demo.followersNum - a.demo.followersNum; });
+            else arr.sort(function(a, b) { return a.name.localeCompare(b.name); });
+            return arr;
+        }
+
+        function laRenderRankings(name) {
+            var sorted = getSortedChannels();
+            var slug = slugify(name);
+            var html = '';
+            sorted.forEach(function(ch, idx) {
+                var handle = ch.demo.handle.replace('{slug}', slug).replace('{name}', name);
+                html += '<tr onclick="window.laToggleExpand(' + idx + ')">' +
+                    '<td><div class="la-platform-cell"><span class="la-platform-dot" style="background:' + ch.color + '"></span>' + ch.name + '</div></td>' +
+                    '<td>' + handle + '</td>' +
+                    '<td>' + ch.demo.releases + '</td>' +
+                    '<td>' + ch.demo.followers + '</td>' +
+                    '<td>' + ch.demo.engagement + '</td>' +
+                    '<td>' + getTrendHTML(ch.demo.trend) + '</td></tr>';
+                html += '<tr class="la-expanded-row" id="laExpRow' + idx + '"><td colspan="6"><div class="la-expanded-content">' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Handle</span><span class="la-stat-pill-value">' + handle + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Releases</span><span class="la-stat-pill-value">' + ch.demo.releases + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Followers</span><span class="la-stat-pill-value">' + ch.demo.followers + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Engagement</span><span class="la-stat-pill-value">' + ch.demo.engagement + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Growth</span><span class="la-stat-pill-value">' + ch.demo.growth + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Trend</span><span class="la-stat-pill-value">' + getTrendHTML(ch.demo.trend) + '</span></span>' +
+                    '</div></td></tr>';
+            });
+            rankingsBody.innerHTML = html;
+        }
+
+        window.laToggleExpand = function(idx) {
+            var row = document.getElementById('laExpRow' + idx);
+            if (row) row.classList.toggle('la-visible');
+        };
+
+        /* Sort buttons */
+        var sortBtns = document.querySelectorAll('.la-sort-btn');
+        sortBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                laCurrentSort = btn.dataset.sort;
+                sortBtns.forEach(function(b) { b.classList.remove('la-sort-active'); });
+                btn.classList.add('la-sort-active');
+                if (laLastName) laRenderRankings(laLastName);
+            });
+        });
+
+        /* Show results */
+        function showResults(name) {
+            populateHeroCards(name);
+            laRenderRankings(name);
+            reportSection.classList.add('la-visible');
+            setTimeout(function() { actionsSection.classList.add('la-visible'); }, 300);
+            goBtn.disabled = false;
+            searchInput.disabled = false;
+        }
+
+        /* Reset */
+        function resetAnalyzer() {
+            searchInput.value = '';
+            searchInput.disabled = false;
+            goBtn.disabled = false;
+            laLastName = '';
+            laLastLabel = null;
+            channels.forEach(function(ch) {
+                var card = document.getElementById(ch.id);
+                setCardState(card, 'idle');
+                card.classList.remove('la-expanded');
+                card.querySelector('.la-channel-status').textContent = 'waiting';
+                card.querySelector('.la-channel-details').innerHTML = '';
+            });
+            reportSection.classList.remove('la-visible');
+            actionsSection.classList.remove('la-visible');
+            rankingsBody.innerHTML = '';
+            document.getElementById('laHeroArtists').textContent = '\u2014';
+            document.getElementById('laHeroReleases').textContent = '\u2014';
+            document.getElementById('laHeroScore').textContent = '\u2014';
+            document.getElementById('laHeroActivity').textContent = '\u2014';
+            heroGrid.querySelectorAll('.la-heat-bar-fill').forEach(function(bar) { bar.style.width = '0%'; });
+            searchInput.focus();
+        }
+
+        /* Quick actions */
+        if (openAllBtn) openAllBtn.addEventListener('click', function() {
+            if (!laLastName) return;
+            /* Open real social URLs if available from database */
+            if (laLastLabel && laLastLabel.socials) {
+                var bases = { instagram: 'https://instagram.com/', spotify: 'https://open.spotify.com/search/', soundcloud: 'https://soundcloud.com/', twitter: 'https://twitter.com/', beatport: 'https://www.beatport.com/search?q=' };
+                Object.keys(laLastLabel.socials).forEach(function(p) {
+                    var handle = laLastLabel.socials[p];
+                    if (handle) {
+                        var url = handle.startsWith('http') ? handle : (bases[p] || '') + handle;
+                        window.open(url, '_blank');
+                    }
+                });
+            } else {
+                channels.forEach(function(ch) { window.open(ch.searchUrl(laLastName), '_blank'); });
+            }
+        });
+        if (exportBtn) exportBtn.addEventListener('click', function() {
+            if (!laLastName) return;
+            var slug = slugify(laLastName);
+            var lines = ['Label Analysis Report: ' + laLastName, '========================', ''];
+            if (laLastLabel) {
+                lines.push('Genre: ' + laLastLabel.genre + ' / ' + laLastLabel.subGenre);
+                lines.push('Founded: ' + laLastLabel.founded);
+                lines.push('Country: ' + laLastLabel.country);
+                lines.push('Roster: ' + laLastLabel.roster + ' artists');
+                lines.push('');
+            }
+            channels.forEach(function(ch) {
+                var handle = ch.demo.handle.replace('{slug}', slug).replace('{name}', laLastName);
+                lines.push(ch.name + ': ' + handle);
+                lines.push('  Releases: ' + ch.demo.releases);
+                lines.push('  Followers: ' + ch.demo.followers);
+                lines.push('  Engagement: ' + ch.demo.engagement);
+                lines.push('  Growth: ' + ch.demo.growth);
+                lines.push('');
+            });
+            var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'label-report-' + slug + '.txt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+        if (newLookupBtn) newLookupBtn.addEventListener('click', resetAnalyzer);
+
+        /* Events */
+        goBtn.addEventListener('click', runAnalyze);
+        searchInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') runAnalyze(); });
+
+        console.log('[LA] Label Analyzer ready — ' + LG_LABELS.length + ' labels in database');
+    })();
+
+    /* ═══════════════════════════════════
+       CHART REFERENCE GRID
+       ═══════════════════════════════════ */
+    (function() {
+        var panel = document.getElementById('chartRefPanel');
+        var toggle = document.getElementById('chartRefToggle');
+        var body = document.getElementById('chartRefBody');
+        var countEl = document.getElementById('chartRefCount');
+        var searchInput = document.getElementById('chartRefSearch');
+
+        if (!panel || !toggle || !body) return;
+
+        toggle.addEventListener('click', function() { panel.classList.toggle('open'); });
+
+        function socialIcon(platform) {
+            var icons = { instagram: 'IG', spotify: 'SP', soundcloud: 'SC', twitter: 'TW', beatport: 'BP' };
+            return icons[platform] || platform.charAt(0).toUpperCase();
+        }
+
+        function socialUrl(platform, handle) {
+            if (!handle) return '';
+            if (handle.startsWith('http')) return handle;
+            var bases = {
+                instagram: 'https://instagram.com/',
+                spotify: 'https://open.spotify.com/search/',
+                soundcloud: 'https://soundcloud.com/',
+                twitter: 'https://twitter.com/',
+                beatport: 'https://www.beatport.com/search?q='
+            };
+            return (bases[platform] || '') + handle;
+        }
+
+        function renderGrid(filter) {
+            var labels = CHART_LABELS;
+            if (filter) {
+                var lower = filter.toLowerCase();
+                labels = labels.filter(function(l) {
+                    return l.name.toLowerCase().includes(lower) ||
+                        l.subGenre.toLowerCase().includes(lower) ||
+                        (l.sourceTrack && l.sourceTrack.toLowerCase().includes(lower)) ||
+                        (l.sourceChart && l.sourceChart.toLowerCase().includes(lower)) ||
+                        l.country.toLowerCase().includes(lower);
+                });
+            }
+            countEl.textContent = labels.length + ' labels';
+            body.innerHTML = labels.map(function(l) {
+                var socialsHtml = '';
+                if (l.socials) {
+                    Object.keys(l.socials).forEach(function(platform) {
+                        var url = socialUrl(platform, l.socials[platform]);
+                        if (url) socialsHtml += '<a class="cr-social-link" href="' + url + '" target="_blank" title="' + platform + '">' + socialIcon(platform) + '</a>';
+                    });
+                }
+                return '<tr>' +
+                    '<td>' + l.name + '</td>' +
+                    '<td>' + (l.sourceTrack || '\u2014') + '</td>' +
+                    '<td>' + (l.sourceChart || '\u2014') + '</td>' +
+                    '<td><span class="cr-subgenre">' + l.subGenre + '</span></td>' +
+                    '<td>' + l.country + '</td>' +
+                    '<td>' + (socialsHtml || '\u2014') + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        searchInput.addEventListener('input', function() { renderGrid(searchInput.value.trim()); });
+        renderGrid('');
+        console.log('[CRG] Chart Reference Grid ready — ' + CHART_LABELS.length + ' chart labels');
+    })();
+    </script>
+</body>
+</html>

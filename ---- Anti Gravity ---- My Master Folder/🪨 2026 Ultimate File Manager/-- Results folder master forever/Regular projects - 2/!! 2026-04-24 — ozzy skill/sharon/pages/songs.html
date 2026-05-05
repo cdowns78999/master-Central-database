@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sharon — Songs</title>
+<style>
+  :root {
+    --bg:#f4f5f7; --pane:#fff; --line:#e1e4ea; --line-soft:#eef0f4;
+    --accent:#4a6da7; --accent-soft:#eaf0fa; --ink:#1f2430; --muted:#6b7280;
+    --row-alt:#f9fafc; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;background:var(--bg);color:var(--ink);font-size:13px}
+  .page{display:grid;grid-template-rows:56px 1fr 28px;height:100vh}
+
+  header.top{display:flex;align-items:center;gap:16px;padding:0 22px;background:#fff;border-bottom:1px solid var(--line)}
+  header.top a.back{color:var(--muted);text-decoration:none;font-size:12px}
+  header.top a.back:hover{color:var(--accent)}
+  header.top h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-0.01em}
+  header.top .sub{color:var(--muted);font-size:12px}
+
+  .body{padding:18px 22px;overflow:auto}
+  .table-wrap{background:var(--pane);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{
+    text-align:left;padding:10px 12px;background:#f3f5f9;color:var(--muted);
+    font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+    border-bottom:1px solid var(--line);cursor:pointer;user-select:none;
+    position:sticky;top:0;z-index:1;
+  }
+  thead th:hover{color:var(--accent);background:#eef2f8}
+  thead th .arrow{display:inline-block;width:10px;color:var(--accent);font-size:10px;margin-left:4px}
+  tbody td{padding:8px 12px;border-bottom:1px solid var(--line-soft);color:var(--ink)}
+  tbody tr{cursor:pointer;transition:background .12s}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+  tbody tr:hover{background:var(--accent-soft)}
+  tbody tr.edited td:first-child::before{content:"●";color:var(--amber);margin-right:6px;font-size:9px;vertical-align:middle}
+  tbody td.num{color:var(--muted);font-variant-numeric:tabular-nums;width:36px}
+  tbody td.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--muted)}
+  tbody td.title{font-weight:600}
+  tbody td.status{font-size:11px;color:var(--muted)}
+  .empty-state{padding:60px 20px;text-align:center;color:var(--muted)}
+
+  footer.status{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    background:linear-gradient(180deg,#f5f6f9 0%,#e9ecf1 100%);
+    border-top:1px solid var(--line);color:var(--muted);font-size:11px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  footer.status .pill{display:inline-flex;align-items:center;gap:5px}
+  footer.status .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);transition:background .2s}
+  footer.status .pill.unsaved .dot{background:var(--amber)}
+
+  dialog.detail{border:none;border-radius:14px;padding:0;max-width:720px;width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  dialog.detail::backdrop{background:rgba(15,20,35,.55)}
+  dialog.detail .dhead{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line)}
+  dialog.detail .dhead .dh-l h2{margin:0;font-size:16px}
+  dialog.detail .dhead .dh-l .editing{font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  dialog.detail .dclose{width:30px;height:30px;border-radius:50%;border:none;background:#1f2430;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  dialog.detail .dclose:hover{background:var(--accent)}
+  dialog.detail .form{padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  dialog.detail .field{display:flex;flex-direction:column;gap:4px}
+  dialog.detail .field.full{grid-column:1/-1}
+  dialog.detail .field label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+  dialog.detail .field input{border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit;color:var(--ink);background:#fff}
+  dialog.detail .field input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  dialog.detail .dfoot{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:#fafbfd;border-radius:0 0 14px 14px}
+  dialog.detail .btn{border:none;border-radius:7px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  dialog.detail .btn.save{background:var(--accent);color:#fff}
+  dialog.detail .btn.save:hover{background:#3a5689}
+  dialog.detail .btn.ghost{background:transparent;color:var(--muted)}
+  dialog.detail .btn.ghost:hover{color:var(--ink)}
+
+  .toast{
+    position:fixed;bottom:48px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#1f2430;color:#fff;padding:10px 18px;border-radius:24px;font-size:12px;
+    display:flex;align-items:center;gap:8px;box-shadow:0 10px 30px rgba(0,0,0,.25);
+    opacity:0;pointer-events:none;transition:.25s;z-index:100;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast .dot{width:7px;height:7px;border-radius:50%;background:#10b981}
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <a class="back" href="../index.html">← Sharon</a>
+      <div>
+        <h1>Songs</h1>
+        <div class="sub">Master catalog · ISRC · BPM · key</div>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="table-wrap">
+        <table id="songs-table">
+          <thead>
+            <tr>
+              <th data-sort="num" style="width:48px">#<span class="arrow"></span></th>
+              <th data-sort="title">Title<span class="arrow"></span></th>
+              <th data-sort="album">Album<span class="arrow"></span></th>
+              <th data-sort="year" style="width:70px">Year<span class="arrow"></span></th>
+              <th data-sort="isrc" style="width:130px">ISRC<span class="arrow"></span></th>
+              <th data-sort="bpm" style="width:64px">BPM<span class="arrow"></span></th>
+              <th data-sort="duration" style="width:84px">Duration<span class="arrow"></span></th>
+              <th data-sort="status" style="width:110px">Status<span class="arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="songs-body">
+            <tr><td colspan="8" class="empty-state">Loading songs…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer class="status">
+      <span>Songs · v0.2 ·</span>
+      <span id="loaded-count">0 loaded</span>
+      <span>·</span>
+      <span class="pill" id="unsaved-pill"><span class="dot"></span><span id="unsaved-count">0 unsaved</span></span>
+    </footer>
+  </div>
+
+  <dialog class="detail" id="detail">
+    <div class="dhead">
+      <div class="dh-l">
+        <h2 id="d-title">Edit Song</h2>
+        <div class="editing">Editing: <span id="d-editing">—</span></div>
+      </div>
+      <button class="dclose" onclick="document.getElementById('detail').close()">✕</button>
+    </div>
+    <div class="form">
+      <div class="field full"><label>Title</label><input id="f-title"></div>
+      <div class="field"><label>Album</label><input id="f-album"></div>
+      <div class="field"><label>Year</label><input id="f-year"></div>
+      <div class="field"><label>ISRC</label><input id="f-isrc"></div>
+      <div class="field"><label>BPM</label><input id="f-bpm"></div>
+      <div class="field"><label>Duration</label><input id="f-duration"></div>
+      <div class="field"><label>Status</label><input id="f-status"></div>
+    </div>
+    <div class="dfoot">
+      <button class="btn ghost" onclick="document.getElementById('detail').close()">Cancel</button>
+      <button class="btn save" id="save-btn">Save changes</button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast"><span class="dot"></span><span id="toast-msg">saved</span></div>
+
+  <script src="../js/md-table.js"></script>
+  <script>
+  (async function() {
+    const STORAGE_KEY = 'sharon.songs.edits';
+    const tbody = document.getElementById('songs-body');
+    const detail = document.getElementById('detail');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-msg');
+
+    let songs = [];
+    try {
+      songs = await loadMdTable('../data/songs.md');
+    } catch (e) {
+      songs = [];
+    }
+    if (!Array.isArray(songs)) songs = [];
+
+    let edits = {};
+    try { edits = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { edits = {}; }
+
+    songs = songs.map(s => ({ ...s, ...(edits[s.isrc] || {}) }));
+
+    let sortKey = null, sortAsc = true;
+    let activeSong = null;
+
+    function showToast(msg) {
+      toastMsg.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove('show'), 1500);
+    }
+
+    function updateStatusCounts() {
+      document.getElementById('loaded-count').textContent = `${songs.length} loaded`;
+      const n = Object.keys(edits).length;
+      document.getElementById('unsaved-count').textContent = `${n} unsaved`;
+      const pill = document.getElementById('unsaved-pill');
+      if (n > 0) pill.classList.add('unsaved'); else pill.classList.remove('unsaved');
+    }
+
+    function render() {
+      if (!songs.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No songs found in data/songs.md</td></tr>';
+        return;
+      }
+      const rows = songs.map((s, i) => {
+        const editedClass = edits[s.isrc] ? ' class="edited"' : '';
+        return `<tr${editedClass} data-idx="${i}">
+          <td class="num">${i + 1}</td>
+          <td class="title">${esc(s.title)}</td>
+          <td>${esc(s.album)}</td>
+          <td>${esc(s.year)}</td>
+          <td class="mono">${esc(s.isrc)}</td>
+          <td>${esc(s.bpm)}</td>
+          <td>${esc(s.duration)}</td>
+          <td class="status">${esc(s.status)}</td>
+        </tr>`;
+      }).join('');
+      tbody.innerHTML = rows;
+      tbody.querySelectorAll('tr').forEach(tr => {
+        tr.addEventListener('click', () => {
+          const idx = parseInt(tr.dataset.idx, 10);
+          openDialog(songs[idx]);
+        });
+      });
+      // arrow indicators
+      document.querySelectorAll('thead th').forEach(th => {
+        const a = th.querySelector('.arrow');
+        if (!a) return;
+        a.textContent = (th.dataset.sort === sortKey) ? (sortAsc ? '↑' : '↓') : '';
+      });
+    }
+
+    function esc(v) {
+      if (v == null) return '';
+      return String(v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    }
+
+    function openDialog(song) {
+      activeSong = song;
+      document.getElementById('d-editing').textContent = song.title || '(untitled)';
+      document.getElementById('f-title').value    = song.title || '';
+      document.getElementById('f-album').value    = song.album || '';
+      document.getElementById('f-year').value     = song.year || '';
+      document.getElementById('f-isrc').value     = song.isrc || '';
+      document.getElementById('f-bpm').value      = song.bpm || '';
+      document.getElementById('f-duration').value = song.duration || '';
+      document.getElementById('f-status').value   = song.status || '';
+      detail.showModal();
+    }
+
+    document.getElementById('save-btn').addEventListener('click', () => {
+      if (!activeSong) return;
+      const updated = {
+        title:    document.getElementById('f-title').value,
+        album:    document.getElementById('f-album').value,
+        year:     document.getElementById('f-year').value,
+        isrc:     document.getElementById('f-isrc').value,
+        bpm:      document.getElementById('f-bpm').value,
+        duration: document.getElementById('f-duration').value,
+        status:   document.getElementById('f-status').value,
+      };
+      const key = activeSong.isrc || updated.isrc;
+      if (!key) {
+        showToast('no ISRC — cannot save');
+        return;
+      }
+      edits[key] = updated;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(edits));
+      // apply to in-memory songs
+      const idx = songs.findIndex(s => s.isrc === activeSong.isrc);
+      if (idx >= 0) songs[idx] = { ...songs[idx], ...updated };
+      activeSong = songs[idx] || activeSong;
+      render();
+      updateStatusCounts();
+      detail.close();
+      showToast('saved');
+    });
+
+    document.querySelectorAll('th[data-sort]').forEach(h => {
+      h.addEventListener('click', () => {
+        const k = h.dataset.sort;
+        if (sortKey === k) sortAsc = !sortAsc;
+        else { sortKey = k; sortAsc = true; }
+        if (k === 'num') {
+          // fall back to original order — no-op
+          render();
+          return;
+        }
+        songs.sort((a, b) => {
+          const av = a[k] || '', bv = b[k] || '';
+          const numeric = !isNaN(parseFloat(av)) && !isNaN(parseFloat(bv)) && av !== '' && bv !== '';
+          const cmp = numeric ? (Number(av) - Number(bv)) : String(av).localeCompare(String(bv));
+          return sortAsc ? cmp : -cmp;
+        });
+        render();
+      });
+    });
+
+    render();
+    updateStatusCounts();
+  })();
+  </script>
+</body>
+</html>

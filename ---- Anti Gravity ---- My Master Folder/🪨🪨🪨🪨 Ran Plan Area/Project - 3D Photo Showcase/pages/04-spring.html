@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>04 · Spring Drag — 3D Photo Showcase</title>
+
+  <!-- Shared tokens + base -->
+  <link rel="stylesheet" href="../assets/tokens.css" />
+  <link rel="stylesheet" href="../assets/base.css" />
+
+  <!-- Shared left nav -->
+  <link rel="stylesheet" href="../nav/nav.css" />
+
+  <style>
+    /* ============================================================
+       Page: 04 — Spring Drag
+       ============================================================ */
+    html, body { height: 100%; }
+    body {
+      overflow: hidden;            /* rail is horizontal-only */
+    }
+
+    /* ---- Title bar ---- */
+    .page-head {
+      position: fixed;
+      top: 28px;
+      left: calc(220px + 40px);
+      right: 40px;
+      z-index: var(--z-card);
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      pointer-events: none;
+    }
+    .page-head__title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ink-100);
+      padding-left: 14px;
+      border-left: 1px solid var(--line-yellow);
+    }
+    @supports (border-left-width: 0.5px) {
+      .page-head__title { border-left-width: 0.5px; }
+    }
+    .page-head__sub {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+      font-weight: 400;
+    }
+
+    /* ---- Rail ---- */
+    .rail {
+      position: fixed;
+      inset: 0;
+      padding-left: 220px;                   /* clear the nav */
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      z-index: var(--z-base);
+    }
+
+    .track {
+      display: flex;
+      gap: 28px;
+      padding: 0 20vw;                       /* space on both sides for snap play */
+      cursor: grab;
+      will-change: transform;
+      touch-action: pan-y;                   /* let vertical scroll through, we own x */
+      user-select: none;
+    }
+    .track:active { cursor: grabbing; }
+
+    /* ---- Tile ---- */
+    .tile {
+      flex: 0 0 auto;
+      width: 480px;
+      aspect-ratio: 16 / 9;
+      border-radius: 18px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #111 0%, #1a1a1d 55%, #0a0a0b 100%);
+      border: 1px solid rgba(255, 212, 0, 0.08);
+      box-shadow:
+        /* razor-thin yellow inset highlight — fakes the specular travel */
+        0 1px 0 rgba(255, 212, 0, 0.35) inset,
+        /* long soft drop */
+        0 30px 60px -20px rgba(0, 0, 0, 0.9),
+        /* hairline yellow ring */
+        0 0 0 0.5px rgba(255, 212, 0, 0.25);
+      will-change: transform;
+      transform-origin: center center;
+      -webkit-user-drag: none;
+    }
+    .tile__img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+    /* Fallback placeholder layer — visible if img fails / is hidden */
+    .tile__fallback {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(255,212,0,0.05), transparent 60%),
+        linear-gradient(135deg, #111 0%, #1a1a1d 55%, #0a0a0b 100%);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--ink-30);
+      font-weight: 500;
+    }
+    .tile__num {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      color: rgba(255, 212, 0, 0.85);
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    /* ---- Hint footer ---- */
+    .page-foot {
+      position: fixed;
+      bottom: 22px;
+      left: calc(220px + 40px);
+      right: 40px;
+      z-index: var(--z-card);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 9px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ink-30);
+      pointer-events: none;
+    }
+    .page-foot__dot {
+      width: 4px;
+      height: 4px;
+      background: var(--line-yellow);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(255, 212, 0, 0.6);
+    }
+
+    @media (max-width: 720px) {
+      .rail { padding-left: 64px; }
+      .page-head { left: calc(64px + 20px); right: 20px; }
+      .page-foot { left: calc(64px + 20px); right: 20px; }
+      .tile { width: 78vw; }
+      .track { padding: 0 11vw; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tile { transition: none !important; }
+    }
+  </style>
+</head>
+<body class="has-left-nav">
+
+  <!-- Injected left nav -->
+  <div id="nav-mount"></div>
+
+  <header class="page-head">
+    <div class="page-head__title">Spring Drag</div>
+    <div class="page-head__sub">GSAP Draggable + Inertia · velocity-coupled skew with elastic edges</div>
+  </header>
+
+  <main class="rail" aria-label="Spring physics photo strip">
+    <div class="track" id="track"></div>
+  </main>
+
+  <footer class="page-foot">
+    <span class="page-foot__dot"></span>
+    <span>Drag · Flick · Release</span>
+  </footer>
+
+  <!-- GSAP core + Draggable + InertiaPlugin -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/Draggable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/InertiaPlugin.min.js"></script>
+
+  <!-- Load shared nav HTML, then activator -->
+  <script>
+    (async function mountNav() {
+      try {
+        const res = await fetch('../nav/nav.html', { cache: 'no-store' });
+        const html = await res.text();
+        document.getElementById('nav-mount').innerHTML = html;
+      } catch (err) {
+        // Nav is decorative — page still works without it
+        console.warn('Nav inject failed:', err);
+      }
+      // Load activator after nav is in the DOM
+      const s = document.createElement('script');
+      s.src = '../nav/nav.js';
+      document.body.appendChild(s);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---- Build 12 tiles from photos/01.jpg .. 12.jpg ----
+      const track = document.getElementById('track');
+      const COUNT = 12;
+
+      for (let i = 1; i <= COUNT; i++) {
+        const n = String(i).padStart(2, '0');
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+
+        // Fallback layer sits under the image. If the image fails / is hidden, fallback shows.
+        const fallback = document.createElement('div');
+        fallback.className = 'tile__fallback';
+        fallback.textContent = 'Photo ' + n;
+        tile.appendChild(fallback);
+
+        const img = document.createElement('img');
+        img.className = 'tile__img';
+        img.alt = '';
+        img.decoding = 'async';
+        img.loading = 'lazy';
+        img.src = '../photos/' + n + '.jpg';
+        img.addEventListener('error', function () {
+          // Hide broken image → fallback gradient takes over
+          img.style.display = 'none';
+        });
+        tile.appendChild(img);
+
+        const num = document.createElement('div');
+        num.className = 'tile__num';
+        num.textContent = n;
+        tile.appendChild(num);
+
+        track.appendChild(tile);
+      }
+
+      // ---- Respect reduced-motion: skip skew, keep drag ----
+      const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Guard: if CDN blocked, still show tiles (no drag)
+      if (typeof gsap === 'undefined' || typeof Draggable === 'undefined' || typeof InertiaPlugin === 'undefined') {
+        console.warn('GSAP / Draggable / InertiaPlugin not available — static fallback.');
+        return;
+      }
+
+      gsap.registerPlugin(Draggable, InertiaPlugin);
+
+      const tiles = gsap.utils.toArray('.tile');
+
+      // Tile geometry — matches CSS width + gap
+      const TILE = 480 + 28;
+      const maxX = 0;
+      const minX = -(tiles.length - 1) * TILE;
+
+      // Proxy object: InertiaPlugin tracks its `x` velocity without us moving the DOM via it.
+      const proxy = { x: 0 };
+      InertiaPlugin.track(proxy, 'x');
+
+      // Pre-compiled skewX setters — ~10× faster than gsap.to() per frame.
+      const skewSetters = tiles.map(function (t) {
+        return gsap.quickTo(t, 'skewX', { duration: 0.5, ease: 'power3.out' });
+      });
+
+      const clamp = gsap.utils.clamp(-12, 12);          // max skew deg
+      const velToSkew = function (v) { return clamp(v / -60); }; // negative: lean against motion
+
+      let raf = null;
+      function loop() {
+        const v = InertiaPlugin.getVelocity(proxy, 'x') || 0;
+        const s = REDUCED ? 0 : velToSkew(v);
+        for (let i = 0; i < skewSetters.length; i++) skewSetters[i](s);
+        raf = requestAnimationFrame(loop);
+      }
+      function stopLoop() {
+        if (raf !== null) {
+          cancelAnimationFrame(raf);
+          raf = null;
+        }
+      }
+
+      Draggable.create(track, {
+        type: 'x',
+        inertia: true,
+        edgeResistance: 0.78,                           // rubber-band feel
+        bounds: { minX: minX, maxX: maxX },
+        snap: { x: function (v) { return Math.round(v / TILE) * TILE; } },
+        allowNativeTouchScrolling: false,
+        onPress: function () {
+          stopLoop();
+          proxy.x = this.x;
+          loop();
+        },
+        onDrag: function () {
+          proxy.x = this.x;
+        },
+        onThrowUpdate: function () {
+          proxy.x = this.x;
+        },
+        onRelease: function () {
+          // let inertia continue; the RAF loop keeps sampling velocity
+        },
+        onThrowComplete: function () {
+          stopLoop();
+          // Spring skew back to flat
+          for (let i = 0; i < skewSetters.length; i++) skewSetters[i](0);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

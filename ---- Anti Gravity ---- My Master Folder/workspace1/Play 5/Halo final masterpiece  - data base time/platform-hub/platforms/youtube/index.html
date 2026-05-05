@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Shorts Intelligence Report — Anti Gravity</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ── CSS Variables ── */
+        :root {
+            --bg: #0a0a0a;
+            --bg-elevated: #141414;
+            --bg-float: #1a1a1a;
+            --bg-hover: #222;
+            --border: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,0,0,0.25);
+            --text: #e8e8e8;
+            --text-dim: rgba(255,255,255,0.45);
+            --text-ghost: rgba(255,255,255,0.25);
+            --platform: #FF0000;
+            --platform-dim: rgba(255,0,0,0.15);
+            --platform-ghost: rgba(255,0,0,0.06);
+            --amber: #f59e0b;
+            --amber-dim: rgba(245,158,11,0.15);
+            --blue: #3b82f6;
+            --blue-dim: rgba(59,130,246,0.12);
+            --purple: #a855f7;
+            --purple-dim: rgba(168,85,247,0.12);
+        }
+
+        /* ── Reset & Base ── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ── Skeleton Shimmer ── */
+        .skeleton-pulse { position: relative; overflow: hidden; }
+        .skeleton-pulse::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+            animation: skeletonShimmer 2s infinite;
+        }
+        @keyframes skeletonShimmer { to { left: 100%; } }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        section + section {
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── Typography ── */
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.15; }
+        h2 { font-size: clamp(1.5rem, 3.5vw, 2.2rem); line-height: 1.2; margin-bottom: 16px; }
+        h3 { font-size: 1.15rem; line-height: 1.3; margin-bottom: 8px; }
+        h4 { font-size: 0.95rem; font-weight: 600; }
+
+        .accent { color: var(--platform); }
+        .bold { font-weight: 800; }
+
+        /* ── Badge ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            background: var(--platform-dim);
+            color: var(--platform);
+            border: 1px solid rgba(255,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--platform);
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ── Card Base ── */
+        .card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: border-color 0.3s ease, background 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+        }
+
+        /* ── Grid Utilities ── */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        .grid-5 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        /* ── Placeholder Text Lines ── */
+        .skel-line {
+            height: 12px;
+            border-radius: 6px;
+            background: var(--bg-hover);
+            margin-bottom: 8px;
+        }
+        .skel-line.w-80 { width: 80%; }
+        .skel-line.w-60 { width: 60%; }
+        .skel-line.w-40 { width: 40%; }
+        .skel-line.w-90 { width: 90%; }
+
+        /* ───────────────────────────────────────────────
+           SECTION 1 — Hero
+        ─────────────────────────────────────────────── */
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -60px; left: 50%; transform: translateX(-50%);
+            width: 800px; height: 800px;
+            background: radial-gradient(circle, rgba(255,0,0,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero .container { position: relative; z-index: 1; }
+
+        .hero h1 {
+            margin-bottom: 20px;
+        }
+
+        .hero .subtitle {
+            max-width: 600px;
+            margin: 0 auto;
+            color: var(--text-dim);
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        /* ───────────────────────────────────────────────
+           SECTION 2 — Verified Conversion Benchmarks
+        ─────────────────────────────────────────────── */
+        .benchmarks { padding-top: 60px; }
+
+        .metric-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--platform);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .metric-source {
+            font-size: 0.75rem;
+            color: var(--text-ghost);
+        }
+
+        .multiplier-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px 28px;
+            margin-top: 16px;
+            text-align: center;
+            transition: border-color 0.3s ease;
+        }
+
+        .multiplier-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .multiplier-card .metric-value {
+            font-size: 3.4rem;
+        }
+
+        /* ───────────────────────────────────────────────
+           SECTION 3 — Complete Benchmark Table
+        ─────────────────────────────────────────────── */
+        .benchmark-table-wrap {
+            overflow-x: auto;
+        }
+
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .benchmark-table thead th {
+            text-align: left;
+            padding: 14px 20px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-float);
+        }
+
+        .benchmark-table thead th:first-child {
+            border-radius: 12px 0 0 0;
+        }
+
+        .benchmark-table thead th:last-child {
+            border-radius: 0 12px 0 0;
+        }
+
+        .benchmark-table tbody td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        .benchmark-table tbody tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        .benchmark-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .benchmark-table tbody tr:last-child td:first-child {
+            border-radius: 0 0 0 12px;
+        }
+
+        .benchmark-table tbody tr:last-child td:last-child {
+            border-radius: 0 0 12px 0;
+        }
+
+        .table-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        /* ───────────────────────────────────────────────
+           SECTION 4 — Optimal Campaign Sequence
+        ─────────────────────────────────────────────── */
+        .sequence-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: var(--platform-dim);
+            color: var(--platform);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-content { flex: 1; }
+
+        .step-content h3 {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .step-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .step-tag {
+            font-size: 0.72rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        .step-tag.tools {
+            background: var(--blue-dim);
+            color: var(--blue);
+        }
+
+        .step-tag.audience {
+            background: var(--purple-dim);
+            color: var(--purple);
+        }
+
+        .step-tag.lift {
+            background: var(--amber-dim);
+            color: var(--amber);
+        }
+
+        .sequence-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .sequence-connector {
+            width: 2px;
+            height: 24px;
+            background: var(--border);
+            margin-left: 21px;
+        }
+
+        /* ───────────────────────────────────────────────
+           SECTION 5 — Analysis Grid
+        ─────────────────────────────────────────────── */
+        .analysis-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: var(--platform-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--platform);
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 16px;
+        }
+
+        .analysis-card p {
+            color: var(--text-dim);
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        /* ───────────────────────────────────────────────
+           SECTION 6 — Career Paths Grid
+        ─────────────────────────────────────────────── */
+        .career-card .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .career-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: var(--bg-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .career-icon .skel-block {
+            width: 20px; height: 20px;
+            border-radius: 4px;
+            background: var(--text-ghost);
+        }
+
+        .career-card p {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            line-height: 1.55;
+        }
+
+        /* ───────────────────────────────────────────────
+           SECTION 7 — Campaign Generator
+        ─────────────────────────────────────────────── */
+        .generator {
+            text-align: center;
+        }
+
+        .generator-placeholder {
+            background: var(--bg-elevated);
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            padding: 60px 28px;
+            margin-top: 40px;
+            transition: border-color 0.3s ease;
+        }
+
+        .generator-placeholder:hover {
+            border-color: var(--border-hover);
+        }
+
+        .generator-placeholder-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-ghost);
+        }
+
+        .generator-placeholder .skel-line {
+            max-width: 400px;
+            margin: 12px auto;
+        }
+
+        /* ───────────────────────────────────────────────
+           SECTION 8 — Footer
+        ─────────────────────────────────────────────── */
+        .footer {
+            padding: 40px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer p {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--text-ghost);
+        }
+
+        /* ── Section Headers ── */
+        .section-header {
+            margin-bottom: 36px;
+        }
+
+        .section-header h2 {
+            margin-bottom: 8px;
+        }
+
+        .section-header p {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            max-width: 540px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            section { padding: 60px 0; }
+            .hero { padding: 80px 0 60px; }
+            .grid-3, .grid-2 { grid-template-columns: 1fr; }
+            .grid-5 { grid-template-columns: repeat(2, 1fr); }
+            .metric-value { font-size: 2.2rem; }
+            .multiplier-card .metric-value { font-size: 2.6rem; }
+        }
+
+        @media (max-width: 480px) {
+            .grid-5 { grid-template-columns: 1fr; }
+            .container { padding: 0 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION 1 — Hero
+    ═══════════════════════════════════════════════ -->
+    <section class="hero">
+        <div class="container">
+            <div class="badge">Coming Soon</div>
+            <h1>YouTube Shorts <span class="bold accent">Intelligence Report</span></h1>
+            <p class="subtitle">
+                Verified conversion benchmarks for YouTube Shorts, Premieres, and Community
+                engagement — built from platform data and cross-referenced campaign performance.
+            </p>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION 2 — Verified Conversion Benchmarks
+    ═══════════════════════════════════════════════ -->
+    <section class="benchmarks">
+        <div class="container">
+            <div class="section-header">
+                <h2>Verified Conversion <span class="accent">Benchmarks</span></h2>
+                <p>Key performance metrics sourced from verified campaign data.</p>
+            </div>
+
+            <!-- Primary 3-Card Grid -->
+            <div class="grid-3">
+                <div class="card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+                <div class="card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+                <div class="card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+            </div>
+
+            <!-- Secondary 3-Card Grid -->
+            <div class="grid-3" style="margin-top: 16px;">
+                <div class="card skeleton-pulse">
+                    <div class="metric-value" style="font-size: 2rem;">--</div>
+                    <div class="metric-label">Secondary Metric</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+                <div class="card skeleton-pulse">
+                    <div class="metric-value" style="font-size: 2rem;">--</div>
+                    <div class="metric-label">Secondary Metric</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+                <div class="card skeleton-pulse">
+                    <div class="metric-value" style="font-size: 2rem;">--</div>
+                    <div class="metric-label">Secondary Metric</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+            </div>
+
+            <!-- Full-Width Multiplier Card -->
+            <div class="multiplier-card skeleton-pulse">
+                <div class="metric-value">--x</div>
+                <div class="metric-label">Multiplier Metric Placeholder</div>
+                <div class="metric-source">Aggregated from verified sources — pending final review</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION 3 — Complete Benchmark Table
+    ═══════════════════════════════════════════════ -->
+    <section>
+        <div class="container">
+            <div class="section-header">
+                <h2>Complete Benchmark <span class="accent">Table</span></h2>
+                <p>Full metric breakdown with verified source attribution.</p>
+            </div>
+
+            <div class="table-card skeleton-pulse">
+                <div class="benchmark-table-wrap">
+                    <table class="benchmark-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Shorts Average View Duration</td>
+                                <td>&mdash;</td>
+                                <td style="color: var(--text-ghost);">Pending verification</td>
+                            </tr>
+                            <tr>
+                                <td>Premiere Click-Through Rate</td>
+                                <td>&mdash;</td>
+                                <td style="color: var(--text-ghost);">Pending verification</td>
+                            </tr>
+                            <tr>
+                                <td>Community Post Engagement</td>
+                                <td>&mdash;</td>
+                                <td style="color: var(--text-ghost);">Pending verification</td>
+                            </tr>
+                            <tr>
+                                <td>Subscriber Conversion Rate</td>
+                                <td>&mdash;</td>
+                                <td style="color: var(--text-ghost);">Pending verification</td>
+                            </tr>
+                            <tr>
+                                <td>Cross-Format Retention Lift</td>
+                                <td>&mdash;</td>
+                                <td style="color: var(--text-ghost);">Pending verification</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION 4 — Optimal Campaign Sequence
+    ═══════════════════════════════════════════════ -->
+    <section>
+        <div class="container">
+            <div class="section-header">
+                <h2>Optimal Campaign <span class="accent">Sequence</span></h2>
+                <p>Five-phase deployment strategy for maximum YouTube impact.</p>
+            </div>
+
+            <div class="card" style="padding: 36px 32px;">
+                <div class="sequence-flow">
+
+                    <!-- Step 1 -->
+                    <div class="sequence-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Pre-Release Teaser</h3>
+                            <p style="color: var(--text-dim); font-size: 0.85rem;">Build anticipation with short-form teasers and community posts ahead of release.</p>
+                            <div class="step-meta">
+                                <span class="step-tag tools">Tools: TBD</span>
+                                <span class="step-tag audience">Audience: TBD</span>
+                                <span class="step-tag lift">Lift: --</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sequence-connector"></div>
+
+                    <!-- Step 2 -->
+                    <div class="sequence-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Shorts Push</h3>
+                            <p style="color: var(--text-dim); font-size: 0.85rem;">Deploy Shorts-first strategy to maximize algorithmic reach and new audience discovery.</p>
+                            <div class="step-meta">
+                                <span class="step-tag tools">Tools: TBD</span>
+                                <span class="step-tag audience">Audience: TBD</span>
+                                <span class="step-tag lift">Lift: --</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sequence-connector"></div>
+
+                    <!-- Step 3 -->
+                    <div class="sequence-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Premiere Launch</h3>
+                            <p style="color: var(--text-dim); font-size: 0.85rem;">Leverage YouTube Premieres for real-time engagement and concentrated view velocity.</p>
+                            <div class="step-meta">
+                                <span class="step-tag tools">Tools: TBD</span>
+                                <span class="step-tag audience">Audience: TBD</span>
+                                <span class="step-tag lift">Lift: --</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sequence-connector"></div>
+
+                    <!-- Step 4 -->
+                    <div class="sequence-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Community Engage</h3>
+                            <p style="color: var(--text-dim); font-size: 0.85rem;">Activate Community tab with polls, updates, and behind-the-scenes content for retention.</p>
+                            <div class="step-meta">
+                                <span class="step-tag tools">Tools: TBD</span>
+                                <span class="step-tag audience">Audience: TBD</span>
+                                <span class="step-tag lift">Lift: --</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sequence-connector"></div>
+
+                    <!-- Step 5 -->
+                    <div class="sequence-step">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <h3>Sustain & Repurpose</h3>
+                            <p style="color: var(--text-dim); font-size: 0.85rem;">Extend campaign lifecycle through content repurposing and playlist optimization.</p>
+                            <div class="step-meta">
+                                <span class="step-tag tools">Tools: TBD</span>
+                                <span class="step-tag audience">Audience: TBD</span>
+                                <span class="step-tag lift">Lift: --</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION 5 — Analysis Grid
+    ═══════════════════════════════════════════════ -->
+    <section>
+        <div class="container">
+            <div class="section-header">
+                <h2>Platform <span class="accent">Analysis</span></h2>
+                <p>Deep-dive breakdowns on YouTube Shorts promotion effectiveness.</p>
+            </div>
+
+            <div class="grid-5">
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 1</h3>
+                    <p>Placeholder analysis on YouTube Shorts promotion effectiveness and algorithmic distribution patterns.</p>
+                </div>
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 2</h3>
+                    <p>Placeholder analysis on Premiere viewership concentration and real-time engagement benchmarks.</p>
+                </div>
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 3</h3>
+                    <p>Placeholder analysis on Community tab conversion funnels and subscriber retention metrics.</p>
+                </div>
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 4</h3>
+                    <p>Placeholder analysis on cross-format content strategy and watch-time multiplier effects.</p>
+                </div>
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 5</h3>
+                    <p>Placeholder analysis on YouTube Shorts shelf placement and recommendation pipeline optimization.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION 6 — Career Paths Grid
+    ═══════════════════════════════════════════════ -->
+    <section>
+        <div class="container">
+            <div class="section-header">
+                <h2>Career <span class="accent">Paths</span></h2>
+                <p>Platform-specific growth trajectories and role mappings.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card career-card skeleton-pulse">
+                    <div class="card-header">
+                        <div class="career-icon"><div class="skel-block"></div></div>
+                        <h3>Path Title Placeholder</h3>
+                    </div>
+                    <p>Skeleton description for this career path. Content will be injected once research is finalized.</p>
+                    <div class="skel-line w-80" style="margin-top: 14px;"></div>
+                    <div class="skel-line w-60"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="card-header">
+                        <div class="career-icon"><div class="skel-block"></div></div>
+                        <h3>Path Title Placeholder</h3>
+                    </div>
+                    <p>Skeleton description for this career path. Content will be injected once research is finalized.</p>
+                    <div class="skel-line w-90" style="margin-top: 14px;"></div>
+                    <div class="skel-line w-40"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="card-header">
+                        <div class="career-icon"><div class="skel-block"></div></div>
+                        <h3>Path Title Placeholder</h3>
+                    </div>
+                    <p>Skeleton description for this career path. Content will be injected once research is finalized.</p>
+                    <div class="skel-line w-80" style="margin-top: 14px;"></div>
+                    <div class="skel-line w-60"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="card-header">
+                        <div class="career-icon"><div class="skel-block"></div></div>
+                        <h3>Path Title Placeholder</h3>
+                    </div>
+                    <p>Skeleton description for this career path. Content will be injected once research is finalized.</p>
+                    <div class="skel-line w-60" style="margin-top: 14px;"></div>
+                    <div class="skel-line w-40"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="card-header">
+                        <div class="career-icon"><div class="skel-block"></div></div>
+                        <h3>Path Title Placeholder</h3>
+                    </div>
+                    <p>Skeleton description for this career path. Content will be injected once research is finalized.</p>
+                    <div class="skel-line w-90" style="margin-top: 14px;"></div>
+                    <div class="skel-line w-60"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="card-header">
+                        <div class="career-icon"><div class="skel-block"></div></div>
+                        <h3>Path Title Placeholder</h3>
+                    </div>
+                    <p>Skeleton description for this career path. Content will be injected once research is finalized.</p>
+                    <div class="skel-line w-80" style="margin-top: 14px;"></div>
+                    <div class="skel-line w-40"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION 7 — Campaign Generator
+    ═══════════════════════════════════════════════ -->
+    <section class="generator">
+        <div class="container">
+            <div class="badge">Campaign Generator</div>
+            <h2>Build Your <span class="bold accent">YouTube Campaign</span></h2>
+            <p style="color: var(--text-dim); font-size: 1rem;">Generator coming soon</p>
+
+            <div class="generator-placeholder skeleton-pulse">
+                <div class="generator-placeholder-text">Generator Under Development</div>
+                <div class="skel-line w-60" style="margin-top: 20px;"></div>
+                <div class="skel-line w-40"></div>
+                <div class="skel-line w-80"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION 8 — Footer
+    ═══════════════════════════════════════════════ -->
+    <footer class="footer">
+        <div class="container">
+            <p>ANTI GRAVITY &mdash; YOUTUBE CAMPAIGN INTELLIGENCE &mdash; SKELETON TEMPLATE &mdash; 2026</p>
+        </div>
+    </footer>
+
+</body>
+</html>

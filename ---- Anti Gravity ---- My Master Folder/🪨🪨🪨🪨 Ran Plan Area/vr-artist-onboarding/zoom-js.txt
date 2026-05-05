@@ -1,0 +1,75 @@
+const QUADS = [
+  { cls: 'zoom-q1', label: 'You Were Scouted · 1 of 4' },
+  { cls: 'zoom-q2', label: 'How It Works · 2 of 4' },
+  { cls: 'zoom-q3', label: 'Pick Your Song · 3 of 4' },
+  { cls: 'zoom-q4', label: 'Your Deal · 4 of 4' },
+];
+let currentQuad = -1; // -1 = overview (not zoomed)
+
+function zoomTo(index) {
+  // Remove all zoom classes
+  QUADS.forEach(q => document.body.classList.remove(q.cls));
+  if (index < 0 || index >= QUADS.length) {
+    currentQuad = -1;
+    return;
+  }
+  currentQuad = index;
+  document.body.classList.add(QUADS[index].cls);
+  // Update label
+  const label = document.getElementById('zoomLabel');
+  if (label) label.textContent = QUADS[index].label;
+}
+
+function zoomOut() {
+  zoomTo(-1);
+}
+
+function zoomNext() {
+  const next = currentQuad < QUADS.length - 1 ? currentQuad + 1 : 0;
+  zoomTo(next);
+}
+
+function zoomPrev() {
+  const prev = currentQuad > 0 ? currentQuad - 1 : QUADS.length - 1;
+  zoomTo(prev);
+}
+
+// Auto-zoom into Q1 (hero) after 1 second
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    zoomTo(0);
+  }, 1000);
+});
+
+document.getElementById('zoomNext')?.addEventListener('click', zoomNext);
+document.getElementById('zoomPrev')?.addEventListener('click', zoomPrev);
+document.getElementById('zoomOutBtn')?.addEventListener('click', zoomOut);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') zoomNext();
+  if (e.key === 'ArrowLeft')  zoomPrev();
+  if (e.key === 'Escape')     zoomOut();
+});
+
+document.querySelectorAll('.quadrant').forEach((el, i) => {
+  el.addEventListener('click', () => {
+    if (currentQuad === -1) zoomTo(i);
+  });
+});
+// After DOM ready
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.quadrant').forEach((el, i) => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', () => {
+      if (currentQuad === -1) zoomTo(i);
+    });
+  });
+  // Remove pointer when zoomed (so inner elements work normally)
+  const observer = new MutationObserver(() => {
+    const isZoomed = currentQuad >= 0;
+    document.querySelectorAll('.quadrant').forEach(el => {
+      el.style.cursor = isZoomed ? 'default' : 'pointer';
+    });
+  });
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+});

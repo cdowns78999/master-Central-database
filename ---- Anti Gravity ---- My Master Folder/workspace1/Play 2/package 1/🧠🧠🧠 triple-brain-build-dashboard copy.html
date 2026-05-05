@@ -1,0 +1,1023 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Companion | Ahead</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --lamp-deep: #c2560a;
+            --lamp-mid: #e07b2e;
+            --lamp-warm: #f2a54a;
+            --lamp-soft: #f8c97d;
+            --lamp-glow: #fde8c8;
+            --white: #ffffff;
+            --text: #3b1a04;
+            --text-dim: rgba(59, 26, 4, 0.55);
+            --border-thick: 4px;
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+            padding: 2.5rem 2rem;
+            background:
+                radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%),
+                linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%);
+        }
+
+        .container { width: 100%; max-width: 760px; margin: 0 auto; }
+
+        /* ── Header ── */
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 {
+            font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 800; letter-spacing: -0.04em;
+            color: var(--white);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .header .subtitle {
+            font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.8);
+            margin-top: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+
+        /* ── Panel Toggle ── */
+        .panel-toggle {
+            position: fixed; top: 1.25rem; right: 1.25rem; z-index: 90;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--white); border: var(--border-thick) solid var(--white);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 -2px 0 rgba(0,0,0,0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .panel-toggle:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+        .panel-toggle svg { width: 18px; height: 18px; fill: none; stroke: var(--lamp-deep); stroke-width: 2.5; stroke-linecap: round; }
+
+        /* ── Quick Plan Button ── */
+        .quick-plan-btn {
+            position: fixed; top: 1.25rem; right: 4.5rem; z-index: 90;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--white); border: var(--border-thick) solid var(--white);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 -2px 0 rgba(0,0,0,0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700;
+            color: var(--lamp-deep); letter-spacing: -0.02em;
+        }
+        .quick-plan-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+
+        /* ── Traveling Glow Ring ── */
+        @keyframes glowTravel {
+            0%   { box-shadow: 0 -4px 12px 2px rgba(242,165,74,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+            25%  { box-shadow: 4px 0 12px 2px rgba(224,123,46,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+            50%  { box-shadow: 0 4px 12px 2px rgba(194,86,10,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+            75%  { box-shadow: -4px 0 12px 2px rgba(224,123,46,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+            100% { box-shadow: 0 -4px 12px 2px rgba(242,165,74,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+        }
+        .quick-plan-btn.glow-ring {
+            animation: glowTravel 2s ease-in-out infinite;
+        }
+
+        /* ── Quick Plan Overlay ── */
+        .quick-plan-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(59, 26, 4, 0.6); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center;
+        }
+        .quick-plan-overlay.show { display: flex; }
+        .quick-plan-card {
+            background: #fff; border-radius: 16px; padding: 2rem 2.2rem;
+            max-width: 520px; width: 90%; position: relative;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        }
+        .quick-plan-close {
+            position: absolute; top: 12px; right: 14px;
+            width: 28px; height: 28px; border-radius: 8px;
+            background: none; border: 2px solid rgba(0,0,0,0.08);
+            cursor: pointer; font-size: 1rem; color: #999;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s ease;
+        }
+        .quick-plan-close:hover { color: #333; border-color: rgba(0,0,0,0.2); }
+        .quick-plan-card pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem; line-height: 1.85; color: #1a1a1a;
+            white-space: pre; margin: 0; letter-spacing: 0.01em;
+        }
+        .quick-plan-card .qp-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.25em; color: #999; margin-bottom: 1rem;
+        }
+        .quick-plan-card .qp-divider {
+            height: 1px; background: #eee; margin: 1rem 0;
+        }
+
+        /* ── Shared Card Base ── */
+        .card {
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0,0,0,0.1),
+                0 1px 0 rgba(255,255,255,0.6),
+                inset 0 1px 0 rgba(255,255,255,1),
+                inset 0 -1px 0 rgba(0,0,0,0.04);
+        }
+
+        /* ── Obsidian Reminder Banner ── */
+        .obsidian-reminder {
+            padding: 1rem 1.4rem;
+            margin-bottom: 1rem;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, #b91c1c 0%, #dc2626 40%, #ef4444 100%);
+            border: 2px solid rgba(255,255,255,0.25);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            box-shadow: 0 4px 16px rgba(185, 28, 28, 0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .obsidian-reminder .or-title {
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.3em;
+            margin-bottom: 0.5rem; opacity: 0.85;
+        }
+        .obsidian-reminder .or-items {
+            display: flex; gap: 10px; flex-wrap: wrap;
+        }
+        .obsidian-reminder .or-pill {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 10px;
+            background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3);
+            font-size: 0.68rem; font-weight: 700;
+        }
+        .obsidian-reminder .or-dot {
+            width: 6px; height: 6px; border-radius: 50%; background: #fde8c8;
+        }
+
+        /* ── Season Pass ── */
+        .season-hero {
+            padding: 1.4rem 1.6rem;
+            margin-bottom: 1.5rem;
+        }
+        .season-label-top {
+            font-size: 0.6rem; color: var(--lamp-deep); text-transform: uppercase;
+            letter-spacing: 0.3em; font-weight: 700; margin-bottom: 0.7rem;
+        }
+        .season-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .season-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: 10px;
+            background: var(--lamp-glow); border: 2px solid var(--white);
+            font-size: 0.7rem; font-weight: 700; color: var(--text);
+            cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        .season-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .season-chip.chip-active { background: var(--lamp-warm); border-color: var(--white); }
+        .season-chip .sc-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lamp-deep); }
+        .season-chip.chip-active .sc-dot { background: var(--white); }
+        .season-chip .sc-num { font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; color: var(--text-dim); }
+
+        /* ── Live Tools ── */
+        .live-tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .live-tool-pill {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 18px; flex: 1; min-width: 200px;
+            cursor: pointer; transition: all 0.2s ease;
+            text-decoration: none; color: var(--text);
+        }
+        .live-tool-pill:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.6), inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04); }
+        .live-dot { width: 8px; height: 8px; min-width: 8px; border-radius: 50%; }
+        .live-label { font-size: 0.75rem; font-weight: 700; flex: 1; }
+        .live-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; padding: 3px 10px; border-radius: 8px;
+            background: var(--lamp-glow); color: var(--lamp-deep);
+        }
+
+        /* ── Section Header ── */
+        .section-header {
+            font-size: 1rem; font-weight: 700; color: var(--white);
+            margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .section-header::before {
+            content: ''; width: var(--border-thick); height: 20px;
+            background: var(--white); border-radius: 2px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        /* ── Block Stack ── */
+        .block-stack { display: flex; flex-direction: column; gap: 10px; }
+
+        .block-btn {
+            display: flex; align-items: center; gap: 12px;
+            padding: 15px 20px;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .block-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.6), inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04); }
+        .block-btn.active-block { border-color: var(--lamp-deep); box-shadow: 0 0 0 2px var(--lamp-deep), 0 4px 12px rgba(0,0,0,0.1); }
+
+        .dot { width: 8px; height: 8px; min-width: 8px; border-radius: 50%; }
+
+        .btn-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .btn-label { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px; }
+        .btn-sub { font-size: 0.62rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
+
+        .btn-tag {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 10px; border-radius: 8px;
+        }
+        .tag-now { background: var(--lamp-warm); color: var(--text); }
+        .tag-locked { background: rgba(59,26,4,0.06); color: var(--text-dim); }
+
+        /* Locked blocks */
+        .block-btn.locked { opacity: 0.5; border-style: dashed; border-color: rgba(255,255,255,0.6); }
+        .block-btn.locked:hover { opacity: 0.75; }
+
+        /* ── Right Slide Panel ── */
+        .slide-panel {
+            position: fixed; top: 0; right: 0; width: 400px; height: 100vh;
+            background: var(--lamp-glow);
+            border-left: var(--border-thick) solid var(--white);
+            transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: -6px 0 24px rgba(0,0,0,0.1);
+        }
+        .slide-panel.open { transform: translateX(0); }
+
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.4rem 1.5rem; border-bottom: 2px solid rgba(255,255,255,0.6); flex-shrink: 0;
+        }
+        .panel-header-row { display: flex; align-items: center; gap: 10px; }
+        .panel-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--white); }
+        .panel-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+        .panel-close {
+            width: 30px; height: 30px; border-radius: 10px;
+            background: var(--white); border: 2px solid var(--white);
+            color: var(--text-dim); font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        .panel-close:hover { color: var(--text); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+
+        .panel-body { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
+        .panel-section-label {
+            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.3em; color: var(--lamp-deep);
+        }
+        .panel-desc {
+            font-size: 0.85rem; color: var(--text-dim); line-height: 1.7;
+            white-space: pre-wrap; word-break: break-word;
+        }
+
+        /* Step Rows */
+        .steps-list { display: flex; flex-direction: column; gap: 0; }
+        .step-block {
+            display: flex; flex-direction: column; gap: 2px;
+            padding: 14px 0;
+            border-top: 1.5px solid rgba(194, 86, 10, 0.1);
+        }
+        .step-block:first-child { border-top: none; }
+        .step-title {
+            font-size: 0.8rem; font-weight: 700; color: var(--text);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .step-title .step-num {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+            font-weight: 700; color: var(--lamp-deep); background: var(--lamp-glow);
+            padding: 2px 8px; border-radius: 6px;
+        }
+        .step-item {
+            font-size: 0.76rem; color: var(--text-dim); line-height: 1.6;
+            padding-left: 1.1rem; position: relative;
+        }
+        .step-item::before {
+            content: ''; position: absolute; left: 0.4rem; top: 0.45em;
+            width: 4px; height: 4px; border-radius: 50%;
+            background: var(--lamp-mid); opacity: 0.7;
+        }
+        .step-item strong {
+            color: var(--text); font-weight: 800; font-size: 0.84rem;
+            letter-spacing: 0.01em;
+        }
+        .step-item .arrow {
+            color: var(--lamp-deep); font-weight: 700; font-size: 0.9rem;
+            margin: 0 2px;
+        }
+
+        .panel-notes {
+            width: 100%; min-height: 180px; padding: 1rem;
+            background: var(--white);
+            border: 3px solid var(--white); border-radius: 12px;
+            color: var(--text); font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem; line-height: 1.6; resize: vertical;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .panel-notes::placeholder { color: var(--text-dim); }
+        .panel-notes:focus { outline: none; border-color: var(--lamp-mid); }
+
+        /* ── Skill Review Toggle ── */
+        .srt-toggle-wrap {
+            display: flex; justify-content: center; margin-bottom: 1rem;
+        }
+        .srt-toggle-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; padding: 8px 22px; border-radius: 10px;
+            background: #fef3c7; color: #92400e;
+            border: 2px solid var(--white); cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+            transition: all 0.2s ease;
+        }
+        .srt-toggle-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+        .srt-toggle-btn.active { background: var(--lamp-warm); color: var(--text); }
+
+        /* ── Skill Review Tile ── */
+        .skill-review-tile {
+            padding: 1.4rem 1.6rem; margin-bottom: 1rem;
+            border-radius: var(--radius);
+            background: rgba(255,255,255,0.95);
+            border: 3px solid var(--white);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            display: none;
+        }
+        .skill-review-tile.show { display: block; }
+        .skill-review-tile .srt-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .skill-review-tile .srt-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.25em; color: var(--lamp-deep);
+        }
+        .skill-review-tile .srt-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; padding: 3px 10px; border-radius: 8px;
+            background: #fef3c7; color: #92400e;
+        }
+        .skill-review-tile pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem; line-height: 1.9; color: var(--text);
+            white-space: pre; margin: 0;
+        }
+        .skill-review-tile .srt-divider {
+            height: 1px; background: rgba(194,86,10,0.1); margin: 0.8rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Quick Plan Button -->
+    <button class="quick-plan-btn glow-ring" id="quickPlanBtn" title="Quick Plan">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 5h11M9 12h11M9 19h7M4 5l1.5 1.5L8 4M4 12l1.5 1.5L8 11M4 19l1.5 1.5L8 18"/></svg>
+    </button>
+
+    <!-- Panel Toggle Button -->
+    <button class="panel-toggle" id="panelToggle" title="Toggle side panel">
+        <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+
+    <!-- Quick Plan Overlay -->
+    <div class="quick-plan-overlay" id="quickPlanOverlay">
+        <div class="quick-plan-card">
+            <button class="quick-plan-close" id="quickPlanClose">&times;</button>
+            <div class="qp-label">Build Plan</div>
+<pre>ONE - ➤ Finish Plan MD 1              ✓
+      ➤ Broad intake Qs       | ➤ Document answers
+      ➤ Finish Plan MD 2              ✓
+      ➤ 20 deep-dive Qs       | ➤ Document answers
+      ➤ Finish Plan MD 3              ✓
+      ➤ Final build spec       | ➤ Lock it in</pre>
+            <div class="qp-divider"></div>
+<pre>TWO - ➤ Install Obsidian
+      ➤ Create vault "Ahead"  | ➤ Point to master folder
+      ➤ Build MD hierarchy             ✓
+      ➤ Global CLAUDE.md      | ➤ Project folders | ➤ Stubs
+      ➤ Wire first quadrant            ✓
+      ➤ Supplier ➤ Client     | ➤ Price ➤ Service
+      ➤ Set up memory.md               ✓
+      ➤ Read-before rule      | ➤ Update-after rule</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Build Companion</h1>
+            <p class="subtitle">Ahead Artist Solutions &mdash; Obsidian Memory System</p>
+        </div>
+
+        <!-- 🔍 Skill Spec Toggle -->
+        <div class="srt-toggle-wrap">
+            <button class="srt-toggle-btn" id="srtToggleBtn">Pending Approval</button>
+        </div>
+
+        <!-- 🔍 Skill Review Tile (hidden by default) -->
+        <div class="skill-review-tile" id="skillReviewTile">
+            <div class="srt-header">
+                <div class="srt-label">Skill Spec — Review</div>
+                <div class="srt-tag">Pending Approval</div>
+            </div>
+<pre>ONE - ➤ User invokes skill
+      ➤ "What do you want to build?"
+      ➤ Capture the goal        | ➤ Confirm understanding
+      ➤ Frame through Build Companion
+      ➤ Salt lamp design        | ➤ All standard sections</pre>
+            <div class="srt-divider"></div>
+<pre>TWO - ➤ Research the idea
+      ➤ Use tools / web / agents | ➤ Find what's needed
+      ➤ Break it into real steps
+      ➤ Map steps to build phases | ➤ Simple + actionable
+      ➤ Generate the HTML dashboard
+      ➤ Fill ALL sections w/ real content:
+      ➤ Reminder tile            | ➤ Context for THIS build
+      ➤ Season pass              | ➤ Phases of THIS project
+      ➤ Building blocks          | ➤ Actual tasks to do
+      ➤ Pickup prompt            | ➤ Resume context
+      ➤ Build plan overlay       | ➤ ONE/TWO step format</pre>
+            <div class="srt-divider"></div>
+<pre>THREE ➤ "Ready for skill spec review?"
+      ➤ Update the SAME HTML    | ➤ 2nd pass, not new file
+      ➤ Inject review tile      | ➤ Full spec in step format
+      ➤ Tag: "Pending Approval"
+      ➤ User says "approved"    | ➤ Remove tile + move on</pre>
+            <div class="srt-divider"></div>
+<pre>FOUR  ➤ Inject routine tile into HTML
+      ➤ "Which routine?"        | ➤ iOS slider — yes/no
+      ➤ Option A: "Direct me"
+      ➤ Tell user next step     | ➤ They do it
+      ➤ Option B: "Do it for me"
+      ➤ Claude executes w/ tools | ➤ Or directs if manual
+      ➤ Update HTML with progress
+      ➤ Loop back to slider     | ➤ Next step</pre>
+        </div>
+
+        <!-- 🧠 Obsidian Reminder — DO NOT FORGET -->
+        <div class="obsidian-reminder">
+            <div class="or-title">🧠 Reminder — Two Obsidians In Progress</div>
+            <div class="or-items">
+                <div class="or-pill"><span class="or-dot"></span>HTML Obsidian — custom Obsidian-style app in HTML</div>
+                <div class="or-pill"><span class="or-dot"></span>Actual Obsidian — real Obsidian vault / setup</div>
+            </div>
+        </div>
+
+        <!-- Season Pass Quick Nav -->
+        <div class="season-hero card">
+            <div class="season-label-top">Season Pass</div>
+            <div class="season-chips">
+                <div class="season-chip chip-active" data-target="s1"><span class="sc-dot"></span><span class="sc-num">01</span> Foundation</div>
+                <div class="season-chip" data-target="s2"><span class="sc-dot"></span><span class="sc-num">02</span> Skeleton</div>
+                <div class="season-chip" data-target="s3"><span class="sc-dot"></span><span class="sc-num">03</span> First String</div>
+                <div class="season-chip" data-target="s4"><span class="sc-dot"></span><span class="sc-num">04</span> Memory</div>
+                <div class="season-chip" data-target="s5"><span class="sc-dot"></span><span class="sc-num">05</span> Scale</div>
+                <div class="season-chip" data-target="s6"><span class="sc-dot"></span><span class="sc-num">06</span> Full Assist</div>
+            </div>
+        </div>
+
+        <!-- Live Tools -->
+        <div class="live-tools">
+            <div class="live-tool-pill card" id="hotkeyBtn">
+                <div class="live-dot" style="background:var(--lamp-deep);"></div>
+                <span class="live-label">Hotkey Step Tiles</span>
+                <span class="live-tag">View</span>
+            </div>
+            <div class="live-tool-pill card" id="pickupPromptBtn">
+                <div class="live-dot" style="background:var(--lamp-mid);"></div>
+                <span class="live-label">Pick Up Prompt</span>
+                <span class="live-tag">View</span>
+            </div>
+        </div>
+
+        <!-- Block Stack -->
+        <div class="section-header">Build Blocks</div>
+        <div class="block-stack">
+            <div class="block-btn card" data-id="s1" data-title="Foundation" data-desc="Set up Obsidian, create the Ahead vault, establish the root folder structure. This is the ground floor — every MD, every context file, every memory starts here." data-color="#c2560a">
+                <div class="dot" style="background:var(--lamp-deep);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">01 &mdash; Foundation</div>
+                    <div class="btn-sub">Install Obsidian + create vault</div>
+                </div>
+                <div class="btn-tag tag-now">Now</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s2" data-title="Skeleton" data-desc="Build the empty MD hierarchy — global CLAUDE.md at top, project folders in middle, bite-size context files at the bottom. All stubs, ready to fill." data-color="#e07b2e">
+                <div class="dot" style="background:var(--lamp-mid);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">02 &mdash; Skeleton</div>
+                    <div class="btn-sub">MD hierarchy &bull; folders &bull; stubs</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s3" data-title="First String" data-desc="Wire up the first quadrant: one supplier, one client, one price, one service — connected and linked inside the vault." data-color="#f2a54a">
+                <div class="dot" style="background:var(--lamp-warm);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">03 &mdash; First String</div>
+                    <div class="btn-sub">Supplier / Client / Price / Service</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s4" data-title="Memory Engine" data-desc="Add the memory.md that reads before and updates after every session. Compounds knowledge — turns Claude from tool to asset." data-color="#c2560a">
+                <div class="dot" style="background:var(--lamp-deep);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">04 &mdash; Memory Engine</div>
+                    <div class="btn-sub">Reads before &bull; updates after &bull; compounds</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s5" data-title="Scale Out" data-desc="Add more quadrant strings — more suppliers, more clients, more prices, more services. The system grows with your business." data-color="#e07b2e">
+                <div class="dot" style="background:var(--lamp-mid);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">05 &mdash; Scale Out</div>
+                    <div class="btn-sub">More strings &bull; system grows</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s6" data-title="Full Assist" data-desc="Claude knows your whole business. Daily routines, client lookups, task automation, memory recall — the full personal assistant." data-color="#f2a54a">
+                <div class="dot" style="background:var(--lamp-warm);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">06 &mdash; Full Assist</div>
+                    <div class="btn-sub">Full personal assistant &bull; everything wired</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Slide Panel -->
+    <div class="slide-panel" id="slidePanel">
+        <div class="panel-header">
+            <div class="panel-header-row">
+                <div class="panel-dot" id="panelDot"></div>
+                <div class="panel-title" id="panelTitle">&mdash;</div>
+            </div>
+            <button class="panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="panel-body">
+            <div class="panel-section-label">Overview</div>
+            <div class="panel-desc" id="panelDesc">&mdash;</div>
+            <div class="panel-section-label">Steps</div>
+            <div class="steps-list" id="panelSteps"></div>
+            <div class="panel-section-label">Your Notes</div>
+            <textarea class="panel-notes" id="panelNotes" placeholder="Add notes here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        const slidePanel = document.getElementById('slidePanel');
+        const panelTitle = document.getElementById('panelTitle');
+        const panelDesc = document.getElementById('panelDesc');
+        const panelDot = document.getElementById('panelDot');
+        const panelNotes = document.getElementById('panelNotes');
+        const panelSteps = document.getElementById('panelSteps');
+        const panelToggle = document.getElementById('panelToggle');
+
+        const savedNotes = {};
+        let currentId = null;
+
+        const stepData = {
+            s1: [
+                { title: '\u2192 Download Obsidian', subs: [
+                    'Go to <strong>obsidian.md</strong> <span class="arrow">\u2192</span> <strong>Install the app</strong>',
+                    'Open it <span class="arrow">\u2192</span> Create a new vault called <strong>"Ahead"</strong>'
+                ]},
+                { title: '\u2192 Set Vault Location', subs: [
+                    'Point it to your <strong>master Anti Gravity folder</strong>',
+                    'Confirm the <strong>.obsidian</strong> config folder appears <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Create Root Folders', subs: [
+                    'Add top-level: <strong>clients</strong> / <strong>suppliers</strong> / <strong>services</strong> / <strong>prices</strong>',
+                    'Add <strong>_system</strong> folder <span class="arrow">\u2192</span> for <strong>CLAUDE.md</strong> and <strong>memory.md</strong>'
+                ]},
+            ],
+            s2: [
+                { title: '\u2192 Global CLAUDE.md', subs: [
+                    'Create <strong>CLAUDE.md</strong> at <strong>vault root</strong>',
+                    'Add <strong>business identity</strong>, <strong>tone</strong>, and <strong>rules</strong>'
+                ]},
+                { title: '\u2192 Project Folders', subs: [
+                    'Create a <strong>folder per project</strong> or <strong>client</strong>',
+                    'Add a <strong>project-level CLAUDE.md</strong> in each <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Context File Stubs', subs: [
+                    'Create empty <strong>.md files</strong> for each <strong>quadrant entity</strong>',
+                    'Name them: <strong>supplier-name.md</strong>, <strong>client-name.md</strong>'
+                ]},
+            ],
+            s3: [
+                { title: '\u2192 Pick One Supplier', subs: [
+                    'Choose your <strong>most active supplier</strong>',
+                    'Fill in their <strong>.md</strong> with <strong>real data</strong>'
+                ]},
+                { title: '\u2192 Link the Quadrant', subs: [
+                    'Create matching: <strong>client</strong> <span class="arrow">\u2194</span> <strong>price</strong> <span class="arrow">\u2194</span> <strong>service</strong>',
+                    'Add <strong>[[wikilinks]]</strong> between all four <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Test the Connection', subs: [
+                    'Open <strong>graph view</strong> <span class="arrow">\u2192</span> confirm <strong>4 nodes link</strong>',
+                    'Click through each <strong>link</strong> to verify <span class="arrow">\u2713</span>'
+                ]},
+            ],
+            s4: [
+                { title: '\u2192 Create memory.md', subs: [
+                    'Add <strong>memory.md</strong> to the <strong>_system</strong> folder',
+                    'Define sections: <strong>learnings</strong> / <strong>preferences</strong> / <strong>patterns</strong>'
+                ]},
+                { title: '\u2192 Set Read-Before Rule', subs: [
+                    'Add instruction in <strong>CLAUDE.md</strong> <span class="arrow">\u2192</span> <strong>read memory.md first</strong>',
+                    'Test that Claude <strong>references it</strong> on session start <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Set Update-After Rule', subs: [
+                    'Instruction: <strong>append new learnings</strong> after each session',
+                    'Verify <strong>compounding</strong> after <strong>2-3 test runs</strong> <span class="arrow">\u21BB</span>'
+                ]},
+            ],
+            s5: [
+                { title: '\u2192 Add More Quadrant Strings', subs: [
+                    '<strong>Repeat</strong> the First String process <span class="arrow">\u21BB</span> for each new <strong>supplier</strong>',
+                    'Keep the same <strong>naming pattern</strong> for consistency'
+                ]},
+                { title: '\u2192 Cross-Link Entities', subs: [
+                    'Link <strong>shared clients</strong> across multiple <strong>suppliers</strong> <span class="arrow">\u2194</span>',
+                    'Tag <strong>services</strong> that overlap between suppliers'
+                ]},
+                { title: '\u2192 Validate at Scale', subs: [
+                    'Check <strong>graph view</strong> stays <strong>clean and navigable</strong>',
+                    'Confirm Claude can <strong>look up any entity</strong> by name <span class="arrow">\u2713</span>'
+                ]},
+            ],
+            s6: [
+                { title: '\u2192 Daily Routine Automation', subs: [
+                    'Define <strong>morning check-in prompts</strong> in <strong>CLAUDE.md</strong>',
+                    'Set up <strong>task lists</strong> Claude can <strong>reference and update</strong>'
+                ]},
+                { title: '\u2192 Client Lookup Mode', subs: [
+                    'Test: <strong>"tell me about [client]"</strong> queries',
+                    'Ensure Claude pulls from <strong>all linked context files</strong> <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Full Recall Verification', subs: [
+                    'Ask Claude to <strong>summarize your business</strong> from memory',
+                    'Confirm it knows: <strong>suppliers</strong> / <strong>clients</strong> / <strong>prices</strong> / <strong>services</strong> <span class="arrow">\u2713</span>'
+                ]},
+            ],
+        };
+
+        function renderSteps(id) {
+            const steps = stepData[id];
+            if (!steps || !steps.length) { panelSteps.innerHTML = '<div style="font-size:0.76rem;color:var(--text-dim);">No steps yet.</div>'; return; }
+            panelSteps.innerHTML = steps.map((s, i) =>
+                `<div class="step-block">
+                    <div class="step-title"><span class="step-num">${String(i+1).padStart(2,'0')}</span>${s.title}</div>
+                    <div class="step-item">${s.subs[0]}</div>
+                    <div class="step-item">${s.subs[1]}</div>
+                </div>`
+            ).join('');
+        }
+
+        function openPanel(id, title, desc, color) {
+            if (currentId) savedNotes[currentId] = panelNotes.value;
+            currentId = id;
+            panelTitle.textContent = title;
+            panelDesc.textContent = desc;
+            panelDot.style.background = color || '#c2560a';
+            panelNotes.value = savedNotes[id] || '';
+            renderSteps(id);
+            slidePanel.classList.add('open');
+            document.querySelectorAll('.block-btn').forEach(el => el.classList.remove('active-block'));
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if (el) el.classList.add('active-block');
+        }
+
+        function closePanel() {
+            if (currentId) savedNotes[currentId] = panelNotes.value;
+            slidePanel.classList.remove('open');
+            document.querySelectorAll('.block-btn').forEach(el => el.classList.remove('active-block'));
+            currentId = null;
+        }
+
+        panelToggle.addEventListener('click', () => {
+            if (slidePanel.classList.contains('open')) { closePanel(); }
+            else { openPanel('general', 'Side Panel', 'Click any block to see details here, or just use this space for notes.', '#c2560a'); }
+        });
+
+        document.querySelectorAll('.block-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openPanel(btn.dataset.id, btn.dataset.title, btn.dataset.desc, btn.dataset.color);
+            });
+        });
+
+        // Hotkey Step Tiles → panel
+        const hotkeyDesc = `23 workflow cue cards — 13 core from Chrome extension + 10 extended. Click-to-copy with clipboard stack. Keyboard shortcuts [1]–[0] for first 10.
+
+CORE STEPS:
+[1] ✌️ Set The Goal
+[2] 🟢 Set Their Phase Plan
+[3] 🟡 Contact Them
+[4] 🟡 Call Them
+[5] 🟡 Send Recap Email
+[6] 🟡 Update SIMS' Dash
+[7] 🟠 Follow Up
+[8] 🟣 Get Them To Purchase
+[9] 🔴 Get on: Group Weekly Call
+[0] 🔴 Get on: Weekly Personal Call
+    🔵 Report and Track Order
+    🔵 Unique
+    🔵 Problem
+
+EXTENDED STEPS:
+    📋 Review Contract
+    💰 Send Invoice
+    📅 Schedule Meeting
+    🧑‍💻 Onboard New Client
+    📊 Check Campaign Status
+    📝 Create Proposal
+    💳 Log Payment
+    🚨 Escalate Issue
+    📂 Update Client Profile
+    🔁 Send Follow-Up Email`;
+
+        document.getElementById('hotkeyBtn').addEventListener('click', () => {
+            openPanel('hotkeys', 'Hotkey Step Tiles', hotkeyDesc, '#c2560a');
+        });
+
+        // Pick Up Prompt → panel
+        const pickupPrompt = `I'm building a Digital Communications layer for my business (Ahead Artist Solutions) using a 3-piece closed operation ecosystem: the Wing Dashboard App (index.html) as the front-end with pill-based navigation, POS DB, mode switcher, and green-spreadsheets integration — the Railroad Control Panel (railroad-control-panel.html) as the step-by-step build executor with 5 main jobs (16 steps) and 11 platform jobs (96 steps) for 112 total — and the Build Digital Coms guide (build-digital-coms.html) as the source of truth for all step data and definitions. The system is powered by the /c9-1-job-runner Claude Code skill which reads steps from the build guide, determines if each is a Claude step or a Chad step, executes or hands off, logs to Results, and threads forward automatically. The end goal is a live on-call, on-demand, voice-like assistant using Claude, the Wing Dashboard App, and the /c9-1-job-runner slash command + 2 supporting HTML closed operation ecosystem.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT THE DASHBOARD HAS:
+
+Wing Dashboard App (--wingdashapp--1--/index.html):
+  - Pill-based navigation for every data category
+  - POS Database integration for transaction tracking
+  - Mode switcher (assistant mode / work mode)
+  - Pulls live data from green-spreadsheets.html sheets
+  - Front-end hub — everything the user sees and touches
+
+Green Spreadsheets (green-spreadsheets.html):
+  - Social Accounts sheet — 10 platforms pre-seeded:
+    LinkedIn, IG, X, Gmail, Outlook, FB, TikTok, YT, Discord, WhatsApp
+  - Calendar Contacts sheet — ICS import ready:
+    Name, Email, Phone, Company, Last Meeting, Source, Tags
+  - Clients sheet — fed by comms scrape tools
+  - Services sheet — linked to supplier/client quadrant
+
+Railroad Control Panel (railroad-control-panel.html):
+  - 4-zone grid layout:
+    ┌──────────────┬──────────────┐
+    │              │ Loaded Tasks │
+    │  Current     ├──────────────┤
+    │  Step        │ Currently    │
+    │  (LEFT)      │ Working      │
+    │              ├──────────────┤
+    │              │ Questions    │
+    │              │ for Chad     │
+    │              ├──────────────┤
+    │              │ Results      │
+    └──────────────┴──────────────┘
+  - Step cards with mini gauges (needle: Chad/Claude/Done)
+  - Claudify button on each job header
+  - Question system for async Claude→Chad communication
+  - Results zone with append-only output blocks
+  - railroadState JS object holds all progress:
+    railroadState = {
+      currentSection: 's2',
+      currentStep: 1,
+      completedSteps: ['s1-0','s1-1','s1-2','s1-3','s2-0'],
+      skippedSteps: [],
+      mode: 'main',
+      totalSteps: 112,
+      results: [/* append-only array */],
+      questions: [/* {id, text, status, answer, step} */],
+      claudifyQueue: []
+    }
+
+Build Digital Coms (build-digital-coms.html):
+  - Source of truth for all 112 steps
+  - stepData object defines each section's steps:
+    stepData.s1 = [
+      { title: 'Gmail Scrape', type: 'claude',
+        subs: ['Connect to Gmail API...', 'Pull threads...'] },
+      // ... 4 steps total
+    ]
+  - platformData defines 11 platforms × 8-10 steps each
+  - Step types: 'claude' (auto-execute) or 'chad' (hand off)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT PROGRESS:
+
+S1 — COMMS SCRAPE: ✅ COMPLETE (4/4)
+  - Step 1: Gmail Scrape → tools/gmail-scrape.py
+    OAuth2 auth → pulls threads → organizes by contact + date
+    → exports JSON + CSV to tools/exports/gmail/
+  - Step 2: iMessage Pull → tools/imessage-pull.py
+    Reads chat.db → extracts by contact + thread
+    → top-20 contact summary → exports to tools/exports/imessage/
+  - Step 3: WhatsApp Export → tools/whatsapp-export.py
+    Parses .txt/.zip exports → organizes by contact + date + media
+    → exports to tools/exports/whatsapp/
+  - Step 4: Other Comms → tools/other-comms.py
+    Unified scraper for Discord, Messenger, etc.
+    → normalizes all channels → exports to tools/exports/unified/
+
+S2 — SOCIAL SWEEP: 🟢 IN PROGRESS (1/3)
+  - Step 1: Connect Social Accounts → ✅ CLAUDIFIED
+    Built Social Accounts Registry in green-spreadsheets.html
+    10 platforms pre-seeded with columns: Platform, Handle,
+    Profile URL, API Key, Status, Last Synced, Notes
+    + Calendar Contacts sheet for ICS import
+  - Step 2: Run Contact Enrichment → ⏳ NEXT UP
+  - Step 3: Build Contact Dashboard → ⏳ WAITING
+
+S3 — REVIO: ⏳ LOCKED (0/3)
+S4 — ALLEY: ⏳ LOCKED (0/3)
+S5 — INTEGRATION: ⏳ LOCKED (0/3)
+Platforms (11 × 8-10 steps): ⏳ LOCKED (0/96)
+
+Overall: 5 of 112 steps done (~4.5%)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+THE SYSTEM (3 files + 1 skill):
+
+  ┌─────────────────────────────────────────┐
+  │  1. Wing Dashboard App (index.html)     │
+  │     → front-end, pills, POS, switcher   │
+  │     → reads from green-spreadsheets     │
+  ├─────────────────────────────────────────┤
+  │  2. Railroad Control Panel              │
+  │     (railroad-control-panel.html)       │
+  │     → executor, 4-zone grid, results    │
+  │     → railroadState holds all progress  │
+  ├─────────────────────────────────────────┤
+  │  3. Build Digital Coms                  │
+  │     (build-digital-coms.html)           │
+  │     → source of truth, step definitions │
+  │     → stepData + platformData objects   │
+  ├─────────────────────────────────────────┤
+  │  4. /c9-1-job-runner (skill)            │
+  │     → reads steps, executes or hands    │
+  │       off, logs results, threads forward│
+  │     → PRE-FLIGHT → CHOOSE → TEE UP →   │
+  │       EXECUTE → VERIFY+LOG → PASS-OFF   │
+  └─────────────────────────────────────────┘
+
+The skill flow for each step:
+  STEP 1 (Choose Path)
+    → "Main Focus" / "Platform Setup" / "Resume" / "Full Run"
+  STEP 2 (Tee Up)
+    → Read control panel → identify next step
+    → Update LEFT zone + Loaded Tasks + Currently Working
+  STEP 3 (Execute)
+    → Claude step: do the work, capture output
+    → Chad step: ask status (Done/Skip/Help/Claudify)
+  STEP 4 (Verify + Log)
+    → Append to Results with output block:
+      <div class="output-block">
+        <div class="ob-label">{Section} — Step {N}</div>
+        <div class="ob-content">{technical result}</div>
+        <div class="ob-english">
+          💬 English Please...
+          [What I did] → plain summary
+          [What it does] → business value
+          [How to connect it] → Wing Dashboard link
+          ✅ Validated
+        </div>
+      </div>
+    → Clear Currently Working → remove from Loaded Tasks
+    → Write session log to ADMIN/memory/
+  STEP 5 (Pass-Off)
+    → More steps? Auto-thread to STEP 2
+    → Job done? Ask "Next job" or "Pause here"
+
+Results use the "English Please..." 3-group format:
+  - What I did — plain language summary of the action
+  - What it does — practical business value for Ahead
+  - How to connect it — steps to link with Wing Dashboard
+    App and assistant/work mode
+  - Validation — inline check that all 3 groups are
+    accurate given the project context
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CLAUDIFY SYSTEM:
+
+Any Chad step can be converted to an in-house Claude process.
+When Chad selects "Claudify it" on a step:
+  1. Skill diverts from normal execution
+  2. Asks: "Let me describe it" / "You draft it" / "Skip"
+  3. Claude builds the in-house process
+  4. Step type updates from 'chad' → 'claude'
+  5. Step gauge needle moves: red → white → green
+  6. Results logged, railroad resumes
+All 4 focus tools (Manis, Social Sweep, Revio, Alley) are
+built IN-HOUSE as Claude-powered tools. No external SaaS.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+KEY FILE PATHS:
+
+Wing Dashboard:
+  --wingdashapp--1--/index.html
+
+Railroad + Build Guide + Green Spreadsheets:
+  🪨🪨 AUTOMATIONS 🪨🪨/🔧 WORK/railroad-control-panel.html
+  🪨🪨 AUTOMATIONS 🪨🪨/🔧 WORK/build-digital-coms.html
+  🪨🪨 AUTOMATIONS 🪨🪨/🔧 WORK/green-spreadsheets.html
+
+Backups:
+  🪨🪨 AUTOMATIONS 🪨🪨/💾 BACKUPS/
+
+Session Logs:
+  🪨🪨 AUTOMATIONS 🪨🪨/⚙️ ADMIN/memory/
+
+Skill:
+  .claude/skills/c9-1-job-runner/skill.md
+
+Tools (built by S1):
+  tools/gmail-scrape.py
+  tools/imessage-pull.py
+  tools/whatsapp-export.py
+  tools/other-comms.py
+  tools/exports/{gmail,imessage,whatsapp,unified}/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DESIGN LANGUAGE:
+  - Salt rock lamp aesthetic — warm orange gradient, thick
+    white borders with dimension, solid and clean
+  - CSS vars: --lamp-deep #c2560a, --lamp-mid #e07b2e,
+    --lamp-warm #f2a54a, --lamp-soft #f8c97d, --lamp-glow #fde8c8
+  - Fonts: Outfit (body), JetBrains Mono (labels/code),
+    Press Start 2P (game HUD elements)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ DUAL TERMINAL MODE: The user may have 2+ Claude terminal
+sessions working on this folder at the same time. Always re-read
+files before editing — another session may have changed them.
+Never edit from memory.
+
+⚠️ SAFETY: Pre-flight creates timestamped backup before edits.
+Results are append-only. State lives in the HTML's railroadState
+object — if session crashes, resume reads from there.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The end goal is a live on-call, on-demand, voice-like assistant using Claude, the Wing Dashboard App, and the /c9-1-job-runner slash command + 2 supporting HTML closed operation ecosystem. To resume: invoke /c9-1-job-runner resume — the skill reads railroadState from the control panel, finds the first incomplete step (currently S2 Step 2 — Run Contact Enrichment), and threads forward from there. Each completed step logs to the Results zone with the "English Please..." 3-group translation (What I did / What it does / How to connect it) plus an inline validation check. The railroad never stops — it always threads forward or wraps cleanly.`;
+
+        document.getElementById('pickupPromptBtn').addEventListener('click', () => {
+            openPanel('pickup', 'Pick Up Prompt', pickupPrompt, '#e07b2e');
+        });
+
+        // Skill Review toggle
+        const srtToggleBtn = document.getElementById('srtToggleBtn');
+        const skillReviewTile = document.getElementById('skillReviewTile');
+        srtToggleBtn.addEventListener('click', () => {
+            skillReviewTile.classList.toggle('show');
+            srtToggleBtn.classList.toggle('active');
+        });
+
+        // Quick Plan overlay
+        const quickPlanBtn = document.getElementById('quickPlanBtn');
+        const quickPlanOverlay = document.getElementById('quickPlanOverlay');
+        const quickPlanClose = document.getElementById('quickPlanClose');
+        quickPlanBtn.addEventListener('click', () => quickPlanOverlay.classList.add('show'));
+        quickPlanClose.addEventListener('click', () => quickPlanOverlay.classList.remove('show'));
+        quickPlanOverlay.addEventListener('click', (e) => { if (e.target === quickPlanOverlay) quickPlanOverlay.classList.remove('show'); });
+
+        // Season chip clicks
+        document.querySelectorAll('.season-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const target = chip.dataset.target;
+                const block = document.querySelector(`[data-id="${target}"]`);
+                if (block) {
+                    block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => block.click(), 400);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

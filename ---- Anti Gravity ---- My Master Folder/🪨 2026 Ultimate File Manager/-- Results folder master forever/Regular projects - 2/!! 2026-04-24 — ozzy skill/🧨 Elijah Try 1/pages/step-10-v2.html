@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Step 10 v2 — Where do we go from here?</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --panel-soft: #fbfcfe;
+    --ink: #1a2332;
+    --ink-soft: #4a5568;
+    --ink-mute: #7c8a9e;
+    --rule: #dde3ec;
+    --rule-soft: #eef1f6;
+    --accent: #4a6da7;
+    --accent-deep: #34507f;
+    --accent-soft: #e8eef8;
+    --chip-bg: #eef2f8;
+    --gold: #c9a96a;
+    --gold-soft: #fff4d6;
+    --trunk-1: #2e8b57;   /* INDEPENDENT - green */
+    --trunk-2: #b8390e;   /* SIGNED - red/burnt */
+    --trunk-3: #6b46c1;   /* HYBRID-MODERN - purple */
+    --shadow-sm: 0 1px 2px rgba(20, 30, 50, 0.04), 0 1px 3px rgba(20, 30, 50, 0.06);
+    --shadow-md: 0 4px 12px rgba(20, 30, 50, 0.08), 0 2px 4px rgba(20, 30, 50, 0.04);
+    --shadow-lg: 0 12px 32px rgba(20, 30, 50, 0.14);
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ============ HEADER ============ */
+  .page-header {
+    background: rgba(255,255,255,0.92);
+    border-bottom: 1px solid var(--rule);
+    padding: 24px 48px 22px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(8px);
+  }
+  .header-left { flex: 1; min-width: 0; }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    color: var(--ink-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+  .back-link:hover { color: var(--accent); text-decoration: none; }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent-soft), transparent);
+    max-width: 220px;
+  }
+  .page-title {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 760px;
+  }
+  .spike-pill {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--accent-deep);
+  }
+  .spike-pill::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffd166;
+    box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.25);
+  }
+
+  /* ============ MAIN ============ */
+  main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 36px 48px 80px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-head h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0;
+  }
+  .section-head .meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  .section-head .num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
+    letter-spacing: 0.05em;
+  }
+
+  /* ============ KEY CONCEPTS TILES ============ */
+  .examples-section { margin-bottom: 56px; }
+  .examples-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .example-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .example-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent);
+  }
+  .mock-thumb {
+    aspect-ratio: 16 / 10;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 18px;
+    color: #fff;
+  }
+  .mock-thumb::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+  .mock-thumb-1 {
+    background:
+      radial-gradient(circle at 25% 30%, #c9a96a 0%, transparent 45%),
+      radial-gradient(circle at 80% 80%, #6e8ab8 0%, transparent 50%),
+      linear-gradient(135deg, #2d4570 0%, #4a6da7 100%);
+  }
+  .mock-thumb-2 {
+    background:
+      radial-gradient(circle at 30% 70%, #2e8b57 0%, transparent 50%),
+      linear-gradient(140deg, #1f2a44 0%, #34507f 60%, #5e7aa6 100%);
+  }
+  .mock-thumb-3 {
+    background:
+      radial-gradient(circle at 70% 25%, #b8390e 0%, transparent 45%),
+      linear-gradient(160deg, #344b73 0%, #6883b0 100%);
+  }
+  .mock-spike {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    height: 50%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    opacity: 0.85;
+  }
+  .mock-spike .bar-tall {
+    width: 14px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 2px 2px 0 0;
+    height: 95%;
+    box-shadow: 0 0 18px rgba(255,255,255,0.5);
+  }
+  .mock-spike .bar-short {
+    width: 8px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px 2px 0 0;
+  }
+  .mock-spike .bar-short.s1 { height: 25%; }
+  .mock-spike .bar-short.s2 { height: 30%; }
+  .mock-spike .bar-short.s3 { height: 22%; }
+  .mock-spike .bar-short.s4 { height: 28%; }
+  .mock-depth {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    opacity: 0.85;
+  }
+  .mock-depth .well {
+    width: 36px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 4px 4px 0 0;
+    align-self: flex-end;
+  }
+  .mock-depth .well.deep { height: 95%; box-shadow: 0 0 16px rgba(255,255,255,0.45); }
+  .mock-depth .well.shallow { height: 22%; }
+  .mock-audit {
+    position: absolute;
+    inset: auto 18px 60px 18px;
+    height: 50%;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    justify-content: center;
+    opacity: 0.85;
+  }
+  .mock-audit .row {
+    height: 8px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 2px;
+    position: relative;
+  }
+  .mock-audit .row::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: rgba(255, 209, 102, 0.95);
+    border-radius: 2px;
+  }
+  .mock-audit .row.r1::after { width: 75%; }
+  .mock-audit .row.r2::after { width: 90%; }
+  .mock-audit .row.r3 { background: rgba(255,255,255,0.4); }
+  .mock-audit .row.r3::after { width: 25%; background: rgba(255, 80, 80, 0.95); }
+  .mock-audit .row.r4::after { width: 60%; }
+  .mock-overlay { position: relative; z-index: 2; width: 100%; }
+  .mock-overlay .name {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .mock-overlay .tag {
+    font-size: 11px;
+    opacity: 0.85;
+    margin: 2px 0 0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .example-body { padding: 14px 18px 16px; }
+  .example-body p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .example-body .open-hint {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ============ RESEARCH BLOCKS ============ */
+  .research-block { margin-bottom: 48px; }
+  .research-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+  }
+  .result-card {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .result-card.spike-card { border-left-color: var(--gold); }
+  .result-card.practice-card { border-left-color: var(--trunk-1); }
+  .result-card.avoid-card { border-left-color: var(--trunk-2); }
+  .result-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  .topic-chip {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    background: var(--chip-bg);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .topic-chip.spike { color: #8a6a1f; background: var(--gold-soft); }
+  .topic-chip.practice { color: #155c33; background: #e2f4eb; }
+  .topic-chip.avoid { color: #8a2009; background: #fde6df; }
+  .result-card h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .result-meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .result-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-mute); }
+  .result-quote {
+    font-size: 13px;
+    font-style: italic;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--rule);
+    padding: 4px 0 4px 12px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .result-why {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin: 0;
+  }
+  .result-why strong {
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-size: 10px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .result-source {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+    align-self: flex-start;
+  }
+  .result-source:hover { text-decoration: underline; }
+
+  /* ============ INTERACTIVE TREE BLOCK ============ */
+  .tree-section {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    padding: 32px 36px 36px;
+    margin: 56px 0 48px;
+    box-shadow: var(--shadow-sm);
+  }
+  .tree-section .section-head {
+    border-bottom: 1px dashed var(--rule);
+  }
+  .tree-section .section-head h2 .diamond {
+    color: var(--gold);
+    margin-right: 6px;
+  }
+  .tree-layout {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 28px;
+    align-items: start;
+    margin-top: 8px;
+  }
+  .tree-canvas-wrap {
+    background: #fafbfd;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 18px 14px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tree-canvas-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--rule-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule-soft) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .tree-canvas {
+    width: 100%;
+    height: 520px;
+    display: block;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* tree node styling */
+  .tree-node {
+    transition: filter 0.18s ease, transform 0.18s ease;
+    cursor: default;
+  }
+  .tree-node text {
+    font-family: var(--font);
+    fill: var(--ink);
+    pointer-events: none;
+    user-select: none;
+  }
+  .tree-link {
+    fill: none;
+    stroke-linecap: round;
+    transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
+  }
+
+  /* trunk dim/highlight */
+  .trunk.dim .tree-node rect,
+  .trunk.dim .tree-link {
+    opacity: 0.22;
+  }
+  .trunk.dim .tree-node text { opacity: 0.3; }
+  .trunk.highlight .tree-node rect {
+    filter: drop-shadow(0 4px 14px rgba(74,109,167,0.35));
+  }
+  .trunk.highlight .tree-link {
+    stroke-width: 3.5;
+  }
+
+  /* spike chip rail */
+  .chip-rail-wrap { margin-top: 22px; }
+  .chip-rail-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .chip-rail-head .label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .chip-rail-head .hint {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-style: italic;
+  }
+  .chip-rail-head .clear-btn {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid transparent;
+    padding: 4px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .chip-rail-head .clear-btn:hover {
+    background: #fff;
+    border-color: var(--accent);
+  }
+  .chip-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .spike-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    background: #fff;
+    border: 1.5px solid var(--rule);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.02em;
+  }
+  .spike-chip::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink-mute);
+    transition: background 0.15s ease;
+  }
+  .spike-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent-deep);
+    transform: translateY(-1px);
+  }
+  .spike-chip.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent-deep);
+    box-shadow: var(--shadow-md);
+  }
+  .spike-chip.active::before { background: #ffd166; }
+  .spike-chip[data-trunks*="t1"]::before { background: var(--trunk-1); }
+  .spike-chip[data-trunks*="t2"]::before { background: var(--trunk-2); }
+  .spike-chip[data-trunks*="t3"]::before { background: var(--trunk-3); }
+  .spike-chip[data-trunks="t1,t2,t3"]::before {
+    background: linear-gradient(120deg, var(--trunk-1) 0 33%, var(--trunk-2) 33% 66%, var(--trunk-3) 66% 100%);
+  }
+  .spike-chip[data-trunks="t1,t3"]::before {
+    background: linear-gradient(120deg, var(--trunk-1) 0 50%, var(--trunk-3) 50% 100%);
+  }
+  .spike-chip[data-trunks="t2,t3"]::before {
+    background: linear-gradient(120deg, var(--trunk-2) 0 50%, var(--trunk-3) 50% 100%);
+  }
+  .spike-chip[data-trunks="t1,t2"]::before {
+    background: linear-gradient(120deg, var(--trunk-1) 0 50%, var(--trunk-2) 50% 100%);
+  }
+
+  /* right panel - 90 day plan */
+  .plan-panel {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    padding: 22px 24px;
+    min-height: 280px;
+    position: relative;
+  }
+  .plan-panel-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ink-mute);
+    font-style: italic;
+    font-size: 13px;
+  }
+  .plan-panel-empty .arrow-hint {
+    display: block;
+    font-size: 30px;
+    margin-bottom: 10px;
+    color: var(--rule);
+  }
+  .plan-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 6px;
+  }
+  .plan-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .plan-tag-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0 0 14px;
+  }
+  .plan-tag {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .plan-tag.t1 { background: #e2f4eb; color: #155c33; }
+  .plan-tag.t2 { background: #fde6df; color: #8a2009; }
+  .plan-tag.t3 { background: #efe7fb; color: #4a2f9e; }
+  .plan-quote {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--ink-soft);
+    border-left: 3px solid var(--gold);
+    background: var(--gold-soft);
+    padding: 10px 14px;
+    border-radius: 0 var(--r-sm) var(--r-sm) 0;
+    margin: 0 0 16px;
+    line-height: 1.5;
+  }
+  .plan-section-head {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 0 0 8px;
+  }
+  .plan-90day {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    display: grid;
+    gap: 8px;
+  }
+  .plan-90day li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--panel-soft);
+    border: 1px solid var(--rule-soft);
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  .plan-90day li .day {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
+    height: max-content;
+    letter-spacing: 0.04em;
+    align-self: start;
+  }
+  .plan-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  /* audit weak step panel */
+  .audit-section {
+    margin: 36px 0 48px;
+    background: linear-gradient(135deg, #fffaf0 0%, #fdf6e7 100%);
+    border: 1px solid var(--gold);
+    border-left: 5px solid var(--gold);
+    border-radius: var(--r-lg);
+    padding: 26px 32px;
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 28px;
+    align-items: start;
+  }
+  .audit-section h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .audit-section .audit-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: #8a6a1f;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+  }
+  .audit-section p {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 0 0 12px;
+  }
+  .audit-section blockquote {
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--gold);
+    padding: 4px 0 4px 12px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .step-rail {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .step-rail a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-sm);
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 500;
+    transition: all 0.12s ease;
+  }
+  .step-rail a:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-deep);
+    text-decoration: none;
+  }
+  .step-rail a .num {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 6px;
+    border-radius: var(--r-sm);
+  }
+
+  /* ============ OUTLINE / WALK-AWAY ============ */
+  .outline-section {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+    padding: 28px 32px;
+    margin-top: 24px;
+  }
+  .outline-section .section-head { border-bottom: none; padding-bottom: 0; margin-bottom: 16px; }
+  .outline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 32px;
+    counter-reset: outline;
+  }
+  .outline-list li {
+    position: relative;
+    padding-left: 32px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    counter-increment: outline;
+  }
+  .outline-list li::before {
+    content: counter(outline, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 7px;
+    border-radius: var(--r-sm);
+    letter-spacing: 0.04em;
+  }
+  .outline-list li strong {
+    color: var(--ink);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+
+  /* ============ DIALOG ============ */
+  dialog.example-dialog {
+    border: none;
+    background: transparent;
+    padding: 0;
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+  dialog.example-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.68);
+    backdrop-filter: blur(4px);
+  }
+  .dialog-shell {
+    background: var(--panel);
+    border-radius: var(--r-lg);
+    width: min(680px, 90vw);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+  }
+  .dialog-hero {
+    aspect-ratio: 16 / 7;
+    display: flex;
+    align-items: flex-end;
+    padding: 24px;
+    color: #fff;
+    position: relative;
+  }
+  .dialog-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--ink);
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    z-index: 5;
+  }
+  .dialog-body { padding: 22px 28px 26px; }
+  .dialog-body h3 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    color: var(--ink);
+  }
+  .dialog-body .dialog-tag {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 14px;
+  }
+  .dialog-body p { font-size: 14px; color: var(--ink-soft); line-height: 1.6; margin: 0 0 12px; }
+  .dialog-body ul { padding-left: 20px; margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.65; }
+  .dialog-body ul li { margin-bottom: 6px; }
+
+  /* ============ FOOTER ============ */
+  .footer-row {
+    margin-top: 44px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    padding: 24px 30px;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+  }
+  .complete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 26px;
+    background: linear-gradient(180deg, #2e8b57 0%, #1f6b41 100%);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-md);
+    border: 1px solid #1f6b41;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .complete-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+    color: #fff;
+  }
+  .complete-btn .target { font-size: 16px; }
+  .footer-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-mute);
+    font-weight: 600;
+  }
+  .footer-arrow:hover { color: var(--accent); text-decoration: none; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1080px) {
+    .tree-layout { grid-template-columns: 1fr; }
+    .audit-section { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .page-header { padding: 22px 24px 18px; flex-direction: column; gap: 16px; }
+    main { padding: 28px 24px 60px; }
+    .examples-grid { grid-template-columns: 1fr; }
+    .outline-list { grid-template-columns: 1fr; }
+    .page-title { font-size: 24px; }
+  }
+</style>
+  <link rel="stylesheet" href="../_version-jumper.css">
+  <script src="../_version-jumper.js" defer></script>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="header-left">
+    <a class="back-link" href="../index.html">← back to dashboard</a>
+    <p class="eyebrow">Step 10 · Music Business Education</p>
+    <h1 class="page-title">Where do we go from here?</h1>
+    <p class="page-subtitle">Ten steps in. Now you stand at a fork: every artist needs a primary spike — the one area you go deeper than anyone around you. Pick your trunk, pick your spike, and go.</p>
+  </div>
+  <a href="#tree" class="spike-pill">Pick Your Spike</a>
+</header>
+
+<main>
+
+  <!-- 01 KEY CONCEPTS -->
+  <section class="examples-section">
+    <div class="section-head">
+      <span class="num">01</span>
+      <h2>Key Concepts — Reference Points</h2>
+      <span class="meta">click any tile to open spec</span>
+    </div>
+    <div class="examples-grid">
+      <article class="example-card" data-dialog="dlg-1">
+        <div class="mock-thumb mock-thumb-1">
+          <div class="mock-spike">
+            <span class="bar-short s1"></span>
+            <span class="bar-short s2"></span>
+            <span class="bar-tall"></span>
+            <span class="bar-short s3"></span>
+            <span class="bar-short s4"></span>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">1 spike beats 10</p>
+            <p class="tag">ONE SPIKE BEATS TEN AVERAGES</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>Every artist needs a primary spike — the one area you go deeper than anyone around you. Ten lessons in, the next move isn't more breadth. It's depth in one chosen lane.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+      <article class="example-card" data-dialog="dlg-2">
+        <div class="mock-thumb mock-thumb-2">
+          <div class="mock-depth">
+            <div class="well shallow"></div>
+            <div class="well shallow"></div>
+            <div class="well deep"></div>
+            <div class="well shallow"></div>
+            <div class="well shallow"></div>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Depth &gt; breadth</p>
+            <p class="tag">DEPTH BEATS BREADTH</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>Don't try to master all 10 at once. Pick one spike from the list and go deep for the next 6 months — depth in one area beats shallow across many.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+
+      <article class="example-card" data-dialog="dlg-3">
+        <div class="mock-thumb mock-thumb-3">
+          <div class="mock-audit">
+            <div class="row r1"></div>
+            <div class="row r2"></div>
+            <div class="row r3"></div>
+            <div class="row r4"></div>
+          </div>
+          <div class="mock-overlay">
+            <p class="name">Audit weakest</p>
+            <p class="tag">AUDIT YOUR WEAKEST STEP</p>
+          </div>
+        </div>
+        <div class="example-body">
+          <p>The 9 prior steps cover the foundation. Walk through each step and ask: where am I weakest? That's your next 90-day project.</p>
+          <p class="open-hint">Open spec ↗</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 02 ACADEMIC LAYER - SPIKE EXEMPLARS -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">02</span>
+      <h2>Academic Layer — Spike Exemplars</h2>
+      <span class="meta">three foundational spikes (Money / Ownership / Audience)</span>
+    </div>
+    <div class="research-grid">
+      <article class="result-card spike-card">
+        <span class="topic-chip spike">SPIKE · MONEY</span>
+        <h3>Follow every dollar from listener to artist</h3>
+        <div class="result-meta"><span>Cat 1 · Streaming</span><span class="dot"></span><span>Foundational</span></div>
+        <p class="result-quote">"Follow every dollar from listener to artist."</p>
+        <p class="result-why"><strong>Why relevant</strong>The money spike audits every leak in your royalty chain — DSPs, distributor fees, mechanicals, publishing splits. Most indie artists leak 15-25% silently.</p>
+        <a class="result-source" href="../pages/cat-1.html" target="_blank" rel="noopener">↗ open Cat 1 — Streaming</a>
+      </article>
+
+      <article class="result-card spike-card">
+        <span class="topic-chip spike">SPIKE · OWNERSHIP</span>
+        <h3>What you own beats what you earn</h3>
+        <div class="result-meta"><span>Cat 16 · Master Rights</span><span class="dot"></span><span>Foundational</span></div>
+        <p class="result-quote">"What you own beats what you earn."</p>
+        <p class="result-why"><strong>Why relevant</strong>Earnings are a moment. Ownership of masters + publishing is a permanent asset that compounds and outlives every cycle.</p>
+        <a class="result-source" href="../pages/cat-16.html" target="_blank" rel="noopener">↗ open Cat 16 — Ownership</a>
+      </article>
+
+      <article class="result-card spike-card">
+        <span class="topic-chip spike">SPIKE · AUDIENCE</span>
+        <h3>Real fans before chasing any deal</h3>
+        <div class="result-meta"><span>Cat 9 · Fan Building</span><span class="dot"></span><span>Foundational</span></div>
+        <p class="result-quote">"Real fans before chasing any deal."</p>
+        <p class="result-why"><strong>Why relevant</strong>A direct audience is your only real leverage. Every label, sync, and tour deal gets better when you bring the fans with you.</p>
+        <a class="result-source" href="../pages/cat-9.html" target="_blank" rel="noopener">↗ open Cat 9 — Audience</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- 03 MAINSTREAM LAYER - PRACTICE -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">03</span>
+      <h2>Mainstream Layer — Practice Cards</h2>
+      <span class="meta">audit + spike picking — the two operational moves</span>
+    </div>
+    <div class="research-grid">
+      <article class="result-card practice-card">
+        <span class="topic-chip practice">PRACTICE</span>
+        <h3>Audit your weakest piece</h3>
+        <div class="result-meta"><span>Operator playbook</span><span class="dot"></span><span>Step 1-9 review</span></div>
+        <p class="result-quote">"The 9 prior steps cover the foundation. Walk through each step and ask: where am I weakest? That's your next 90-day project."</p>
+        <p class="result-why"><strong>Why relevant</strong>Operational playbook — the audit is the easiest, lowest-stakes way to identify your real next move without guessing.</p>
+        <a class="result-source" href="step-1.html">↗ start audit at Step 1</a>
+      </article>
+
+      <article class="result-card practice-card">
+        <span class="topic-chip practice">PRACTICE</span>
+        <h3>Pick one sub-spike for 90 days</h3>
+        <div class="result-meta"><span>Operator playbook</span><span class="dot"></span><span>One quarter window</span></div>
+        <p class="result-quote">"Don't try to master all 10 at once. Pick one spike from the list and go deep for the next 6 months — depth in one area beats shallow across many."</p>
+        <p class="result-why"><strong>Why relevant</strong>90 days is enough to build real depth in one spike but short enough to course-correct if it's the wrong one.</p>
+        <a class="result-source" href="#tree">↗ pick a spike from the tree</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- 04 BLOGS LAYER - AVOID -->
+  <section class="research-block">
+    <div class="section-head">
+      <span class="num">04</span>
+      <h2>Blogs Layer — Anti-Patterns to Avoid</h2>
+      <span class="meta">three failure modes that quietly kill careers at this stage</span>
+    </div>
+    <div class="research-grid">
+      <article class="result-card avoid-card">
+        <span class="topic-chip avoid">AVOID · SPREADING THIN</span>
+        <h3>Don't try to master all 10 at once</h3>
+        <div class="result-meta"><span>Anti-pattern</span><span class="dot"></span><span>Common at year 1-3</span></div>
+        <p class="result-quote">"Trying to master streaming + sync + touring + branding all at once produces shallow results in every area."</p>
+        <p class="result-why"><strong>Why relevant</strong>Failure mode to avoid before signing or shipping — broad effort feels productive but produces nothing competitive.</p>
+        <a class="result-source" href="step-1.html">↗ go single-spike instead</a>
+      </article>
+
+      <article class="result-card avoid-card">
+        <span class="topic-chip avoid">AVOID · SKIPPING THE AUDIT</span>
+        <h3>Biggest bottleneck = the uncomfortable area</h3>
+        <div class="result-meta"><span>Anti-pattern</span><span class="dot"></span><span>Especially legal + money</span></div>
+        <p class="result-quote">"The biggest career bottleneck is usually the area you're most uncomfortable looking at — that's exactly where to start."</p>
+        <p class="result-why"><strong>Why relevant</strong>What you avoid is what kills you slowest. The audit is uncomfortable on purpose — it surfaces the real bottleneck.</p>
+        <a class="result-source" href="step-9.html">↗ revisit step 9 — Team</a>
+      </article>
+
+      <article class="result-card avoid-card">
+        <span class="topic-chip avoid">AVOID · BUSY ≠ BUILDING</span>
+        <h3>Confusing motion with progress</h3>
+        <div class="result-meta"><span>Anti-pattern</span><span class="dot"></span><span>Highest cost trap</span></div>
+        <p class="result-quote">"Posting daily, attending every event, and recording constantly without a strategy is busy-ness, not building."</p>
+        <p class="result-why"><strong>Why relevant</strong>Motion produces dopamine. Strategy produces leverage. Without a spike, every output is interchangeable noise.</p>
+        <a class="result-source" href="#tree">↗ commit to one trunk</a>
+      </article>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE TREE SECTION -->
+  <section class="tree-section" id="tree">
+    <div class="section-head">
+      <span class="num">◆</span>
+      <h2><span class="diamond">◆</span>Interactive · Branching Decision Tree</h2>
+      <span class="meta">click a trunk OR a spike chip below to focus</span>
+    </div>
+
+    <div class="tree-layout">
+      <!-- TREE CANVAS -->
+      <div class="tree-canvas-wrap">
+        <svg class="tree-canvas" viewBox="0 0 760 520" preserveAspectRatio="xMidYMid meet" id="treeSvg">
+          <defs>
+            <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+              <feOffset dx="0" dy="2" result="off"/>
+              <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+              <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- ROOT NODE -->
+          <g class="tree-node root-node">
+            <rect x="270" y="14" width="220" height="62" rx="10"
+                  fill="#fff" stroke="#34507f" stroke-width="2" filter="url(#softShadow)"/>
+            <text x="380" y="36" text-anchor="middle" font-size="10" font-weight="700"
+                  fill="#4a6da7" letter-spacing="2">YOU · 10 STEPS IN</text>
+            <text x="380" y="58" text-anchor="middle" font-size="14" font-weight="700"
+                  fill="#1a2332">NOW WHAT?</text>
+          </g>
+
+          <!-- CONNECTOR FROM ROOT TO TRUNK SPLIT POINT -->
+          <path d="M 380 78 L 380 120" stroke="#7c8a9e" stroke-width="2" fill="none" stroke-dasharray="3,3"/>
+
+          <!-- TRUNK 1 - INDEPENDENT (LEFT) -->
+          <g class="trunk" data-trunk="t1">
+            <!-- branch line root → trunk header -->
+            <path class="tree-link trunk-link"
+                  d="M 380 120 Q 380 140 220 160 Q 145 175 145 200"
+                  stroke="#2e8b57" stroke-width="2.5"/>
+            <g class="tree-node trunk-head">
+              <rect x="40" y="200" width="210" height="56" rx="10"
+                    fill="#e2f4eb" stroke="#2e8b57" stroke-width="2" filter="url(#softShadow)"/>
+              <text x="145" y="222" text-anchor="middle" font-size="10" font-weight="700"
+                    fill="#155c33" letter-spacing="2">TRUNK 1</text>
+              <text x="145" y="244" text-anchor="middle" font-size="14" font-weight="700"
+                    fill="#1a2332">INDEPENDENT</text>
+            </g>
+            <text x="145" y="272" text-anchor="middle" font-size="10" fill="#4a5568"
+                  font-style="italic">DIY · own 100% · no label</text>
+
+            <!-- 3 next moves -->
+            <path class="tree-link" d="M 145 256 L 145 295" stroke="#2e8b57" stroke-width="2"/>
+            <path class="tree-link" d="M 145 295 L 60 320" stroke="#2e8b57" stroke-width="1.5"/>
+            <path class="tree-link" d="M 145 295 L 145 320" stroke="#2e8b57" stroke-width="1.5"/>
+            <path class="tree-link" d="M 145 295 L 230 320" stroke="#2e8b57" stroke-width="1.5"/>
+
+            <g class="tree-node move">
+              <rect x="10" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#2e8b57" stroke-width="1.5"/>
+              <text x="60" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#155c33" letter-spacing="1">NEXT MOVE 1</text>
+              <text x="60" y="356" text-anchor="middle" font-size="11" font-weight="600"
+                    fill="#1a2332">DistroKid</text>
+            </g>
+            <g class="tree-node move">
+              <rect x="95" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#2e8b57" stroke-width="1.5"/>
+              <text x="145" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#155c33" letter-spacing="1">NEXT MOVE 2</text>
+              <text x="145" y="356" text-anchor="middle" font-size="11" font-weight="600"
+                    fill="#1a2332">Build audience</text>
+            </g>
+            <g class="tree-node move">
+              <rect x="180" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#2e8b57" stroke-width="1.5"/>
+              <text x="230" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#155c33" letter-spacing="1">NEXT MOVE 3</text>
+              <text x="230" y="354" text-anchor="middle" font-size="10.5" font-weight="600"
+                    fill="#1a2332">Own publishing</text>
+            </g>
+          </g>
+
+          <!-- TRUNK 2 - SIGNED (CENTER) -->
+          <g class="trunk" data-trunk="t2">
+            <path class="tree-link trunk-link"
+                  d="M 380 120 L 380 200"
+                  stroke="#b8390e" stroke-width="2.5"/>
+            <g class="tree-node trunk-head">
+              <rect x="275" y="200" width="210" height="56" rx="10"
+                    fill="#fde6df" stroke="#b8390e" stroke-width="2" filter="url(#softShadow)"/>
+              <text x="380" y="222" text-anchor="middle" font-size="10" font-weight="700"
+                    fill="#8a2009" letter-spacing="2">TRUNK 2</text>
+              <text x="380" y="244" text-anchor="middle" font-size="14" font-weight="700"
+                    fill="#1a2332">SIGNED</text>
+            </g>
+            <text x="380" y="272" text-anchor="middle" font-size="10" fill="#4a5568"
+                  font-style="italic">Label deal · advance · team</text>
+
+            <!-- 3 next moves -->
+            <path class="tree-link" d="M 380 256 L 380 295" stroke="#b8390e" stroke-width="2"/>
+            <path class="tree-link" d="M 380 295 L 295 320" stroke="#b8390e" stroke-width="1.5"/>
+            <path class="tree-link" d="M 380 295 L 380 320" stroke="#b8390e" stroke-width="1.5"/>
+            <path class="tree-link" d="M 380 295 L 465 320" stroke="#b8390e" stroke-width="1.5"/>
+
+            <g class="tree-node move">
+              <rect x="245" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#b8390e" stroke-width="1.5"/>
+              <text x="295" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#8a2009" letter-spacing="1">NEXT MOVE 1</text>
+              <text x="295" y="356" text-anchor="middle" font-size="11" font-weight="600"
+                    fill="#1a2332">Hire attorney</text>
+            </g>
+            <g class="tree-node move">
+              <rect x="330" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#b8390e" stroke-width="1.5"/>
+              <text x="380" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#8a2009" letter-spacing="1">NEXT MOVE 2</text>
+              <text x="380" y="356" text-anchor="middle" font-size="11" font-weight="600"
+                    fill="#1a2332">Audit deal</text>
+            </g>
+            <g class="tree-node move">
+              <rect x="415" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#b8390e" stroke-width="1.5"/>
+              <text x="465" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#8a2009" letter-spacing="1">NEXT MOVE 3</text>
+              <text x="465" y="354" text-anchor="middle" font-size="10" font-weight="600"
+                    fill="#1a2332">360 vs traditional</text>
+            </g>
+          </g>
+
+          <!-- TRUNK 3 - HYBRID-MODERN (RIGHT) -->
+          <g class="trunk" data-trunk="t3">
+            <path class="tree-link trunk-link"
+                  d="M 380 120 Q 380 140 540 160 Q 615 175 615 200"
+                  stroke="#6b46c1" stroke-width="2.5"/>
+            <g class="tree-node trunk-head">
+              <rect x="510" y="200" width="210" height="56" rx="10"
+                    fill="#efe7fb" stroke="#6b46c1" stroke-width="2" filter="url(#softShadow)"/>
+              <text x="615" y="222" text-anchor="middle" font-size="10" font-weight="700"
+                    fill="#4a2f9e" letter-spacing="2">TRUNK 3</text>
+              <text x="615" y="244" text-anchor="middle" font-size="14" font-weight="700"
+                    fill="#1a2332">HYBRID-MODERN</text>
+            </g>
+            <text x="615" y="272" text-anchor="middle" font-size="10" fill="#4a5568"
+                  font-style="italic">Indie + selective + AI + global</text>
+
+            <!-- 3 next moves -->
+            <path class="tree-link" d="M 615 256 L 615 295" stroke="#6b46c1" stroke-width="2"/>
+            <path class="tree-link" d="M 615 295 L 530 320" stroke="#6b46c1" stroke-width="1.5"/>
+            <path class="tree-link" d="M 615 295 L 615 320" stroke="#6b46c1" stroke-width="1.5"/>
+            <path class="tree-link" d="M 615 295 L 700 320" stroke="#6b46c1" stroke-width="1.5"/>
+
+            <g class="tree-node move">
+              <rect x="480" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#6b46c1" stroke-width="1.5"/>
+              <text x="530" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#4a2f9e" letter-spacing="1">NEXT MOVE 1</text>
+              <text x="530" y="356" text-anchor="middle" font-size="10.5" font-weight="600"
+                    fill="#1a2332">Selective sync</text>
+            </g>
+            <g class="tree-node move">
+              <rect x="565" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#6b46c1" stroke-width="1.5"/>
+              <text x="615" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#4a2f9e" letter-spacing="1">NEXT MOVE 2</text>
+              <text x="615" y="354" text-anchor="middle" font-size="10" font-weight="600"
+                    fill="#1a2332">AI-assisted prod</text>
+            </g>
+            <g class="tree-node move">
+              <rect x="650" y="320" width="100" height="48" rx="8"
+                    fill="#fff" stroke="#6b46c1" stroke-width="1.5"/>
+              <text x="700" y="338" text-anchor="middle" font-size="9" font-weight="700"
+                    fill="#4a2f9e" letter-spacing="1">NEXT MOVE 3</text>
+              <text x="700" y="354" text-anchor="middle" font-size="9.5" font-weight="600"
+                    fill="#1a2332">Global before local</text>
+            </g>
+          </g>
+
+          <!-- LEGEND BAR -->
+          <g class="tree-legend">
+            <rect x="40" y="430" width="680" height="68" rx="10"
+                  fill="#fbfcfe" stroke="#dde3ec" stroke-width="1"/>
+            <text x="60" y="452" font-size="9" font-weight="700"
+                  fill="#7c8a9e" letter-spacing="2">PICK A TRUNK · GO DEEP FOR 90 DAYS</text>
+
+            <circle cx="60" cy="476" r="5" fill="#2e8b57"/>
+            <text x="74" y="480" font-size="11" fill="#1a2332" font-weight="600">INDEPENDENT</text>
+            <text x="170" y="480" font-size="10" fill="#7c8a9e" font-style="italic">own 100%, no advance</text>
+
+            <circle cx="320" cy="476" r="5" fill="#b8390e"/>
+            <text x="334" y="480" font-size="11" fill="#1a2332" font-weight="600">SIGNED</text>
+            <text x="390" y="480" font-size="10" fill="#7c8a9e" font-style="italic">label deal, structured</text>
+
+            <circle cx="540" cy="476" r="5" fill="#6b46c1"/>
+            <text x="554" y="480" font-size="11" fill="#1a2332" font-weight="600">HYBRID-MODERN</text>
+            <text x="660" y="480" font-size="10" fill="#7c8a9e" font-style="italic">a la carte</text>
+          </g>
+        </svg>
+
+        <!-- SPIKE CHIP RAIL -->
+        <div class="chip-rail-wrap">
+          <div class="chip-rail-head">
+            <span class="label">10 Spike Chips</span>
+            <span class="hint">click → highlight matching trunk + load 90-day plan →</span>
+            <button class="clear-btn" id="clearBtn">Reset</button>
+          </div>
+          <div class="chip-rail" id="chipRail">
+            <button class="spike-chip" data-spike="money" data-trunks="t1,t2,t3">Money</button>
+            <button class="spike-chip" data-spike="ownership" data-trunks="t1,t3">Ownership</button>
+            <button class="spike-chip" data-spike="audience" data-trunks="t1,t3">Audience</button>
+            <button class="spike-chip" data-spike="operator" data-trunks="t2,t3">Operator</button>
+            <button class="spike-chip" data-spike="global" data-trunks="t3">Global</button>
+            <button class="spike-chip" data-spike="story" data-trunks="t1,t2,t3">Story</button>
+            <button class="spike-chip" data-spike="legal" data-trunks="t2,t3">Legal</button>
+            <button class="spike-chip" data-spike="diy" data-trunks="t1">DIY</button>
+            <button class="spike-chip" data-spike="touring" data-trunks="t1,t2">Touring</button>
+            <button class="spike-chip" data-spike="hybrid" data-trunks="t3">Hybrid-Modern</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 90-DAY PLAN PANEL -->
+      <div class="plan-panel" id="planPanel">
+        <div class="plan-panel-empty" id="planEmpty">
+          <span class="arrow-hint">←</span>
+          Pick a spike chip to load its 90-day plan and see which trunk(s) it lives on.
+        </div>
+        <div id="planContent" hidden>
+          <p class="plan-eyebrow">Your spike · 90-day plan</p>
+          <h3 class="plan-title" id="planTitle">—</h3>
+          <div class="plan-tag-row" id="planTags"></div>
+          <p class="plan-quote" id="planQuote">—</p>
+          <p class="plan-section-head">90-day plan</p>
+          <ul class="plan-90day" id="planList"></ul>
+          <a class="plan-link" id="planLink" href="#">↗ open relevant cat</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUDIT YOUR WEAKEST STEP -->
+  <section class="audit-section">
+    <div>
+      <p class="audit-eyebrow">Side route · Before you commit to a trunk</p>
+      <h3>Audit your weakest step first</h3>
+      <p>Walk through each of the 9 prior steps and ask: <em>where am I weakest?</em> That's your next 90-day project — usually the area you've been quietly avoiding.</p>
+      <blockquote>"The biggest career bottleneck is usually the area you're most uncomfortable looking at — that's exactly where to start."</blockquote>
+    </div>
+    <div>
+      <p class="plan-section-head">Step rail — jump back and audit</p>
+      <div class="step-rail">
+        <a href="step-1.html"><span class="num">01</span>Branding</a>
+        <a href="step-2.html"><span class="num">02</span>Recording</a>
+        <a href="step-3.html"><span class="num">03</span>Distribution</a>
+        <a href="step-4.html"><span class="num">04</span>Streaming</a>
+        <a href="step-5.html"><span class="num">05</span>Royalties</a>
+        <a href="step-6.html"><span class="num">06</span>Publishing</a>
+        <a href="step-7.html"><span class="num">07</span>Social Media</a>
+        <a href="step-8.html"><span class="num">08</span>Live Performance</a>
+        <a href="step-9.html"><span class="num">09</span>Building Team</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 WHAT YOU WALK AWAY WITH -->
+  <section class="outline-section">
+    <div class="section-head">
+      <span class="num">05</span>
+      <h2>What you walk away with</h2>
+      <span class="meta">core takeaways · ten steps in</span>
+    </div>
+    <ul class="outline-list">
+      <li><strong>One spike beats ten averages</strong>Every artist needs a primary spike — the one area you go deeper than anyone around you. Breadth is table stakes; depth is leverage.</li>
+      <li><strong>Three trunks, one pick</strong>Independent, Signed, or Hybrid-Modern. Each trunk has its own next 3 moves. Pick one and commit for at least 90 days.</li>
+      <li><strong>Audit before you commit</strong>The 9 prior steps cover the foundation. Walk through each and ask where you're weakest — that's your next 90-day project.</li>
+      <li><strong>Depth beats breadth</strong>Don't try to master all 10 at once. Pick one spike from the list and go deep for the next 6 months — depth in one area beats shallow across many.</li>
+      <li><strong>The uncomfortable area = the bottleneck</strong>The biggest career bottleneck is usually the area you're most uncomfortable looking at — that's exactly where to start.</li>
+      <li><strong>Avoid: spreading too thin</strong>Trying to master streaming + sync + touring + branding all at once produces shallow results in every area.</li>
+      <li><strong>Avoid: skipping the audit</strong>Skipping the uncomfortable diagnostic and jumping to whatever's loudest on social wastes the next quarter.</li>
+      <li><strong>Avoid: confusing motion with progress</strong>Posting daily, attending every event, and recording constantly without a strategy is busy-ness, not building.</li>
+    </ul>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer-row">
+    <a class="complete-btn" href="../index.html">
+      <span class="target">🎯</span>
+      <span>Journey complete · Mark Step 10 complete</span>
+    </a>
+    <a class="footer-arrow" href="../index.html">← back to dashboard</a>
+  </div>
+
+</main>
+
+<!-- ============ DIALOGS ============ -->
+<dialog class="example-dialog" id="dlg-1">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-1">
+      <div class="mock-spike">
+        <span class="bar-short s1"></span>
+        <span class="bar-short s2"></span>
+        <span class="bar-tall"></span>
+        <span class="bar-short s3"></span>
+        <span class="bar-short s4"></span>
+      </div>
+      <div class="mock-overlay">
+        <p class="name">1 spike beats 10</p>
+        <p class="tag">ONE SPIKE BEATS TEN AVERAGES</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference · Key Concept</p>
+      <h3>Why this matters</h3>
+      <p>"Every artist needs a primary spike — the one area you go deeper than anyone around you." Ten lessons in, the next move isn't more breadth. It's depth in one chosen lane. Breadth is table stakes; depth is leverage.</p>
+      <ul>
+        <li>One spike differentiates you from every other foundationally-competent artist.</li>
+        <li>Pick from the 10 spike chips below the tree — Money, Ownership, Audience, Operator, Global, Story, Legal, DIY, Touring, Hybrid-Modern.</li>
+        <li>Commit for at least 90 days before evaluating.</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="example-dialog" id="dlg-2">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-2">
+      <div class="mock-depth">
+        <div class="well shallow"></div>
+        <div class="well shallow"></div>
+        <div class="well deep"></div>
+        <div class="well shallow"></div>
+        <div class="well shallow"></div>
+      </div>
+      <div class="mock-overlay">
+        <p class="name">Depth &gt; breadth</p>
+        <p class="tag">DEPTH BEATS BREADTH</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference · Key Concept</p>
+      <h3>Why this matters</h3>
+      <p>"Don't try to master all 10 at once. Pick one spike from the list and go deep for the next 6 months — depth in one area beats shallow across many." A deep well of skill in one area attracts collaborators and opportunities; ten shallow wells produce nothing reusable.</p>
+      <ul>
+        <li>Depth compounds — each month of focused work makes the next month cheaper.</li>
+        <li>Breadth dilutes — splitting attention 10 ways means each piece runs at 10% intensity.</li>
+        <li>You can always add a second spike after the first is established.</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="example-dialog" id="dlg-3">
+  <div class="dialog-shell">
+    <button class="dialog-close" aria-label="Close" onclick="this.closest('dialog').close()">×</button>
+    <div class="dialog-hero mock-thumb-3">
+      <div class="mock-audit">
+        <div class="row r1"></div>
+        <div class="row r2"></div>
+        <div class="row r3"></div>
+        <div class="row r4"></div>
+      </div>
+      <div class="mock-overlay">
+        <p class="name">Audit weakest</p>
+        <p class="tag">AUDIT YOUR WEAKEST STEP</p>
+      </div>
+    </div>
+    <div class="dialog-body">
+      <p class="dialog-tag">Reference · Key Concept</p>
+      <h3>Why this matters</h3>
+      <p>"The 9 prior steps cover the foundation. Walk through each step and ask: where am I weakest? That's your next 90-day project." The audit is the cheapest, lowest-stakes way to identify your real next move without guessing — and the answer is usually the area you've been quietly avoiding.</p>
+      <ul>
+        <li>"The biggest career bottleneck is usually the area you're most uncomfortable looking at — that's exactly where to start."</li>
+        <li>Branding, Recording, Distribution, Streaming, Royalties, Publishing, Social, Live, Team — score yourself 1-5 on each.</li>
+        <li>Whichever scores lowest is your next quarter's project.</li>
+      </ul>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  // ============ DIALOG OPEN/CLOSE ============
+  document.querySelectorAll('.example-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-dialog');
+      const dlg = document.getElementById(id);
+      if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+    });
+  });
+  document.querySelectorAll('dialog.example-dialog').forEach(dlg => {
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+  });
+
+  // ============ SPIKE → TRUNK MAP + 90-DAY PLANS ============
+  const spikePlans = {
+    money: {
+      title: 'Money',
+      trunks: ['t1', 't2', 't3'],
+      quote: '"Follow every dollar from listener to artist."',
+      plan: [
+        { day: '0-30', text: 'Map your full royalty chain — DSP, distributor, publisher, MLC. List every party that touches your money.' },
+        { day: '30-60', text: 'Register with the MLC and a publishing administrator. Most indie artists leak 15-25% by skipping this.' },
+        { day: '60-90', text: 'Pull your first quarterly statements. Audit the gap between gross stream count and what landed in your bank.' }
+      ],
+      link: '../pages/cat-1.html',
+      linkLabel: '↗ open Cat 1 — Streaming'
+    },
+    ownership: {
+      title: 'Ownership',
+      trunks: ['t1', 't3'],
+      quote: '"What you own beats what you earn."',
+      plan: [
+        { day: '0-30', text: 'Inventory every master + every publishing share you own. If you signed anything, get a copy.' },
+        { day: '30-60', text: 'Identify any masters/publishing you do NOT own and decide: live with it, renegotiate, or never sign that way again.' },
+        { day: '60-90', text: 'Build a written policy for the next deal — what % of masters and publishing you keep, no matter who comes calling.' }
+      ],
+      link: '../pages/cat-16.html',
+      linkLabel: '↗ open Cat 16 — Master Rights'
+    },
+    audience: {
+      title: 'Audience',
+      trunks: ['t1', 't3'],
+      quote: '"Real fans before chasing any deal."',
+      plan: [
+        { day: '0-30', text: 'Identify your top 100 actual fans — name, contact, how they found you. Email list, not follower count.' },
+        { day: '30-60', text: 'Ship one weekly direct-to-fan touchpoint (newsletter, voice memo, Discord drop) and measure open + reply rate.' },
+        { day: '60-90', text: 'Convert 10 fans into super-fans (paid tier, merch, show ticket). One paying fan teaches you more than 1,000 followers.' }
+      ],
+      link: '../pages/cat-9.html',
+      linkLabel: '↗ open Cat 9 — Fan Building'
+    },
+    operator: {
+      title: 'Operator',
+      trunks: ['t2', 't3'],
+      quote: '"Who does what in the industry machine."',
+      plan: [
+        { day: '0-30', text: 'Diagram every operator role: manager, agent, publisher, label, attorney, business manager. Know what each one does.' },
+        { day: '30-60', text: 'Identify which 2 operators you actually need for your spike right now. Most artists hire too many too early.' },
+        { day: '60-90', text: 'Interview 3 candidates per role with a written scope of work. Hire only on a defined trial period.' }
+      ],
+      link: '../pages/cat-8.html',
+      linkLabel: '↗ open Cat 8 — Operators'
+    },
+    global: {
+      title: 'Global',
+      trunks: ['t3'],
+      quote: '"The world is multinational — your music is in it."',
+      plan: [
+        { day: '0-30', text: 'Pull listener-by-country data from Spotify for Artists. Find your top 3 non-US markets.' },
+        { day: '30-60', text: 'Translate one piece of release content (bio, single description, video caption) into the language of your #2 market.' },
+        { day: '60-90', text: 'Run a small targeted campaign in that market — local playlist pitch, local press, local sync rep. Test before you scale.' }
+      ],
+      link: '../pages/cat-26.html',
+      linkLabel: '↗ open Cat 26 — Global'
+    },
+    story: {
+      title: 'Story',
+      trunks: ['t1', 't2', 't3'],
+      quote: '"People bond with the human, not the song."',
+      plan: [
+        { day: '0-30', text: 'Write your origin story in 3 paragraphs. Include the specific scene that made you start. Cut everything generic.' },
+        { day: '30-60', text: 'Pick one storytelling channel (long-form video, podcast, written newsletter) and ship 4 pieces in 4 weeks.' },
+        { day: '60-90', text: 'Measure which story-piece moved the most signups. Double down on that format. Drop the others.' }
+      ],
+      link: '../pages/cat-9.html',
+      linkLabel: '↗ open Cat 9 — Story'
+    },
+    legal: {
+      title: 'Legal',
+      trunks: ['t2', 't3'],
+      quote: '"Get the paperwork right; build on it."',
+      plan: [
+        { day: '0-30', text: 'Hire a music attorney for a 1-hour paid consult. Bring every contract you have ever signed.' },
+        { day: '30-60', text: 'Draft templates: producer split sheet, feature agreement, work-for-hire, sync license. Never sign without these on hand.' },
+        { day: '60-90', text: 'Schedule a yearly legal audit — same attorney, same checklist. Treat it like a tax filing, not an emergency.' }
+      ],
+      link: '../pages/cat-15.html',
+      linkLabel: '↗ open Cat 15 — Legal'
+    },
+    diy: {
+      title: 'DIY',
+      trunks: ['t1'],
+      quote: '"Run a global business from a laptop."',
+      plan: [
+        { day: '0-30', text: 'Stack the indie toolkit: DistroKid (or Tunecore), Bandcamp, Mailchimp, Splice, Discord, Linktree. Get fluent in each.' },
+        { day: '30-60', text: 'Ship one full release cycle solo — recording → distribution → release-day → 30-day follow-through. Document every step.' },
+        { day: '60-90', text: 'Identify the 1-2 places you still need help (mixing? legal? video?). Hire surgically; keep the rest in-house.' }
+      ],
+      link: '../pages/cat-5.html',
+      linkLabel: '↗ open Cat 5 — DIY'
+    },
+    touring: {
+      title: 'Touring',
+      trunks: ['t1', 't2'],
+      quote: '"Live performance is the foundation."',
+      plan: [
+        { day: '0-30', text: 'Play 4 shows in 30 days — even small ones. Capture audience reaction video at each. Volume beats prestige here.' },
+        { day: '30-60', text: 'Build a one-page show-pitch with video, draw count, and a list of similar artists. Send to 10 venues + 3 booking agents.' },
+        { day: '60-90', text: 'Lock 1 mini-tour: 4-6 dates in a single region, route them efficiently, sleep cheap. Treat it as your first business test.' }
+      ],
+      link: '../pages/cat-13.html',
+      linkLabel: '↗ open Cat 13 — Touring'
+    },
+    hybrid: {
+      title: 'Hybrid-Modern',
+      trunks: ['t3'],
+      quote: '"Independent + selective partners + AI + global."',
+      plan: [
+        { day: '0-30', text: 'Map which functions you keep in-house vs which you outsource selectively. The hybrid only works if the split is intentional.' },
+        { day: '30-60', text: 'Add ONE AI-assisted workflow to your weekly cadence (production, mastering, video edit, copy). Measure time saved.' },
+        { day: '60-90', text: 'Sign one selective partner deal — sync, distro upgrade, or PR — for ONE release only. No 360, no master assignment.' }
+      ],
+      link: '../pages/cat-25.html',
+      linkLabel: '↗ open Cat 25 — Hybrid-Modern'
+    }
+  };
+
+  const trunkLabels = {
+    t1: 'INDEPENDENT',
+    t2: 'SIGNED',
+    t3: 'HYBRID-MODERN'
+  };
+
+  const treeSvg = document.getElementById('treeSvg');
+  const trunks = treeSvg.querySelectorAll('.trunk');
+  const chips = document.querySelectorAll('.spike-chip');
+  const planEmpty = document.getElementById('planEmpty');
+  const planContent = document.getElementById('planContent');
+  const planTitle = document.getElementById('planTitle');
+  const planTags = document.getElementById('planTags');
+  const planQuote = document.getElementById('planQuote');
+  const planList = document.getElementById('planList');
+  const planLink = document.getElementById('planLink');
+  const clearBtn = document.getElementById('clearBtn');
+
+  function highlightTrunks(activeSet) {
+    trunks.forEach(t => {
+      const id = t.getAttribute('data-trunk');
+      t.classList.remove('dim', 'highlight');
+      if (activeSet.size === 0) return;
+      if (activeSet.has(id)) {
+        t.classList.add('highlight');
+      } else {
+        t.classList.add('dim');
+      }
+    });
+  }
+
+  function loadPlan(spike) {
+    const p = spikePlans[spike];
+    if (!p) return;
+    planEmpty.hidden = true;
+    planContent.hidden = false;
+    planTitle.textContent = p.title;
+    planTags.innerHTML = '';
+    p.trunks.forEach(t => {
+      const tag = document.createElement('span');
+      tag.className = 'plan-tag ' + t;
+      tag.textContent = trunkLabels[t];
+      planTags.appendChild(tag);
+    });
+    planQuote.textContent = p.quote;
+    planList.innerHTML = '';
+    p.plan.forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="day">DAY ' + item.day + '</span><span>' + item.text + '</span>';
+      planList.appendChild(li);
+    });
+    planLink.href = p.link;
+    planLink.textContent = p.linkLabel;
+  }
+
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      const isActive = chip.classList.contains('active');
+      chips.forEach(c => c.classList.remove('active'));
+      if (isActive) {
+        // toggling off
+        highlightTrunks(new Set());
+        planEmpty.hidden = false;
+        planContent.hidden = true;
+        return;
+      }
+      chip.classList.add('active');
+      const trunkList = (chip.getAttribute('data-trunks') || '').split(',').map(s => s.trim()).filter(Boolean);
+      highlightTrunks(new Set(trunkList));
+      loadPlan(chip.getAttribute('data-spike'));
+    });
+  });
+
+  // also let trunk headers be clickable to highlight + clear plan
+  trunks.forEach(trunk => {
+    const head = trunk.querySelector('.trunk-head');
+    if (!head) return;
+    head.style.cursor = 'pointer';
+    head.addEventListener('click', () => {
+      const id = trunk.getAttribute('data-trunk');
+      // dim all chips, only keep ones tied to this trunk visually
+      chips.forEach(c => c.classList.remove('active'));
+      highlightTrunks(new Set([id]));
+      planEmpty.hidden = false;
+      planContent.hidden = true;
+    });
+  });
+
+  clearBtn.addEventListener('click', () => {
+    chips.forEach(c => c.classList.remove('active'));
+    highlightTrunks(new Set());
+    planEmpty.hidden = false;
+    planContent.hidden = true;
+  });
+</script>
+
+
+<!-- ============ V3 RED DOOR BUTTON ============ -->
+<style>
+  .v3-door-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    background: #000000;
+    color: #c1121f;
+    border: 2px solid #8b0000;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px #1a0000, 0 0 24px rgba(139, 0, 0, 0.55), 0 0 44px rgba(193, 18, 31, 0.25);
+    transition: all 0.22s ease;
+    text-shadow: 0 0 6px rgba(193, 18, 31, 0.45);
+  }
+  .v3-door-btn::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c1121f;
+    box-shadow: 0 0 8px #c1121f, 0 0 16px rgba(193, 18, 31, 0.6);
+    animation: v3-pulse 1.6s ease-in-out infinite;
+  }
+  .v3-door-btn:hover {
+    background: #1a0000;
+    color: #ff1f1f;
+    border-color: #c1121f;
+    box-shadow: 0 0 0 1px #2a0000, 0 0 32px rgba(193, 18, 31, 0.85), 0 0 60px rgba(255, 31, 31, 0.4);
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+  @keyframes v3-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+  }
+</style>
+<a class="v3-door-btn" href="step-10-v3.html">▾ enter v3</a>
+
+</body>
+</html>

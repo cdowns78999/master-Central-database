@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Living in Immortality — LiI Records</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── RESET ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    /* ─── TOKENS ─────────────────────────────────────────── */
+    :root {
+      --black:     #050508;
+      --void:      #0d0b1e;
+      --indigo:    #4f46e5;
+      --indigo-dim:#2e2a8a;
+      --silver:    #c8c8d4;
+      --white:     #f0f0ff;
+      --serif:     'Cormorant Garamond', Georgia, serif;
+      --mono:      'Share Tech Mono', 'Courier New', monospace;
+    }
+
+    /* ─── BASE ───────────────────────────────────────────── */
+    body {
+      background-color: var(--black);
+      color: var(--silver);
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ─── KEYFRAMES ──────────────────────────────────────── */
+    @keyframes drift {
+      0%   { transform: translateY(0)   translateX(0)   scale(1);   opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translateY(-110vh) translateX(var(--dx, 40px)) scale(0.6); opacity: 0; }
+    }
+
+    @keyframes nebula-pulse {
+      0%, 100% { opacity: 0.18; transform: scale(1); }
+      50%       { opacity: 0.30; transform: scale(1.06); }
+    }
+
+    @keyframes nebula-pulse-b {
+      0%, 100% { opacity: 0.12; transform: scale(1.06); }
+      50%       { opacity: 0.22; transform: scale(1); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scanline {
+      0%   { top: -8%; }
+      100% { top: 108%; }
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { text-shadow: 0 0 18px rgba(79,70,229,0.35); }
+      50%       { text-shadow: 0 0 48px rgba(79,70,229,0.75), 0 0 90px rgba(79,70,229,0.25); }
+    }
+
+    @keyframes border-shimmer {
+      0%, 100% { border-color: rgba(79,70,229,0.25); }
+      50%       { border-color: rgba(79,70,229,0.65); }
+    }
+
+    @keyframes card-hover-glow {
+      0%, 100% { box-shadow: 0 0 0 rgba(79,70,229,0); }
+      50%       { box-shadow: 0 0 32px rgba(79,70,229,0.2); }
+    }
+
+    /* ─── HERO ───────────────────────────────────────────── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1.5rem;
+      overflow: hidden;
+      background: radial-gradient(ellipse 80% 60% at 50% 60%, #1a1040 0%, var(--void) 45%, var(--black) 100%);
+    }
+
+    /* nebula blobs */
+    #hero::before,
+    #hero::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    #hero::before {
+      width: 55vw; height: 55vw;
+      max-width: 700px; max-height: 700px;
+      top: -10%; left: -10%;
+      background: radial-gradient(ellipse at center, rgba(79,70,229,0.35) 0%, transparent 70%);
+      animation: nebula-pulse 9s ease-in-out infinite;
+    }
+    #hero::after {
+      width: 45vw; height: 45vw;
+      max-width: 600px; max-height: 600px;
+      bottom: -8%; right: -8%;
+      background: radial-gradient(ellipse at center, rgba(100,20,180,0.28) 0%, transparent 70%);
+      animation: nebula-pulse-b 12s ease-in-out infinite;
+    }
+
+    /* scanline overlay */
+    .scanline {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .scanline::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(transparent, rgba(79,70,229,0.06), transparent);
+      animation: scanline 8s linear infinite;
+    }
+
+    /* floating particles */
+    .particles {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .particle {
+      position: absolute;
+      bottom: -10px;
+      width: 2px; height: 2px;
+      border-radius: 50%;
+      background: var(--white);
+      animation: drift var(--dur, 14s) linear var(--delay, 0s) infinite;
+    }
+    .particle:nth-child(1)  { left:5%;   --dur:16s; --delay:0s;   --dx:-20px; width:1px; height:1px; background:var(--silver); }
+    .particle:nth-child(2)  { left:12%;  --dur:12s; --delay:2s;   --dx:30px;  }
+    .particle:nth-child(3)  { left:22%;  --dur:18s; --delay:4s;   --dx:-40px; width:1px; height:1px; background:rgba(79,70,229,0.9); }
+    .particle:nth-child(4)  { left:35%;  --dur:14s; --delay:1s;   --dx:25px;  }
+    .particle:nth-child(5)  { left:45%;  --dur:20s; --delay:6s;   --dx:-30px; width:1px; height:1px; }
+    .particle:nth-child(6)  { left:55%;  --dur:11s; --delay:3s;   --dx:50px;  background:rgba(79,70,229,0.8); }
+    .particle:nth-child(7)  { left:65%;  --dur:15s; --delay:5s;   --dx:-15px; width:1px; height:1px; background:var(--silver); }
+    .particle:nth-child(8)  { left:73%;  --dur:13s; --delay:0.5s; --dx:35px;  }
+    .particle:nth-child(9)  { left:82%;  --dur:17s; --delay:7s;   --dx:-25px; width:1px; height:1px; }
+    .particle:nth-child(10) { left:90%;  --dur:10s; --delay:2.5s; --dx:20px;  background:rgba(79,70,229,0.7); }
+    .particle:nth-child(11) { left:18%;  --dur:22s; --delay:9s;   --dx:-45px; width:1px; height:1px; background:var(--white); }
+    .particle:nth-child(12) { left:50%;  --dur:19s; --delay:11s;  --dx:10px;  background:var(--silver); }
+    .particle:nth-child(13) { left:77%;  --dur:14s; --delay:8s;   --dx:-30px; width:1px; height:1px; }
+    .particle:nth-child(14) { left:30%;  --dur:25s; --delay:13s;  --dx:60px;  background:rgba(79,70,229,0.5); }
+    .particle:nth-child(15) { left:60%;  --dur:21s; --delay:15s;  --dx:-50px; width:1px; height:1px; background:var(--white); }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 860px;
+      animation: fadeInUp 1.4s ease both;
+    }
+
+    .label-id {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.28em;
+      color: var(--indigo);
+      text-transform: uppercase;
+      margin-bottom: 1.8rem;
+      opacity: 0.85;
+    }
+
+    .hero-title {
+      font-family: var(--serif);
+      font-size: clamp(2.8rem, 7vw, 6.5rem);
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      color: var(--white);
+      line-height: 1.05;
+      text-transform: uppercase;
+      animation: glow-pulse 5s ease-in-out infinite;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: rgba(240,240,255,0.7);
+    }
+
+    .hero-divider {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--indigo), transparent);
+      margin: 2rem auto;
+    }
+
+    .hero-tagline {
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--silver);
+      letter-spacing: 0.04em;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-sub {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      color: rgba(200,200,212,0.5);
+      text-transform: uppercase;
+      margin-top: 0.6rem;
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      color: rgba(200,200,212,0.35);
+      text-transform: uppercase;
+    }
+    .hero-scroll::after {
+      content: '';
+      display: block;
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(var(--indigo), transparent);
+      margin: 0.6rem auto 0;
+    }
+
+    /* ─── SECTIONS SHARED ────────────────────────────────── */
+    section {
+      padding: 6rem 1.5rem;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      color: var(--indigo);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      margin-bottom: 2rem;
+    }
+
+    /* ─── ABOUT ──────────────────────────────────────────── */
+    #about {
+      background: linear-gradient(180deg, var(--black) 0%, #080614 100%);
+      border-top: 1px solid rgba(79,70,229,0.12);
+      border-bottom: 1px solid rgba(79,70,229,0.12);
+    }
+
+    .about-inner {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    .about-glyph {
+      font-family: var(--serif);
+      font-size: 8rem;
+      font-weight: 300;
+      font-style: italic;
+      color: rgba(79,70,229,0.15);
+      line-height: 1;
+      user-select: none;
+    }
+
+    .about-body p {
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      font-weight: 300;
+      color: var(--silver);
+      margin-bottom: 1.2rem;
+      line-height: 1.85;
+    }
+
+    .about-body p:first-of-type {
+      font-size: clamp(1.1rem, 2vw, 1.4rem);
+      color: rgba(240,240,255,0.9);
+      font-style: italic;
+    }
+
+    .about-stat-row {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .stat-num {
+      font-family: var(--mono);
+      font-size: 1.6rem;
+      color: var(--white);
+      letter-spacing: 0.04em;
+    }
+
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      color: rgba(200,200,212,0.45);
+      text-transform: uppercase;
+    }
+
+    /* ─── ARTISTS ────────────────────────────────────────── */
+    #artists {
+      background: var(--black);
+    }
+
+    .artists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .artist-card {
+      background: linear-gradient(135deg, rgba(13,11,30,0.9) 0%, rgba(5,5,8,0.95) 100%);
+      border: 1px solid rgba(79,70,229,0.2);
+      border-radius: 2px;
+      padding: 2.2rem 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.4s ease, transform 0.3s ease;
+      animation: border-shimmer 6s ease-in-out infinite;
+    }
+
+    .artist-card:nth-child(2) { animation-delay: 2s; }
+    .artist-card:nth-child(3) { animation-delay: 4s; }
+
+    .artist-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(79,70,229,0.5);
+    }
+
+    .artist-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--indigo), transparent);
+      opacity: 0.6;
+    }
+
+    .artist-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(79,70,229,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .card-num {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.28em;
+      color: rgba(79,70,229,0.55);
+      margin-bottom: 1.6rem;
+    }
+
+    .card-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 1px solid rgba(79,70,229,0.3);
+      background: radial-gradient(ellipse at 40% 35%, rgba(79,70,229,0.25), rgba(5,5,8,0.9));
+      margin-bottom: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-avatar-glyph {
+      font-family: var(--serif);
+      font-size: 1.6rem;
+      color: rgba(200,200,212,0.3);
+      font-style: italic;
+    }
+
+    .card-name {
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-genre {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      color: var(--indigo);
+      text-transform: uppercase;
+      margin-bottom: 1.4rem;
+    }
+
+    .card-status {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(79,70,229,0.8);
+      border: 1px solid rgba(79,70,229,0.3);
+      padding: 0.3rem 0.75rem;
+      border-radius: 1px;
+    }
+
+    /* ─── JOIN ───────────────────────────────────────────── */
+    #join {
+      background: linear-gradient(180deg, var(--black) 0%, #06040f 50%, var(--black) 100%);
+      border-top: 1px solid rgba(79,70,229,0.1);
+    }
+
+    .join-inner {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    .join-left p {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: rgba(200,200,212,0.7);
+      line-height: 1.9;
+      margin-bottom: 1rem;
+    }
+
+    .join-meta {
+      margin-top: 2rem;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      color: rgba(200,200,212,0.35);
+      text-transform: uppercase;
+      line-height: 2;
+    }
+
+    /* form */
+    .lii-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .field-group label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      color: rgba(200,200,212,0.45);
+      text-transform: uppercase;
+    }
+
+    .lii-form input,
+    .lii-form select {
+      background: rgba(13,11,30,0.7);
+      border: 1px solid rgba(79,70,229,0.25);
+      border-radius: 1px;
+      padding: 0.85rem 1rem;
+      color: var(--white);
+      font-family: var(--serif);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      -webkit-appearance: none;
+    }
+
+    .lii-form select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234f46e5' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 2.5rem;
+    }
+
+    .lii-form input:focus,
+    .lii-form select:focus {
+      border-color: rgba(79,70,229,0.65);
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
+    }
+
+    .lii-form input::placeholder { color: rgba(200,200,212,0.2); }
+
+    .lii-form select option {
+      background: #0d0b1e;
+      color: var(--white);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+
+    .btn-submit {
+      margin-top: 0.5rem;
+      padding: 1rem 2rem;
+      background: transparent;
+      border: 1px solid var(--indigo);
+      color: var(--white);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 1px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .btn-submit::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--indigo);
+      transform: translateX(-101%);
+      transition: transform 0.35s ease;
+    }
+
+    .btn-submit:hover::before { transform: translateX(0); }
+    .btn-submit:hover { color: var(--white); }
+
+    .btn-submit span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── FOOTER ─────────────────────────────────────────── */
+    footer {
+      background: var(--black);
+      border-top: 1px solid rgba(79,70,229,0.14);
+      padding: 4rem 1.5rem 3rem;
+      text-align: center;
+    }
+
+    .footer-logo {
+      font-family: var(--serif);
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 300;
+      letter-spacing: 0.14em;
+      color: var(--white);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .footer-abbr {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      color: var(--indigo);
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 1.4rem;
+    }
+
+    .footer-tagline {
+      font-size: 1rem;
+      font-style: italic;
+      font-weight: 300;
+      color: rgba(200,200,212,0.5);
+      margin-bottom: 2rem;
+    }
+
+    .footer-divider {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(79,70,229,0.4), transparent);
+      margin: 0 auto 1.8rem;
+    }
+
+    .footer-copy {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: rgba(200,200,212,0.2);
+      text-transform: uppercase;
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .about-inner {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      .about-glyph { display: none; }
+
+      .join-inner {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .about-stat-row {
+        gap: 1.8rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      section { padding: 4rem 1.2rem; }
+      .artists-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── HERO ─────────────────────────────────────────── -->
+  <section id="hero">
+    <div class="scanline"></div>
+
+    <div class="particles" aria-hidden="true">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+
+    <div class="hero-content">
+      <p class="label-id">LiI-001 &nbsp;·&nbsp; VRC Native Label &nbsp;·&nbsp; Est. 2026</p>
+      <h1 class="hero-title">Living<em> in </em>Immortality</h1>
+      <div class="hero-divider"></div>
+      <p class="hero-tagline">Where the frequency outlives the body.</p>
+      <p class="hero-sub">Born in the static. Alive in the signal.</p>
+    </div>
+
+    <div class="hero-scroll" aria-hidden="true">Descend</div>
+  </section>
+
+  <!-- ─── ABOUT ─────────────────────────────────────────── -->
+  <section id="about">
+    <div class="container">
+      <div class="about-inner">
+        <div class="about-glyph" aria-hidden="true">LiI</div>
+        <div class="about-body">
+          <p class="section-label">The Label</p>
+          <h2 class="section-title">Post-Physical.<br />Pure Signal.</h2>
+          <p>The first VRC-native record label with a real brand, a curated roster, and a world-as-album release model — built inside the void, for those who already live there.</p>
+          <p>We don't release music. We release transmissions. Each artist is a frequency. Each world is a side. The catalog doesn't end when the body does.</p>
+          <p>Living in Immortality exists at the intersection of ethereal sound, cosmic visual language, and the permanence of digital existence — where what you make echoes past the moment it was made.</p>
+
+          <div class="about-stat-row">
+            <div class="stat">
+              <span class="stat-num">∞</span>
+              <span class="stat-label">Catalog Lifespan</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num">001</span>
+              <span class="stat-label">Active Worlds</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num">VRC</span>
+              <span class="stat-label">Native Platform</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── ARTISTS ───────────────────────────────────────── -->
+  <section id="artists">
+    <div class="container">
+      <p class="section-label">Roster — Season I</p>
+      <h2 class="section-title">The Frequencies</h2>
+
+      <div class="artists-grid">
+
+        <div class="artist-card">
+          <p class="card-num">LiI-A001 &nbsp;·&nbsp; SLOT I</p>
+          <div class="card-avatar"><span class="card-avatar-glyph">∿</span></div>
+          <h3 class="card-name">Artist TBA</h3>
+          <p class="card-genre">Ethereal Wave / Dark Ambient</p>
+          <span class="card-status">Accepting Applications</span>
+        </div>
+
+        <div class="artist-card">
+          <p class="card-num">LiI-A002 &nbsp;·&nbsp; SLOT II</p>
+          <div class="card-avatar"><span class="card-avatar-glyph">◈</span></div>
+          <h3 class="card-name">Artist TBA</h3>
+          <p class="card-genre">Neoclassical / Void Electronic</p>
+          <span class="card-status">Accepting Applications</span>
+        </div>
+
+        <div class="artist-card">
+          <p class="card-num">LiI-A003 &nbsp;·&nbsp; SLOT III</p>
+          <div class="card-avatar"><span class="card-avatar-glyph">⟁</span></div>
+          <h3 class="card-name">Artist TBA</h3>
+          <p class="card-genre">Ritual Industrial / Drone</p>
+          <span class="card-status">Accepting Applications</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── JOIN ──────────────────────────────────────────── -->
+  <section id="join">
+    <div class="container">
+      <div class="join-inner">
+        <div class="join-left">
+          <p class="section-label">Transmit</p>
+          <h2 class="section-title">Join the Label</h2>
+          <p>We're building the first generation of artists who understand that a VRC world is not a stage — it's an album. If you make sound that belongs in the dark, reach through.</p>
+          <p>Applications are curated, not open. We're looking for voices that carry weight in silence.</p>
+          <div class="join-meta">
+            Currently accepting<br />
+            Season I applications<br />
+            ─────────────────<br />
+            3 slots / limited intake<br />
+            All genres considered<br />
+            VRC presence required
+          </div>
+        </div>
+
+        <form class="lii-form" onsubmit="return false;" aria-label="Label Application Form">
+          <div class="form-row">
+            <div class="field-group">
+              <label for="f-name">Name</label>
+              <input type="text" id="f-name" name="name" placeholder="Your name" autocomplete="off" />
+            </div>
+            <div class="field-group">
+              <label for="f-email">Email</label>
+              <input type="email" id="f-email" name="email" placeholder="you@signal.void" autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="f-vrc">VRChat Username</label>
+            <input type="text" id="f-vrc" name="vrc_username" placeholder="YourVRCHandle" autocomplete="off" />
+          </div>
+
+          <div class="field-group">
+            <label for="f-genre">Primary Genre</label>
+            <select id="f-genre" name="genre">
+              <option value="" disabled selected>Select your frequency</option>
+              <option value="ethereal-wave">Ethereal Wave</option>
+              <option value="dark-ambient">Dark Ambient</option>
+              <option value="neoclassical">Neoclassical</option>
+              <option value="void-electronic">Void Electronic</option>
+              <option value="ritual-industrial">Ritual Industrial</option>
+              <option value="drone">Drone</option>
+              <option value="other">Other / Hybrid</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-submit">
+            <span>Transmit Application &rarr;</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ────────────────────────────────────────── -->
+  <footer>
+    <p class="footer-logo">Living in Immortality</p>
+    <p class="footer-abbr">LiI Records</p>
+    <p class="footer-tagline">Where the frequency outlives the body.</p>
+    <div class="footer-divider"></div>
+    <p class="footer-copy">&copy; 2026 Living in Immortality &nbsp;·&nbsp; All transmissions reserved</p>
+  </footer>
+
+</body>
+</html>

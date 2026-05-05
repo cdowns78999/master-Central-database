@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LadyMilkyMoo — a soft hand in a loud world</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%8D%93%3C/text%3E%3C/svg%3E" />
+<style>
+  :root {
+    /* Strawberry Milk palette */
+    --bg-1: #fef0f4;
+    --bg-2: #ffe0ea;
+    --cream: #fff9f2;
+    --cream-deep: #ffeedd;
+    --milk: #fff5f8;
+    --strawberry: #e85a7c;
+    --strawberry-deep: #c94564;
+    --foam: #ffffff;
+    --rose-glow: rgba(232, 90, 124, 0.18);
+    --text: #5a3744;
+    --text-soft: #8a6575;
+    --tile-shadow: 0 8px 28px rgba(232, 90, 124, 0.14);
+    --tile-shadow-hover: 0 14px 38px rgba(232, 90, 124, 0.22);
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-stack);
+    color: var(--text);
+    background:
+      radial-gradient(ellipse at 20% 0%, var(--bg-2) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 10%, var(--cream) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--milk) 45%, var(--bg-2) 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(255,255,255,0.35) 0%, transparent 40%),
+      radial-gradient(circle at 70% 60%, var(--rose-glow) 0%, transparent 45%);
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 56px 24px 24px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ===== SOURCE BANNER ===== */
+  #sourceBanner {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(232, 90, 124, 0.18);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    box-shadow: 0 8px 24px rgba(232, 90, 124, 0.14);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    z-index: 50;
+    max-width: 280px;
+  }
+  #sourceBanner.show { opacity: 1; }
+
+  /* ===== HEADER ===== */
+  header.page-head {
+    text-align: center;
+    padding: 32px 0 24px;
+  }
+  header.page-head h1 {
+    font-family: var(--font-stack);
+    font-size: clamp(44px, 8vw, 76px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+    background: linear-gradient(135deg, var(--strawberry) 0%, #ff8fa8 50%, var(--strawberry-deep) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 24px rgba(232,90,124,0.12);
+    line-height: 1.05;
+  }
+  header.page-head .subtitle {
+    margin-top: 14px;
+    font-size: clamp(14px, 2.2vw, 18px);
+    color: var(--text-soft);
+    font-style: italic;
+    letter-spacing: 0.02em;
+  }
+
+  /* ===== CENTERPIECE: CARTON + GLASS ===== */
+  .centerpiece {
+    margin: 40px auto 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .carton-stage {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 28px;
+    min-height: 320px;
+    perspective: 1200px;
+  }
+
+  /* Carton */
+  .carton-wrap {
+    width: 160px;
+    height: 260px;
+    cursor: pointer;
+    transform-origin: bottom right;
+    transition: transform 1.1s cubic-bezier(0.34, 1.2, 0.5, 1);
+    position: relative;
+    filter: drop-shadow(0 18px 24px rgba(232,90,124,0.22));
+  }
+  .carton-wrap.pouring {
+    transform: rotate(-62deg) translateX(34px);
+  }
+  .carton-body {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(180deg, #ffeaf1 0%, #ffd0de 100%);
+    border-radius: 8px;
+    border: 2px solid #f2bdcc;
+    position: absolute;
+    bottom: 0;
+    box-shadow: inset -10px 0 18px rgba(201, 69, 100, 0.12), inset 10px 0 12px rgba(255,255,255,0.6);
+    overflow: hidden;
+  }
+  .carton-body::before {
+    /* side-shade for depth */
+    content: "";
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 22px;
+    background: linear-gradient(90deg, transparent 0%, rgba(201,69,100,0.22) 100%);
+  }
+  .carton-top {
+    width: 100%;
+    height: 78px;
+    position: absolute;
+    top: 0;
+    clip-path: polygon(0 40%, 50% 0%, 100% 40%, 100% 100%, 0% 100%);
+    background: linear-gradient(180deg, #ffd3e0 0%, #ffb9cd 100%);
+    border-bottom: 2px solid #f2bdcc;
+  }
+  .carton-top::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 78px;
+    background: rgba(201,69,100,0.35);
+  }
+  .carton-label {
+    position: absolute;
+    top: 92px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 110px;
+    background: var(--cream);
+    border-radius: 8px;
+    border: 2px dashed #f2bdcc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px;
+  }
+  .strawberry-icon {
+    width: 42px;
+    height: 48px;
+    position: relative;
+  }
+  .strawberry-icon .berry {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 38px;
+    height: 38px;
+    background: radial-gradient(circle at 35% 30%, #ff8fa8 0%, var(--strawberry) 55%, var(--strawberry-deep) 100%);
+    border-radius: 50% 50% 48% 48% / 45% 45% 60% 60%;
+    box-shadow: inset -6px -6px 10px rgba(201,69,100,0.4);
+  }
+  .strawberry-icon .berry::before,
+  .strawberry-icon .berry::after {
+    content: "";
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #fff4e0;
+    border-radius: 50%;
+    box-shadow:
+      8px 6px 0 #fff4e0,
+      -7px 10px 0 #fff4e0,
+      4px 16px 0 #fff4e0,
+      -4px 4px 0 #fff4e0,
+      10px 20px 0 #fff4e0;
+    top: 8px;
+    left: 12px;
+  }
+  .strawberry-icon .leaf {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 22px;
+    height: 14px;
+    background: #7bc47f;
+    clip-path: polygon(50% 0%, 0% 60%, 25% 100%, 50% 70%, 75% 100%, 100% 60%);
+  }
+  .carton-label .label-text {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--strawberry-deep);
+    text-transform: uppercase;
+  }
+
+  /* Pour stream */
+  .pour-stream {
+    position: absolute;
+    top: 30px;
+    left: 36px;
+    width: 10px;
+    height: 0;
+    background: linear-gradient(180deg, #ffe4ec 0%, #ffc3d4 100%);
+    border-radius: 6px;
+    opacity: 0;
+    transform-origin: top;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .carton-wrap.pouring .pour-stream {
+    animation: streamFlow 1s ease-in 0.35s forwards;
+  }
+  @keyframes streamFlow {
+    0%   { height: 0; opacity: 0; }
+    15%  { height: 40px; opacity: 0.9; }
+    85%  { height: 140px; opacity: 0.9; }
+    100% { height: 140px; opacity: 0; }
+  }
+
+  /* Glass */
+  .glass-wrap {
+    width: 120px;
+    height: 180px;
+    position: relative;
+    filter: drop-shadow(0 14px 18px rgba(232,90,124,0.12));
+  }
+  .glass {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.15) 100%);
+    border: 2.5px solid rgba(232, 90, 124, 0.35);
+    border-top: 2.5px solid rgba(232, 90, 124, 0.25);
+    border-radius: 8px 8px 40px 40px / 8px 8px 26px 26px;
+    overflow: hidden;
+    backdrop-filter: blur(2px);
+  }
+  .glass::before {
+    /* glass highlight */
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 12px;
+    width: 12px;
+    height: 70%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0));
+    border-radius: 8px;
+  }
+  .liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    background: linear-gradient(180deg, #ffd1de 0%, #ffb3c7 100%);
+    transition: height 1.1s ease-in;
+  }
+  .liquid::before {
+    /* foam top */
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: radial-gradient(circle at 20% 50%, #fff 2px, transparent 3px),
+                radial-gradient(circle at 50% 50%, #fff 3px, transparent 4px),
+                radial-gradient(circle at 80% 50%, #fff 2px, transparent 3px),
+                linear-gradient(180deg, #fff 0%, #ffe9f0 100%);
+    border-radius: 50% 50% 0 0 / 80% 80% 0 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .glass-wrap.filled .liquid { height: 75%; }
+  .glass-wrap.filled .liquid::before { opacity: 1; }
+
+  /* Foam bubbles */
+  .foam-bubble {
+    position: absolute;
+    background: rgba(255,255,255,0.85);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .glass-wrap.filled .foam-bubble {
+    animation: bubbleRise 2.8s ease-out infinite;
+  }
+  @keyframes bubbleRise {
+    0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+    25%  { opacity: 0.8; }
+    100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
+  }
+
+  /* Phrase readout */
+  .phrase-readout {
+    min-height: 52px;
+    max-width: 560px;
+    text-align: center;
+    font-size: clamp(16px, 2.4vw, 20px);
+    color: var(--text);
+    font-style: italic;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+    padding: 0 18px;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .phrase-readout.show { opacity: 1; }
+  .phrase-readout::before {
+    content: "\201C";
+    color: var(--strawberry);
+    font-size: 1.4em;
+    margin-right: 4px;
+    vertical-align: -0.1em;
+  }
+  .phrase-readout::after {
+    content: "\201D";
+    color: var(--strawberry);
+    font-size: 1.4em;
+    margin-left: 4px;
+    vertical-align: -0.1em;
+  }
+
+  .tap-hint {
+    font-size: 12px;
+    color: var(--text-soft);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  /* ===== TILES ===== */
+  .tiles-section {
+    margin: 64px 0 48px;
+  }
+  .tiles-section h2 {
+    text-align: center;
+    font-size: clamp(18px, 3vw, 22px);
+    font-weight: 600;
+    color: var(--text-soft);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .tile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 22px;
+  }
+  .tile {
+    min-height: 180px;
+    border-radius: var(--radius-lg);
+    padding: 24px 22px;
+    cursor: pointer;
+    background: linear-gradient(145deg, var(--cream) 0%, #ffe4ea 100%);
+    border: 1px solid rgba(232, 90, 124, 0.14);
+    box-shadow: var(--tile-shadow);
+    transition: transform 0.5s cubic-bezier(0.4, 0.1, 0.3, 1), box-shadow 0.4s ease, background 0.6s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    transform-style: preserve-3d;
+  }
+  .tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .tile:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--tile-shadow-hover);
+  }
+  .tile.flipped {
+    background: linear-gradient(145deg, #ffd5e1 0%, var(--strawberry) 180%);
+    color: var(--text);
+  }
+  .tile-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--strawberry-deep);
+    letter-spacing: 0.01em;
+    transition: opacity 0.35s ease;
+  }
+  .tile.flipped .tile-title {
+    opacity: 0;
+    position: absolute;
+  }
+  .tile-body {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.45s ease 0.15s, transform 0.45s ease 0.15s;
+    max-width: 300px;
+  }
+  .tile.flipped .tile-body {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .tile .tap-marker {
+    position: absolute;
+    bottom: 14px;
+    right: 16px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--strawberry);
+    opacity: 0.6;
+    text-transform: uppercase;
+  }
+  .tile.flipped .tap-marker { opacity: 0; }
+
+  /* ===== BLOSSOMS ===== */
+  .blossom-field {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .blossom {
+    position: absolute;
+    bottom: -40px;
+    width: 14px;
+    height: 14px;
+    opacity: 0;
+    animation: floatUp linear infinite;
+  }
+  .blossom svg { width: 100%; height: 100%; display: block; }
+  @keyframes floatUp {
+    0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+    8%   { opacity: 0.85; }
+    50%  { transform: translateY(-55vh) translateX(30px) rotate(180deg); }
+    92%  { opacity: 0.7; }
+    100% { transform: translateY(-110vh) translateX(-20px) rotate(360deg); opacity: 0; }
+  }
+
+  /* ===== FOOTER ===== */
+  footer.page-foot {
+    margin: 72px auto 40px;
+    text-align: center;
+    padding: 0 20px;
+  }
+  .receipts-link {
+    display: inline-block;
+    padding: 14px 34px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ffd5e1 0%, var(--cream) 100%);
+    color: var(--strawberry-deep);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    border: 1px solid rgba(232, 90, 124, 0.25);
+    box-shadow: 0 6px 20px rgba(232, 90, 124, 0.16);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.4s ease;
+  }
+  .receipts-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(232, 90, 124, 0.24);
+    background: linear-gradient(90deg, #ffc5d4 0%, var(--cream-deep) 100%);
+  }
+  .footer-note {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--text-soft);
+    letter-spacing: 0.08em;
+    font-style: italic;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 520px) {
+    .carton-stage { gap: 16px; }
+    .carton-wrap { width: 130px; height: 220px; }
+    .carton-body { height: 166px; }
+    .carton-top { height: 64px; clip-path: polygon(0 40%, 50% 0%, 100% 40%, 100% 100%, 0% 100%); }
+    .carton-top::after { height: 64px; }
+    .carton-label { top: 76px; width: 96px; height: 90px; }
+    .glass-wrap { width: 96px; height: 150px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="sourceBanner">source logged</div>
+
+<div class="blossom-field" id="blossomField"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="page-head">
+    <h1>LadyMilkyMoo</h1>
+    <div class="subtitle">a soft hand in a loud world</div>
+  </header>
+
+  <!-- CENTERPIECE -->
+  <section class="centerpiece">
+    <div class="carton-stage">
+      <div class="carton-wrap" id="carton" role="button" tabindex="0" aria-label="Pour the strawberry milk">
+        <div class="pour-stream"></div>
+        <div class="carton-body">
+          <div class="carton-top"></div>
+          <div class="carton-label">
+            <div class="strawberry-icon">
+              <div class="leaf"></div>
+              <div class="berry"></div>
+            </div>
+            <div class="label-text">Milky Moo</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-wrap" id="glass">
+        <div class="glass">
+          <div class="liquid"></div>
+        </div>
+        <div class="foam-bubble" style="left: 22px; bottom: 40px; width: 6px; height: 6px; animation-delay: 0s;"></div>
+        <div class="foam-bubble" style="left: 50px; bottom: 50px; width: 4px; height: 4px; animation-delay: 0.7s;"></div>
+        <div class="foam-bubble" style="left: 80px; bottom: 35px; width: 5px; height: 5px; animation-delay: 1.4s;"></div>
+        <div class="foam-bubble" style="left: 40px; bottom: 60px; width: 3px; height: 3px; animation-delay: 2.1s;"></div>
+      </div>
+    </div>
+
+    <div class="phrase-readout" id="phrase"></div>
+    <div class="tap-hint" id="tapHint">tap the carton</div>
+  </section>
+
+  <!-- TILES -->
+  <section class="tiles-section">
+    <h2>small truths</h2>
+    <div class="tile-grid" id="tileGrid">
+      <div class="tile" data-title="Caribbean roots" data-body="warmth that travels — wherever she lands, the room temperature changes">
+        <div class="tile-title">Caribbean roots</div>
+        <div class="tile-body">warmth that travels — wherever she lands, the room temperature changes</div>
+        <div class="tap-marker">tap</div>
+      </div>
+      <div class="tile" data-title="Veteran of VRChat" data-body="she's seen every room, every crowd, every kind of person. still soft.">
+        <div class="tile-title">Veteran of VRChat</div>
+        <div class="tile-body">she's seen every room, every crowd, every kind of person. still soft.</div>
+        <div class="tap-marker">tap</div>
+      </div>
+      <div class="tile" data-title="The rescue crew" data-body="when a karaoke group started treating singers like they were lucky to be there, she helped bring the good ones out. didn't burn the bridge. just walked the singers across it.">
+        <div class="tile-title">The rescue crew</div>
+        <div class="tile-body">when a karaoke group started treating singers like they were lucky to be there, she helped bring the good ones out. didn't burn the bridge. just walked the singers across it.</div>
+        <div class="tap-marker">tap</div>
+      </div>
+      <div class="tile" data-title="Strawberry milk energy" data-body="not a flavor — a frequency. you tune into it and your shoulders drop.">
+        <div class="tile-title">Strawberry milk energy</div>
+        <div class="tile-body">not a flavor — a frequency. you tune into it and your shoulders drop.</div>
+        <div class="tap-marker">tap</div>
+      </div>
+      <div class="tile" data-title="The great hang" data-body="you sit down for 5 minutes. you stand up 3 hours later. nobody keeps track of time around her.">
+        <div class="tile-title">The great hang</div>
+        <div class="tile-body">you sit down for 5 minutes. you stand up 3 hours later. nobody keeps track of time around her.</div>
+        <div class="tap-marker">tap</div>
+      </div>
+      <div class="tile" data-title="The one who notices" data-body="she clocks who's quiet. she clocks who's new. she moves toward them, not away.">
+        <div class="tile-title">The one who notices</div>
+        <div class="tile-body">she clocks who's quiet. she clocks who's new. she moves toward them, not away.</div>
+        <div class="tap-marker">tap</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="page-foot">
+    <span class="receipts-link" style="pointer-events:none;cursor:default;opacity:0.5;">&mdash;</span>
+    <div class="footer-note">proof that what they said about you wasn't true</div>
+  </footer>
+
+</div>
+
+<script>
+  // ===== PHRASES =====
+  const phrases = [
+    "you were never the problem.",
+    "soft is not a crack.",
+    "they chose you because you shine — not because you're weak.",
+    "every room gets better when you enter it.",
+    "you've seen everything and stayed kind. that's the flex.",
+    "the right people find you. let them.",
+    "what they did says who they are, not who you are.",
+    "caribbean sunshine built you. nothing dims that."
+  ];
+  let phraseIdx = 0;
+
+  // ===== CARTON POUR =====
+  const carton = document.getElementById('carton');
+  const glass = document.getElementById('glass');
+  const phraseEl = document.getElementById('phrase');
+  const tapHint = document.getElementById('tapHint');
+  let isPouring = false;
+  let idleTimer = null;
+
+  function pour() {
+    if (isPouring) return;
+    isPouring = true;
+    tapHint.style.opacity = '0';
+
+    carton.classList.add('pouring');
+
+    // start filling after stream reaches glass
+    setTimeout(() => {
+      glass.classList.add('filled');
+    }, 600);
+
+    // drop phrase
+    setTimeout(() => {
+      phraseEl.classList.remove('show');
+      setTimeout(() => {
+        phraseEl.textContent = phrases[phraseIdx];
+        phraseIdx = (phraseIdx + 1) % phrases.length;
+        phraseEl.classList.add('show');
+      }, 250);
+    }, 1200);
+
+    // return carton upright
+    setTimeout(() => {
+      carton.classList.remove('pouring');
+    }, 1600);
+
+    // reset after idle
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(resetGlass, 4000 + 1600);
+
+    // release lock so double-tap after carton is upright works
+    setTimeout(() => { isPouring = false; }, 1800);
+  }
+
+  function resetGlass() {
+    glass.classList.remove('filled');
+    phraseEl.classList.remove('show');
+  }
+
+  carton.addEventListener('click', pour);
+  carton.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pour(); }
+  });
+
+  // ===== TILE FLIP =====
+  document.querySelectorAll('.tile').forEach(tile => {
+    tile.addEventListener('click', () => {
+      tile.classList.toggle('flipped');
+    });
+  });
+
+  // ===== BLOSSOMS =====
+  const blossomField = document.getElementById('blossomField');
+  const blossomSVG = `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <g>
+        <circle cx="12" cy="6"  r="4" fill="#ffd3e0" opacity="0.95"/>
+        <circle cx="6"  cy="12" r="4" fill="#ffc0d2" opacity="0.95"/>
+        <circle cx="18" cy="12" r="4" fill="#ffc0d2" opacity="0.95"/>
+        <circle cx="9"  cy="18" r="4" fill="#ffd3e0" opacity="0.95"/>
+        <circle cx="15" cy="18" r="4" fill="#ffd3e0" opacity="0.95"/>
+        <circle cx="12" cy="12" r="2.4" fill="#fff4e0"/>
+      </g>
+    </svg>`;
+
+  function spawnBlossom() {
+    const b = document.createElement('div');
+    b.className = 'blossom';
+    b.innerHTML = blossomSVG;
+    const size = 10 + Math.random() * 18;
+    b.style.width = size + 'px';
+    b.style.height = size + 'px';
+    b.style.left = Math.random() * 100 + 'vw';
+    const dur = 14 + Math.random() * 12;
+    b.style.animationDuration = dur + 's';
+    b.style.animationDelay = (-Math.random() * dur) + 's';
+    b.style.opacity = 0.6 + Math.random() * 0.3;
+    blossomField.appendChild(b);
+    setTimeout(() => b.remove(), dur * 1000 + 500);
+  }
+  // initial burst + continuous
+  for (let i = 0; i < 10; i++) spawnBlossom();
+  setInterval(spawnBlossom, 1400);
+
+  // ===== SOURCE BANNER =====
+  const banner = document.getElementById('sourceBanner');
+  document.querySelectorAll('[data-source]').forEach(el => {
+    el.addEventListener('click', () => {
+      const src = el.getAttribute('data-source') || 'source logged';
+      banner.textContent = src;
+      banner.classList.add('show');
+      clearTimeout(banner._timer);
+      banner._timer = setTimeout(() => banner.classList.remove('show'), 3000);
+    });
+  });
+</script>
+</body>
+</html>

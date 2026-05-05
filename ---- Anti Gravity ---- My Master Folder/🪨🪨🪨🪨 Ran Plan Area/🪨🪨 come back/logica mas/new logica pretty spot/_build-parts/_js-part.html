@@ -1,0 +1,260 @@
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────────
+const contacts = {
+  family:  { name:'FAMILY CHAT',           avatars:['👩','👦'], preview:'You: Ok · 2:05 pm',               online:true,  group:true  },
+  ray:     { name:'Ray Downs',             avatars:['👨'],      preview:'You: Thank you ! · 2:05 pm',      online:true              },
+  chad:    { name:'Chad Downs',            avatars:['🧔'],      preview:'You sent a photo. · 2:01 pm',     online:false             },
+  raykim:  { name:'Ray, Kim',              avatars:['👨','👩'], preview:'You: that sounds like... · Sun',  online:true,  group:true  },
+  randy:   { name:'Randy Engineersski',    avatars:['🎸'],      preview:'2 new messages · Sun',            online:true,  unread:true },
+  james:   { name:'James Poddubny',        avatars:['🧑'],      preview:'❤️❤️❤️ love you... · Sun',       online:true              },
+  jenna:   { name:'Jenna Bodley',          avatars:['👩‍🦱'],    preview:'You: hollar whenever... · Sat',   online:true              },
+  kim:     { name:'Kim Downs',             avatars:['👩'],      preview:'You: kim · Fri',                  online:true              },
+  linda:   { name:'Linda-Brooke Thompson', avatars:['👩‍🦳'],    preview:'4 new messages · Fri',            online:false, unread:true },
+  ed:      { name:'Ed Adkins Sr.',         avatars:['👨‍🦳'],    preview:'You: work going well th... · Thu', online:false            },
+  kayla:   { name:'Kayla Amber',           avatars:['🧕'],      preview:'You: That was waay... · Mar 22',  online:true              },
+  ari:     { name:'Ari Aloush',            avatars:['🧑‍💼'],    preview:'Hey, at this rate... · Mar 16',   online:false, unread:true },
+};
+
+const threads = {
+  chad: {
+    headerAvatars: ['🧔','👨'],
+    name: '2 People ›',
+    messages: [
+      { type:'sent', text:"I don't really want a lot of frantic panic energy. lol" },
+      { type:'sent', text:"But come on over lol" },
+      { type:'sent', text:"Are you stopping somewhere before you stop here? That's ok" },
+      { type:'time', label:'Yesterday 8:54 PM' },
+      { type:'sent', text:"Thank you dad\n\nThank you very much for the help guys\n\nAnd the Claude payment yesterday guys" },
+      { type:'sent', text:"I've been setting them timers today!" },
+      { type:'recv', sender:'Ray Downs', avatar:'👨', text:"I just sent you $5.00 by Zelle. Let me know if you got it." },
+      { type:'time', label:'Yesterday 10:56 PM' },
+      { type:'sent', text:"I did get it!" },
+      { type:'time', label:'Today 5:53 AM' },
+      { type:'recv', sender:'Ray Downs', avatar:'👨', text:"Ok. Good so I have that setup. I will send you the funds for your mortgage tonight" },
+      { type:'sent', text:"Good morning" },
+      { type:'sent', text:"Let's call first 1 but sure" },
+      { type:'sent', text:"This is ganna be such a good week thank you dad" },
+      { type:'time', label:'Today 8:14 AM' },
+      { type:'recv', sender:'Ray Downs', avatar:'👨', text:"Hey @Chad Downs can you give me a call about Kids on Campus" },
+      { type:'recv', sender:'Ray Downs', avatar:'👨', text:"I am trying to register James. I really need the login and password to his account with Kids on Campus." },
+    ]
+  },
+  family: {
+    headerAvatars: ['👩','👦'],
+    name: 'Family Chat',
+    messages: [
+      { type:'sent', text:"Ok" },
+    ]
+  },
+  ray: {
+    headerAvatars: ['👨'],
+    name: 'Ray Downs',
+    messages: [
+      { type:'sent', text:"Thank you !" },
+    ]
+  },
+};
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let activeId = null;
+let activeCard2Item = null; // track which sub-item was clicked in card-2
+
+// ─── STEP 1 — Chat list click ──────────────────────────────────────────────
+function handleChatClick(id, el) {
+  // Remove .active from all panel-0 chat items, add to clicked
+  document.querySelectorAll('#panel-0 .chat-item').forEach(function(item) {
+    item.classList.remove('active');
+  });
+  el.classList.add('active');
+
+  // Set state
+  activeId = id;
+  activeCard2Item = null;
+
+  // Close card-2 and card-3
+  document.getElementById('card-2').classList.remove('open');
+  document.getElementById('card-3').classList.remove('open');
+
+  // Build and open card-1
+  var c1 = document.getElementById('card-1');
+  var c1Body = document.getElementById('card-1-body');
+  c1Body.innerHTML = buildContactCard(id, contacts[id] || { name: id, avatars:['👤'] }, 1);
+  c1.classList.add('open');
+}
+
+// ─── STEP 2 — card-1 card click ───────────────────────────────────────────
+function handleCard1Click(id) {
+  // Close card-3
+  document.getElementById('card-3').classList.remove('open');
+  activeCard2Item = null;
+
+  var c = contacts[id] || { name: id, avatars:['👤'] };
+
+  // Sub-items list for card-2
+  var subItems = [
+    { icon:'💬', label:'Messages',  key:'messages'  },
+    { icon:'🖼️', label:'Photos',    key:'photos'    },
+    { icon:'📁', label:'Files',     key:'files'     },
+    { icon:'🔗', label:'Links',     key:'links'     },
+    { icon:'👥', label:'Members',   key:'members'   },
+  ];
+
+  var c2 = document.getElementById('card-2');
+  var c2Title = document.getElementById('card-2-title');
+  var c2Body = document.getElementById('card-2-body');
+
+  c2Title.textContent = c.name;
+  c2Body.innerHTML = subItems.map(function(item) {
+    return [
+      '<div class="sub-item" onclick="handleCard2Click(\'' + id + '\', \'' + item.key + '\', this)">',
+      '  <span class="sub-item-icon">' + item.icon + '</span>',
+      '  <span class="sub-item-label">' + item.label + '</span>',
+      '  <span class="sub-item-arrow">›</span>',
+      '</div>',
+    ].join('');
+  }).join('');
+
+  c2.classList.add('open');
+}
+
+// ─── STEP 3 — card-2 sub-item click ───────────────────────────────────────
+function handleCard2Click(id, key, el) {
+  // Mark active sub-item
+  document.querySelectorAll('#card-2-body .sub-item').forEach(function(item) {
+    item.classList.remove('active');
+  });
+  el.classList.add('active');
+  activeCard2Item = key;
+
+  loadThread(id, key);
+
+  document.getElementById('card-3').classList.add('open');
+}
+
+// ─── CONTACT CARD BUILDER ─────────────────────────────────────────────────
+function buildContactCard(id, c, targetCardNum) {
+  var avatarHtml = c.group
+    ? '<div class="avatar-group"><div class="av1">' + c.avatars[0] + '</div><div class="av2">' + (c.avatars[1] || '') + '</div></div>'
+    : '<div class="avatar">' + c.avatars[0] + '</div>';
+
+  var onlineDot = c.online ? '<div class="online-dot"></div>' : '';
+  var unreadDot = c.unread ? '<div class="unread-dot"></div>' : '';
+  var previewClass = c.unread ? 'chat-preview unread' : 'chat-preview';
+
+  return [
+    '<div class="chat-item contact-card" onclick="handleCard1Click(\'' + id + '\')">',
+    '  <div class="avatar-wrap">',
+    '    ' + avatarHtml,
+    '    ' + onlineDot,
+    '  </div>',
+    '  <div class="chat-info">',
+    '    <div class="chat-name">' + c.name + '</div>',
+    '    <div class="' + previewClass + '">' + c.preview + '</div>',
+    '  </div>',
+    '  ' + unreadDot,
+    '  <span class="card-arrow">›</span>',
+    '</div>',
+  ].join('');
+}
+
+// ─── THREAD LOADER ────────────────────────────────────────────────────────
+function loadThread(id, key) {
+  var t = threads[id] || {
+    headerAvatars: contacts[id] ? contacts[id].avatars : ['👤'],
+    name: contacts[id] ? contacts[id].name : id,
+    messages: []
+  };
+
+  // Update card-3 title
+  var c = contacts[id] || { name: id, avatars:['👤'] };
+  var keyLabels = { messages:'Messages', photos:'Photos', files:'Files', links:'Links', members:'Members' };
+  document.getElementById('card-3-title').textContent = c.name + ' · ' + (keyLabels[key] || key);
+
+  // Header avatars inside card-3 thread header
+  var avatarWrap = document.getElementById('card-3-convo-avatars');
+  if (avatarWrap) {
+    avatarWrap.innerHTML = t.headerAvatars.map(function(a) {
+      return '<div class="convo-av">' + a + '</div>';
+    }).join('');
+  }
+  var convoName = document.getElementById('card-3-convo-name');
+  if (convoName) convoName.textContent = t.name;
+
+  renderThread(t.messages);
+}
+
+// ─── THREAD RENDERER ─────────────────────────────────────────────────────
+function renderThread(msgs) {
+  var thread = document.getElementById('card-3-thread');
+  thread.innerHTML = '';
+  var lastSender = null;
+
+  msgs.forEach(function(m, i) {
+    if (m.type === 'time') {
+      var ts = document.createElement('div');
+      ts.className = 'timestamp-label';
+      ts.textContent = m.label;
+      thread.appendChild(ts);
+      lastSender = null;
+      return;
+    }
+
+    var isLast = i === msgs.length - 1
+      || msgs[i + 1].type === 'time'
+      || msgs[i + 1].type !== m.type
+      || (m.type === 'recv' && msgs[i + 1].sender !== m.sender);
+
+    if (m.type === 'recv' && m.sender && m.sender !== lastSender) {
+      var sn = document.createElement('div');
+      sn.className = 'sender-name';
+      sn.textContent = m.sender;
+      thread.appendChild(sn);
+    }
+
+    var row = document.createElement('div');
+    row.className = 'msg-row ' + m.type;
+
+    if (m.type === 'recv') {
+      var av = document.createElement('div');
+      av.className = 'msg-avatar' + (isLast ? '' : ' hidden');
+      av.textContent = m.avatar || '👤';
+      row.appendChild(av);
+    }
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble ' + m.type;
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.textContent = m.text;
+    row.appendChild(bubble);
+    thread.appendChild(row);
+
+    lastSender = m.type === 'recv' ? m.sender : null;
+  });
+
+  thread.scrollTop = thread.scrollHeight;
+}
+
+// ─── INPUT ────────────────────────────────────────────────────────────────
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function sendMessage() {
+  var input = document.getElementById('msg-input');
+  var text = input.value.trim();
+  if (!text || !activeId) return;
+  if (!threads[activeId]) {
+    threads[activeId] = {
+      headerAvatars: contacts[activeId] ? contacts[activeId].avatars : ['👤'],
+      name: contacts[activeId] ? contacts[activeId].name : activeId,
+      messages: []
+    };
+  }
+  threads[activeId].messages.push({ type:'sent', text: text });
+  renderThread(threads[activeId].messages);
+  input.value = '';
+}
+</script>

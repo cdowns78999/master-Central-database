@@ -1,0 +1,295 @@
+```markdown
+---
+filename: c-yesterday-support.md
+purpose: Toast-style support file for the /c-yesterday skill. Mirrors Chad's job board, catches net-new jobs cheaply, and logs self-support notes.
+parent_skill: /c-yesterday
+location: C:\Users\chad\OneDrive\Documents\GitHub\master-Central-database\---- Anti Gravity ---- My Master Folder\🪨🪨      AUTOMATIONS     🪨🪨\skill-support-md\c-yesterday-support.md
+last_updated: (auto — write ISO8601 to NOTES LOG on every fire)
+---
+
+# TOAST PROTOCOL
+
+The parent skill (`/c-yesterday`) invokes this file on every fire. Execute the three protocols IN ORDER. Each protocol is stateful — read sections below, mutate sections below, save file.
+
+---
+
+## Protocol 1 — Job List Mirror (staleness check)
+
+```
+STEP 1: Open this file. Locate "## JOB LIST MIRROR" section.
+STEP 2: If the section body is empty OR the "mirror_timestamp" field is missing OR mirror_timestamp is > 72h old:
+          GOTO STEP 3 (refresh).
+        ELSE:
+          GOTO Protocol 2 (skip refresh).
+STEP 3: Pull the current job board from the most recent conversation paste
+        OR from Chad's c-chads-dreams board source.
+        Expected categories (preserve order + color dots + ✅ markers):
+          - Work Progress
+          - Work Debt
+          - Personal & Family
+          - Finance
+          - Vietnam
+          - Tech Partnerships
+          - Work Dreams
+STEP 4: Overwrite the "## JOB LIST MIRROR" section body with the fresh list.
+STEP 5: Set mirror_timestamp = <now ISO8601> at top of JOB LIST MIRROR section.
+STEP 6: Append a one-line entry to "## NOTES LOG": "[<ts>] mirror refreshed — N jobs across 7 categories".
+```
+
+---
+
+## Protocol 2 — New Job Catcher (low-token)
+
+```
+STEP 1: Load the JOB LIST MIRROR section into memory as a SET of normalized job titles
+        (lowercase, strip emoji/dots/checkmarks/whitespace).
+STEP 2: Scan ONLY the last 3 days of chat context already available in the current
+        /c-yesterday invocation. DO NOT spawn new searches. DO NOT re-read archives.
+        (This keeps token cost near-zero — reuse what the parent skill already loaded.)
+STEP 3: Extract candidate jobs using these triggers:
+          - "new job:", "add to board", "put this on the list"
+          - "I need to", "gotta", "todo", "remember to"
+          - explicit board-category mentions followed by a new item
+STEP 4: For each candidate, normalize the title and check membership against STEP 1 set.
+          - If already in mirror → discard.
+          - If NOT in mirror → append to "## NEW JOBS QUEUE" with:
+              [<ts>] category_guess: "<Work Progress|Work Debt|...>" | title: "<short>"
+STEP 5: Cap the queue at 10 entries. If >10, drop the oldest.
+STEP 6: Append one-line entry to NOTES LOG: "[<ts>] catcher ran — K candidates, M new queued".
+```
+
+Expected delta per fire: 0–2. If K > 5 on a single run, log an edge-case flag in NOTES LOG.
+
+---
+
+## Protocol 3 — Notes Log
+
+```
+STEP 1: On every invocation, append a dated line to "## NOTES LOG".
+STEP 2: Entries should include (when relevant):
+          - timestamp of run
+          - which protocols fired vs skipped
+          - approx token budget used by this support file
+          - any parse failures, empty scans, or category guesses that were ambiguous
+          - promotions from NEW JOBS QUEUE → JOB LIST MIRROR (when Chad confirms)
+STEP 3: Keep the log rolling. Trim to last 50 entries to prevent bloat.
+```
+
+---
+
+## Protocol 4 — Pinned Jobs
+
+```
+STEP 1: On every fire, read ## PINNED JOBS (inside # CACHED VIEWS).
+STEP 2: Render those rows at the TOP of the QAL output with 📌 marker,
+        separated from the main list by a divider line.
+        Pinned rows do NOT count toward total_sessions.
+STEP 3: Pinned jobs are maintained MANUALLY by Chad — the skill does NOT
+        auto-populate them. They persist until Chad removes or moves them.
+STEP 4: To add a pinned job, Chad says "pin [job]" or "add to top" —
+        append an entry to ## PINNED JOBS in the format:
+          N. 📌 <job title> — <status dot> <status label>
+STEP 5: When a pinned job is completed or deprioritized, Chad manually
+        removes or relocates the entry. Skill does NOT auto-expire pins.
+STEP 6: Soft cap = 5 pinned jobs. If ## PINNED JOBS has >5 entries,
+        log a warning in NOTES LOG: "[<ts>] pin cap exceeded — N pins active".
+```
+
+---
+
+# JOB LIST MIRROR
+
+mirror_timestamp: (empty — populated on first successful Protocol 1 run)
+
+<!-- On first fire, Protocol 1 writes the full categorized board here.
+     Format preserved from source:
+     ## Work Progress
+     - 🟢 job name
+     - ✅ completed job
+     ## Work Debt
+     - 🔴 job name
+     ...etc across all 7 categories.
+-->
+
+---
+
+# NEW JOBS QUEUE
+
+<!-- Protocol 2 appends here. One line per catch. Format:
+     [2026-04-20T14:03:11Z] category_guess: "Work Progress" | title: "wire up drive oauth fix"
+     Promotion to JOB LIST MIRROR requires Chad's explicit confirmation.
+-->
+
+---
+
+# NOTES LOG
+
+<!-- Rolling log, newest at bottom. Max 50 entries. Format:
+     [2026-04-20T14:03:11Z] mirror refreshed — 23 jobs across 7 categories
+     [2026-04-20T14:03:12Z] catcher ran — 4 candidates, 1 new queued
+-->
+[2026-04-21] skill fired — 68 sessions across 7 categories, seed: none, handshake input: "code working well!"
+
+---
+
+# LAST GRID SNAPSHOT
+
+snapshot_timestamp: 2026-04-21
+window: last 72 hours
+total_sessions: 68
+sub_agent: haiku (1 call, ~90k tokens)
+
+## Category Counts
+- 🔴 Work Progress: 45
+- 🔴 Work Debt: 1
+- 🟡 Personal & Family: 1
+- 🟣 Finance: 0
+- 🟢 Vietnam: 0
+- 🔵 Tech Partnerships: 0
+- 🟠 Work Dreams: 12
+
+## Headlines per Category
+
+### Work Progress (45)
+- THENNOW press release — pickup 🟡
+- VR full website task — pickup 🟡
+- Koi Angel 2 redesign — pickup 🟡
+- Matt conversation thread — pickup 🟡
+- Dashboard recent updates — pickup 🟡
+- Ozzy deploy — done ✅
+- +39 more
+
+### Work Debt (1)
+- run & fix debug loop — pickup 🟡
+
+### Personal & Family (1)
+- Ozzy detective file (tribute app) — done ✅
+
+### Finance (0)
+- empty
+
+### Vietnam (0)
+- empty
+
+### Tech Partnerships (0)
+- empty
+
+### Work Dreams (12)
+- c-chads-dreams active — done ✅
+- c-churn skill build — pickup 🟡
+- c-sub-agent wire-up — pickup 🟡
+- c-launch-the-day cleanup — pickup 🟡
+- low-token debug webview — pickup 🟡
+- +7 more
+
+## Hype Read
+68 sessions in 3 days is a furnace-level push. Work Progress is stacked with clean pickups (THENNOW, VR site, Koi Angel 2), Work Dreams is cooking on the skill factory, and Ozzy's tribute app is already shipped. One lone bug in Work Debt and the right column (Finance / Vietnam / Tech Partners) is wide open — leading with BUILD, not FIX.
+
+<!-- Overwrite on each fire. Represents the most recent grid render, in case Chad
+     wants to reference it later without re-scanning the jsonl archive. -->
+
+---
+
+# CACHED VIEWS
+
+cached_timestamp: 2026-04-22T18:30:00Z
+window: last 72 hours
+total_sessions: 40
+pinned_jobs: 3
+
+## PINNED JOBS
+<!-- These ALWAYS render at the top of CACHED QAL before any other rows. Maintain manually. Read by the skill on every fire. -->
+1. 📌 VR speed dating app — 🟡 new · needs start
+2. 📌 VR language barrier — 🟡 new · needs start
+3. 📌 VRchat music label  — 🟡 new · needs start
+
+## CACHED GRID
+
+╭─ 3-DAY REVIEW · GRID ───────────────────────────────────────╮
+│ ╭─🔴 WORK PROGRESS · 34─╮   ╭─🟤 PERSONAL&FAM · 4───╮       │
+│ │ • ✨ Numerology app ✅ │   │ • ✨ Tribute app bldr 🟡│       │
+│ │ • ✨ Koi angel setup 🟡│   │ • ✨ Ozzy detective 🟢 │       │
+│ │ • +32 more            │   │ • +2 more             │       │
+│ ╰───────────────────────╯   ╰───────────────────────╯       │
+│ ╭─🟤 WORK DREAMS · 2────╮                                   │
+│ │ • ✨ Yesterday review 🟡│                                   │
+│ │ • ✨ Job board dsply 🟡│                                   │
+│ ╰───────────────────────╯                                   │
+╰─────────────────────────────────────────────────────────────╯
+empty: WORK DEBT · FINANCE · VIETNAM · TECH PARTNERS
+
+## CACHED QAL
+
+╭─ QUICK ACCESS LIST · 40 chats · 3 pinned ───────────────────╮
+│ name                  stat   id          bash               │
+│ ──────────────────────────────────────────────────────────  │
+│ 📌 VR speed dating app 🟡    new         claude --new        │
+│ 📌 VR language barrier 🟡    new         claude --new        │
+│ 📌 VRchat music label  🟡    new         claude --new        │
+│ ──────────────────────────────────────────────────────────  │
+│ ✨ Numerology app      ✅    a30a64b2…  claude --resume a3… │
+│ ✨ Tribute app bldr    🟡    bf5bb63a…  claude --resume bf… │
+│ ✨ Ozzy detective      🟢    0f12c475…  claude --resume 0f… │
+│ ✨ Koi angel setup     🟡    8cc9b0da…  claude --resume 8c… │
+│ ✨ Koi angel setup     🟡    b444cc66…  claude --resume b4… │
+│ ✨ misc chat           ✅    deeedd1e…  claude --resume de… │
+│ ✨ misc chat           ✅    fa42a01d…  claude --resume fa… │
+│ ✨ Yesterday review    🟡    480f7106…  claude --resume 48… │
+│ ✨ misc chat           ✅    c2d2bb8b…  claude --resume c2… │
+│ ✨ Tribute app bldr    ✅    a933e791…  claude --resume a9… │
+│ ✨ misc chat           ✅    22577eb5…  claude --resume 22… │
+│ ✨ Jordan tribute      🟢    6cf66f02…  claude --resume 6c… │
+│ ✨ Job board display   🟡    9e263494…  claude --resume 9e… │
+│ Shortcut --pr rename  ✅    5656bf8f…  claude --resume 56… │
+│ c-yest QAL protocol   ✅    7138f879…  claude --resume 71… │
+│ c-yest UUID expand    ✅    4a02160a…  claude --resume 4a… │
+│ Clear only            ✅    7593f330…  claude --resume 75… │
+│ Delete koi skill      ✅    f39c669a…  claude --resume f3… │
+│ Whiteboard Spotify DR ✅    efc6735d…  claude --resume ef… │
+│ QAL list display      ✅    93fc95a0…  claude --resume 93… │
+│ Full UUID list show   ✅    b30a5069…  claude --resume b3… │
+│ c-yest 14-row expand  ✅    8feeca74…  claude --resume 8f… │
+│ c-yest input protocol ✅    531a187f…  claude --resume 53… │
+│ c-yest y-day only     ✅    fb034bd4…  claude --resume fb… │
+│ Whiteboard music rsch 🟡    8fec313a…  claude --resume 8f… │
+│ c-yest input handshk  ✅    9da20b5d…  claude --resume 9d… │
+│ Koi Angel project nav ✅    3d8fcd14…  claude --resume 3d… │
+│ Usage est question    ✅    334a8f5f…  claude --resume 33… │
+│ c-yest stack-only     ✅    791243bd…  claude --resume 79… │
+│ Clear only            ✅    f81921a4…  claude --resume f8… │
+│ Dreams # shorthand    ✅    bbae333e…  claude --resume bb… │
+│ Mike warm-heart build 🟡    18ace9a6…  claude --resume 18… │
+│ Dreams session IDs    ✅    9366e416…  claude --resume 93… │
+│ Clear only            ✅    34cfbda5…  claude --resume 34… │
+│ c-yest interrupted    ✅    e7b11d9e…  claude --resume e7… │
+│ Dandom OAuth app bld  🟡    fc79a166…  claude --resume fc… │
+│ c-rizz wholesome piv  ✅    9121f619…  claude --resume 91… │
+│ Launch-day path find  ✅    16d27ba2…  claude --resume 16… │
+│ Mike path debug       ✅    4d2396b0…  claude --resume 4d… │
+│ Resume session attmpt ✅    24324532…  claude --resume 24… │
+╰─────────────────────────────────────────────────────────────╯
+
+<!-- CACHED VIEWS is the instant-read block. Skill reads this on every fire and renders BOTH grid + QAL without scanning disk. Overwritten only by REFRESH, stale cache (>72h), or missing block. Per-output bucket #6 may append new rows here when new-job signals fire. -->
+
+---
+
+# HOW THE SKILL USES ME
+
+The `/c-yesterday` skill produces a toast-style 3-day review of Chad's recent work. I am its memory layer.
+
+- **Before the grid renders:** the skill calls Protocol 1 so it knows the current job universe. This prevents reporting "new work" that was already on the board.
+- **While the grid renders:** the skill calls Protocol 2 against the same 3-day window it's already summarizing — near-zero extra token cost because the context is already loaded.
+- **After the grid renders:** the skill calls Protocol 3 to log what happened, what was skipped, and any queued catches for Chad to confirm on the next fire.
+- **Pinned jobs layer (Protocol 4):** on every fire, the skill reads `## PINNED JOBS` inside `# CACHED VIEWS` and injects those rows at the top of the QAL with a 📌 marker and a divider. Pins are manually managed by Chad — the skill never auto-writes or auto-removes them. Soft cap is 5 pins.
+
+If the skill fires and I'm missing or corrupt, the skill should fall back to a stateless grid and log a warning — do not block the user on support-file issues.
+
+---
+
+## NOTES LOG
+
+- [2026-04-22T00:00:00Z] fired · 58 files · ~0.8k tokens · under budget · mode: qal_shortcircuit · seed: qal_row_paste_14_rows
+- [2026-04-22T18:00:00Z] fired · 27 files · ~2.5k tokens · under budget · mode: detail_name_misc · seed: rename_27_misc_chats · cache: 0/27 hit (all fresh names)
+- [2026-04-22T18:30:00Z] pinned jobs wired — 3 pins: VR speed dating, VR language barrier, VRchat music label
+- [2026-04-23T00:00:00Z] fired · mode: cached · ~0.5k tokens · under budget · cache: 40/40 hit · seed: none · handshake: "no"
+```

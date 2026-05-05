@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Dashboard | Baller Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg: #010c1a;
+            --primary: #4cc9f0;
+            --accent: #4361ee;
+            --secondary: #7209b7;
+            --pink: #ff5d8f;
+            --green: #34c759;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.5);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --radius-lg: 35px;
+            --radius-md: 20px;
+            --radius-pill: 100px;
+            --transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 10% 10%, #001219 0%, transparent 50%),
+                radial-gradient(circle at 90% 90%, #003049 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, #1a2a6c 0%, transparent 80%);
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4rem 2rem;
+        }
+
+        canvas#bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        /* TYPOGRAPHY */
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+
+        /* --------------------------- */
+        /* TIER 1: STRATEGIC KANBAN    */
+        /* --------------------------- */
+        .task-tier {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        .task-input-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .premium-input {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-pill);
+            padding: 1rem 2rem;
+            color: #fff;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .premium-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(76, 201, 240, 0.2);
+        }
+
+        .p-btn-action {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            border-radius: var(--radius-pill);
+            padding: 0 2.5rem;
+            font-weight: 800;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .p-btn-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(67, 97, 238, 0.4);
+        }
+
+        .kanban-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .kanban-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 200px;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .col-tag {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            padding: 4px 12px;
+            border-radius: 5px;
+            width: fit-content;
+        }
+
+        /* --------------------------- */
+        /* TIER 2: CROWN CONSOLE       */
+        /* --------------------------- */
+        .crown-tier {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        .glass-side-panel {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            transition: var(--transition);
+        }
+
+        .center-pillar {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 45px;
+            padding: 3rem;
+            min-height: 700px;
+            box-shadow: 0 60px 150px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            transform: translateY(-20px);
+            /* The "Crown" Lift */
+        }
+
+        /* MAPPER STYLE BUTTONS (REPLICATED) */
+        .p-btn {
+            padding: 18px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-pill);
+            color: #fff;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .p-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(76, 201, 240, 0.2);
+        }
+
+        .p-btn .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary);
+        }
+
+        .btn-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+        }
+
+        .btn-label {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn-meta {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* KANBAN CARDS */
+        .baller-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            cursor: grab;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .baller-card:hover {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .baller-card:active {
+            cursor: grabbing;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 93, 143, 0.2);
+            border: 1px solid rgba(255, 93, 143, 0.4);
+            border-radius: 50%;
+            color: var(--pink);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .baller-card:hover .delete-btn {
+            display: flex;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 93, 143, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* --------------------------- */
+        /* TIER 3: WORKSTATION GRID    */
+        /* --------------------------- */
+        .workstation-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        /* ANIMATIONS */
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* EXPANDABLE SECTIONS */
+        .expand-section {
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.3s ease,
+                padding 0.3s ease;
+        }
+
+        .expand-section.expanding {
+            animation: expandIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .expand-section.collapsing {
+            animation: collapseOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes expandIn {
+            from {
+                opacity: 0;
+                max-height: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                max-height: 300px;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes collapseOut {
+            from {
+                opacity: 1;
+                max-height: 300px;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                max-height: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Nested expand animation */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+
+            to {
+                opacity: 1;
+                max-height: 150px;
+            }
+        }
+
+        /* iOS STYLE TOGGLE */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-pill);
+            margin-top: 5px;
+        }
+
+        .toggle-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-switch.active {
+            background: var(--green);
+            box-shadow: 0 0 15px rgba(52, 199, 89, 0.4);
+        }
+
+        .toggle-knob {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            transition: var(--transition);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-switch.active .toggle-knob {
+            left: 25px;
+        }
+
+        /* INTEGRATED REPORT INPUT */
+        .report-input-wrapper {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 0 30px;
+        }
+
+        .report-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+            width: 100%;
+            outline: none;
+            padding: 18px 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .report-input::placeholder {
+            color: #fff;
+            opacity: 1;
+        }
+
+        .report-input:focus {
+            cursor: text;
+        }
+
+        .report-input:focus::placeholder {
+            opacity: 0.3;
+        }
+
+        .report-toggle-icon {
+            font-size: 10px;
+            color: var(--text-dim);
+            transition: var(--transition);
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .report-toggle-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .report-toggle-icon.open {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="container">
+
+        <!-- TIER 1: STRATEGIC TASK MANAGEMENT -->
+        <section class="task-tier">
+            <div class="section-label">Strategic Pipeline</div>
+            <div class="task-input-bar">
+                <input type="text" id="taskInput" placeholder="Enter high-level objective..." class="premium-input">
+                <button onclick="addStrategicTask()" class="p-btn-action">DEPLOY TASK</button>
+            </div>
+            <div class="kanban-grid">
+                <div class="kanban-column" id="strat-todo" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="col-tag" style="background: rgba(67, 97, 238, 0.2); color: var(--accent);">TO DO</div>
+                </div>
+                <div class="kanban-column" id="strat-done" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="col-tag" style="background: rgba(52, 199, 89, 0.2); color: var(--green);">COMPLETE</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TIER 2: CROWN CONSOLE PIECE -->
+        <section class="crown-tier">
+
+            <!-- LEFT WING: REPORTS -->
+            <aside class="glass-side-panel">
+                <div class="section-label">Reporting Hub</div>
+                <div class="section-label"
+                    style="color: rgba(255, 93, 143, 0.15); font-style: italic; font-size: 0.0025rem; margin-top: -1.4rem; margin-bottom: 1rem;">
+                    right click to delete</div>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <!-- LINKS BOX SYSTEM -->
+                    <div id="linksContainer">
+                        <div id="linkInputBtn">
+                            <input type="text" id="linkDrop" class="report-input" placeholder="Paste URL..."
+                                onpaste="handleLinkPaste(event)" onfocus="this.placeholder='Paste URL...'"
+                                onblur="this.placeholder='Paste URL...'"
+                                style="background: rgba(50, 50, 50, 0.3); border: none; color: rgba(200, 200, 200, 0.8); width: 100%; border-radius: 20px; padding: 1rem 2rem; outline: none;">
+                        </div>
+                        <div id="savedLinks" class="expand-section"
+                            style="display: none; max-height: 0; overflow: hidden; flex-direction: column; gap: 6px; transition: max-height 0.4s ease;">
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER: CAMPAIGN ENGINE -->
+            <main class="center-pillar">
+                <div class="section-label" style="text-align: center;">Campaign Engine</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <button class="p-btn-action"
+                        style="padding: 12px 20px; font-size: 20px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"
+                        onclick="openCampaignWizard()">+</button>
+                    <div style="font-size: 10px; letter-spacing: 2px; color: var(--primary);">ACTIVE CAMPAIGNS</div>
+                </div>
+
+                <!-- CAMPAIGN BOARD -->
+                <div id="campaign-board" style="display: flex; flex-direction: column; gap: 2rem; flex-grow: 1;">
+                    <div class="kanban-column" id="camp-active" ondrop="drop(event)" ondragover="allowDrop(event)"
+                        style="min-height: 250px;">
+                        <!-- Active Campaign Cards -->
+                    </div>
+                    <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                    <div class="kanban-column" id="camp-closed" ondrop="drop(event)" ondragover="allowDrop(event)"
+                        style="min-height: 250px;">
+                        <div class="col-tag" style="background: rgba(255,255,255,0.05); color: var(--text-dim);">CLOSED
+                            ARCHIVE</div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- RIGHT WING: IDENTITY & CONSOLE -->
+            <aside style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- TILE 1: IDENTITY & CONSOLE -->
+                <div class="glass-side-panel" style="padding: 2rem;">
+                    <div class="section-label">Identity & System</div>
+                    <div style="display: flex; flex-direction: column; gap: 2rem; align-items: center;">
+                        <div class="profile-frame" style="position: relative;">
+                            <div class="glow"
+                                style="position: absolute; width: 120%; height: 120%; top: -10%; left: -10%; background: var(--primary); filter: blur(40px); opacity: 0.2; border-radius: 50%;">
+                            </div>
+                            <div class="img-wrap" id="profileImageWrap"
+                                style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); overflow: hidden; position: relative; z-index: 2; background: rgba(255,255,255,0.05); background-size: cover; background-position: center;">
+                                <svg id="defaultProfileIcon" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                    stroke-width="1" style="width: 100%; height: 100%; padding: 15px;">
+                                    <circle cx="12" cy="8" r="5" />
+                                    <path d="M20 21a8 8 0 0 0-16 0" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TILE 2: SPOTIFY & SYSTEM CONTROLS -->
+                <div class="glass-side-panel"
+                    style="padding: 2rem; height: 585px; display: flex; flex-direction: column;">
+                    <div class="section-label">Spotify & System</div>
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <!-- SPOTIFY IDENTITY SYNC INPUT -->
+                        <div style="width: 100%;">
+                            <input type="text" id="spotifySyncInput" placeholder="Paste Spotify Artist Link..."
+                                class="premium-input" style="font-size: 10px; padding: 10px 15px; width: 100%;"
+                                onpaste="setTimeout(() => syncSpotifyIdentity(this.value), 10)">
+                        </div>
+                        <!-- SYSTEM CONTROLS -->
+                        <div style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
+                            <!-- BACKUP SNAPSHOT - INLINE EXPANDABLE -->
+                            <div class="p-btn" id="backupBtn"
+                                style="border-color: rgba(76, 201, 240, 0.2); flex-direction: column; gap: 0; padding: 0; overflow: hidden; height: 60px; background: rgba(255, 255, 255, 0.02);">
+                                <div id="backupMain" onclick="toggleBackupOptions()"
+                                    style="width: 100%; height: 60px; padding: 18px 30px; display: flex; justify-content: center; cursor: pointer;">
+                                    <span class="btn-label" style="color: rgba(255, 255, 255, 0.7);">BACKUP
+                                        SNAPSHOT</span>
+                                </div>
+                                <div id="backupOptions"
+                                    style="display: none; width: 100%; border-top: 1px solid rgba(255,255,255,0.06);">
+                                    <div style="display: flex;">
+                                        <button onclick="backupState()"
+                                            style="flex: 1; padding: 12px; background: rgba(76, 201, 240, 0.1); border: none; border-right: 1px solid rgba(255,255,255,0.06); color: var(--primary); font-size: 9px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: var(--transition);">NORMAL</button>
+                                        <button onclick="showCustomPathInput()"
+                                            style="flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-dim); font-size: 9px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: var(--transition);">CHOOSE
+                                            PATH</button>
+                                    </div>
+                                    <div id="customPathSection"
+                                        style="display: none; padding: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
+                                        <input type="text" id="customFolderUrl" placeholder="Paste folder URL..."
+                                            style="width: 100%; padding: 8px 12px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 10px; outline: none; transition: var(--transition);"
+                                            oninput="validateFolderUrl(this.value)">
+                                        <div id="urlValidationStatus"
+                                            style="margin-top: 4px; font-size: 8px; letter-spacing: 1px; color: var(--text-dim);">
+                                        </div>
+                                        <button id="customBackupBtn" onclick="backupToCustomFolder()" disabled
+                                            style="width: 100%; margin-top: 6px; padding: 8px; background: rgba(255,255,255,0.05); border: none; border-radius: 8px; color: var(--text-dim); font-size: 9px; font-weight: 700; letter-spacing: 1px; cursor: not-allowed; transition: var(--transition);">BACKUP</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- LOAD SNAPSHOT - INLINE EXPANDABLE -->
+                            <div class="p-btn" id="loadBtn"
+                                style="border-color: rgba(76, 201, 240, 0.2); flex-direction: column; gap: 0; padding: 0; overflow: hidden; height: 60px; background: rgba(255, 255, 255, 0.02);">
+                                <div id="loadMain" onclick="toggleLoadOptions()"
+                                    style="width: 100%; height: 60px; padding: 18px 30px; display: flex; justify-content: center; cursor: pointer;">
+                                    <span class="btn-label" style="color: rgba(255, 255, 255, 0.7);">LOAD
+                                        SNAPSHOT</span>
+                                </div>
+                                <div id="loadOptions"
+                                    style="display: none; width: 100%; border-top: 1px solid rgba(255,255,255,0.06);">
+                                    <div style="display: flex;">
+                                        <button onclick="loadFromDrive(); toggleLoadOptions();"
+                                            style="flex: 1; padding: 12px; background: rgba(76, 201, 240, 0.1); border: none; border-right: 1px solid rgba(255,255,255,0.06); color: var(--primary); font-size: 9px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: var(--transition);">NORMAL</button>
+                                        <button onclick="triggerRestore(); toggleLoadOptions();"
+                                            style="flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-dim); font-size: 9px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: var(--transition);">LOCAL</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="file" id="snapshotInput" style="display: none;" onchange="restoreState(event)">
+                            <!-- PAGE PROTECTION TOGGLE -->
+                            <div class="toggle-container"
+                                style="height: 60px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08);">
+                                <span class="toggle-label" style="color: rgba(255, 255, 255, 0.7);">PAGE
+                                    PROTECTION</span>
+                                <div class="toggle-switch" id="protectionToggle" onclick="togglePageProtection()"
+                                    style="background: rgba(255, 255, 255, 0.08);">
+                                    <div class="toggle-knob" style="background: rgba(255, 255, 255, 0.5);"></div>
+                                </div>
+                            </div>
+                            <!-- GOOGLE AUTH STATUS -->
+                            <div class="toggle-container"
+                                style="cursor: pointer; height: 60px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08);"
+                                onclick="googleAccessToken ? handleSignoutClick() : handleAuthClick()">
+                                <span class="toggle-label" style="color: rgba(255, 255, 255, 0.7);">GOOGLE DRIVE</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span id="googleStatusText"
+                                        style="font-size: 10px; color: rgba(255, 255, 255, 0.3);">Not
+                                        Connected</span>
+                                    <div id="googleStatusDot"
+                                        style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.3);">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+
+    </div>
+
+    <!-- MODALS / OVERLAYS -->
+    <div id="campaignWizard"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(1,12,26,0.95); backdrop-filter: blur(15px); z-index: 100; align-items: center; justify-content: center;">
+        <div class="glass-side-panel" style="width: 450px; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="section-label">Deploy New Campaign</div>
+            <input type="text" id="wizSong" placeholder="Song/Project Name" class="premium-input">
+            <input type="text" id="wizType" placeholder="Campaign Category" class="premium-input">
+            <input type="text" id="wizPrice" placeholder="Value/Volume" class="premium-input">
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="createCampaign()" class="p-btn-action" style="flex: 1;">EXECUTE</button>
+                <button onclick="closeCampaignWizard()" class="p-btn-action"
+                    style="flex: 1; background: transparent; border: 1px solid rgba(255,255,255,0.2);">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GOOGLE DRIVE INTEGRATION
+        const GOOGLE_CLIENT_ID = '908389111255-v0f6p302onggab7l1qnb2uh9th5jlcvi.apps.googleusercontent.com';
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+        let googleAccessToken = null;
+
+        // Initialize Google API client
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                discoveryDocs: [DISCOVERY_DOC],
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+        // Initialize Google Identity Services
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: GOOGLE_CLIENT_ID,
+                scope: SCOPES,
+                callback: '', // Will be set dynamically
+            });
+            gisInited = true;
+            maybeEnableButtons();
+        }
+
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                updateGoogleStatus();
+            }
+        }
+
+        // Handle OAuth authentication
+        function handleAuthClick(callback) {
+            if (!tokenClient) {
+                showToast('Google API still loading, please wait...', 'info');
+                return;
+            }
+
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    console.error('Auth error:', resp);
+                    showToast('Google authentication failed', 'error');
+                    return;
+                }
+                googleAccessToken = resp.access_token;
+                updateGoogleStatus();
+                if (callback) callback();
+            };
+
+            if (googleAccessToken === null) {
+                // Request new token
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            } else {
+                // Skip consent if already have token
+                tokenClient.requestAccessToken({ prompt: '' });
+            }
+        }
+
+        // Sign out from Google
+        function handleSignoutClick() {
+            if (googleAccessToken) {
+                google.accounts.oauth2.revoke(googleAccessToken);
+                googleAccessToken = null;
+                updateGoogleStatus();
+                showToast('Signed out from Google', 'info');
+            }
+        }
+
+        // Update Google connection status indicator
+        function updateGoogleStatus() {
+            const statusDot = document.getElementById('googleStatusDot');
+            const statusText = document.getElementById('googleStatusText');
+            if (statusDot && statusText) {
+                if (googleAccessToken) {
+                    statusDot.style.background = 'var(--green)';
+                    statusDot.style.boxShadow = '0 0 12px var(--green)';
+                    statusText.textContent = 'Connected';
+                } else {
+                    statusDot.style.background = 'var(--text-dim)';
+                    statusDot.style.boxShadow = 'none';
+                    statusText.textContent = 'Not Connected';
+                }
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                padding: 15px 25px;
+                background: ${type === 'error' ? 'rgba(255, 93, 143, 0.9)' : type === 'info' ? 'rgba(67, 97, 238, 0.9)' : 'rgba(52, 199, 89, 0.9)'};
+                color: white;
+                border-radius: 10px;
+                font-size: 13px;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // SMOOTH EXPAND/COLLAPSE HELPER
+        function smoothExpand(element) {
+            element.style.display = 'block';
+            element.style.maxHeight = '0';
+            element.style.opacity = '0';
+            requestAnimationFrame(() => {
+                element.style.transition = 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease';
+                element.style.maxHeight = '300px';
+                element.style.opacity = '1';
+            });
+        }
+
+        function smoothCollapse(element, callback) {
+            element.style.transition = 'max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease';
+            element.style.maxHeight = '0';
+            element.style.opacity = '0';
+            setTimeout(() => {
+                element.style.display = 'none';
+                if (callback) callback();
+            }, 300);
+        }
+
+        // LINKS BOX OPTIONS UI
+        function toggleLinksBox() {
+            const options = document.getElementById('linksBox');
+            const toggle = document.getElementById('linksToggle');
+            const isVisible = options.style.display !== 'none';
+
+            if (isVisible) {
+                smoothCollapse(options);
+                toggle.classList.remove('open');
+            } else {
+                smoothExpand(options);
+                toggle.classList.add('open');
+
+                // Ensure savedLinks container is ready to show links
+                const savedLinks = document.getElementById('savedLinks');
+                savedLinks.style.maxHeight = '150px';
+                savedLinks.style.padding = '10px';
+            }
+        }
+
+        function handleLinkPaste(event) {
+            setTimeout(() => {
+                const input = event.target;
+                const url = input.value.trim();
+                if (!url) return;
+
+                // Ultra smooth animation: gentle fade and slide
+                const container = document.getElementById('linksContainer');
+                const inputBtn = document.getElementById('linkInputBtn');
+
+                // Gently fade out input with subtle lift
+                inputBtn.style.transition = 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                inputBtn.style.opacity = '0';
+                inputBtn.style.transform = 'translateY(-8px) scale(0.98)';
+
+                setTimeout(() => {
+                    const linkButton = document.createElement('div');
+                    linkButton.className = 'p-btn';
+                    linkButton.style.cssText = 'border-color: rgba(255, 93, 143, 0.3); background: rgba(255, 93, 143, 0.05); opacity: 0; transform: translateY(8px) scale(0.98); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);';
+
+                    const link = document.createElement('a');
+                    link.href = url.startsWith('http') ? url : 'https://' + url;
+                    link.target = '_blank';
+                    link.style.cssText = 'text-decoration: none; color: rgba(255, 255, 255, 0.4); font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 400; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 0; text-align: center; position: relative; text-transform: lowercase;';
+
+                    // Create link text with icon
+                    const linkText = url.length > 45 ? url.substring(0, 42) + '...' : url;
+
+                    // Add subtle link indicator
+                    const linkIcon = document.createElement('span');
+                    linkIcon.innerHTML = '⟡';
+                    linkIcon.style.cssText = 'position: absolute; right: 20px; font-size: 8px; color: rgba(255, 93, 143, 0.4); opacity: 0.6;';
+
+                    link.textContent = linkText;
+                    link.appendChild(linkIcon);
+                    linkButton.appendChild(link);
+
+                    // Replace with link button and animate in
+                    container.innerHTML = '';
+                    container.appendChild(linkButton);
+
+                    // Smooth slide down and fade in
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            linkButton.style.opacity = '1';
+                            linkButton.style.transform = 'translateY(0) scale(1)';
+                        }, 50);
+                    });
+                }, 400);
+
+                // Add hover effects matching the existing p-btn style
+                linkButton.onmouseover = () => {
+                    linkButton.style.background = 'rgba(255, 93, 143, 0.1)';
+                    linkButton.style.borderColor = 'rgba(255, 93, 143, 0.5)';
+                    linkButton.style.transform = 'translateY(-5px)';
+                    linkButton.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 93, 143, 0.2)';
+                };
+                linkButton.onmouseout = () => {
+                    linkButton.style.background = 'rgba(255, 93, 143, 0.05)';
+                    linkButton.style.borderColor = 'rgba(255, 93, 143, 0.3)';
+                    linkButton.style.transform = 'translateY(0)';
+                    linkButton.style.boxShadow = 'none';
+                };
+
+                // Right-click to delete
+                linkButton.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    container.innerHTML = `
+                        <div class="p-btn" id="linkInputBtn" style="border-color: rgba(255, 93, 143, 0.6); flex-direction: column; gap: 0; padding: 0; overflow: hidden;">
+                            <div class="report-input-wrapper">
+                                <input type="text" id="linkDrop" class="report-input" placeholder="Paste URL..." onpaste="handleLinkPaste(event)" onfocus="this.placeholder='Paste URL...'" onblur="this.placeholder='Paste URL...'">
+
+                            </div>
+                        </div>
+                        <div id="savedLinks" class="expand-section" style="display: none; max-height: 0; overflow: hidden; flex-direction: column; gap: 6px; transition: max-height 0.4s ease;">
+                        </div>
+                    `;
+                    document.getElementById('linkDrop').focus();
+                });
+
+                // Make it clickable to add more links (but allow link to work on first click)
+                linkButton.addEventListener('click', (e) => {
+                    if (e.target === linkButton || e.target.closest('.btn-info')) {
+                        container.innerHTML = `
+                            <div class="p-btn" id="linkInputBtn" style="border-color: rgba(255, 93, 143, 0.6); flex-direction: column; gap: 0; padding: 0; overflow: hidden;">
+                                <div class="report-input-wrapper">
+                                    <input type="text" id="linkDrop" class="report-input" placeholder="Paste URL..." onpaste="handleLinkPaste(event)" onfocus="this.placeholder='Paste URL...'" onblur="this.placeholder='Paste URL...'">
+    
+                                </div>
+                            </div>
+                            <div id="savedLinks" class="expand-section" style="display: none; max-height: 0; overflow: hidden; flex-direction: column; gap: 6px; transition: max-height 0.4s ease;">
+                            </div>
+                        `;
+                        document.getElementById('linkDrop').focus();
+                    }
+                });
+
+                showToast('Link saved!', 'success');
+            }, 10);
+        }
+
+
+
+        // LOAD OPTIONS UI
+        function toggleLoadOptions() {
+            const options = document.getElementById('loadOptions');
+            const isVisible = options.style.display !== 'none';
+            options.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // BACKUP OPTIONS UI
+        let customFolderId = null;
+
+        function toggleBackupOptions() {
+            const options = document.getElementById('backupOptions');
+            const isVisible = options.style.display !== 'none';
+            options.style.display = isVisible ? 'none' : 'block';
+            if (isVisible) {
+                // Reset when closing
+                document.getElementById('customPathSection').style.display = 'none';
+                document.getElementById('customFolderUrl').value = '';
+                customFolderId = null;
+            }
+        }
+
+        function showCustomPathInput() {
+            document.getElementById('customPathSection').style.display = 'block';
+        }
+
+        function validateFolderUrl(url) {
+            const input = document.getElementById('customFolderUrl');
+            const status = document.getElementById('urlValidationStatus');
+            const btn = document.getElementById('customBackupBtn');
+
+            // Reset state
+            customFolderId = null;
+
+            if (!url.trim()) {
+                input.style.borderColor = 'rgba(255,255,255,0.1)';
+                status.textContent = '';
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+                btn.style.background = 'rgba(255,255,255,0.05)';
+                btn.style.color = 'var(--text-dim)';
+                return;
+            }
+
+            // Extract folder ID from various Google Drive URL formats
+            // Format 1: https://drive.google.com/drive/folders/FOLDER_ID
+            // Format 2: https://drive.google.com/drive/u/0/folders/FOLDER_ID
+            // Format 3: https://drive.google.com/drive/folders/FOLDER_ID?...
+            const folderMatch = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+
+            if (folderMatch && folderMatch[1]) {
+                customFolderId = folderMatch[1];
+                // Show pending state while we verify
+                input.style.borderColor = 'var(--primary)';
+                status.textContent = 'VALIDATING...';
+                status.style.color = 'var(--primary)';
+
+                // Verify folder exists and is accessible
+                verifyFolderAccess(customFolderId);
+            } else {
+                // Invalid URL format
+                input.style.borderColor = 'var(--pink)';
+                status.textContent = 'INVALID URL FORMAT';
+                status.style.color = 'var(--pink)';
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+                btn.style.background = 'rgba(255, 93, 143, 0.1)';
+                btn.style.color = 'var(--pink)';
+            }
+        }
+
+        async function verifyFolderAccess(folderId) {
+            const input = document.getElementById('customFolderUrl');
+            const status = document.getElementById('urlValidationStatus');
+            const btn = document.getElementById('customBackupBtn');
+
+            if (!googleAccessToken) {
+                // Need to authenticate first
+                input.style.borderColor = 'rgba(67, 97, 238, 0.6)';
+                status.textContent = 'AUTHENTICATE TO VERIFY';
+                status.style.color = 'var(--accent)';
+                btn.disabled = false;
+                btn.style.cursor = 'pointer';
+                btn.style.background = 'rgba(67, 97, 238, 0.2)';
+                btn.style.color = 'var(--accent)';
+                return;
+            }
+
+            try {
+                const response = await gapi.client.drive.files.get({
+                    fileId: folderId,
+                    fields: 'id, name, mimeType'
+                });
+
+                if (response.result.mimeType === 'application/vnd.google-apps.folder') {
+                    // Valid folder
+                    input.style.borderColor = 'var(--green)';
+                    status.textContent = `✓ FOLDER: ${response.result.name}`;
+                    status.style.color = 'var(--green)';
+                    btn.disabled = false;
+                    btn.style.cursor = 'pointer';
+                    btn.style.background = 'rgba(52, 199, 89, 0.2)';
+                    btn.style.borderColor = 'rgba(52, 199, 89, 0.4)';
+                    btn.style.color = 'var(--green)';
+                } else {
+                    // Not a folder
+                    throw new Error('Not a folder');
+                }
+            } catch (error) {
+                // Folder not accessible or doesn't exist
+                input.style.borderColor = 'var(--pink)';
+                status.textContent = 'FOLDER NOT ACCESSIBLE';
+                status.style.color = 'var(--pink)';
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+                btn.style.background = 'rgba(255, 93, 143, 0.1)';
+                btn.style.color = 'var(--pink)';
+                customFolderId = null;
+            }
+        }
+
+        async function backupToCustomFolder() {
+            if (!gapiInited || !gisInited) {
+                showToast('Google API still loading, please wait...', 'info');
+                return;
+            }
+
+            if (!googleAccessToken) {
+                handleAuthClick(() => {
+                    // Re-validate after auth
+                    const url = document.getElementById('customFolderUrl').value;
+                    validateFolderUrl(url);
+                });
+                return;
+            }
+
+            if (!customFolderId) {
+                showToast('Please enter a valid folder URL', 'error');
+                return;
+            }
+
+            const data = {
+                ...state,
+                stratTodo: Array.from(document.getElementById('strat-todo').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[1].textContent, m: c.children[2].textContent })),
+                stratDone: Array.from(document.getElementById('strat-done').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[1].textContent, m: c.children[2].textContent })),
+                campActive: Array.from(document.getElementById('camp-active').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[1].textContent, m: c.children[2].textContent })),
+                campClosed: Array.from(document.getElementById('camp-closed').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[1].textContent, m: c.children[2].textContent })),
+                backupTimestamp: new Date().toISOString()
+            };
+
+            await uploadToDrive(data, customFolderId);
+            toggleBackupOptions(); // Close panel after successful backup
+        }
+
+        // Upload backup to Google Drive
+        async function uploadToDrive(jsonData, folderId = null) {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const filename = `dashboard-backup-${timestamp}.json`;
+
+            const file = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+            const metadata = {
+                name: filename,
+                mimeType: 'application/json'
+            };
+
+            // If a folder ID is provided, set it as the parent
+            if (folderId) {
+                metadata.parents = [folderId];
+            }
+
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', file);
+
+            try {
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': 'Bearer ' + googleAccessToken }),
+                    body: form
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showToast(`Backup saved: ${filename}`, 'success');
+                    return result;
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                console.error('Drive upload error:', error);
+                showToast('Failed to upload to Google Drive', 'error');
+                throw error;
+            }
+        }
+
+        // Load most recent backup from Google Drive
+        async function loadFromDrive() {
+            if (!gapiInited || !gisInited) {
+                showToast('Google API still loading, please wait...', 'info');
+                return;
+            }
+
+            if (!googleAccessToken) {
+                handleAuthClick(loadFromDrive);
+                return;
+            }
+
+            try {
+                showToast('Searching for backups...', 'info');
+
+                // Search for backup files
+                const response = await gapi.client.drive.files.list({
+                    q: "name contains 'dashboard-backup-' and mimeType='application/json' and trashed=false",
+                    orderBy: 'createdTime desc',
+                    pageSize: 1,
+                    fields: 'files(id, name, createdTime)'
+                });
+
+                const files = response.result.files;
+                if (!files || files.length === 0) {
+                    showToast('No backups found in Google Drive', 'info');
+                    return;
+                }
+
+                const latestFile = files[0];
+
+                // Download the file content
+                const fileResponse = await gapi.client.drive.files.get({
+                    fileId: latestFile.id,
+                    alt: 'media'
+                });
+
+                const data = typeof fileResponse.body === 'string'
+                    ? JSON.parse(fileResponse.body)
+                    : fileResponse.result;
+
+                // Restore state using existing logic
+                state = data;
+
+                // Clear existing boards
+                document.getElementById('strat-todo').innerHTML = '<div class="col-tag" style="background: rgba(67, 97, 238, 0.2); color: var(--accent);">TO DO</div>';
+                document.getElementById('strat-done').innerHTML = '<div class="col-tag" style="background: rgba(52, 199, 89, 0.2); color: var(--green);">COMPLETE</div>';
+                document.getElementById('camp-active').innerHTML = '';
+                document.getElementById('camp-closed').innerHTML = '<div class="col-tag" style="background: rgba(255,255,255,0.05); color: var(--text-dim);">CLOSED ARCHIVE</div>';
+                document.getElementById('savedLinks').innerHTML = '';
+
+                // Restore board data
+                if (data.stratTodo) data.stratTodo.forEach(c => renderCard('strat-todo', c.t, c.m));
+                if (data.stratDone) data.stratDone.forEach(c => renderCard('strat-done', c.t, c.m));
+                if (data.campActive) data.campActive.forEach(c => renderCard('camp-active', c.t, c.m));
+                if (data.campClosed) data.campClosed.forEach(c => renderCard('camp-closed', c.t, c.m));
+
+                // Restore Identity
+                updateIdentityUI();
+
+                showToast(`Restored from: ${latestFile.name}`, 'success');
+            } catch (error) {
+                console.error('Drive load error:', error);
+                showToast('Failed to load from Google Drive', 'error');
+            }
+        }
+
+        // PAGE PROTECTION FEATURE
+        let pageProtectionEnabled = false;
+
+        function togglePageProtection() {
+            const toggle = document.getElementById('protectionToggle');
+            pageProtectionEnabled = !pageProtectionEnabled;
+            toggle.classList.toggle('active', pageProtectionEnabled);
+        }
+
+        window.addEventListener('beforeunload', function (e) {
+            if (pageProtectionEnabled) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // CORE DASHBOARD ENGINE
+        let state = {
+            strategicTasks: [],
+            campaigns: [],
+            reports: [],
+            artistIdentity: {
+                name: '{artist name}',
+                photo: ''
+            }
+        };
+
+        // DYNAMIC IDENTITY SYNC
+        async function syncSpotifyIdentity(url) {
+            if (!url.includes('spotify.com')) return;
+            const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+            try {
+                const response = await fetch(oembedUrl);
+                const data = await response.json();
+                const artistName = data.title ? data.title.toUpperCase() : "SYNCED ARTIST";
+                const thumbUrl = data.thumbnail_url;
+
+                // Update State
+                state.artistIdentity.name = artistName;
+                state.artistIdentity.photo = thumbUrl;
+
+                // Update UI
+                updateIdentityUI();
+            } catch (error) {
+                console.error('Sync failed:', error);
+            }
+        }
+
+        function updateIdentityUI() {
+            // Update Report Input placeholder
+            const reportInput = document.getElementById('linkDrop');
+            if (reportInput) {
+                const nameLabel = state.artistIdentity.name.toLowerCase();
+                reportInput.placeholder = `${nameLabel} report`;
+                // If not focused, update immediate value/placeholder feel
+                if (document.activeElement !== reportInput) {
+                    reportInput.placeholder = `${nameLabel} report`;
+                }
+            }
+
+            // Update Profile Image
+            const imgWrap = document.getElementById('profileImageWrap');
+            const defaultIcon = document.getElementById('defaultProfileIcon');
+            if (state.artistIdentity.photo) {
+                imgWrap.style.backgroundImage = `url('${state.artistIdentity.photo}')`;
+                if (defaultIcon) defaultIcon.style.display = 'none';
+            } else {
+                imgWrap.style.backgroundImage = 'none';
+                if (defaultIcon) defaultIcon.style.display = 'block';
+            }
+        }
+
+        function addStrategicTask() {
+            const input = document.getElementById('taskInput');
+            const val = input.value.trim();
+            if (!val) return;
+            renderCard('strat-todo', val, 'Strategic ID: ' + Math.random().toString(36).substr(2, 5));
+            input.value = '';
+        }
+
+        function openCampaignWizard() { document.getElementById('campaignWizard').style.display = 'flex'; }
+        function closeCampaignWizard() { document.getElementById('campaignWizard').style.display = 'none'; }
+
+        function createCampaign() {
+            const song = document.getElementById('wizSong').value;
+            const type = document.getElementById('wizType').value;
+            const price = document.getElementById('wizPrice').value;
+            if (!song) return;
+            renderCard('camp-active', song, `${type} | ${price}`);
+            closeCampaignWizard();
+            document.getElementById('wizSong').value = '';
+        }
+
+        function renderCard(targetId, title, meta) {
+            const id = 'card-' + Date.now() + Math.random().toString(36).substr(2, 4);
+            const card = document.createElement('div');
+            card.className = 'baller-card';
+            card.id = id;
+            card.draggable = true;
+            card.ondragstart = drag;
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deleteCard('${id}')">×</button>
+                <div class="btn-label" style="font-size: 13px;">${title}</div>
+                <div class="btn-meta">${meta}</div>
+            `;
+            document.getElementById(targetId).appendChild(card);
+        }
+
+        function deleteCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.remove();
+            }
+        }
+
+        // DRAG & DROP LOGIC
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.style.background = 'rgba(76, 201, 240, 0.05)'; }
+        function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.style.background = '';
+            const data = ev.dataTransfer.getData("text");
+            ev.currentTarget.appendChild(document.getElementById(data));
+        }
+
+        // PERSISTENCE
+        function backupState() {
+            if (!gapiInited || !gisInited) {
+                showToast('Google API still loading, please wait...', 'info');
+                return;
+            }
+
+            const data = {
+                ...state,
+                stratTodo: Array.from(document.getElementById('strat-todo').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[1].textContent, m: c.children[2].textContent })),
+                stratDone: Array.from(document.getElementById('strat-done').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[1].textContent, m: c.children[2].textContent })),
+                campActive: Array.from(document.getElementById('camp-active').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[1].textContent, m: c.children[2].textContent })),
+                campClosed: Array.from(document.getElementById('camp-closed').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[1].textContent, m: c.children[2].textContent })),
+                backupTimestamp: new Date().toISOString()
+            };
+
+            // Upload to Google Drive
+            if (!googleAccessToken) {
+                handleAuthClick(() => uploadToDrive(data));
+                return;
+            }
+            uploadToDrive(data);
+        }
+
+        function triggerRestore() {
+            document.getElementById('snapshotInput').click();
+        }
+
+        function restoreState(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    state = data;
+
+                    // Clear existing boards
+                    document.getElementById('strat-todo').innerHTML = '<div class="col-tag" style="background: rgba(67, 97, 238, 0.2); color: var(--accent);">TO DO</div>';
+                    document.getElementById('strat-done').innerHTML = '<div class="col-tag" style="background: rgba(52, 199, 89, 0.2); color: var(--green);">COMPLETE</div>';
+                    document.getElementById('camp-active').innerHTML = '';
+                    document.getElementById('camp-closed').innerHTML = '<div class="col-tag" style="background: rgba(255,255,255,0.05); color: var(--text-dim);">CLOSED ARCHIVE</div>';
+                    document.getElementById('savedLinks').innerHTML = '';
+
+                    // Restore board data
+                    if (data.stratTodo) data.stratTodo.forEach(c => renderCard('strat-todo', c.t, c.m));
+                    if (data.stratDone) data.stratDone.forEach(c => renderCard('strat-done', c.t, c.m));
+                    if (data.campActive) data.campActive.forEach(c => renderCard('camp-active', c.t, c.m));
+                    if (data.campClosed) data.campClosed.forEach(c => renderCard('camp-closed', c.t, c.m));
+
+                    // Restore Identity
+                    updateIdentityUI();
+
+                    console.log('State restored successfully');
+                } catch (err) {
+                    console.error('Snapshot recovery failed:', err);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // CANVAS PARTICLES (BALLER STYLE)
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const resize = () => {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            particles = Array.from({ length: 60 }, () => ({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                s: Math.random() * 2 + 1, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+                o: Math.random() * 0.4 + 0.1
+            }));
+        };
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+                ctx.fillStyle = `rgba(76, 201, 240, ${p.o})`;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        };
+        window.onresize = resize; resize(); animate();
+    </script>
+
+    <!-- Google API Scripts (loaded after main script so functions are defined) -->
+    <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+</body>
+
+</html>

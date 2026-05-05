@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>James Downs — Band Bucket Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎺</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800;900&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ROOT TOKENS — inherited from reference design system
+   ============================================================ */
+:root {
+  --bg:           #faf9f4;
+  --surface:      #fdfcf8;
+  --surface2:     #f2efe6;
+  --border:       #e4e0d5;
+  --border-light: #ede9de;
+  --text-primary: #1a1814;
+  --text-second:  #4a4640;
+  --text-muted:   #9a958c;
+  --text-ghost:   #c8c3ba;
+  --blue:         #2e7be8;
+  --blue-soft:    rgba(46, 123, 232, 0.08);
+  --blue-glow:    rgba(46, 123, 232, 0.18);
+  --green:        #1a9e6e;
+  --green-soft:   rgba(26, 158, 110, 0.08);
+  --green-glow:   rgba(26, 158, 110, 0.18);
+  --amber:        #c07a1a;
+  --amber-soft:   rgba(192, 122, 26, 0.08);
+  --red:          #d94040;
+  --red-soft:     rgba(217, 64, 64, 0.08);
+  --purple:       #7c5cbf;
+  --purple-soft:  rgba(124, 92, 191, 0.08);
+  --mono:         'JetBrains Mono', monospace;
+  --sans:         'Outfit', system-ui, sans-serif;
+  --script:       'Caveat', cursive;
+  --r:            6px;
+  --r-lg:         10px;
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:    0 4px 16px rgba(0,0,0,0.08);
+  --transition:   all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Paper-specific tokens */
+  --paper-line:   rgba(26, 158, 110, 0.13);
+  --paper-margin: rgba(217, 64, 64, 0.18);
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  font-family: var(--mono);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+  /* Subtle paper grain via SVG noise */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.028'/%3E%3C/svg%3E");
+}
+
+/* ============================================================
+   AMBIENT GLOW ORBS — very subtle on paper
+   ============================================================ */
+.ambient-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+.glow-1 {
+  top: -8%; left: -6%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(46,123,232,0.055) 0%, transparent 70%);
+  animation: glow-breathe 9s ease-in-out infinite;
+}
+.glow-2 {
+  bottom: -18%; right: -4%;
+  width: 580px; height: 580px;
+  background: radial-gradient(circle, rgba(26,158,110,0.045) 0%, transparent 70%);
+  animation: glow-breathe 11s ease-in-out infinite 1.5s;
+}
+.glow-3 {
+  top: 40%; left: 42%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(124,92,191,0.035) 0%, transparent 70%);
+  animation: glow-breathe 14s ease-in-out infinite 3s;
+}
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%       { opacity: 0.75; transform: scale(1.06); }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+@keyframes pop-in {
+  0%   { opacity: 0; transform: scale(0.88); }
+  65%  { transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-ghost); }
+
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.page-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+@media (max-width: 640px) {
+  .page-wrap { padding: 28px 14px 60px; gap: 24px; }
+}
+
+/* ============================================================
+   DOCUMENT HEADER — hole-punched paper look
+   ============================================================ */
+.doc-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 32px 36px 28px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  animation: fade-up 0.55s ease-out both;
+}
+
+/* Left margin stripe */
+.doc-header::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 50px;
+  background: var(--surface2);
+  border-right: 1px solid var(--border-light);
+}
+
+.hole-punches {
+  position: absolute;
+  left: 15px; top: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 24px 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.hole {
+  width: 19px; height: 19px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+}
+
+.doc-header-inner {
+  padding-left: 22px;
+  position: relative;
+  z-index: 1;
+}
+
+.doc-label {
+  font-size: 0.575rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.doc-label-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 8px var(--blue-glow);
+}
+
+.doc-title {
+  font-family: var(--sans);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.doc-subtitle {
+  font-family: var(--script);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 26px;
+}
+
+/* ---- Rank progress bar ---- */
+.rank-bar-wrap { margin-top: 4px; }
+
+.rank-bar-toprow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.rank-bar-label {
+  font-size: 0.575rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+}
+.rank-current-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--blue);
+  transition: var(--transition);
+}
+
+.rank-track {
+  position: relative;
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  overflow: visible;
+  margin-bottom: 10px;
+}
+.rank-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  box-shadow: 0 0 10px var(--blue-glow);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.rank-fill::after {
+  content: '';
+  position: absolute;
+  right: -1px; top: 50%;
+  transform: translateY(-50%);
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: white;
+  border: 2.5px solid var(--blue);
+  box-shadow: 0 0 8px var(--blue-glow);
+}
+
+.rank-milestones {
+  display: flex;
+  justify-content: space-between;
+}
+.rank-milestone {
+  font-size: 0.49rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  text-align: center;
+  flex: 1;
+  line-height: 1.35;
+  transition: var(--transition);
+}
+.rank-milestone.reached { color: var(--green); }
+.rank-milestone.current { color: var(--blue); font-weight: 900; }
+
+/* ============================================================
+   STAT STRIP — 4 cards
+   ============================================================ */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  animation: fade-up 0.55s ease-out 0.1s both;
+}
+@media (max-width: 600px) {
+  .stat-strip { grid-template-columns: repeat(2, 1fr); }
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  transition: var(--transition);
+  cursor: default;
+}
+.stat-card:hover {
+  border-color: transparent;
+  box-shadow: 0 0 0 1.5px var(--blue), var(--shadow-md), 0 0 20px var(--blue-glow);
+  transform: translateY(-1px);
+}
+.stat-card.green:hover {
+  box-shadow: 0 0 0 1.5px var(--green), var(--shadow-md), 0 0 20px var(--green-glow);
+}
+.stat-card.amber:hover {
+  box-shadow: 0 0 0 1.5px var(--amber), var(--shadow-md), 0 0 16px var(--amber-soft);
+}
+.stat-card.purple:hover {
+  box-shadow: 0 0 0 1.5px var(--purple), var(--shadow-md), 0 0 16px var(--purple-soft);
+}
+.stat-tag {
+  font-size: 0.555rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: var(--sans);
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+  transition: var(--transition);
+}
+.stat-value.blue   { color: var(--blue); }
+.stat-value.green  { color: var(--green); }
+.stat-value.amber  { color: var(--amber); }
+.stat-value.purple { color: var(--purple); }
+.stat-sub {
+  font-size: 0.575rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* ============================================================
+   SECTION WRAPPER — school document section
+   ============================================================ */
+.section-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: fade-up 0.55s ease-out 0.18s both;
+  transition: var(--transition);
+}
+.section-wrap.section-done {
+  border-color: rgba(26,158,110,0.3);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 20px;
+  background: var(--surface2);
+  border-bottom: 2px solid var(--border);
+  flex-wrap: wrap;
+  transition: var(--transition);
+}
+.section-wrap.section-done .section-header {
+  background: linear-gradient(to right, rgba(26,158,110,0.04), var(--surface2));
+  border-bottom-color: rgba(26,158,110,0.22);
+}
+
+.section-num {
+  font-size: 0.565rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  white-space: nowrap;
+}
+.section-title {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  flex: 1;
+}
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.555rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.section-badge.blue   { background: var(--blue-soft);   color: var(--blue); }
+.section-badge.green  { background: var(--green-soft);  color: var(--green); }
+.section-badge.purple { background: var(--purple-soft); color: var(--purple); }
+
+.section-complete-flash {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  background: var(--green-soft);
+  border-radius: 999px;
+  font-size: 0.555rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: pop-in 0.3s ease both;
+}
+.section-complete-flash.show { display: inline-flex; }
+
+/* ============================================================
+   CHECKLIST — lined paper feel
+   ============================================================ */
+.checklist {
+  list-style: none;
+  padding: 0;
+}
+
+.check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--paper-line);
+  position: relative;
+  transition: background 0.18s ease;
+}
+.check-item:last-child { border-bottom: none; }
+.check-item:hover { background: rgba(46,123,232,0.025); }
+.check-item.completed { background: rgba(26,158,110,0.03); }
+.check-item.completed .check-text {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-ghost);
+}
+.check-item.completed .check-num { color: var(--green); }
+
+/* Margin red line */
+.check-item::before {
+  content: '';
+  position: absolute;
+  left: 46px; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--paper-margin);
+  pointer-events: none;
+}
+
+.check-num {
+  font-size: 0.555rem;
+  font-weight: 700;
+  color: var(--text-ghost);
+  min-width: 18px;
+  text-align: right;
+  padding-top: 2px;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.check-box-wrap {
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+/* Custom checkbox */
+.check-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border: 1.5px solid #c8c3ba;
+  border-radius: 3px;
+  background: var(--surface);
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition);
+  display: block;
+  flex-shrink: 0;
+}
+.check-input:hover {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+}
+.check-input:checked {
+  background: var(--green);
+  border-color: var(--green);
+}
+.check-input:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 1px;
+  width: 5px; height: 8px;
+  border: 2px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.check-content { flex: 1; min-width: 0; }
+
+.check-text {
+  font-family: var(--mono);
+  font-size: 0.715rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.6;
+  transition: var(--transition);
+}
+.check-text em {
+  font-style: normal;
+  color: var(--blue);
+  font-size: 0.68rem;
+}
+.check-text .time-note {
+  color: var(--text-muted);
+  font-size: 0.64rem;
+}
+
+/* ---- Fill-in fields ---- */
+.fill-ins {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fill-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fill-label {
+  font-size: 0.575rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  white-space: nowrap;
+  min-width: 132px;
+  flex-shrink: 0;
+}
+.fill-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  outline: none;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-primary);
+  padding: 2px 4px;
+  min-width: 0;
+  transition: var(--transition);
+}
+.fill-input:focus {
+  border-bottom-color: var(--blue);
+  background: var(--blue-soft);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+.fill-input::placeholder { color: var(--text-ghost); font-style: italic; }
+
+/* Leadership rows */
+.leadership-rows {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.leadership-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.leadership-lbl {
+  font-size: 0.565rem;
+  font-weight: 700;
+  color: var(--text-ghost);
+  min-width: 108px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.leadership-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--border);
+  outline: none;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-primary);
+  padding: 2px 4px;
+  transition: var(--transition);
+}
+.leadership-input:focus {
+  border-bottom-color: var(--amber);
+  background: var(--amber-soft);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+.leadership-input::placeholder { color: var(--text-ghost); }
+
+/* ============================================================
+   SCALE CYCLE REFERENCE CARD
+   ============================================================ */
+.scale-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: fade-up 0.55s ease-out 0.32s both;
+}
+.scale-card-header {
+  padding: 12px 20px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.scale-card-title {
+  font-size: 0.575rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scale-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow: 0 0 6px var(--purple-soft);
+}
+.scale-card-ref {
+  font-size: 0.555rem;
+  color: var(--text-ghost);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.scale-card-body {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.scale-name {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.scale-keys {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.scale-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  transition: var(--transition);
+  cursor: default;
+  white-space: nowrap;
+}
+.scale-key:hover {
+  background: var(--purple-soft);
+  border-color: var(--purple);
+  color: var(--purple);
+}
+.scale-sep {
+  color: var(--text-ghost);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+.scale-note {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   CELEBRATION BANNER — all 15 done
+   ============================================================ */
+.celebration-wrap {
+  display: none;
+  animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.celebration-wrap.visible { display: block; }
+
+.celebration-banner {
+  background: linear-gradient(135deg, var(--green-soft), var(--blue-soft));
+  border: 1.5px solid var(--green);
+  border-radius: var(--r-lg);
+  padding: 28px 32px;
+  text-align: center;
+  box-shadow: 0 0 32px var(--green-glow), var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+.celebration-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(26,158,110,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.celebration-icon {
+  font-size: 2.4rem;
+  display: block;
+  margin-bottom: 10px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+.celebration-title {
+  font-family: var(--sans);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--green);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.celebration-sub {
+  font-size: 0.7rem;
+  color: var(--text-second);
+  letter-spacing: 0.04em;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.medal-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.medal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  background: var(--surface);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.medal-badge.gold   { border: 1.5px solid var(--amber);  color: var(--amber);  box-shadow: 0 0 12px var(--amber-soft); }
+.medal-badge.green  { border: 1.5px solid var(--green);  color: var(--green);  box-shadow: 0 0 12px var(--green-soft); }
+
+/* ============================================================
+   PAGE FOOTER
+   ============================================================ */
+.page-footer {
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  animation: fade-up 0.4s ease-out 0.44s both;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.footer-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footer-note {
+  font-size: 0.615rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+}
+.footer-note strong { color: var(--text-second); font-weight: 700; }
+.footer-note .ast   { color: var(--amber); }
+.footer-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.footer-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  opacity: 0.55;
+}
+.footer-bottom {
+  border-top: 1px solid var(--border-light);
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.footer-id {
+  font-size: 0.555rem;
+  font-weight: 700;
+  color: var(--text-ghost);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.footer-saved {
+  font-size: 0.555rem;
+  color: var(--text-ghost);
+  letter-spacing: 0.1em;
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+@media (max-width: 560px) {
+  .doc-header::before { display: none; }
+  .hole-punches { display: none; }
+  .doc-header-inner { padding-left: 0; }
+  .check-item::before { display: none; }
+  .fill-row { flex-direction: column; align-items: flex-start; gap: 3px; }
+  .fill-label { min-width: unset; }
+  .scale-card-body { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .section-header { flex-wrap: wrap; gap: 6px; }
+  .rank-milestone { font-size: 0.43rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Ambient glow orbs -->
+<div class="ambient-glow glow-1"></div>
+<div class="ambient-glow glow-2"></div>
+<div class="ambient-glow glow-3"></div>
+
+<div class="page-wrap">
+
+  <!-- ======================================================
+       DOCUMENT HEADER
+       ====================================================== -->
+  <div class="doc-header">
+    <div class="hole-punches">
+      <div class="hole"></div>
+      <div class="hole"></div>
+      <div class="hole"></div>
+    </div>
+    <div class="doc-header-inner">
+      <div class="doc-label">
+        <span class="doc-label-dot"></span>
+        Student Achievement Record
+      </div>
+      <div class="doc-title">James Downs</div>
+      <div class="doc-subtitle">Band Bucket Tracker</div>
+
+      <div class="rank-bar-wrap">
+        <div class="rank-bar-toprow">
+          <span class="rank-bar-label">Rank Progress</span>
+          <span class="rank-current-label" id="currentRankLabel">Bandsman First Class</span>
+        </div>
+        <div class="rank-track">
+          <div class="rank-fill" id="rankFill" style="width: 0%"></div>
+        </div>
+        <div class="rank-milestones">
+          <span class="rank-milestone" id="rm0">Bandsman<br>First Class</span>
+          <span class="rank-milestone" id="rm1">Training<br>Ribbon</span>
+          <span class="rank-milestone" id="rm2">Senior<br>Bandsman</span>
+          <span class="rank-milestone" id="rm3">Staff<br>Sergeant</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       STAT STRIP
+       ====================================================== -->
+  <div class="stat-strip">
+    <div class="stat-card">
+      <div class="stat-tag">Total Items</div>
+      <div class="stat-value blue">15</div>
+      <div class="stat-sub">across 3 sections</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-tag">Completed</div>
+      <div class="stat-value green" id="statCompleted">0</div>
+      <div class="stat-sub">items checked off</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-tag">Remaining</div>
+      <div class="stat-value amber" id="statRemaining">15</div>
+      <div class="stat-sub">still to finish</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-tag">Current Rank</div>
+      <div class="stat-value purple" id="statRank" style="font-size: 0.72rem; padding-top: 6px; line-height: 1.25;">Bandsman<br>First Class</div>
+      <div class="stat-sub" id="statRankSub">0 of 3 levels</div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       SECTION 1 — BANDSMAN FIRST CLASS
+       ====================================================== -->
+  <div class="section-wrap" id="section1">
+    <div class="section-header">
+      <span class="section-num">S-01</span>
+      <span class="section-title">Bandsman First Class</span>
+      <span class="section-badge blue" id="s1Badge">0 / 5</span>
+      <span class="section-complete-flash" id="s1Complete">&#10003; Complete</span>
+    </div>
+    <ul class="checklist">
+
+      <li class="check-item" id="item-s1i1">
+        <span class="check-num">01</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s1i1" data-key="s1i1">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Count line 6 from <em>Rhythm Sheet 12</em></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s1i2">
+        <span class="check-num">02</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s1i2" data-key="s1i2">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play TOE line #35 <em>(The Wabash Cannonball)</em></div>
+          <div class="fill-ins">
+            <div class="fill-row">
+              <span class="fill-label">Define "Syncopation":</span>
+              <input type="text" class="fill-input" id="f_syncopation" data-key="f_syncopation" placeholder="write your definition here...">
+            </div>
+            <div class="leadership-rows">
+              <div class="leadership-row">
+                <span class="leadership-lbl">Leadership Ex. 1:</span>
+                <input type="text" class="leadership-input" id="f_lead1" data-key="f_lead1" placeholder="example...">
+              </div>
+              <div class="leadership-row">
+                <span class="leadership-lbl">Leadership Ex. 2:</span>
+                <input type="text" class="leadership-input" id="f_lead2" data-key="f_lead2" placeholder="example...">
+              </div>
+              <div class="leadership-row">
+                <span class="leadership-lbl">Leadership Ex. 3:</span>
+                <input type="text" class="leadership-input" id="f_lead3" data-key="f_lead3" placeholder="example...">
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s1i3">
+        <span class="check-num">03</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s1i3" data-key="s1i3">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play TOE line #36 <em>(Still, Still, Still)</em></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s1i4">
+        <span class="check-num">04</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s1i4" data-key="s1i4">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play the <em>Concert D&#9837; Scale</em></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s1i5">
+        <span class="check-num">05</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s1i5" data-key="s1i5">
+        </div>
+        <div class="check-content">
+          <div class="check-text">What are 3 examples of leadership in our band room?</div>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+
+  <!-- ======================================================
+       SECTION 2 — SENIOR BANDSMAN
+       ====================================================== -->
+  <div class="section-wrap" id="section2" style="animation-delay: 0.22s;">
+    <div class="section-header">
+      <span class="section-num">S-02</span>
+      <span class="section-title">Senior Bandsman</span>
+      <span class="section-badge green" id="s2Badge">0 / 5</span>
+      <span class="section-complete-flash" id="s2Complete">&#10003; Complete</span>
+    </div>
+    <ul class="checklist">
+
+      <li class="check-item" id="item-s2i1">
+        <span class="check-num">01</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s2i1" data-key="s2i1">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Count line 5 from <em>Rhythm Sheet 12.5</em></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s2i2">
+        <span class="check-num">02</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s2i2" data-key="s2i2">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play TOE line #41 <em>(Skill Builder)</em></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s2i3">
+        <span class="check-num">03</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s2i3" data-key="s2i3">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play TOE line #56 <em>(Sight-Reading Challenge Minuet)</em></div>
+          <div class="fill-ins">
+            <div class="fill-row">
+              <span class="fill-label">Define "Tenuto":</span>
+              <input type="text" class="fill-input" id="f_tenuto" data-key="f_tenuto" placeholder="write your definition here...">
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s2i4">
+        <span class="check-num">04</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s2i4" data-key="s2i4">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play TOE line #59 <em>(Skill Builder)</em></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s2i5">
+        <span class="check-num">05</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s2i5" data-key="s2i5">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Count TOE line #65 <em>(Rhythm Time)</em> &mdash; then play TOE line #66 <em>(This Train)</em></div>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+
+  <!-- ======================================================
+       SECTION 3 — STAFF SERGEANT
+       ====================================================== -->
+  <div class="section-wrap" id="section3" style="animation-delay: 0.28s;">
+    <div class="section-header">
+      <span class="section-num">S-03</span>
+      <span class="section-title">Staff Sergeant</span>
+      <span class="section-badge purple" id="s3Badge">0 / 5</span>
+      <span class="section-complete-flash" id="s3Complete">&#10003; Complete</span>
+    </div>
+    <ul class="checklist">
+
+      <li class="check-item" id="item-s3i1">
+        <span class="check-num">01</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s3i1" data-key="s3i1">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play TOE line #70 <em>(The Thunderer)</em></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s3i2">
+        <span class="check-num">02</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s3i2" data-key="s3i2">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play TOE line #75 <em>(Theme from The Barber of Seville)</em></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s3i3">
+        <span class="check-num">03</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s3i3" data-key="s3i3">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play TOE line #78 <em>(Skill Builder: Sailor's Song)</em> &mdash; without repeats</div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s3i4">
+        <span class="check-num">04</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s3i4" data-key="s3i4">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play <em>Chromatic #10</em> from memory <span class="time-note">(in less than 1 min.)</span></div>
+        </div>
+      </li>
+
+      <li class="check-item" id="item-s3i5">
+        <span class="check-num">05</span>
+        <div class="check-box-wrap">
+          <input type="checkbox" class="check-input" id="s3i5" data-key="s3i5">
+        </div>
+        <div class="check-content">
+          <div class="check-text">Play the <em>Middle School Scale Cycle</em> from memory <span class="time-note">(in less than 2 min.)</span></div>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+
+  <!-- ======================================================
+       SCALE CYCLE REFERENCE PANEL
+       ====================================================== -->
+  <div class="scale-card">
+    <div class="scale-card-header">
+      <div class="scale-card-title">
+        <span class="scale-dot"></span>
+        Scale Cycle Reference
+      </div>
+      <span class="scale-card-ref">S-03 &mdash; Item 5</span>
+    </div>
+    <div class="scale-card-body">
+      <span class="scale-name">Middle School Scale Cycle</span>
+      <div class="scale-keys">
+        <span class="scale-key">G</span>
+        <span class="scale-sep">&mdash;</span>
+        <span class="scale-key">C</span>
+        <span class="scale-sep">&mdash;</span>
+        <span class="scale-key">F</span>
+        <span class="scale-sep">&mdash;</span>
+        <span class="scale-key">B&#9837;</span>
+        <span class="scale-sep">&mdash;</span>
+        <span class="scale-key">E&#9837;</span>
+        <span class="scale-sep">&mdash;</span>
+        <span class="scale-key">A&#9837;</span>
+        <span class="scale-sep">&mdash;</span>
+        <span class="scale-key">D&#9837;</span>
+      </div>
+      <span class="scale-note">1 octave minimum</span>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       CELEBRATION — hidden until all 15 done
+       ====================================================== -->
+  <div class="celebration-wrap" id="celebrationWrap">
+    <div class="celebration-banner">
+      <span class="celebration-icon">&#127942;</span>
+      <div class="celebration-title">All 15 Items Complete!</div>
+      <div class="celebration-sub">Outstanding work, James. Every box checked, every challenge met.</div>
+      <div class="medal-row">
+        <span class="medal-badge gold">&#127941; Achievement Medal</span>
+        <span class="medal-badge green">&#127846; Ice Pop Earned</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       FOOTER
+       ====================================================== -->
+  <div class="page-footer">
+    <div class="footer-top">
+      <div>
+        <div class="footer-note">
+          <span class="ast">*</span> Eligible for Admittance into <strong>Honor Band</strong> next school year
+        </div>
+        <div class="footer-note" style="margin-top: 4px; opacity: 0.65;">
+          Complete all 3 sections to qualify &mdash; Band Director sign-off required
+        </div>
+      </div>
+      <div class="footer-dots">
+        <div class="footer-dot" style="background: var(--blue);"></div>
+        <div class="footer-dot" style="background: var(--green);"></div>
+        <div class="footer-dot" style="background: var(--purple);"></div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-id">James Downs &mdash; Band Bucket Tracker</span>
+      <span class="footer-saved">Progress auto-saved locally</span>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+/* ============================================================
+   BAND BUCKET TRACKER — Interactive Logic
+   ============================================================ */
+
+const STORE_KEY = 'jd_band_bucket';
+const TOTAL     = 15;
+
+// Section item keys
+const SECTIONS = {
+  1: ['s1i1','s1i2','s1i3','s1i4','s1i5'],
+  2: ['s2i1','s2i2','s2i3','s2i4','s2i5'],
+  3: ['s3i1','s3i2','s3i3','s3i4','s3i5'],
+};
+
+// Default checked on first load
+const DEFAULTS = {
+  s1i1: true,
+  s1i2: true,
+  s1i4: true,
+};
+
+const RANKS = [
+  'Bandsman First Class',
+  'Training Ribbon',
+  'Senior Bandsman',
+  'Staff Sergeant',
+];
+
+// ---- Storage ----
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+function saveState(state) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e) {}
+}
+
+// ---- Init ----
+function initState() {
+  let state = loadState();
+  if (!state) {
+    state = { checks: { ...DEFAULTS }, fields: {} };
+    saveState(state);
+  }
+  if (!state.fields) state.fields = {};
+  return state;
+}
+
+// ---- Apply state to DOM ----
+function applyState(state) {
+  document.querySelectorAll('.check-input').forEach(el => {
+    el.checked = !!state.checks[el.dataset.key];
+    updateItemStyle(el);
+  });
+  document.querySelectorAll('.fill-input, .leadership-input').forEach(el => {
+    const v = state.fields[el.dataset.key];
+    if (v !== undefined) el.value = v;
+  });
+}
+
+// ---- Completed item style ----
+function updateItemStyle(checkboxEl) {
+  const li = document.getElementById('item-' + checkboxEl.dataset.key);
+  if (!li) return;
+  li.classList.toggle('completed', checkboxEl.checked);
+}
+
+// ---- Compute stats ----
+function computeStats(state) {
+  let completed = 0;
+  document.querySelectorAll('.check-input').forEach(el => {
+    if (el.checked) completed++;
+  });
+
+  const sc = {};
+  for (const [s, keys] of Object.entries(SECTIONS)) {
+    sc[s] = keys.filter(k => state.checks[k]).length;
+  }
+
+  const s1d = sc[1] === 5;
+  const s2d = sc[2] === 5;
+  const s3d = sc[3] === 5;
+  const sectsDone = (s1d ? 1 : 0) + (s2d ? 1 : 0) + (s3d ? 1 : 0);
+
+  // Rank index
+  let rankIdx = 0;
+  if (s1d) rankIdx = 1;
+  if (s1d && s2d) rankIdx = 2;
+  if (s1d && s2d && s3d) rankIdx = 3;
+
+  // Progress bar fill — smooth across partial sections
+  let barPct = 0;
+  if (sectsDone === 0) {
+    barPct = (sc[1] / 5) * 30;
+  } else if (sectsDone === 1 && s1d) {
+    barPct = 33 + (sc[2] / 5) * 33;
+  } else if (sectsDone === 2 && s1d && s2d) {
+    barPct = 66 + (sc[3] / 5) * 34;
+  } else if (sectsDone === 3) {
+    barPct = 100;
+  }
+
+  return { completed, remaining: TOTAL - completed, rankIdx, barPct, sc, s1d, s2d, s3d, sectsDone };
+}
+
+// ---- Update UI ----
+function updateUI(state) {
+  const s = computeStats(state);
+
+  // Stat strip
+  document.getElementById('statCompleted').textContent = s.completed;
+  document.getElementById('statRemaining').textContent = s.remaining;
+
+  // Rank card — break long names
+  const rl = RANKS[s.rankIdx];
+  const rankEl = document.getElementById('statRank');
+  const words = rl.split(' ');
+  const mid = Math.ceil(words.length / 2);
+  rankEl.innerHTML = words.slice(0, mid).join(' ') + '<br>' + words.slice(mid).join(' ');
+  document.getElementById('statRankSub').textContent = s.sectsDone + ' of 3 levels';
+
+  // Rank bar + label
+  document.getElementById('rankFill').style.width = Math.min(100, s.barPct).toFixed(1) + '%';
+  document.getElementById('currentRankLabel').textContent = rl;
+
+  // Rank milestones
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('rm' + i);
+    el.classList.toggle('reached', i < s.rankIdx);
+    el.classList.toggle('current', i === s.rankIdx);
+  }
+
+  // Per-section badges + complete flash
+  const sData = [
+    { n: 1, done: s.s1d, count: s.sc[1] },
+    { n: 2, done: s.s2d, count: s.sc[2] },
+    { n: 3, done: s.s3d, count: s.sc[3] },
+  ];
+  sData.forEach(({ n, done, count }) => {
+    document.getElementById('s' + n + 'Badge').textContent = count + ' / 5';
+    document.getElementById('s' + n + 'Complete').classList.toggle('show', done);
+    document.getElementById('section' + n).classList.toggle('section-done', done);
+  });
+
+  // Celebration
+  document.getElementById('celebrationWrap').classList.toggle('visible', s.completed === TOTAL);
+}
+
+// ---- Event binding ----
+function bindEvents(state) {
+  document.querySelectorAll('.check-input').forEach(el => {
+    el.addEventListener('change', () => {
+      state.checks[el.dataset.key] = el.checked;
+      saveState(state);
+      updateItemStyle(el);
+      updateUI(state);
+    });
+  });
+
+  document.querySelectorAll('.fill-input, .leadership-input').forEach(el => {
+    el.addEventListener('input', () => {
+      state.fields[el.dataset.key] = el.value;
+      saveState(state);
+    });
+  });
+}
+
+// ---- Boot ----
+(function boot() {
+  const state = initState();
+  applyState(state);
+  bindEvents(state);
+  updateUI(state);
+})();
+</script>
+</body>
+</html>

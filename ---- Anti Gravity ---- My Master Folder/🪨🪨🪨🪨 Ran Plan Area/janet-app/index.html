@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Janet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --deep-1: #001219;
+      --deep-2: #002633;
+      --deep-3: #005f73;
+      --purple-mid: #0a9396;
+      --purple-bright: #40c8c8;
+      --violet-glow: #80e8d8;
+      --mystic-pink: #e9c46a;
+      --hot-pink: #f4a261;
+      --soft-rose: #e0fbfc;
+      --text-primary: #e0fbfc;
+      --text-muted: rgba(180, 220, 230, 0.6);
+    }
+
+    html {
+      scroll-behavior: smooth;
+      overscroll-behavior: none;
+      overflow-x: hidden;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--deep-1);
+      color: var(--text-primary);
+      font-family: 'Quicksand', 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+      border: 6px solid #f5f0e8;
+      border-radius: 28px;
+    }
+
+    #particleCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    .goo-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .goo-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.35; animation: goo-drift 20s ease-in-out infinite alternate; }
+    .goo-blob:nth-child(1) { width: 500px; height: 500px; background: radial-gradient(circle, #0a9396, transparent 70%); top: -10%; left: -10%; animation-duration: 22s; }
+    .goo-blob:nth-child(2) { width: 400px; height: 400px; background: radial-gradient(circle, #40c8c8, transparent 70%); top: 30%; right: -15%; animation-duration: 18s; animation-delay: -5s; }
+    .goo-blob:nth-child(3) { width: 600px; height: 600px; background: radial-gradient(circle, #005f73, transparent 70%); bottom: -20%; left: 20%; animation-duration: 25s; animation-delay: -10s; }
+    .goo-blob:nth-child(4) { width: 350px; height: 350px; background: radial-gradient(circle, #f4a261, transparent 70%); top: 60%; left: -5%; animation-duration: 15s; animation-delay: -3s; opacity: 0.18; }
+    .goo-blob:nth-child(5) { width: 280px; height: 280px; background: radial-gradient(circle, #e9c46a, transparent 70%); top: 10%; right: 10%; animation-duration: 20s; animation-delay: -8s; opacity: 0.12; }
+
+    @keyframes goo-drift {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(60px, -40px) scale(1.15); }
+      66%  { transform: translate(-30px, 50px) scale(0.9); }
+      100% { transform: translate(40px, 20px) scale(1.05); }
+    }
+
+    .content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+    .hero { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; min-height: 100dvh; padding: 2rem 1.5rem; text-align: center; position: relative; }
+
+    .hero-tag { font-size: 0.8rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--soft-rose); opacity: 0.7; margin-bottom: 1rem; animation: fadeSlideIn 1.2s ease 0.3s both; }
+
+    .hero-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(1.8rem, 6vw, 3.5rem);
+      background: linear-gradient(135deg, #40c8c8 0%, #80e8d8 30%, #e9c46a 60%, #40c8c8 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: gradientShift 6s ease-in-out infinite, fadeSlideIn 1.2s ease 0.6s both;
+      filter: drop-shadow(0 0 30px rgba(64, 200, 200, 0.5));
+      margin-bottom: 0.6rem;
+    }
+
+    .hero-sub { font-size: clamp(0.85rem, 2.5vw, 1rem); color: var(--text-muted); font-weight: 300; letter-spacing: 0.1em; margin-bottom: 3rem; animation: fadeSlideIn 1.2s ease 0.9s both; }
+
+    @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ========== CRYSTAL BALL ========== */
+    .crystal-ball-wrap {
+      position: relative; width: 240px; height: 240px; margin-bottom: 2rem;
+      animation: fadeSlideIn 1.5s ease 1.2s both; cursor: pointer;
+      touch-action: manipulation; -webkit-user-select: none; user-select: none;
+      min-width: 44px; min-height: 44px;
+    }
+
+    .crystal-ball {
+      position: absolute; inset: 0; border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.15) 0%, transparent 40%),
+        radial-gradient(circle at 60% 70%, rgba(128, 232, 216, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(64, 200, 200, 0.5) 0%, rgba(0, 95, 115, 0.8) 60%, rgba(0, 18, 25, 0.95) 100%);
+      box-shadow:
+        0 0 40px rgba(64, 200, 200, 0.5), 0 0 80px rgba(10, 147, 150, 0.3), 0 0 120px rgba(0, 95, 115, 0.2),
+        inset 0 0 60px rgba(128, 232, 216, 0.15), inset 0 -20px 40px rgba(0, 18, 25, 0.4);
+      animation: crystalPulse 4s ease-in-out infinite;
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease;
+    }
+
+    .crystal-ball:hover {
+      transform: scale(1.06);
+      box-shadow:
+        0 0 60px rgba(64, 200, 200, 0.7), 0 0 120px rgba(10, 147, 150, 0.4), 0 0 180px rgba(0, 95, 115, 0.25),
+        inset 0 0 80px rgba(128, 232, 216, 0.25), inset 0 -20px 40px rgba(0, 18, 25, 0.4);
+    }
+    .crystal-ball:active { transform: scale(0.97); }
+
+    .crystal-ball::before {
+      content: ''; position: absolute; inset: 15%; border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, rgba(128, 232, 216, 0.4) 0%, transparent 50%), radial-gradient(circle at 65% 60%, rgba(244, 162, 97, 0.25) 0%, transparent 45%);
+      animation: innerSwirl 8s ease-in-out infinite; opacity: 0.7;
+    }
+
+    .crystal-ball::after {
+      content: ''; position: absolute; top: 12%; left: 18%; width: 35%; height: 25%; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.05) 100%);
+      filter: blur(2px); transform: rotate(-20deg);
+    }
+
+    .crystal-base { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); width: 100px; height: 30px; background: linear-gradient(180deg, #005f73 0%, #002633 100%); border-radius: 50%; box-shadow: 0 5px 20px rgba(0,0,0,0.6), 0 0 30px rgba(0, 95, 115, 0.3); }
+    .crystal-base::before { content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 70px; height: 16px; background: linear-gradient(180deg, #0a9396, #005f73); border-radius: 50%; }
+    .crystal-reflection { position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); width: 180px; height: 20px; background: radial-gradient(ellipse, rgba(64, 200, 200, 0.25) 0%, transparent 70%); border-radius: 50%; animation: crystalPulse 4s ease-in-out infinite; }
+
+    @keyframes crystalPulse {
+      0%, 100% { box-shadow: 0 0 40px rgba(64,200,200,0.5), 0 0 80px rgba(10,147,150,0.3), 0 0 120px rgba(0,95,115,0.2), inset 0 0 60px rgba(128,232,216,0.15), inset 0 -20px 40px rgba(0,18,25,0.4); filter: brightness(1); }
+      50% { box-shadow: 0 0 60px rgba(64,200,200,0.7), 0 0 100px rgba(10,147,150,0.4), 0 0 160px rgba(0,95,115,0.3), inset 0 0 80px rgba(128,232,216,0.25), inset 0 -20px 40px rgba(0,18,25,0.4); filter: brightness(1.1); }
+    }
+    @keyframes innerSwirl { 0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.6; } 25% { transform: rotate(90deg) scale(1.1); opacity: 0.8; } 50% { transform: rotate(180deg) scale(0.95); opacity: 0.5; } 75% { transform: rotate(270deg) scale(1.05); opacity: 0.75; } }
+    .crystal-ball.flash { animation: orbFlash 0.6s ease-out; }
+    @keyframes orbFlash { 0% { filter: brightness(1); } 30% { filter: brightness(2) saturate(1.5); } 100% { filter: brightness(1); } }
+
+    /* ========== CRYSTAL MESSAGE ========== */
+    .crystal-message {
+      max-width: 400px; min-height: 2.4rem; padding: 0.8rem 1.5rem;
+      background: rgba(0, 38, 51, 0.4); border: 1px solid rgba(128, 232, 216, 0.2); border-radius: 20px;
+      backdrop-filter: blur(10px); font-size: 0.9rem; font-style: normal; color: #b8e8e0; text-align: center;
+      opacity: 0; transform: translateY(10px); transition: opacity 0.6s ease, transform 0.6s ease;
+      animation: fadeSlideIn 1.5s ease 1.5s both;
+    }
+    .crystal-message .c-label {
+      font-family: 'Cinzel Decorative', serif; font-style: normal; font-weight: 700;
+      text-transform: lowercase; font-size: 0.95rem; display: block;
+      margin-bottom: 0.25rem; letter-spacing: 0.05em;
+      background: linear-gradient(0deg,
+        #ff4500 0%, #ff6a00 15%, #ffae42 30%,
+        #fff4c2 45%, #ffae42 55%, #ff6a00 70%,
+        #ff4500 85%, #ff6a00 100%);
+      background-size: 100% 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: fireFlicker 2.5s ease-in-out infinite;
+    }
+    @keyframes fireFlicker {
+      0%   { background-position: 0% 100%; }
+      25%  { background-position: 0% 60%; }
+      40%  { background-position: 0% 80%; }
+      55%  { background-position: 0% 40%; }
+      70%  { background-position: 0% 70%; }
+      85%  { background-position: 0% 50%; }
+      100% { background-position: 0% 100%; }
+    }
+    .crystal-message .c-detail { font-style: normal; color: #b8e8e0; font-size: 0.88rem; }
+    .crystal-message.visible { opacity: 1; transform: translateY(0); }
+    .crystal-message.hidden { opacity: 0; transform: translateY(10px); }
+
+    /* ========== SCROLL CUE ========== */
+    .scroll-cue { position: absolute; bottom: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; animation: fadeSlideIn 1.5s ease 2s both; }
+    .scroll-cue span { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.15em; text-transform: lowercase; }
+    .scroll-arrow { width: 20px; height: 20px; border-right: 2px solid rgba(64, 200, 200, 0.4); border-bottom: 2px solid rgba(64, 200, 200, 0.4); transform: rotate(45deg); animation: scrollBounce 2s ease-in-out infinite; }
+    @keyframes scrollBounce { 0%, 100% { transform: rotate(45deg) translate(0,0); opacity: 0.4; } 50% { transform: rotate(45deg) translate(5px,5px); opacity: 1; } }
+
+    /* ========== TILES ========== */
+    .tiles-section { width: 100%; max-width: 520px; padding: 2rem 1.5rem 6rem; display: flex; flex-direction: column; gap: 2.5rem; position: relative; }
+
+    /* ========== CORNER BLOOM FLOWERS ========== */
+    .bloom-corner { position: absolute; pointer-events: none; z-index: 0; opacity: 0.6; }
+    .bloom-corner--top-right { top: -20px; right: -30px; transform: scale(0.45); transform-origin: top right; }
+    .bloom-corner--bottom-left { bottom: 40px; left: -30px; transform: scale(0.45) scaleX(-1); transform-origin: bottom left; }
+    .bloom-corner--mid-left { top: 35%; left: -40px; transform: scale(0.32); transform-origin: center left; }
+    .bloom-corner--mid-right { top: 55%; right: -40px; transform: scale(0.35) scaleX(-1); transform-origin: center right; }
+    .bloom-corner--upper-left { top: 12%; left: -25px; transform: scale(0.28) scaleX(-1); transform-origin: top left; }
+    .bloom-corner--lower-right { bottom: 18%; right: -25px; transform: scale(0.3); transform-origin: bottom right; }
+
+    .bloom-svg .b-stem {
+      stroke-dasharray: 200; stroke-dashoffset: 0;
+    }
+
+    .bloom-svg .b-leaf {
+      transform-origin: 50% 100%;
+      animation: bloomLeafGrow 5s ease-in-out infinite;
+    }
+    .bloom-svg .b-leaf:nth-of-type(1) { animation-delay: 0s; }
+    .bloom-svg .b-leaf:nth-of-type(2) { animation-delay: 0.15s; }
+
+    .bloom-svg .b-petal {
+      transform-origin: 50% 100%;
+      animation: bloomUnfurl 5s ease-in-out infinite;
+    }
+    .bloom-svg .b-petal:nth-child(1)  { animation-delay: 0s; }
+    .bloom-svg .b-petal:nth-child(2)  { animation-delay: 0.1s; }
+    .bloom-svg .b-petal:nth-child(3)  { animation-delay: 0.2s; }
+    .bloom-svg .b-petal:nth-child(4)  { animation-delay: 0.3s; }
+    .bloom-svg .b-petal:nth-child(5)  { animation-delay: 0.4s; }
+    .bloom-svg .b-petal:nth-child(6)  { animation-delay: 0.5s; }
+    .bloom-svg .b-petal:nth-child(7)  { animation-delay: 0.6s; }
+    .bloom-svg .b-petal:nth-child(8)  { animation-delay: 0.7s; }
+
+    @keyframes bloomUnfurl {
+      0%  { transform: rotate(var(--bp-rot, 0deg)) scaleY(0.2); opacity: 0; }
+      25% { transform: rotate(var(--bp-rot, 0deg)) scaleY(1); opacity: 0.85; }
+      75% { transform: rotate(var(--bp-rot, 0deg)) scaleY(1); opacity: 0.85; }
+      100%{ transform: rotate(var(--bp-rot, 0deg)) scaleY(0.2); opacity: 0; }
+    }
+    @keyframes bloomLeafGrow {
+      0%, 100% { transform: scale(0); opacity: 0; }
+      20%, 80% { transform: scale(1); opacity: 0.75; }
+    }
+
+    .bloom-svg .b-center {
+      transform-origin: center;
+      animation: bloomCenterPop 5s ease-in-out infinite;
+      animation-delay: 0.5s;
+    }
+    @keyframes bloomCenterPop {
+      0%, 100% { transform: scale(0); opacity: 0; }
+      30%, 70% { transform: scale(1); opacity: 1; }
+    }
+
+    .bloom-svg .b-sway {
+      animation: bloomSway 5s 3.5s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    @keyframes bloomSway {
+      0%, 100% { transform: rotate(-1.5deg); }
+      50% { transform: rotate(1.5deg); }
+    }
+
+    .tile {
+      position: relative; background: rgba(0, 30, 40, 0.6); border: 1.5px solid rgba(64, 200, 200, 0.15);
+      border-radius: 24px; padding: 2.2rem 1.8rem 1.8rem; cursor: pointer;
+      -webkit-user-select: none; user-select: none;
+      -webkit-tap-highlight-color: transparent; overflow: hidden; backdrop-filter: blur(12px);
+      touch-action: manipulation;
+      transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), border-color 0.5s ease, box-shadow 0.5s ease;
+      opacity: 0; transform: translateY(50px) scale(0.95);
+      min-height: 44px;
+    }
+    .tile.revealed { opacity: 1; transform: translateY(0) scale(1); transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1), border-color 0.5s ease, box-shadow 0.5s ease; }
+
+    .tile::before { content: ''; position: absolute; top: -1px; left: 10%; right: 10%; height: 3px; background: linear-gradient(90deg, transparent, var(--soft-rose), var(--hot-pink), var(--soft-rose), transparent); border-radius: 0 0 50% 50%; opacity: 0; transition: opacity 0.5s ease; }
+    .tile::after { content: ''; position: absolute; inset: 0; border-radius: 24px; background: radial-gradient(ellipse at 50% 0%, rgba(64,200,200,0.12) 0%, transparent 65%); opacity: 0; transition: opacity 0.5s ease; pointer-events: none; }
+    .tile:hover { transform: translateY(-6px) scale(1.02); border-color: rgba(64,200,200,0.45); box-shadow: 0 12px 40px rgba(0,50,60,0.35), 0 0 80px rgba(64,200,200,0.1); }
+    .tile:hover::before { opacity: 1; }
+    .tile:hover::after { opacity: 1; }
+    .tile:active { transform: translateY(-2px) scale(0.98) !important; }
+
+    .tile-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem; }
+
+    /* 3D Spinning Icon */
+    .tile-icon-3d { width: 50px; height: 50px; flex-shrink: 0; perspective: 400px; }
+    .tile-icon-3d .spinner {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; animation: spin3d 6s ease-in-out infinite; transform-style: preserve-3d;
+      filter: drop-shadow(0 0 15px rgba(64, 200, 200, 0.6));
+    }
+    .tile:hover .tile-icon-3d .spinner { animation-duration: 2s; }
+    @keyframes spin3d {
+      0%   { transform: rotateY(0deg) rotateX(0deg) scale(1); }
+      25%  { transform: rotateY(90deg) rotateX(10deg) scale(1.1); }
+      50%  { transform: rotateY(180deg) rotateX(0deg) scale(1); }
+      75%  { transform: rotateY(270deg) rotateX(-10deg) scale(1.1); }
+      100% { transform: rotateY(360deg) rotateX(0deg) scale(1); }
+    }
+
+    .tile-title { font-family: 'Cinzel Decorative', serif; font-size: clamp(0.95rem, 3vw, 1.15rem); color: #a0e8e0; letter-spacing: 0.03em; }
+    .tile-desc { font-size: 0.82rem; color: var(--text-muted); font-weight: 300; line-height: 1.5; margin-left: 0.2rem; }
+
+    .tile-response {
+      margin-top: 1.2rem; padding-top: 0; border-top: 1px solid rgba(64,200,200,0.12);
+      font-size: 0.88rem; color: #d0f0f0; line-height: 1.6; max-height: 0; overflow: hidden; opacity: 0;
+      transition: max-height 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.5s ease, padding-top 0.5s ease;
+    }
+    .tile-response.open { max-height: 200px; opacity: 1; padding-top: 1rem; }
+    .tile-response .r-label { font-family: 'Cinzel Decorative', serif; color: var(--hot-pink); font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 0.2rem; letter-spacing: 0.04em; }
+    .tile-response .r-detail { font-style: italic; color: #c0e8e0; }
+    .tile-response .r-detail.spin-emoji {
+      display: block; font-size: 2.5rem; font-style: normal; text-align: center;
+      padding: 0.5rem 0;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 70%);
+      border-radius: 50%;
+      width: 60px; height: 60px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.25)) drop-shadow(0 0 35px rgba(255, 255, 255, 0.08));
+      animation: angelBreathe 4s ease-in-out infinite;
+    }
+    /* Steam room — full-width box */
+    .steam-room {
+      position: relative;
+      width: 100%; height: 90px; margin: 0.3rem 0 0;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; border-radius: 14px;
+    }
+    .steam-room .r-detail.spin-emoji {
+      position: relative; z-index: 0;
+      opacity: 0;
+      transition: opacity 1.5s ease 4s;
+    }
+    .steam-room.revealed .r-detail.spin-emoji {
+      opacity: 1;
+    }
+    /* Stacked white gradient sheets */
+    .steam-sheet {
+      position: absolute; inset: 0; pointer-events: none; z-index: 1;
+      opacity: 1;
+    }
+    .steam-sheet-1 {
+      background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(245,248,255,0.55) 40%, rgba(235,240,250,0.65) 70%, rgba(255,255,255,0.5) 100%);
+      animation: sheetFade 4s ease-in 0s forwards;
+    }
+    .steam-sheet-2 {
+      background: linear-gradient(135deg, rgba(250,252,255,0.6) 0%, rgba(255,255,255,0.4) 30%, rgba(240,245,255,0.55) 60%, rgba(255,255,255,0.35) 100%);
+      animation: sheetFade 4.5s ease-in 0.5s forwards;
+    }
+    .steam-sheet-3 {
+      background: linear-gradient(200deg, rgba(255,255,255,0.5) 0%, rgba(248,250,255,0.45) 35%, rgba(255,255,255,0.35) 65%, rgba(240,248,255,0.5) 100%);
+      animation: sheetFade 5s ease-in 0.8s forwards;
+    }
+    .steam-sheet-4 {
+      background: linear-gradient(160deg, rgba(255,255,255,0.4) 0%, rgba(245,250,255,0.3) 50%, rgba(255,255,255,0.35) 100%);
+      animation: sheetFade 5.2s ease-in 1.2s forwards;
+    }
+    .steam-sheet-5 {
+      background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(250,253,255,0.2) 30%, rgba(255,255,255,0.25) 60%, rgba(255,255,255,0.15) 100%);
+      animation: sheetFade 5.5s ease-in 1.5s forwards;
+    }
+    @keyframes sheetFade {
+      0%   { opacity: 1; }
+      50%  { opacity: 0.5; }
+      100% { opacity: 0; }
+    }
+
+    /* Burst puffs that escape outside the tile */
+    .steam-burst {
+      position: absolute; top: 50%; left: 50%;
+      width: 30px; height: 30px; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 60%, transparent 100%);
+      filter: blur(8px);
+      z-index: 10;
+      animation: burstOut 1.2s ease-out forwards;
+      --b-angle: 0deg; --b-dist: 80px;
+    }
+    @keyframes burstOut {
+      0%   { opacity: 0.7; transform: translate(-50%, -50%) rotate(var(--b-angle)) translateY(0); }
+      100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--b-angle)) translateY(calc(-1 * var(--b-dist))); }
+    }
+
+    @keyframes angelBreathe {
+      0%, 100% { filter: drop-shadow(0 0 15px rgba(255,255,255,0.2)) drop-shadow(0 0 35px rgba(255,255,255,0.06)); }
+      50%      { filter: drop-shadow(0 0 22px rgba(255,255,255,0.35)) drop-shadow(0 0 45px rgba(255,255,255,0.12)); }
+    }
+    @keyframes iosShiver {
+      0%   { transform: translate(0, 0) rotate(0deg); }
+      10%  { transform: translate(-0.5px, 0.5px) rotate(-0.3deg); }
+      20%  { transform: translate(0.8px, -0.3px) rotate(0.4deg); }
+      30%  { transform: translate(-0.6px, -0.5px) rotate(-0.2deg); }
+      40%  { transform: translate(0.4px, 0.6px) rotate(0.3deg); }
+      50%  { transform: translate(-0.3px, -0.4px) rotate(-0.4deg); }
+      60%  { transform: translate(0.6px, 0.3px) rotate(0.2deg); }
+      70%  { transform: translate(-0.4px, 0.5px) rotate(-0.3deg); }
+      80%  { transform: translate(0.5px, -0.6px) rotate(0.4deg); }
+      90%  { transform: translate(-0.3px, 0.4px) rotate(-0.2deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    .tile-response.typing::after { content: '|'; animation: cursorBlink 0.6s step-end infinite; color: var(--hot-pink); margin-left: 1px; }
+    @keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .sparkle { position: absolute; border-radius: 50%; pointer-events: none; animation: sparklePop 0.7s ease-out forwards; }
+    @keyframes sparklePop { 0% { transform: scale(0) translate(0,0); opacity: 1; } 100% { transform: scale(1) translate(var(--tx), var(--ty)); opacity: 0; } }
+
+    footer { position: relative; z-index: 1; text-align: center; padding: 0 1.5rem 3rem; font-size: 0.72rem; color: rgba(180, 220, 230, 0.25); letter-spacing: 0.12em; }
+
+    @media (max-width: 540px) {
+      .crystal-ball-wrap { width: 190px; height: 190px; }
+      .crystal-base { width: 80px; height: 24px; bottom: -14px; }
+      .crystal-base::before { width: 56px; height: 12px; }
+      .crystal-reflection { width: 140px; bottom: -34px; }
+      .tiles-section { padding: 1.5rem 1rem 5rem; gap: 2rem; }
+      .tile { padding: 1.8rem 1.4rem 1.4rem; }
+      .hero { padding: 1.5rem 1rem; }
+    }
+    @media (max-width: 380px) { .crystal-ball-wrap { width: 160px; height: 160px; } }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    body { animation: fadeIn 0.8s ease; }
+
+    /* ========== MOBILE HARDENING ========== */
+    .content {
+      overscroll-behavior: none;
+      touch-action: pan-y;
+    }
+
+    .crystal-ball {
+      touch-action: manipulation;
+      -webkit-user-select: none; user-select: none;
+    }
+
+    .tile-header, .tile-title, .tile-desc, .tile-icon-3d {
+      pointer-events: none;
+      -webkit-user-select: none; user-select: none;
+    }
+
+    .tile-response {
+      -webkit-user-select: none; user-select: none;
+      pointer-events: none;
+    }
+
+    .scroll-cue {
+      touch-action: manipulation;
+      -webkit-user-select: none; user-select: none;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .tile:hover { transform: none; border-color: rgba(64,200,200,0.15); box-shadow: none; }
+      .tile:hover::before { opacity: 0; }
+      .tile:hover::after { opacity: 0; }
+      .tile.revealed:hover { transform: translateY(0) scale(1); }
+      .tile:active { transform: scale(0.97) !important; transition: transform 0.1s ease; }
+      .crystal-ball:hover { transform: none; box-shadow: 0 0 40px rgba(64,200,200,0.5), 0 0 80px rgba(10,147,150,0.3), 0 0 120px rgba(0,95,115,0.2), inset 0 0 60px rgba(128,232,216,0.15), inset 0 -20px 40px rgba(0,18,25,0.4); }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+
+  <div class="goo-layer" aria-hidden="true">
+    <div class="goo-blob"></div>
+    <div class="goo-blob"></div>
+    <div class="goo-blob"></div>
+    <div class="goo-blob"></div>
+    <div class="goo-blob"></div>
+  </div>
+
+  <div class="content">
+    <section class="hero">
+      <p class="hero-tag"></p>
+      <h1 class="hero-title">Janet</h1>
+      <p class="hero-sub">gorgeous <span style="color: rgba(128, 232, 180, 0.85); font-weight: 400;">green eyes</span> from another planet</p>
+
+      <div class="crystal-ball-wrap" id="crystalBallWrap">
+        <div class="crystal-ball" id="crystalBall"></div>
+        <div class="crystal-base"></div>
+        <div class="crystal-reflection"></div>
+      </div>
+
+      <div class="crystal-message" id="crystalMessage">tap the crystal...</div>
+
+      <div class="scroll-cue">
+        <span>keep going</span>
+        <div class="scroll-arrow"></div>
+      </div>
+    </section>
+
+    <section class="tiles-section">
+
+      <!-- Bloom flower — top right -->
+      <div class="bloom-corner bloom-corner--top-right">
+        <svg class="bloom-svg" viewBox="0 0 200 300" width="200" height="300" xmlns="http://www.w3.org/2000/svg">
+          <g class="b-sway">
+            <line class="b-stem" x1="100" y1="150" x2="100" y2="290" stroke="#0a9396" stroke-width="3" stroke-linecap="round"/>
+            <ellipse class="b-leaf" cx="82" cy="230" rx="18" ry="7" fill="#0a9396" transform="rotate(-25, 82, 230)"/>
+            <ellipse class="b-leaf" cx="120" cy="255" rx="16" ry="6" fill="#40c8c8" transform="rotate(20, 120, 255)"/>
+            <g transform="translate(100, 140)">
+              <g class="b-petal" style="--bp-rot: 0deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8"/></g>
+              <g class="b-petal" style="--bp-rot: 45deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(45)"/></g>
+              <g class="b-petal" style="--bp-rot: 90deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(90)"/></g>
+              <g class="b-petal" style="--bp-rot: 135deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(135)"/></g>
+              <g class="b-petal" style="--bp-rot: 180deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(180)"/></g>
+              <g class="b-petal" style="--bp-rot: 225deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(225)"/></g>
+              <g class="b-petal" style="--bp-rot: 270deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(270)"/></g>
+              <g class="b-petal" style="--bp-rot: 315deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(315)"/></g>
+              <circle class="b-center" cx="0" cy="0" r="8" fill="#e9c46a"/>
+              <circle class="b-center" cx="0" cy="0" r="5" fill="#f4a261" style="animation-delay: 3.2s"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Bloom flower — bottom left -->
+      <div class="bloom-corner bloom-corner--bottom-left">
+        <svg class="bloom-svg" viewBox="0 0 200 300" width="200" height="300" xmlns="http://www.w3.org/2000/svg">
+          <g class="b-sway">
+            <line class="b-stem" x1="100" y1="150" x2="100" y2="290" stroke="#0a9396" stroke-width="3" stroke-linecap="round"/>
+            <ellipse class="b-leaf" cx="82" cy="230" rx="18" ry="7" fill="#0a9396" transform="rotate(-25, 82, 230)"/>
+            <ellipse class="b-leaf" cx="120" cy="255" rx="16" ry="6" fill="#40c8c8" transform="rotate(20, 120, 255)"/>
+            <g transform="translate(100, 140)">
+              <g class="b-petal" style="--bp-rot: 0deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8"/></g>
+              <g class="b-petal" style="--bp-rot: 45deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(45)"/></g>
+              <g class="b-petal" style="--bp-rot: 90deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(90)"/></g>
+              <g class="b-petal" style="--bp-rot: 135deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(135)"/></g>
+              <g class="b-petal" style="--bp-rot: 180deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(180)"/></g>
+              <g class="b-petal" style="--bp-rot: 225deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(225)"/></g>
+              <g class="b-petal" style="--bp-rot: 270deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(270)"/></g>
+              <g class="b-petal" style="--bp-rot: 315deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(315)"/></g>
+              <circle class="b-center" cx="0" cy="0" r="8" fill="#e9c46a"/>
+              <circle class="b-center" cx="0" cy="0" r="5" fill="#f4a261" style="animation-delay: 3.2s"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Bloom flower — mid left -->
+      <div class="bloom-corner bloom-corner--mid-left">
+        <svg class="bloom-svg" viewBox="0 0 200 300" width="200" height="300" xmlns="http://www.w3.org/2000/svg">
+          <g class="b-sway">
+            <line class="b-stem" x1="100" y1="150" x2="100" y2="290" stroke="#0a9396" stroke-width="3" stroke-linecap="round"/>
+            <ellipse class="b-leaf" cx="82" cy="230" rx="18" ry="7" fill="#0a9396" transform="rotate(-25, 82, 230)"/>
+            <ellipse class="b-leaf" cx="120" cy="255" rx="16" ry="6" fill="#40c8c8" transform="rotate(20, 120, 255)"/>
+            <g transform="translate(100, 140)">
+              <g class="b-petal" style="--bp-rot: 0deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8"/></g>
+              <g class="b-petal" style="--bp-rot: 45deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(45)"/></g>
+              <g class="b-petal" style="--bp-rot: 90deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(90)"/></g>
+              <g class="b-petal" style="--bp-rot: 135deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(135)"/></g>
+              <g class="b-petal" style="--bp-rot: 180deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(180)"/></g>
+              <g class="b-petal" style="--bp-rot: 225deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(225)"/></g>
+              <g class="b-petal" style="--bp-rot: 270deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(270)"/></g>
+              <g class="b-petal" style="--bp-rot: 315deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(315)"/></g>
+              <circle class="b-center" cx="0" cy="0" r="8" fill="#e9c46a"/>
+              <circle class="b-center" cx="0" cy="0" r="5" fill="#f4a261" style="animation-delay: 3.2s"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Bloom flower — mid right -->
+      <div class="bloom-corner bloom-corner--mid-right">
+        <svg class="bloom-svg" viewBox="0 0 200 300" width="200" height="300" xmlns="http://www.w3.org/2000/svg">
+          <g class="b-sway" style="animation-delay: 4.5s">
+            <line class="b-stem" x1="100" y1="150" x2="100" y2="290" stroke="#0a9396" stroke-width="3" stroke-linecap="round"/>
+            <ellipse class="b-leaf" cx="82" cy="230" rx="18" ry="7" fill="#0a9396" transform="rotate(-25, 82, 230)"/>
+            <ellipse class="b-leaf" cx="120" cy="255" rx="16" ry="6" fill="#40c8c8" transform="rotate(20, 120, 255)"/>
+            <g transform="translate(100, 140)">
+              <g class="b-petal" style="--bp-rot: 0deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8"/></g>
+              <g class="b-petal" style="--bp-rot: 45deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(45)"/></g>
+              <g class="b-petal" style="--bp-rot: 90deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(90)"/></g>
+              <g class="b-petal" style="--bp-rot: 135deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(135)"/></g>
+              <g class="b-petal" style="--bp-rot: 180deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(180)"/></g>
+              <g class="b-petal" style="--bp-rot: 225deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(225)"/></g>
+              <g class="b-petal" style="--bp-rot: 270deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(270)"/></g>
+              <g class="b-petal" style="--bp-rot: 315deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(315)"/></g>
+              <circle class="b-center" cx="0" cy="0" r="8" fill="#e9c46a"/>
+              <circle class="b-center" cx="0" cy="0" r="5" fill="#f4a261" style="animation-delay: 3.2s"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Bloom flower — lower right -->
+      <div class="bloom-corner bloom-corner--lower-right">
+        <svg class="bloom-svg" viewBox="0 0 200 300" width="200" height="300" xmlns="http://www.w3.org/2000/svg">
+          <g class="b-sway" style="animation-delay: 5s">
+            <line class="b-stem" x1="100" y1="150" x2="100" y2="290" stroke="#0a9396" stroke-width="3" stroke-linecap="round"/>
+            <ellipse class="b-leaf" cx="82" cy="230" rx="18" ry="7" fill="#0a9396" transform="rotate(-25, 82, 230)"/>
+            <ellipse class="b-leaf" cx="120" cy="255" rx="16" ry="6" fill="#40c8c8" transform="rotate(20, 120, 255)"/>
+            <g transform="translate(100, 140)">
+              <g class="b-petal" style="--bp-rot: 0deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8"/></g>
+              <g class="b-petal" style="--bp-rot: 45deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(45)"/></g>
+              <g class="b-petal" style="--bp-rot: 90deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(90)"/></g>
+              <g class="b-petal" style="--bp-rot: 135deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(135)"/></g>
+              <g class="b-petal" style="--bp-rot: 180deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(180)"/></g>
+              <g class="b-petal" style="--bp-rot: 225deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(225)"/></g>
+              <g class="b-petal" style="--bp-rot: 270deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#80e8d8" opacity="0.8" transform="rotate(270)"/></g>
+              <g class="b-petal" style="--bp-rot: 315deg"><ellipse cx="0" cy="-26" rx="10" ry="24" fill="#40c8c8" opacity="0.75" transform="rotate(315)"/></g>
+              <circle class="b-center" cx="0" cy="0" r="8" fill="#e9c46a"/>
+              <circle class="b-center" cx="0" cy="0" r="5" fill="#f4a261" style="animation-delay: 3.2s"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Tile 1 — Fire Red Head -->
+      <article class="tile" data-tile="fire-red-head" role="button" tabindex="0">
+        <div class="tile-header">
+          <div class="tile-icon-3d"><div class="spinner">🔥</div></div>
+          <h2 class="tile-title">Fire Red Head</h2>
+        </div>
+        <p class="tile-desc">tap to see...</p>
+        <div class="tile-response" id="fireRedHeadResponse"></div>
+      </article>
+
+      <!-- Tile 2 — Heart of Warmth -->
+      <article class="tile" data-tile="heart-of-warmth" role="button" tabindex="0">
+        <div class="tile-header">
+          <div class="tile-icon-3d"><div class="spinner">❤️</div></div>
+          <h2 class="tile-title">Uses Her Life To Save Others</h2>
+        </div>
+        <p class="tile-desc">tap to see...</p>
+        <div class="tile-response" id="heartOfWarmthResponse"></div>
+      </article>
+
+      <!-- Tile 3 — Gorgeous Green Eyes -->
+      <article class="tile" data-tile="green-eyes" role="button" tabindex="0">
+        <div class="tile-header">
+          <div class="tile-icon-3d"><div class="spinner">💎</div></div>
+          <h2 class="tile-title">Gorgeous Green Eyes</h2>
+        </div>
+        <p class="tile-desc">tap to see...</p>
+        <div class="tile-response" id="greenEyesResponse"></div>
+      </article>
+
+      <!-- Tile 4 — I Knew -->
+      <article class="tile" data-tile="thats-when-i-knew" role="button" tabindex="0">
+        <div class="tile-header">
+          <div class="tile-icon-3d"><div class="spinner">✨</div></div>
+          <h2 class="tile-title">We Just Met</h2>
+        </div>
+        <p class="tile-desc">tap to see...</p>
+        <div class="tile-response" id="thatsWhenIKnewResponse"></div>
+      </article>
+
+      <!-- Tile 5 — I Like Her -->
+      <article class="tile" data-tile="do-i-like-her" role="button" tabindex="0">
+        <div class="tile-header">
+          <div class="tile-icon-3d"><div class="spinner">🤍</div></div>
+          <h2 class="tile-title">Do I Like Her?</h2>
+        </div>
+        <p class="tile-desc">tap to see...</p>
+        <div class="tile-response" id="doILikeHerResponse"></div>
+      </article>
+
+      <!-- Tile 6 — Do I Want To See Her -->
+      <article class="tile" data-tile="do-i-want-to-see-her" role="button" tabindex="0">
+        <div class="tile-header">
+          <div class="tile-icon-3d"><div class="spinner">🔮</div></div>
+          <h2 class="tile-title">Do I Want To See Her</h2>
+        </div>
+        <p class="tile-desc">tap to see...</p>
+        <div class="tile-response" id="doIWantToSeeHerResponse"></div>
+      </article>
+
+    </section>
+
+    <footer>
+      <p>crafted under a turquoise sky — for janet</p>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      /* ============================================================
+         PARTICLE CANVAS
+         ============================================================ */
+      const canvas = document.getElementById('particleCanvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      let W, H;
+
+      function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+      resize();
+      window.addEventListener('resize', resize);
+
+      class Particle {
+        constructor() { this.reset(); }
+        reset() {
+          this.x = Math.random() * W; this.y = Math.random() * H + H;
+          this.r = Math.random() * 2.5 + 0.5; this.vy = -(Math.random() * 0.5 + 0.15);
+          this.vx = (Math.random() - 0.5) * 0.3; this.alpha = Math.random() * 0.5 + 0.1;
+          this.hue = 160 + Math.random() * 40; this.sat = 65 + Math.random() * 30; this.light = 60 + Math.random() * 25;
+        }
+        update() { this.y += this.vy; this.x += this.vx + Math.sin(this.y * 0.005) * 0.2; this.alpha -= 0.0008; if (this.y < -10 || this.alpha <= 0) this.reset(); }
+        draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.fillStyle = `hsla(${this.hue}, ${this.sat}%, ${this.light}%, ${this.alpha})`; ctx.fill(); }
+      }
+
+      const PARTICLE_COUNT = Math.min(80, Math.floor(W * H / 15000));
+      for (let i = 0; i < PARTICLE_COUNT; i++) { const p = new Particle(); p.y = Math.random() * H; particles.push(p); }
+      function animateParticles() { ctx.clearRect(0, 0, W, H); for (const p of particles) { p.update(); p.draw(); } requestAnimationFrame(animateParticles); }
+      animateParticles();
+
+      /* ============================================================
+         SCROLL REVEAL
+         ============================================================ */
+      const tiles = document.querySelectorAll('.tile');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const delay = Array.from(tiles).indexOf(entry.target) * 150;
+            setTimeout(() => entry.target.classList.add('revealed'), delay);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+      tiles.forEach(tile => observer.observe(tile));
+
+      /* ============================================================
+         TILE COMPLIMENT POOLS — "compliment: details" format
+         ============================================================ */
+      const messages = {
+        'fire-red-head': [
+          { label: "fire", detail: "she got that heat" }
+        ],
+        'green-eyes': [
+          { label: "gorgeous", detail: "green eyes that stop you mid-sentence" }
+        ],
+        'thats-when-i-knew': [
+          { label: "we just met", detail: "why she running through my mind a lil? XD" }
+        ],
+        'do-i-like-her': [
+          { label: "do i?", detail: "she'll find out" }
+        ],
+        'do-i-want-to-see-her': [
+          { label: "", detail: "🙂" }
+        ],
+        'heart-of-warmth': [
+          { label: "uses her life to save others", detail: "beautiful" }
+        ]
+      };
+
+      /* ============================================================
+         CRYSTAL BALL COMPLIMENTS — sequential cycle
+         ============================================================ */
+      const crystalCompliments = [
+        { label: "so", detail: "...looks like fate brought us together" },
+        { label: "glad", detail: "you're on the planet, saving lives, and allowing others to stay on the planet" },
+        { label: "we", detail: "...would actually look good together 😎" },
+        { label: "met", detail: "...when will we meet in person 🤔" }
+      ];
+
+      let crystalIndex = 0;
+
+      /* ============================================================
+         HELPERS
+         ============================================================ */
+      function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+      function nextCrystalCompliment() {
+        const item = crystalCompliments[crystalIndex];
+        crystalIndex = (crystalIndex + 1) % crystalCompliments.length;
+        return item;
+      }
+
+      function typewriteCompliment(el, item, speed = 25) {
+        el.innerHTML = '';
+        el.classList.add('typing');
+        const lbl = document.createElement('span'); lbl.className = 'r-label';
+        const det = document.createElement('span'); det.className = 'r-detail';
+        // If detail is a single emoji, wrap in steam room
+        const isEmoji = /^\p{Emoji}/u.test(item.detail.trim()) && item.detail.trim().length <= 4;
+        if (isEmoji) {
+          det.classList.add('spin-emoji');
+          const steam = document.createElement('div');
+          steam.className = 'steam-room';
+          // 5 stacked white gradient sheets
+          for (let s = 1; s <= 5; s++) { const sh = document.createElement('div'); sh.className = `steam-sheet steam-sheet-${s}`; steam.appendChild(sh); }
+          det.textContent = item.detail;
+          steam.appendChild(det);
+          el.appendChild(steam);
+          el.classList.remove('typing');
+          setTimeout(() => steam.classList.add('revealed'), 50);
+          // Burst of steam outside card at ~5s
+          const tile = el.closest('.tile');
+          if (tile) {
+            setTimeout(() => {
+              for (let b = 0; b < 10; b++) {
+                const burst = document.createElement('div');
+                burst.className = 'steam-burst';
+                burst.style.setProperty('--b-angle', `${(b / 10) * 360}deg`);
+                burst.style.setProperty('--b-dist', `${60 + Math.random() * 40}px`);
+                tile.appendChild(burst);
+                burst.addEventListener('animationend', () => burst.remove());
+              }
+            }, 4500);
+          }
+          return;
+        }
+        el.appendChild(lbl); el.appendChild(det);
+        const fullLabel = item.label ? item.label + ':' : '';
+        const fullDetail = fullLabel ? ' ' + item.detail : item.detail;
+        if (!fullLabel) {
+          det.textContent = item.detail;
+          el.classList.remove('typing');
+          return;
+        }
+        let phase = 'label', i = 0;
+        const iv = setInterval(() => {
+          if (phase === 'label') { lbl.textContent += fullLabel[i]; i++; if (i >= fullLabel.length) { phase = 'detail'; i = 0; } }
+          else { det.textContent += fullDetail[i]; i++; if (i >= fullDetail.length) { clearInterval(iv); el.classList.remove('typing'); } }
+        }, speed);
+      }
+
+      function typewriteCrystal(el, item, speed = 30) {
+        el.innerHTML = '';
+        const lbl = document.createElement('span'); lbl.className = 'c-label';
+        const det = document.createElement('span'); det.className = 'c-detail';
+        el.appendChild(lbl); el.appendChild(det);
+        const fullLabel = item.label + ':';
+        const fullDetail = ' ' + item.detail;
+        let phase = 'label', i = 0;
+        const iv = setInterval(() => {
+          if (phase === 'label') { lbl.textContent += fullLabel[i]; i++; if (i >= fullLabel.length) { phase = 'detail'; i = 0; } }
+          else { det.textContent += fullDetail[i]; i++; if (i >= fullDetail.length) { clearInterval(iv); } }
+        }, speed);
+      }
+
+      function spawnSparkles(container, x, y, count = 10) {
+        for (let i = 0; i < count; i++) {
+          const s = document.createElement('div'); s.className = 'sparkle';
+          const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.5);
+          const dist = 25 + Math.random() * 50; const size = 3 + Math.random() * 5;
+          s.style.width = size + 'px'; s.style.height = size + 'px'; s.style.left = x + 'px'; s.style.top = y + 'px';
+          s.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+          s.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+          s.style.background = `hsl(${160 + Math.random() * 40}, 80%, ${65 + Math.random() * 25}%)`;
+          container.appendChild(s);
+          s.addEventListener('animationend', () => s.remove());
+        }
+      }
+
+      /* ============================================================
+         CRYSTAL BALL CLICK
+         ============================================================ */
+      const crystalBall = document.getElementById('crystalBall');
+      const crystalWrap = document.getElementById('crystalBallWrap');
+      const crystalMsg  = document.getElementById('crystalMessage');
+
+      crystalWrap.addEventListener('click', (e) => {
+        crystalBall.classList.remove('flash'); void crystalBall.offsetWidth; crystalBall.classList.add('flash');
+        const rect = crystalWrap.getBoundingClientRect();
+        spawnSparkles(crystalWrap, e.clientX - rect.left, e.clientY - rect.top, 12);
+        const compliment = nextCrystalCompliment();
+        crystalMsg.classList.remove('visible', 'hidden'); crystalMsg.classList.add('hidden');
+        setTimeout(() => { crystalMsg.classList.remove('hidden'); crystalMsg.classList.add('visible'); typewriteCrystal(crystalMsg, compliment, 30); }, 200);
+      });
+
+      setTimeout(() => crystalMsg.classList.add('visible'), 2000);
+
+      /* ============================================================
+         TILE CLICK
+         ============================================================ */
+      tiles.forEach(tile => {
+        tile.addEventListener('click', (e) => {
+          const type = tile.dataset.tile;
+          const pool = messages[type]; if (!pool) return;
+          const response = tile.querySelector('.tile-response'); if (!response) return;
+          document.querySelectorAll('.tile-response.open').forEach(r => { if (r !== response) { r.classList.remove('open', 'typing'); } });
+          const rect = tile.getBoundingClientRect();
+          spawnSparkles(tile, e.clientX - rect.left, e.clientY - rect.top, 10);
+          const msg = randomFrom(pool);
+          response.classList.add('open');
+          typewriteCompliment(response, msg, 22);
+        });
+        tile.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tile.click(); } });
+      });
+
+      /* ============================================================
+         MOBILE: prevent pull-to-refresh & horizontal overscroll
+         ============================================================ */
+      document.addEventListener('touchmove', (e) => {
+        // Block horizontal swipe at page level
+        if (Math.abs(e.touches[0].clientX - (e.touches[0].clientX || 0)) > 0) {
+          const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+          if (scrollTop <= 0 && e.touches[0].clientY > (e.targetTouches[0] && e.targetTouches[0].clientY || 0)) {
+            // At top, pulling down — allow CSS overscroll-behavior to handle it
+          }
+        }
+      }, { passive: true });
+
+      // Prevent double-tap zoom on interactive elements
+      let lastTap = 0;
+      document.querySelectorAll('.tile, .crystal-ball-wrap').forEach(el => {
+        el.addEventListener('touchend', (e) => {
+          const now = Date.now();
+          if (now - lastTap < 300) {
+            e.preventDefault();
+          }
+          lastTap = now;
+        }, { passive: false });
+      });
+
+      /* ============================================================
+         HIDE SCROLL CUE
+         ============================================================ */
+      const scrollCue = document.querySelector('.scroll-cue');
+      let cueHidden = false;
+      window.addEventListener('scroll', () => {
+        if (!cueHidden && window.scrollY > 100) { scrollCue.style.opacity = '0'; scrollCue.style.transition = 'opacity 0.5s ease'; cueHidden = true; }
+      }, { passive: true });
+
+    })();
+  </script>
+</body>
+</html>

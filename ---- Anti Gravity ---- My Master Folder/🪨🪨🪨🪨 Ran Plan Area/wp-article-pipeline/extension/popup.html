@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 320px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #1d2327;
+    color: #c3c4c7;
+    padding: 16px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .logo {
+    width: 28px; height: 28px;
+    background: #2271b1;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 14px;
+  }
+  .header h1 {
+    font-size: 16px;
+    color: #fff;
+    font-weight: 500;
+  }
+  .status {
+    background: #2c3338;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .status .label {
+    color: #a7aaad;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status .value {
+    color: #fff;
+    font-weight: 500;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .status.ready { border-left: 3px solid #00a32a; }
+  .status.empty { border-left: 3px solid #d63638; }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: #2271b1;
+    color: #fff;
+  }
+  .btn-primary:hover { background: #135e96; }
+  .btn-primary:disabled {
+    background: #3c434a;
+    color: #646970;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: #2c3338;
+    color: #c3c4c7;
+  }
+  .btn-secondary:hover { background: #3c434a; }
+  .btn-danger {
+    background: transparent;
+    color: #d63638;
+    border: 1px solid #d63638;
+    font-size: 12px;
+    padding: 6px;
+  }
+  .btn-danger:hover { background: #d63638; color: #fff; }
+  .divider {
+    border-top: 1px solid #3c434a;
+    margin: 12px 0;
+  }
+  .footer {
+    font-size: 11px;
+    color: #646970;
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  /* Blog Picker */
+  .picker-label {
+    font-size: 11px;
+    color: #a7aaad;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .blog-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .blog-btn {
+    background: #2c3338;
+    color: #c3c4c7;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    padding: 8px 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    line-height: 1.2;
+  }
+  .blog-btn:hover {
+    background: #3c434a;
+    color: #fff;
+  }
+  .blog-btn.selected {
+    border-color: #2271b1;
+    color: #fff;
+    background: #2c3338;
+  }
+
+  /* Send confirmation flash */
+  .send-flash {
+    font-size: 12px;
+    color: #00a32a;
+    text-align: center;
+    padding: 4px 0;
+    margin-bottom: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .send-flash.visible {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">W</div>
+    <h1>WP Article Dropper</h1>
+  </div>
+
+  <div class="status" id="captureStatus">
+    <div class="label">Captured Article</div>
+    <div class="value" id="captureTitle">No article captured</div>
+  </div>
+
+  <div class="picker-label">Target Blog</div>
+  <div class="blog-grid" id="blogGrid">
+    <button class="blog-btn" data-url="https://daily-beat.com/wp-admin/post-new.php">Daily Beat</button>
+    <button class="blog-btn" data-url="https://bythewavs.com/wp-admin/post-new.php">By The Wavs</button>
+    <button class="blog-btn" data-url="https://raverrafting.com/wp-admin/post-new.php">Raver Rafting</button>
+    <button class="blog-btn" data-url="https://www.themusicninja.com/wp-admin/post-new.php">The Music Ninja</button>
+    <button class="blog-btn" data-url="https://edmjoy.com/wp-admin/post-new.php">EDM Joy</button>
+    <button class="blog-btn" data-url="https://freshnewtracks.com/wp-admin/post-new.php">Fresh New Tracks</button>
+  </div>
+
+  <div class="send-flash" id="sendFlash"></div>
+
+  <button class="btn btn-primary" id="sendBtn" disabled>
+    Send to WordPress
+  </button>
+
+  <button class="btn btn-secondary" id="captureBtn">
+    Capture from Current Tab
+  </button>
+
+  <div class="divider"></div>
+
+  <button class="btn btn-danger" id="clearBtn">
+    Clear Captured Article
+  </button>
+
+  <div class="footer">Ctrl+S in emulator to capture</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

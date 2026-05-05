@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Ledger</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f172a;
+      --card:      #1e293b;
+      --border:    #334155;
+      --accent:    #10b981;
+      --accent-dk: #065f46;
+      --accent-hl: #34d399;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --red:       #ef4444;
+      --amber:     #f59e0b;
+      --green:     #10b981;
+      --font:      system-ui, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(180deg, #0a1628 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 24px 20px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+
+    .header-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .header-title {
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 16px 20px 0;
+      max-width: 900px;
+      margin: 0 auto;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      bottom: -1px;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background: #1a2744;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      background: var(--card);
+      border-color: var(--border);
+      border-bottom-color: var(--card);
+    }
+
+    .tab-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 7px;
+      vertical-align: middle;
+    }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 20px 80px;
+    }
+
+    .section {
+      display: none;
+      animation: fadeSlide 0.22s ease;
+    }
+
+    .section.active { display: block; }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── FORM ELEMENTS ── */
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    select option { background: #1e293b; }
+
+    /* ── FIELD GRID ── */
+    .field-row {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .field-row.cols-2 { grid-template-columns: 1fr 1fr; }
+    .field-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    @media (max-width: 600px) {
+      .field-row.cols-2,
+      .field-row.cols-3 { grid-template-columns: 1fr; }
+    }
+
+    .field { display: flex; flex-direction: column; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0a1628;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hl);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border: 1px solid transparent;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239,68,68,0.1);
+      border-color: var(--red);
+    }
+
+    /* ── TOGGLE ── */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .toggle {
+      position: relative;
+      width: 52px;
+      height: 28px;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #334155;
+      border-radius: 28px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 4px;
+      top: 4px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background: var(--accent-dk);
+    }
+
+    .toggle input:checked + .toggle-slider::before {
+      transform: translateX(24px);
+      background: var(--accent);
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .badge-active   { background: rgba(16,185,129,0.15); color: var(--accent); }
+    .badge-hold     { background: rgba(100,116,139,0.15); color: #64748b; }
+    .badge-paid     { background: rgba(16,185,129,0.15); color: var(--green); }
+    .badge-unpaid   { background: rgba(239,68,68,0.15);  color: var(--red); }
+    .badge-upcoming { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .badge-interested { background: rgba(16,185,129,0.12); color: var(--accent); }
+    .badge-pending    { background: rgba(245,158,11,0.12); color: var(--amber); }
+    .badge-notinterested { background: rgba(239,68,68,0.12); color: var(--red); }
+
+    /* ── PROSPECT LIST ── */
+    .prospect-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .prospect-item:hover { border-color: #475569; }
+
+    .prospect-info { flex: 1; min-width: 0; }
+
+    .prospect-name {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .prospect-contact {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── BILL LIST ── */
+    .bill-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .bill-item:hover { border-color: #475569; }
+
+    @media (max-width: 600px) {
+      .bill-item {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+      }
+      .bill-item .bill-date { display: none; }
+    }
+
+    .bill-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .bill-due {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .bill-amount {
+      font-size: 15px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+
+    /* ── TOTAL BAR ── */
+    .total-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.04) 100%);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+
+    .total-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+
+    .total-amount {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--red);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 36px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: 0.4;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+    }
+
+    /* ── PAYBACK PLACEHOLDER ── */
+    .payback-card {
+      background: linear-gradient(135deg, #1e293b 0%, #162032 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 32px;
+      text-align: center;
+    }
+
+    .payback-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent-dk), #022c22);
+      border: 1px solid rgba(16,185,129,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 28px;
+    }
+
+    .payback-heading {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .payback-sub {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 320px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+
+    .payback-pill {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 20px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .section-header h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .count-badge {
+      background: var(--accent-dk);
+      color: var(--accent);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* ── SORT BAR ── */
+    .sort-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .sort-bar span {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .sort-btn {
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .sort-btn.active,
+    .sort-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* ── DATE INPUT STYLING ── */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.6) sepia(1) saturate(3) hue-rotate(100deg);
+      cursor: pointer;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 500px) {
+      .tabs { padding: 12px 12px 0; gap: 2px; }
+      .tab-btn { padding: 8px 12px; font-size: 12px; }
+      main { padding: 20px 12px 60px; }
+      .card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow">Personal Finance Dashboard</div>
+  <div class="header-title">THE LEDGER</div>
+  <div class="header-subtitle">Finance &middot; Housing &middot; Payback</div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" onclick="switchTab('roommate', this)">
+    <span class="tab-dot"></span>Roommate
+  </button>
+  <button class="tab-btn" onclick="switchTab('bills', this)">
+    <span class="tab-dot"></span>Outstanding Bills
+  </button>
+  <button class="tab-btn" onclick="switchTab('payback', this)">
+    <span class="tab-dot"></span>Payback
+  </button>
+</nav>
+
+<main>
+
+  <!-- ══ ROOMMATE SECTION ══ -->
+  <section id="section-roommate" class="section active">
+
+    <div class="card">
+      <div class="card-title">Search Status</div>
+
+      <div class="toggle-wrap">
+        <label class="toggle">
+          <input type="checkbox" id="roommateToggle" onchange="saveRoommate()" />
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label">Status:</span>
+        <span class="status-badge" id="roommateStatusBadge">On Hold</span>
+      </div>
+
+      <div class="field-row cols-2">
+        <div class="field">
+          <label for="moveInDate">Ideal Move-In Date</label>
+          <input type="date" id="moveInDate" oninput="saveRoommate()" />
+        </div>
+        <div class="field">
+          <label>Budget Range (Monthly Rent)</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="budgetMin" placeholder="Min $" oninput="saveRoommate()" style="flex:1;" />
+            <span style="color:var(--muted);font-size:12px;">—</span>
+            <input type="number" id="budgetMax" placeholder="Max $" oninput="saveRoommate()" style="flex:1;" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="roommateNotes">Notes</label>
+        <textarea id="roommateNotes" placeholder="Preferences, requirements, deal-breakers..." oninput="saveRoommate()"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Prospects</div>
+
+      <div class="field-row cols-3">
+        <div class="field">
+          <label for="pName">Name</label>
+          <input type="text" id="pName" placeholder="Full name" />
+        </div>
+        <div class="field">
+          <label for="pContact">Contact</label>
+          <input type="text" id="pContact" placeholder="Phone / email / @handle" />
+        </div>
+        <div class="field">
+          <label for="pStatus">Status</label>
+          <select id="pStatus">
+            <option value="pending">Pending</option>
+            <option value="interested">Interested</option>
+            <option value="notinterested">Not Interested</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="addProspect()">+ Add Prospect</button>
+
+      <div class="divider"></div>
+
+      <div class="section-header">
+        <h2>Prospect List</h2>
+        <span class="count-badge" id="prospectCount">0</span>
+      </div>
+
+      <div id="prospectList">
+        <div class="empty-state">
+          <div class="empty-icon">👥</div>
+          <p>No prospects yet — add one above.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══ BILLS SECTION ══ -->
+  <section id="section-bills" class="section">
+
+    <div class="total-bar">
+      <div>
+        <div class="total-label">Total Unpaid</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Outstanding balance</div>
+      </div>
+      <div class="total-amount" id="unpaidTotal">$0.00</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Add Bill</div>
+
+      <div class="field-row cols-3">
+        <div class="field" style="grid-column: span 1;">
+          <label for="billName">Bill Name</label>
+          <input type="text" id="billName" placeholder="e.g. Rent, Electric..." />
+        </div>
+        <div class="field">
+          <label for="billAmount">Amount ($)</label>
+          <input type="number" id="billAmount" placeholder="0.00" step="0.01" min="0" />
+        </div>
+        <div class="field">
+          <label for="billDue">Due Date</label>
+          <input type="date" id="billDue" />
+        </div>
+      </div>
+
+      <div class="field-row cols-2">
+        <div class="field">
+          <label for="billStatus">Status</label>
+          <select id="billStatus">
+            <option value="unpaid">Unpaid</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+        <div class="field" style="justify-content:flex-end;">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary" onclick="addBill()" style="width:100%;">+ Add Bill</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Bill Register</div>
+
+      <div class="sort-bar">
+        <span>Sort:</span>
+        <button class="sort-btn active" id="sortDate" onclick="sortBills('date', this)">Due Date</button>
+        <button class="sort-btn" id="sortAmount" onclick="sortBills('amount', this)">Amount</button>
+        <button class="sort-btn" id="sortStatus" onclick="sortBills('status', this)">Status</button>
+      </div>
+
+      <div id="billList">
+        <div class="empty-state">
+          <div class="empty-icon">🧾</div>
+          <p>No bills logged yet — add one above.</p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══ PAYBACK SECTION ══ -->
+  <section id="section-payback" class="section">
+    <div class="payback-card">
+      <div class="payback-icon">↩</div>
+      <div class="payback-heading">Payback</div>
+      <div class="payback-sub">
+        Existing payback data will be merged here.
+        Track who owes what, split costs, and close the loop on every IOU.
+      </div>
+      <div class="payback-pill">Coming Soon</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  /* ── STATE ── */
+  let state = {
+    roommate: {
+      active: false,
+      moveIn: '',
+      budgetMin: '',
+      budgetMax: '',
+      notes: '',
+      prospects: []
+    },
+    bills: {
+      items: [],
+      sortBy: 'date'
+    }
+  };
+
+  /* ── INIT ── */
+  function init() {
+    const saved = localStorage.getItem('the-ledger-v1');
+    if (saved) {
+      try { state = JSON.parse(saved); } catch(e) {}
+    }
+    loadRoommate();
+    renderProspects();
+    renderBills();
+  }
+
+  /* ── PERSIST ── */
+  function save() {
+    localStorage.setItem('the-ledger-v1', JSON.stringify(state));
+  }
+
+  /* ── TABS ── */
+  function switchTab(name, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  /* ════════════════════════════════
+     ROOMMATE
+  ════════════════════════════════ */
+  function loadRoommate() {
+    const r = state.roommate;
+    document.getElementById('roommateToggle').checked = r.active;
+    document.getElementById('moveInDate').value  = r.moveIn    || '';
+    document.getElementById('budgetMin').value   = r.budgetMin || '';
+    document.getElementById('budgetMax').value   = r.budgetMax || '';
+    document.getElementById('roommateNotes').value = r.notes   || '';
+    updateStatusBadge(r.active);
+  }
+
+  function updateStatusBadge(isActive) {
+    const badge = document.getElementById('roommateStatusBadge');
+    badge.textContent = isActive ? 'Active' : 'On Hold';
+    badge.className = 'status-badge ' + (isActive ? 'badge-active' : 'badge-hold');
+  }
+
+  function saveRoommate() {
+    const r = state.roommate;
+    r.active    = document.getElementById('roommateToggle').checked;
+    r.moveIn    = document.getElementById('moveInDate').value;
+    r.budgetMin = document.getElementById('budgetMin').value;
+    r.budgetMax = document.getElementById('budgetMax').value;
+    r.notes     = document.getElementById('roommateNotes').value;
+    updateStatusBadge(r.active);
+    save();
+  }
+
+  function addProspect() {
+    const name    = document.getElementById('pName').value.trim();
+    const contact = document.getElementById('pContact').value.trim();
+    const status  = document.getElementById('pStatus').value;
+
+    if (!name) {
+      document.getElementById('pName').focus();
+      document.getElementById('pName').style.borderColor = 'var(--red)';
+      setTimeout(() => document.getElementById('pName').style.borderColor = '', 1200);
+      return;
+    }
+
+    state.roommate.prospects.push({
+      id: Date.now(),
+      name,
+      contact,
+      status
+    });
+
+    document.getElementById('pName').value    = '';
+    document.getElementById('pContact').value = '';
+    document.getElementById('pStatus').value  = 'pending';
+
+    save();
+    renderProspects();
+  }
+
+  function deleteProspect(id) {
+    state.roommate.prospects = state.roommate.prospects.filter(p => p.id !== id);
+    save();
+    renderProspects();
+  }
+
+  function updateProspectStatus(id, newStatus) {
+    const p = state.roommate.prospects.find(p => p.id === id);
+    if (p) { p.status = newStatus; save(); renderProspects(); }
+  }
+
+  function renderProspects() {
+    const list = document.getElementById('prospectList');
+    const prospects = state.roommate.prospects;
+    document.getElementById('prospectCount').textContent = prospects.length;
+
+    if (prospects.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>No prospects yet — add one above.</p></div>`;
+      return;
+    }
+
+    const statusLabels = {
+      pending:        'Pending',
+      interested:     'Interested',
+      notinterested:  'Not Interested'
+    };
+
+    list.innerHTML = prospects.map(p => `
+      <div class="prospect-item">
+        <div class="prospect-info">
+          <div class="prospect-name">${escHtml(p.name)}</div>
+          ${p.contact ? `<div class="prospect-contact">${escHtml(p.contact)}</div>` : ''}
+        </div>
+        <select class="sort-btn" style="padding:5px 10px;border-radius:6px;" onchange="updateProspectStatus(${p.id}, this.value)">
+          <option value="pending"       ${p.status === 'pending'       ? 'selected' : ''}>Pending</option>
+          <option value="interested"    ${p.status === 'interested'    ? 'selected' : ''}>Interested</option>
+          <option value="notinterested" ${p.status === 'notinterested' ? 'selected' : ''}>Not Interested</option>
+        </select>
+        <span class="status-badge badge-${p.status}">${statusLabels[p.status] || p.status}</span>
+        <button class="btn btn-danger" onclick="deleteProspect(${p.id})" title="Remove">✕</button>
+      </div>
+    `).join('');
+  }
+
+  /* ════════════════════════════════
+     BILLS
+  ════════════════════════════════ */
+  function addBill() {
+    const name   = document.getElementById('billName').value.trim();
+    const amount = parseFloat(document.getElementById('billAmount').value);
+    const due    = document.getElementById('billDue').value;
+    const status = document.getElementById('billStatus').value;
+
+    if (!name) {
+      highlight('billName');
+      return;
+    }
+    if (isNaN(amount) || amount < 0) {
+      highlight('billAmount');
+      return;
+    }
+
+    state.bills.items.push({ id: Date.now(), name, amount, due, status });
+
+    document.getElementById('billName').value   = '';
+    document.getElementById('billAmount').value = '';
+    document.getElementById('billDue').value    = '';
+    document.getElementById('billStatus').value = 'unpaid';
+
+    save();
+    renderBills();
+  }
+
+  function deleteBill(id) {
+    state.bills.items = state.bills.items.filter(b => b.id !== id);
+    save();
+    renderBills();
+  }
+
+  function updateBillStatus(id, newStatus) {
+    const b = state.bills.items.find(b => b.id === id);
+    if (b) { b.status = newStatus; save(); renderBills(); }
+  }
+
+  function sortBills(by, btn) {
+    state.bills.sortBy = by;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    save();
+    renderBills();
+  }
+
+  function renderBills() {
+    const list  = document.getElementById('billList');
+    let bills   = [...state.bills.items];
+    const sortBy = state.bills.sortBy || 'date';
+
+    if (sortBy === 'date') {
+      bills.sort((a, b) => {
+        if (!a.due && !b.due) return 0;
+        if (!a.due) return 1;
+        if (!b.due) return -1;
+        return a.due.localeCompare(b.due);
+      });
+    } else if (sortBy === 'amount') {
+      bills.sort((a, b) => b.amount - a.amount);
+    } else if (sortBy === 'status') {
+      const order = { unpaid: 0, upcoming: 1, paid: 2 };
+      bills.sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+    }
+
+    // Unpaid total
+    const unpaid = state.bills.items
+      .filter(b => b.status !== 'paid')
+      .reduce((sum, b) => sum + b.amount, 0);
+    document.getElementById('unpaidTotal').textContent = '$' + unpaid.toFixed(2);
+
+    if (bills.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">🧾</div><p>No bills logged yet — add one above.</p></div>`;
+      return;
+    }
+
+    const statusLabels = { paid: 'Paid', unpaid: 'Unpaid', upcoming: 'Upcoming' };
+
+    list.innerHTML = bills.map(b => `
+      <div class="bill-item">
+        <div>
+          <div class="bill-name">${escHtml(b.name)}</div>
+          <div class="bill-due">${b.due ? 'Due ' + formatDate(b.due) : 'No due date'}</div>
+        </div>
+        <div class="bill-amount">$${Number(b.amount).toFixed(2)}</div>
+        <select class="sort-btn" style="padding:5px 10px;border-radius:6px;" onchange="updateBillStatus(${b.id}, this.value)">
+          <option value="unpaid"   ${b.status === 'unpaid'   ? 'selected' : ''}>Unpaid</option>
+          <option value="upcoming" ${b.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+          <option value="paid"     ${b.status === 'paid'     ? 'selected' : ''}>Paid</option>
+        </select>
+        <span class="status-badge badge-${b.status}">${statusLabels[b.status] || b.status}</span>
+        <button class="btn btn-danger" onclick="deleteBill(${b.id})" title="Remove">✕</button>
+      </div>
+    `).join('');
+  }
+
+  /* ── UTILS ── */
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[parseInt(m,10)-1]} ${parseInt(d,10)}, ${y}`;
+  }
+
+  function highlight(id) {
+    const el = document.getElementById(id);
+    el.focus();
+    el.style.borderColor = 'var(--red)';
+    el.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+    setTimeout(() => {
+      el.style.borderColor = '';
+      el.style.boxShadow = '';
+    }, 1400);
+  }
+
+  /* ── BOOT ── */
+  init();
+</script>
+</body>
+</html>

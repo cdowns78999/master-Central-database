@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Contacts</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --radius-md: 12px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-deep: rgba(0, 0, 0, 0.4);
+        }
+
+        .contacts-view {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+            height: calc(100vh - 120px);
+        }
+
+        /* Sidebar Contact List */
+        .contact-sidebar {
+            background: var(--panel);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .add-contact-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #fff;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .add-contact-input:focus {
+            border-color: var(--primary);
+            background: rgba(76, 201, 240, 0.05);
+        }
+
+        .contact-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .contact-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dim);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .contact-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+        }
+
+        .contact-item.active {
+            background: rgba(76, 201, 240, 0.1);
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Grid Area */
+        .grid-container {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .grid-header {
+            padding: 0 0 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Tabs System */
+        .tabs-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(250, 93, 41, 0.1);
+        }
+
+        .add-tab-btn {
+            padding: 8px 12px;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 800;
+            background: rgba(250, 93, 41, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .add-tab-btn:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        /* Grid Controls */
+        .grid-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .btn-action:hover {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Premium Grid System */
+        .premium-grid-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .premium-grid-head {
+            display: grid;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            gap: 15px;
+        }
+
+        .table-row {
+            display: grid;
+            align-items: center;
+            padding: 16px 20px;
+            background: rgba(17, 24, 39, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            gap: 15px;
+            transition: var(--transition);
+            animation: rowEnter 0.4s ease-out backwards;
+        }
+
+        @keyframes rowEnter {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .table-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--primary);
+            transform: scale(1.01);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .cell-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #f3f4f6;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .cell-label {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #f3f4f6;
+        }
+
+        /* Responsive Scroller */
+        .premium-grid-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .premium-grid-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .premium-grid-wrapper::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .empty-grid-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-dim);
+            opacity: 0.5;
+            background: var(--panel);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        /* Status Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            color: var(--primary);
+            font-size: 0.85rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon" style="background: var(--primary);"></div>
+            <span style="font-family: 'Outfit', sans-serif; font-weight: 800; letter-spacing: 0.1em;">OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="cards.html" class="nav-link">Cards</a>
+            <a href="actions.html" class="nav-link">Actions</a>
+            <a href="contacts.html" class="nav-link active">Contacts</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.2rem; margin: 0;">Artist
+                    Analysis Book</h1>
+                <p style="color: var(--text-dim); font-family: 'Outfit', sans-serif; margin-top: 4px;">Data-dense
+                    database for sequential discovery streams</p>
+            </div>
+            <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div
+                    style="width: 6px; height: 6px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary);">
+                </div>
+                Ledger Active
+            </div>
+        </header>
+
+        <div class="contacts-view">
+            <!-- Left: Contact Sidebar -->
+            <div class="contact-sidebar">
+                <div class="sidebar-header">
+                    <input type="text" class="add-contact-input" id="newContactInput" placeholder="Add new contact...">
+                </div>
+                <div class="contact-list" id="contactList">
+                    <!-- Contacts populated by JS -->
+                </div>
+            </div>
+
+            <!-- Right: Dynamic Grid Area -->
+            <div class="grid-container" id="gridArea">
+                <div class="empty-grid-placeholder" id="noContactSelected">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">{ }</div>
+                    <p style="font-family: 'Outfit', sans-serif; font-weight: 600;">Select a contact to view analysis
+                        ledger</p>
+                </div>
+
+                <div id="gridInterface" style="display: none; flex-direction: column; height: 100%;">
+                    <div class="grid-header">
+                        <div class="tabs-row" id="tabsRow">
+                            <!-- Tabs populated by JS -->
+                            <div class="add-tab-btn" onclick="addNewTab()">+</div>
+                        </div>
+                        <div class="grid-actions">
+                            <button class="btn-action" onclick="adjustGrid('row', 1)">+ Row</button>
+                            <button class="btn-action" onclick="adjustGrid('row', -1)">- Row</button>
+                            <button class="btn-action" onclick="adjustGrid('col', 1)">+ Col</button>
+                            <button class="btn-action" onclick="adjustGrid('col', -1)">- Col</button>
+                        </div>
+                    </div>
+
+                    <div id="gridHead" class="premium-grid-head">
+                        <!-- Column Headers populated by JS -->
+                    </div>
+
+                    <div class="premium-grid-wrapper" id="gridBody">
+                        <!-- Rows populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // State Management
+        let contacts = [];
+        let selectedContactId = null;
+        let activeTabIndex = 0;
+
+        // Load data on start
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            renderContactList();
+
+            // Interaction: Add contact
+            const contactInput = document.getElementById('newContactInput');
+            contactInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && contactInput.value.trim()) {
+                    addContact(contactInput.value.trim());
+                    contactInput.value = '';
+                }
+            });
+        });
+
+        function loadData() {
+            const saved = localStorage.getItem('ocean_contacts_page');
+            if (saved) {
+                contacts = JSON.parse(saved);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('ocean_contacts_page', JSON.stringify(contacts));
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // --- Contact List Logic ---
+
+        function addContact(name) {
+            const newContact = {
+                id: 'c-' + Date.now(),
+                name: name,
+                tabs: [
+                    { name: 'Analysis', cols: 6, rows: 5, data: {} }
+                ]
+            };
+            contacts.push(newContact);
+            saveData();
+            renderContactList();
+            selectContact(newContact.id);
+            showToast(`Added: ${name}`);
+        }
+
+        function renderContactList() {
+            const list = document.getElementById('contactList');
+            list.innerHTML = contacts.map(c => `
+                <div class="contact-item ${c.id === selectedContactId ? 'active' : ''}" onclick="selectContact('${c.id}')">
+                    <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--primary); opacity: 0.6;"></div>
+                    <span>${c.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectContact(id) {
+            selectedContactId = id;
+            activeTabIndex = 0;
+            renderContactList();
+
+            document.getElementById('noContactSelected').style.display = 'none';
+            document.getElementById('gridInterface').style.display = 'flex';
+
+            renderTabs();
+            renderGrid();
+        }
+
+        // --- Tab Logic ---
+
+        function renderTabs() {
+            const contact = contacts.find(c => c.id === selectedContactId);
+            const row = document.getElementById('tabsRow');
+            const addBtn = row.querySelector('.add-tab-btn');
+
+            // Clear existing tabs (keeping the add button)
+            Array.from(row.querySelectorAll('.tab')).forEach(t => t.remove());
+
+            contact.tabs.forEach((tab, i) => {
+                const tabEl = document.createElement('div');
+                tabEl.className = `tab ${i === activeTabIndex ? 'active' : ''}`;
+                tabEl.innerHTML = `
+                    <span class="tab-name" contenteditable="${i === activeTabIndex}" 
+                          onblur="renameTab(${i}, this.innerText)"
+                          onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${tab.name}</span>
+                    <span class="tab-close" onclick="deleteTab(${i}, event)" style="font-size: 10px; opacity: 0.4;">✕</span>
+                `;
+                tabEl.onclick = () => { if (activeTabIndex !== i) { activeTabIndex = i; renderTabs(); renderGrid(); } };
+                row.insertBefore(tabEl, addBtn);
+            });
+        }
+
+        function addNewTab() {
+            const contact = contacts.find(c => c.id === selectedContactId);
+            contact.tabs.push({ name: 'Set ' + (contact.tabs.length + 1), cols: 6, rows: 5, data: {} });
+            activeTabIndex = contact.tabs.length - 1;
+            saveData();
+            renderTabs();
+            renderGrid();
+        }
+
+        function renameTab(index, newName) {
+            const contact = contacts.find(c => c.id === selectedContactId);
+            if (newName.trim()) {
+                contact.tabs[index].name = newName.trim();
+                saveData();
+            }
+        }
+
+        function deleteTab(index, e) {
+            e.stopPropagation();
+            const contact = contacts.find(c => c.id === selectedContactId);
+            if (contact.tabs.length <= 1) return;
+
+            contact.tabs.splice(index, 1);
+            if (activeTabIndex >= contact.tabs.length) activeTabIndex = contact.tabs.length - 1;
+            saveData();
+            renderTabs();
+            renderGrid();
+        }
+
+        // --- Grid Logic ---
+
+        function renderGrid() {
+            const contact = contacts.find(c => c.id === selectedContactId);
+            const tab = contact.tabs[activeTabIndex];
+            const head = document.getElementById('gridHead');
+            const body = document.getElementById('gridBody');
+
+            // Header labels
+            const labels = ['Entity', 'Status', 'Match', 'Visual', 'Platform', 'Action', 'Secondary', 'Notes'];
+
+            // Setup CSS Grid Columns
+            let gridColStyle = '';
+            for (let i = 0; i < tab.cols; i++) gridColStyle += '1fr ';
+            head.style.gridTemplateColumns = gridColStyle;
+
+            // Render Head
+            let headHtml = '';
+            for (let c = 0; c < tab.cols; c++) {
+                headHtml += `<span>${labels[c] || 'Col ' + (c + 1)}</span>`;
+            }
+            head.innerHTML = headHtml;
+
+            // Render Body Rows
+            body.innerHTML = '';
+            for (let r = 0; r < tab.rows; r++) {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'table-row';
+                rowEl.style.gridTemplateColumns = gridColStyle;
+                rowEl.style.animationDelay = `${r * 0.05}s`;
+
+                let rowHtml = '';
+                for (let c = 0; c < tab.cols; c++) {
+                    const key = `${r}-${c}`;
+                    const val = tab.data[key] || '';
+                    rowHtml += `<div class="cell-wrap"><input class="cell-input" value="${val}" placeholder="--" oninput="updateCell(${r}, ${c}, this.value)"></div>`;
+                }
+                rowEl.innerHTML = rowHtml;
+                body.appendChild(rowEl);
+            }
+        }
+
+        function updateCell(r, c, val) {
+            const contact = contacts.find(c => c.id === selectedContactId);
+            const tab = contact.tabs[activeTabIndex];
+            tab.data[`${r}-${c}`] = val;
+            saveData();
+        }
+
+        function adjustGrid(type, delta) {
+            const contact = contacts.find(c => c.id === selectedContactId);
+            const tab = contact.tabs[activeTabIndex];
+
+            if (type === 'row') {
+                tab.rows = Math.max(1, tab.rows + delta);
+            } else {
+                tab.cols = Math.max(1, tab.cols + delta);
+            }
+
+            saveData();
+            renderGrid();
+        }
+
+    </script>
+</body>
+
+</html>

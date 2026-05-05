@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Slang Dictionary — VRChat Ultimate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    .search-wrap { text-align: center; padding: 2rem 0 1rem; margin-bottom: 1rem; }
+    .search-wrap input {
+      width: 100%; max-width: 560px;
+      padding: 0.9rem 1.2rem;
+      font-size: 1.05rem;
+      border-radius: var(--badge-radius);
+    }
+    .letter-pills {
+      display: flex; flex-wrap: wrap; gap: 0.35rem;
+      justify-content: center; margin-bottom: 2rem;
+    }
+    .letter-pill {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      font-size: 0.85rem; font-weight: 700;
+      background: var(--bg-4); color: var(--text-dim);
+      border: 1px solid var(--border);
+      cursor: pointer; transition: all var(--transition);
+    }
+    .letter-pill:hover { border-color: var(--vrc-lavender); color: var(--vrc-lavender); }
+    .letter-pill.active { background: var(--vrc-primary); color: #fff; border-color: var(--vrc-lavender); }
+    .term-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    .term-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      transition: all var(--transition);
+    }
+    .term-card:hover { border-color: var(--vrc-lavender); transform: translateY(-2px); }
+    .term-name { font-size: 1.15rem; font-weight: 800; color: var(--text-bright); margin-bottom: 0.4rem; }
+    .term-def { font-size: 0.9rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 0.4rem; }
+    .term-example { font-size: 0.85rem; font-style: italic; color: var(--text-muted); }
+    .newcomer-tip {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(163,190,140,0.15);
+      color: var(--green);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--badge-radius);
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    .totw-card { padding: 1.5rem; margin-bottom: 2rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="sidebar-mount"></div>
+  <button id="hamburger" class="hamburger">&#9776;</button>
+  <main id="main-content">
+
+    <h1 class="section-title">Slang Dictionary</h1>
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <input type="text" id="slang-search" autofocus placeholder="Search VRChat slang...">
+    </div>
+
+    <!-- A-Z Letter Pills -->
+    <div class="letter-pills" id="letter-pills">
+      <button class="letter-pill active" data-letter="all">All</button>
+    </div>
+
+    <!-- Term of the Week -->
+    <div class="glass totw-card">
+      <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:0.5rem;">&#127775; Term of the Week</div>
+      <div style="font-size:1.5rem;font-weight:800;color:var(--vrc-lavender);margin-bottom:0.5rem;">Phantom Sense</div>
+      <div style="color:var(--text-dim);font-size:0.95rem;max-width:500px;margin:0 auto;">The phenomenon of feeling physical sensations (touch, heat, proximity) in your real body triggered by avatar interactions in VR. Some users report tingling when their avatar is touched.</div>
+    </div>
+
+    <!-- Term Grid -->
+    <div class="term-grid" id="term-grid"></div>
+
+  </main>
+
+  <script src="../shared/nav.js"></script>
+  <script src="../shared/components.js"></script>
+  <script>
+    (function() {
+      const terms = [
+        { term: 'Crasher', def: 'A malicious avatar or world specifically designed to overload and crash other users\' VRChat clients. Often uses excessive particle effects, shaders, or polygon counts.', example: '"Don\'t go to that world, someone dropped a crasher in there."', newcomer: true },
+        { term: 'FBT', def: 'Full Body Tracking. Using additional hardware trackers (typically on feet and waist) to track your entire body\'s movement in VR, not just your hands and head.', example: '"She got FBT last week and won\'t stop showing off her dance moves."', newcomer: true },
+        { term: 'Phantom Sense', def: 'The sensation of feeling physical touch from avatar interactions in VR. A psychosomatic phenomenon where your brain "fills in" sensory data based on visual input.', example: '"I swear I felt that headpat. Phantom sense is wild."', newcomer: true },
+        { term: 'Ripping', def: 'The act of stealing or copying someone\'s avatar model without their permission, usually by extracting it from VRChat\'s cache or memory. Considered a serious offense.', example: '"That\'s a ripped avi. The original creator is furious."', newcomer: false },
+        { term: 'Kitbash', def: 'Combining parts from multiple avatar assets, models, or prefabs to create a new custom avatar. A common starting point for new avatar creators.', example: '"It\'s a kitbash but honestly it looks clean."', newcomer: false },
+        { term: 'UDON', def: 'VRChat\'s visual scripting language used to create interactive world behaviors. Replaced the older VRChat SDK 2 triggers system. Can be programmed visually or via UdonSharp (C#).', example: '"The escape room is all built in Udon — even the puzzle logic."', newcomer: true },
+        { term: 'Questie', def: 'A user playing VRChat on a Meta Quest headset in standalone mode (not linked to a PC). Quest users have visual limitations due to mobile hardware.', example: '"Half the lobby is Questies so keep your avatar optimized."', newcomer: true },
+        { term: 'Deskie', def: 'A user playing VRChat on a desktop computer without a VR headset. They use keyboard and mouse to navigate. No headtracking or hand tracking.', example: '"You can tell they\'re a Deskie — the head isn\'t moving."', newcomer: true },
+        { term: 'Pretzel', def: 'When Full Body Tracking calibration goes wrong and your avatar\'s limbs contort into impossible twisted positions. Usually gets a laugh from everyone.', example: '"My trackers lost sync and I turned into a pretzel again."', newcomer: false },
+        { term: 'Cloning', def: 'Copying another user\'s public avatar by clicking on their nameplate and selecting "Clone Avatar." Only works if the creator allows public cloning.', example: '"Nice avatar! Is cloning on?" "Yeah go ahead."', newcomer: true },
+        { term: 'Instance', def: 'A single running copy of a VRChat world. Multiple instances of the same world can exist simultaneously, each with its own set of players and state.', example: '"Let\'s make a private instance so randoms don\'t join."', newcomer: true },
+        { term: 'Portal', def: 'An in-world object that acts as a link to another world instance. Players can walk into a portal to teleport to that world. Can be placed by users or world creators.', example: '"Someone dropped a portal to the Black Cat."', newcomer: false },
+        { term: 'Physbones', def: 'VRChat\'s dynamic bone physics system that makes parts of avatars (hair, tails, ears, clothing) react to movement and gravity with realistic bouncing and swaying.', example: '"The tail physics on that avi are so smooth — must be using the new PhysBones."', newcomer: false },
+        { term: 'Shapekey', def: 'A blend shape that stores a modified version of a mesh. Used in VRChat for facial expressions, visemes (lip sync), and toggle-able avatar modifications.', example: '"I added 40 shapekeys for facial expressions."', newcomer: false },
+        { term: 'Viseme', def: 'Mouth shapes used for automatic lip synchronization. VRChat maps your microphone audio to a set of 15 viseme blend shapes to animate your avatar\'s mouth.', example: '"Your visemes aren\'t set up — your mouth isn\'t moving when you talk."', newcomer: false },
+        { term: 'EAC', def: 'Easy Anti-Cheat. VRChat\'s anti-cheat system introduced in 2022. Blocks most client modifications and was highly controversial with the modding community.', example: '"EAC broke half my QoL mods overnight."', newcomer: false },
+        { term: 'OSC', def: 'Open Sound Control. A protocol VRChat uses to let external programs communicate with the game — enabling custom face tracking, avatar controls, chatboxes, and more.', example: '"I\'m running face tracking through OSC with my phone camera."', newcomer: false },
+        { term: 'VCC', def: 'VRChat Creator Companion. The official tool for managing VRChat Unity projects. Handles SDK versions, packages, and project templates for world and avatar creation.', example: '"Use VCC to set up your project instead of manually importing the SDK."', newcomer: true },
+        { term: 'Fallback', def: 'A backup avatar that gets shown to other users when your main avatar can\'t be displayed (e.g., too many polygons for Quest, or blocked by safety settings).', example: '"Set a good fallback so Questies don\'t just see a gray robot."', newcomer: true },
+        { term: 'Earmuffs', def: 'Muting all audio coming from a specific user. Different from a full block — you can still see them and they can still see you, but you won\'t hear anything they say.', example: '"That guy won\'t stop mic-spamming. Earmuffs time."', newcomer: true }
+      ];
+
+      // Generate letter pills
+      const letterContainer = document.getElementById('letter-pills');
+      const usedLetters = [...new Set(terms.map(t => t.term[0].toUpperCase()))].sort();
+      usedLetters.forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = 'letter-pill';
+        btn.dataset.letter = letter;
+        btn.textContent = letter;
+        letterContainer.appendChild(btn);
+      });
+
+      // Render terms
+      const grid = document.getElementById('term-grid');
+      function renderTerms(filtered) {
+        grid.innerHTML = '';
+        filtered.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'term-card';
+          card.dataset.term = t.term.toLowerCase();
+          card.dataset.letter = t.term[0].toUpperCase();
+          card.innerHTML =
+            '<div class="term-name">' + t.term + (t.newcomer ? '<span class="newcomer-tip">Newcomer Tip</span>' : '') + '</div>' +
+            '<div class="term-def">' + t.def + '</div>' +
+            '<div class="term-example">' + t.example + '</div>';
+          grid.appendChild(card);
+        });
+      }
+      renderTerms(terms);
+
+      // Search
+      const searchInput = document.getElementById('slang-search');
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase().trim();
+        // Reset letter pills
+        document.querySelectorAll('.letter-pill').forEach(p => p.classList.remove('active'));
+        document.querySelector('.letter-pill[data-letter="all"]').classList.add('active');
+
+        if (!q) { renderTerms(terms); return; }
+        renderTerms(terms.filter(t =>
+          t.term.toLowerCase().includes(q) || t.def.toLowerCase().includes(q)
+        ));
+      });
+
+      // Letter filter
+      letterContainer.addEventListener('click', (e) => {
+        const pill = e.target.closest('.letter-pill');
+        if (!pill) return;
+        document.querySelectorAll('.letter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const letter = pill.dataset.letter;
+        searchInput.value = '';
+        if (letter === 'all') { renderTerms(terms); return; }
+        renderTerms(terms.filter(t => t.term[0].toUpperCase() === letter));
+      });
+    })();
+  </script>
+</body>
+</html>

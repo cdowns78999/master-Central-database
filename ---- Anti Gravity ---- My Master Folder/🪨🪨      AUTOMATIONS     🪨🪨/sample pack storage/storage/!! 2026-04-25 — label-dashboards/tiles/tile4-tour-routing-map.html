@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tour Routing Map</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --pane: #ffffff;
+    --line: #e3e6ec;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --accent: #4a6da7;
+    --accent-soft: #eaf0fa;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    padding: 26px 32px 60px;
+  }
+  .back {
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 12px;
+    margin-bottom: 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .back:hover { text-decoration: underline; }
+  h1 {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-weight: 300;
+    font-size: 26px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .lede {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 22px;
+    max-width: 640px;
+    line-height: 1.5;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 22px;
+    max-width: 1180px;
+  }
+  .map-wrap {
+    background: var(--pane);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    position: relative;
+  }
+  .map-wrap svg { display: block; width: 100%; height: auto; }
+  .state {
+    fill: #f0f3f8;
+    stroke: #cdd3df;
+    stroke-width: 0.8;
+    transition: fill 0.2s;
+  }
+  .state:hover { fill: #e6ecf6; }
+  .leg {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 6 5;
+    opacity: 0.55;
+    transition: opacity 0.2s, stroke-width 0.2s;
+    cursor: pointer;
+  }
+  .leg:hover { opacity: 1; stroke-width: 3; }
+  .leg.hilite { opacity: 1; stroke-width: 3.4; stroke: #2a3f6b; }
+  .pin {
+    cursor: pointer;
+  }
+  .pin .ring {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    opacity: 0;
+    transform-origin: center;
+  }
+  .pin:hover .ring,
+  .pin.active .ring {
+    opacity: 0.7;
+    animation: pulse 1.4s ease-out infinite;
+  }
+  .pin .dot {
+    fill: var(--accent);
+    stroke: #fff;
+    stroke-width: 2;
+    transition: r 0.15s, fill 0.15s;
+  }
+  .pin:hover .dot { r: 9; }
+  .pin.active .dot { fill: #2a3f6b; r: 9; }
+  .pin .num {
+    fill: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+  }
+  @keyframes pulse {
+    0% { r: 7; opacity: 0.7; }
+    100% { r: 18; opacity: 0; }
+  }
+
+  .leg-tooltip {
+    position: absolute;
+    background: #1f2430;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  .leg-tooltip.show { opacity: 1; }
+
+  .panel {
+    background: var(--pane);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    align-self: start;
+    position: sticky;
+    top: 20px;
+  }
+  .panel h2 {
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: linear-gradient(180deg,#fbfcfd,#eef0f4);
+    border-bottom: 1px solid var(--line);
+    font-weight: 500;
+  }
+  .info {
+    padding: 16px;
+    min-height: 200px;
+  }
+  .info .blank {
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    padding: 30px 0;
+  }
+  .info .num-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 22px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .info .city {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 2px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .info .venue {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+  .info .meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .info .meta .cell {
+    background: #f9fbfe;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .info .meta .lab {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .info .meta .val {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .info .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-top: 1px solid #f1f3f7;
+    font-size: 12px;
+  }
+  .info .row .l { color: var(--muted); }
+  .info .row .r { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .legend {
+    margin-top: 14px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    background: #fafbfd;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .legend .swatch {
+    display: inline-block;
+    width: 18px; height: 2px;
+    background: var(--accent);
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+</style>
+</head>
+<body>
+  <a class="back" href="../index.html">← back to pack</a>
+  <h1>Tour Routing Map</h1>
+  <p class="lede">Mock 8-date US tour. Click any pin for venue details. Hover any leg between cities to see distance and drive time. (sourced via awwwards.com — high-end media dashboard pattern)</p>
+
+  <div class="layout">
+    <div class="map-wrap" id="mapWrap">
+      <svg id="map" viewBox="0 0 900 540" xmlns="http://www.w3.org/2000/svg">
+        <!-- Simplified US shape (approximate continental outline + a few subdivisions for visual texture) -->
+        <g id="states">
+          <!-- West block -->
+          <path class="state" d="M70 180 L160 140 L210 130 L240 160 L240 260 L200 320 L150 360 L100 350 L70 300 Z"></path>
+          <!-- Mountain block -->
+          <path class="state" d="M240 160 L210 130 L300 120 L360 140 L380 240 L340 320 L280 340 L240 260 Z"></path>
+          <!-- Plains -->
+          <path class="state" d="M380 240 L360 140 L470 130 L540 150 L560 260 L500 320 L420 320 L340 320 Z"></path>
+          <!-- Midwest -->
+          <path class="state" d="M540 150 L470 130 L600 130 L680 160 L700 240 L640 280 L560 260 Z"></path>
+          <!-- Northeast -->
+          <path class="state" d="M680 160 L600 130 L740 110 L820 130 L840 200 L780 230 L700 240 Z"></path>
+          <!-- South -->
+          <path class="state" d="M340 320 L420 320 L500 320 L560 260 L640 280 L700 240 L780 230 L770 320 L700 380 L600 410 L500 410 L420 380 L360 380 L320 350 Z"></path>
+          <!-- Florida-ish protrusion -->
+          <path class="state" d="M620 410 L660 420 L700 460 L690 500 L660 510 L640 480 L620 440 Z"></path>
+          <!-- Texas-ish -->
+          <path class="state" d="M340 320 L320 350 L360 380 L380 440 L420 460 L440 420 L420 380 L420 320 Z"></path>
+        </g>
+
+        <!-- Route lines (legs between sequential pins) -->
+        <g id="legs"></g>
+
+        <!-- Pins -->
+        <g id="pins"></g>
+      </svg>
+      <div class="leg-tooltip" id="tt"></div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Show details</h2>
+        <div class="info" id="info">
+          <div class="blank">Click any pin on the map →</div>
+        </div>
+        <div class="legend">
+          <div><span class="swatch"></span> Tour leg — hover for distance</div>
+          <div>● Show pin — click for venue card</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dates = [
+      { n: 1, city: "Seattle, WA",       x: 145, y: 165, venue: "The Showbox",         date: "Jun 14, 2026", cap: 1150, ticket: "$32", status: "On-sale" },
+      { n: 2, city: "San Francisco, CA", x: 110, y: 280, venue: "The Independent",     date: "Jun 17, 2026", cap: 500,  ticket: "$28", status: "On-sale" },
+      { n: 3, city: "Denver, CO",        x: 360, y: 250, venue: "Bluebird Theater",    date: "Jun 21, 2026", cap: 550,  ticket: "$30", status: "Few left" },
+      { n: 4, city: "Austin, TX",        x: 460, y: 410, venue: "Mohawk",              date: "Jun 24, 2026", cap: 850,  ticket: "$26", status: "On-sale" },
+      { n: 5, city: "Nashville, TN",     x: 600, y: 320, venue: "Mercy Lounge",        date: "Jun 27, 2026", cap: 400,  ticket: "$24", status: "Sold out" },
+      { n: 6, city: "Atlanta, GA",       x: 640, y: 360, venue: "The Earl",            date: "Jun 29, 2026", cap: 300,  ticket: "$22", status: "On-sale" },
+      { n: 7, city: "Brooklyn, NY",      x: 800, y: 175, venue: "Music Hall of Wmsbg", date: "Jul 03, 2026", cap: 650,  ticket: "$34", status: "Few left" },
+      { n: 8, city: "Chicago, IL",       x: 600, y: 200, venue: "Lincoln Hall",        date: "Jul 07, 2026", cap: 500,  ticket: "$30", status: "On-sale" }
+    ];
+
+    function legDistance(a, b) {
+      // px-distance fudged into "miles" via a constant to feel realistic
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const px = Math.sqrt(dx*dx + dy*dy);
+      return Math.round(px * 4.8);
+    }
+    function driveHrs(miles) { return (miles / 60).toFixed(1); }
+
+    const legsG = document.getElementById('legs');
+    const pinsG = document.getElementById('pins');
+    const tt = document.getElementById('tt');
+    const info = document.getElementById('info');
+    const mapWrap = document.getElementById('mapWrap');
+
+    // draw legs first so they go behind pins
+    for (let i = 0; i < dates.length - 1; i++) {
+      const a = dates[i], b = dates[i+1];
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      // gentle curve via a midpoint offset
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2 - 15;
+      path.setAttribute('d', `M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}`);
+      path.setAttribute('class', 'leg');
+      path.dataset.from = a.n;
+      path.dataset.to = b.n;
+      path.dataset.miles = legDistance(a, b);
+      legsG.appendChild(path);
+    }
+
+    // pins
+    dates.forEach(d => {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'pin');
+      g.dataset.n = d.n;
+      g.innerHTML = `
+        <circle class="ring" cx="${d.x}" cy="${d.y}" r="7"></circle>
+        <circle class="dot" cx="${d.x}" cy="${d.y}" r="7"></circle>
+        <text class="num" x="${d.x}" y="${d.y}">${d.n}</text>
+      `;
+      pinsG.appendChild(g);
+    });
+
+    pinsG.addEventListener('click', e => {
+      const g = e.target.closest('.pin');
+      if (!g) return;
+      document.querySelectorAll('.pin.active').forEach(x => x.classList.remove('active'));
+      g.classList.add('active');
+      const d = dates.find(x => x.n == g.dataset.n);
+      info.innerHTML = `
+        <div><span class="num-tag">${d.n}</span><span class="city">${d.city}</span></div>
+        <div class="venue">${d.venue}</div>
+        <div class="meta">
+          <div class="cell"><div class="lab">Date</div><div class="val">${d.date}</div></div>
+          <div class="cell"><div class="lab">Capacity</div><div class="val">${d.cap.toLocaleString()}</div></div>
+          <div class="cell"><div class="lab">Ticket</div><div class="val">${d.ticket}</div></div>
+          <div class="cell"><div class="lab">Status</div><div class="val">${d.status}</div></div>
+        </div>
+        <div class="row"><span class="l">Show #</span><span class="r">${d.n} of ${dates.length}</span></div>
+        <div class="row"><span class="l">Tour</span><span class="r">Lantern Hours US</span></div>
+      `;
+    });
+
+    legsG.addEventListener('mousemove', e => {
+      const leg = e.target.closest('.leg');
+      if (!leg) {
+        tt.classList.remove('show');
+        document.querySelectorAll('.leg.hilite').forEach(x => x.classList.remove('hilite'));
+        return;
+      }
+      document.querySelectorAll('.leg.hilite').forEach(x => x.classList.remove('hilite'));
+      leg.classList.add('hilite');
+      const miles = parseInt(leg.dataset.miles);
+      const from = dates.find(d => d.n == leg.dataset.from);
+      const to = dates.find(d => d.n == leg.dataset.to);
+      const rect = mapWrap.getBoundingClientRect();
+      tt.textContent = `${from.city.split(',')[0]} → ${to.city.split(',')[0]} · ${miles.toLocaleString()} mi · ~${driveHrs(miles)}h drive`;
+      tt.style.left = (e.clientX - rect.left + 12) + 'px';
+      tt.style.top = (e.clientY - rect.top + 12) + 'px';
+      tt.classList.add('show');
+    });
+    legsG.addEventListener('mouseleave', () => {
+      tt.classList.remove('show');
+      document.querySelectorAll('.leg.hilite').forEach(x => x.classList.remove('hilite'));
+    });
+  </script>
+</body>
+</html>

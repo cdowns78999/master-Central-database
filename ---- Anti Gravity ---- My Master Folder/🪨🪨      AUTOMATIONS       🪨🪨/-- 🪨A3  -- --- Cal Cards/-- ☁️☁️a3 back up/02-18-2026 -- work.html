@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Automater</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      /* ── Orange Claude ── */
+      --claude-1: #d4622b;
+      --claude-2: #e8783a;
+      --claude-3: #f59e0b;
+      --claude-glow: rgba(232, 120, 58, 0.35);
+
+      /* ── Steel Industrial ── */
+      --steel-900: #0c0f14;
+      --steel-800: #151921;
+      --steel-700: #1e2530;
+      --steel-600: #2a3342;
+      --steel-500: #3d4a5c;
+      --steel-400: #64748b;
+      --steel-300: #94a3b8;
+      --steel-200: #cbd5e1;
+      --steel-100: #e2e8f0;
+
+      --surface: rgba(30, 37, 48, 0.7);
+      --surface-lit: rgba(42, 51, 66, 0.8);
+      --text: #e2e8f0;
+      --text-dim: rgba(148, 163, 184, 0.7);
+      --text-bright: #f8fafc;
+      --border: rgba(100, 116, 139, 0.25);
+      --border-lit: rgba(232, 120, 58, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--steel-900);
+      min-height: 100vh;
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════
+       AMBIENT BACKGROUND
+    ═══════════════════════ */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(232, 120, 58, 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 90%, rgba(245, 158, 11, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(100, 116, 139, 0.05) 0%, transparent 50%),
+        linear-gradient(180deg, var(--steel-900) 0%, #0e1218 50%, var(--steel-900) 100%);
+      pointer-events: none;
+    }
+
+    /* Subtle moving grain */
+    .bg-layer::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+      pointer-events: none;
+    }
+
+    /* Breathing ambient blobs */
+    .amb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .amb-1 {
+      width: 500px;
+      height: 500px;
+      background: var(--claude-2);
+      top: -120px;
+      left: -100px;
+      opacity: 0.06;
+      animation: ambPulse 16s cubic-bezier(0.5, 0, 0.5, 1) infinite alternate;
+    }
+
+    .amb-2 {
+      width: 400px;
+      height: 400px;
+      background: var(--claude-3);
+      bottom: -80px;
+      right: -80px;
+      opacity: 0.04;
+      animation: ambPulse 20s cubic-bezier(0.5, 0, 0.5, 1) infinite alternate-reverse;
+    }
+
+    @keyframes ambPulse {
+      0% { transform: scale(1); opacity: 0.04; }
+      100% { transform: scale(1.15); opacity: 0.08; }
+    }
+
+    /* ═══════════════════════
+       PAGE LAYOUT
+    ═══════════════════════ */
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 6rem;
+    }
+
+    /* ── Header ── */
+    .header-block {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .dash-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, var(--claude-1), var(--claude-2), var(--claude-3), var(--claude-2), var(--claude-1));
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimTitle 8s ease-in-out infinite;
+      margin-bottom: 0.4rem;
+    }
+
+    @keyframes shimTitle {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .dash-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .dash-sub .blink {
+      animation: blink 1.2s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ── Pipeline connector ── */
+    .pipeline-line {
+      width: 2px;
+      height: 32px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, transparent, var(--claude-2), transparent);
+      opacity: 0.3;
+    }
+
+    /* ═══════════════════════
+       TILE STACK
+    ═══════════════════════ */
+    .automater-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Base Tile ── */
+    .tile {
+      position: relative;
+      background: var(--surface);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      will-change: transform, opacity, filter;
+
+      /* Breathing glow */
+      animation: glassBreathe 6s ease-in-out infinite alternate;
+    }
+
+    .tile:hover {
+      border-color: var(--border-lit);
+      cursor: pointer;
+    }
+
+    @keyframes glassBreathe {
+      0% {
+        box-shadow:
+          0 0 0 1px rgba(100, 116, 139, 0.1),
+          0 4px 24px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+      100% {
+        box-shadow:
+          0 0 0 1px rgba(232, 120, 58, 0.08),
+          0 8px 40px rgba(232, 120, 58, 0.06),
+          0 4px 24px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+    }
+
+    /* Industrial grid texture inside tiles */
+    .tile::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+
+    /* Top edge accent — like a factory caution stripe */
+    .tile::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--claude-1) 20%,
+        var(--claude-2) 50%,
+        var(--claude-1) 80%,
+        transparent 100%);
+      opacity: 0.6;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .tile-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 2.4rem 2.2rem 2.2rem;
+      gap: 1rem;
+      min-height: 300px;
+    }
+
+    /* ── Tile header row ── */
+    .tile-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .tile-head-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .tile-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--surface-lit);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .tile-label {
+      font-family: 'Playfair Display', serif;
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: var(--text-bright);
+    }
+
+    .tile-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      background: rgba(232, 120, 58, 0.1);
+      border: 1px solid rgba(232, 120, 58, 0.2);
+      color: var(--claude-2);
+      white-space: nowrap;
+    }
+
+    /* ── Tile body text ── */
+    .tile-body {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 520px;
+    }
+
+    /* ── Status row / metadata ── */
+    .tile-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(100, 116, 139, 0.12);
+    }
+
+    .meta-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      background: rgba(100, 116, 139, 0.1);
+      border: 1px solid rgba(100, 116, 139, 0.15);
+      color: var(--steel-300);
+    }
+
+    .meta-chip.live {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.25);
+      color: #34d399;
+    }
+
+    .meta-chip.warm {
+      background: rgba(232, 120, 58, 0.1);
+      border-color: rgba(232, 120, 58, 0.2);
+      color: var(--claude-2);
+    }
+
+    /* ── Decorative nodes (n8n-style) ── */
+    .node-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .node-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--steel-500);
+      border: 1px solid var(--steel-400);
+    }
+
+    .node-dot.active {
+      background: var(--claude-2);
+      border-color: var(--claude-2);
+      box-shadow: 0 0 8px var(--claude-glow);
+    }
+
+    /* ── Click hint ── */
+    .click-hint {
+      position: absolute;
+      bottom: 14px;
+      right: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      background: rgba(100, 116, 139, 0.12);
+      padding: 0.25rem 0.6rem;
+      border-radius: 8px;
+      color: var(--steel-400);
+      pointer-events: none;
+      z-index: 2;
+      letter-spacing: 0.04em;
+    }
+
+    /* ═══════════════════════════════════════
+       SMOOTH SMOKE TRANSITIONS — 5 VARIANTS
+    ═══════════════════════════════════════ */
+
+    /* Entry: all tiles start invisible */
+    .tile {
+      opacity: 0;
+    }
+
+    /* ─────────────────────────────────────────────
+       V1 — IRIS OPEN
+       Camera lens expanding from dead center.
+       Spring overshoot snaps it slightly past full,
+       then settles. Clean. Cinematic.
+    ───────────────────────────────────────────── */
+    .tile:nth-child(1) {
+      animation:
+        irisOpen 0.85s cubic-bezier(0.34, 1.5, 0.64, 1) 0.1s forwards,
+        glassBreathe 6s ease-in-out 0.95s infinite alternate;
+    }
+
+    @keyframes irisOpen {
+      0%   { opacity: 1; clip-path: circle(0% at 50% 50%); }
+      100% { opacity: 1; clip-path: circle(100% at 50% 50%); }
+    }
+
+    /* ─────────────────────────────────────────────
+       V2 — GLITCH SLAM
+       Horizontal shatter: flies in from the left
+       with skew + hue-rotate chaos, then snaps
+       dead center in a single hard frame.
+    ───────────────────────────────────────────── */
+    .tile:nth-child(3) {
+      animation:
+        glitchSlam 0.75s linear 0.25s forwards,
+        glassBreathe 6s ease-in-out 1s infinite alternate;
+    }
+
+    @keyframes glitchSlam {
+      0%   { opacity: 0; transform: translateX(-55px) skewX(20deg); filter: hue-rotate(130deg) blur(8px) saturate(2.5); }
+      14%  { opacity: 1; transform: translateX(14px) skewX(-11deg); filter: hue-rotate(65deg) blur(3px) saturate(1.6); }
+      26%  { transform: translateX(-7px) skewX(6deg);  filter: hue-rotate(20deg) blur(0px) saturate(1.2); }
+      40%  { transform: translateX(4px) skewX(-3deg);  filter: hue-rotate(4deg); }
+      56%  { transform: translateX(-2px) skewX(1deg); }
+      74%  { transform: translateX(1px); }
+      100% { opacity: 1; transform: translateX(0) skewX(0); filter: none; }
+    }
+
+    /* ─────────────────────────────────────────────
+       V3 — FOLD DOWN
+       3D page folding in from above with perspective.
+       Overshoots slightly past flat, bounces back.
+       Like a card physically landing on the table.
+    ───────────────────────────────────────────── */
+    .tile:nth-child(5) {
+      transform-origin: top center;
+      animation:
+        foldDown 1s cubic-bezier(0.34, 1.3, 0.64, 1) 0.4s forwards,
+        glassBreathe 6s ease-in-out 1.4s infinite alternate;
+    }
+
+    @keyframes foldDown {
+      0%   { opacity: 0; transform: perspective(700px) rotateX(-72deg); }
+      55%  { opacity: 1; transform: perspective(700px) rotateX(5deg); }
+      78%  { transform: perspective(700px) rotateX(-2deg); }
+      100% { opacity: 1; transform: perspective(700px) rotateX(0deg); }
+    }
+
+    /* ─────────────────────────────────────────────
+       V4 — RAZOR WIPE
+       A hard left-to-right slash reveal. No blur,
+       no fade — just a clean inset clip-path
+       cutting across like a blade. Tiny overshoot
+       at the end so it snaps rather than eases.
+    ───────────────────────────────────────────── */
+    .tile:nth-child(7) {
+      animation:
+        razorWipe 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards,
+        glassBreathe 6s ease-in-out 1.3s infinite alternate;
+    }
+
+    @keyframes razorWipe {
+      0%   { opacity: 1; clip-path: inset(0 100% 0 0 round 4px); }
+      82%  { clip-path: inset(0 -3% 0 0 round 4px); }
+      100% { opacity: 1; clip-path: inset(0 0% 0 0 round 4px); }
+    }
+
+    /* ─────────────────────────────────────────────
+       V5 — RISE ASSEMBLE
+       Polygon clip-path rises from the bottom like
+       panels assembling. Slightly warped during
+       travel — a parallelogram that straightens
+       into a clean rectangle on arrival.
+    ───────────────────────────────────────────── */
+    .tile:nth-child(9) {
+      animation:
+        riseAssemble 1s cubic-bezier(0.34, 1.4, 0.64, 1) 0.7s forwards,
+        glassBreathe 6s ease-in-out 1.7s infinite alternate;
+    }
+
+    @keyframes riseAssemble {
+      0%   { opacity: 1; clip-path: polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%); }
+      50%  { clip-path: polygon(0% 0%, 100% 6%, 100% 104%, 0% 98%); }
+      78%  { clip-path: polygon(0% 0%, 100% 0%, 100% 101%, 0% 100%); }
+      100% { opacity: 1; clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
+    }
+
+    /* Pipeline connectors animate in */
+    .pipeline-line {
+      opacity: 0;
+      animation: lineIn 0.35s ease-out forwards;
+    }
+
+    .automater-stack .pipeline-line:nth-child(2) { animation-delay: 0.18s; }
+    .automater-stack .pipeline-line:nth-child(4) { animation-delay: 0.33s; }
+    .automater-stack .pipeline-line:nth-child(6) { animation-delay: 0.48s; }
+    .automater-stack .pipeline-line:nth-child(8) { animation-delay: 0.63s; }
+
+    @keyframes lineIn {
+      0% { opacity: 0; transform: scaleY(0); }
+      100% { opacity: 1; transform: scaleY(1); }
+    }
+
+    /* ── Click exit — static TV burst ── */
+    @keyframes staticBurst {
+      0%   { opacity: 1; filter: blur(0px) brightness(1) saturate(1); transform: scale(1); }
+      25%  { filter: blur(1px) brightness(2.8) saturate(0); transform: scale(1.01); }
+      55%  { filter: blur(6px) brightness(0.4) saturate(0); transform: scale(0.99); }
+      100% { opacity: 0; filter: blur(14px) brightness(0); transform: scale(0.97); }
+    }
+
+    .tile.fading-out {
+      animation: staticBurst 0.5s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+    }
+
+    /* ── Hover lift ── */
+    .tile {
+      transition: border-color 0.4s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .tile:hover {
+      transform: translateY(-4px);
+    }
+
+    /* ═══════════════════════
+       RESPONSIVE
+    ═══════════════════════ */
+    @media(max-width: 640px) {
+      .page-wrap { padding: 2rem 1rem 4rem; }
+      .tile-inner { padding: 1.8rem 1.4rem 1.6rem; }
+      .tile-head { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .dash-title { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="bg-layer"></div>
+  <div class="amb amb-1"></div>
+  <div class="amb amb-2"></div>
+
+  <!-- SVG displacement filter for click transitions -->
+  <svg style="position:absolute;width:0;height:0;">
+    <filter id="smoke-warp">
+      <feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="3" result="noise" seed="3">
+        <animate attributeName="baseFrequency" values="0.015;0.035;0.015" dur="3s" repeatCount="indefinite" />
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G">
+        <animate attributeName="scale" values="0;18;0" dur="2s" begin="indefinite" />
+      </feDisplacementMap>
+    </filter>
+  </svg>
+
+  <div class="page-wrap">
+
+    <div class="header-block">
+      <div class="dash-title">Claude Automater</div>
+      <div class="dash-sub">pipeline active <span class="blink">_</span></div>
+    </div>
+
+    <div class="automater-stack">
+
+      <!-- ═══ TILE 01 — Cal Card Builder ═══ -->
+      <div class="tile">
+        <div class="tile-inner">
+          <div class="tile-head">
+            <div class="tile-head-left">
+              <div class="tile-icon">&#9878;</div>
+              <div class="tile-label">Cal Card Builder</div>
+            </div>
+            <div class="tile-tag">node 01</div>
+          </div>
+          <div class="tile-body">
+            Spin up artist project dashboards from a single prompt. Guided menu walks
+            through workflow presets, link-pill colors pull from Critical Mapper hubs,
+            and the whole card exports ready to drop into the master database.
+          </div>
+          <div class="tile-meta">
+            <span class="meta-chip live">active</span>
+            <span class="meta-chip warm">cal-card</span>
+            <span class="meta-chip">v3.2</span>
+            <div class="node-dots" style="margin-left:auto;">
+              <span class="node-dot active"></span>
+              <span class="node-dot active"></span>
+              <span class="node-dot"></span>
+            </div>
+          </div>
+        </div>
+        <div class="click-hint">click to sizzle</div>
+      </div>
+
+      <div class="pipeline-line"></div>
+
+      <!-- ═══ TILE 02 — Critical Mapper ═══ -->
+      <div class="tile">
+        <div class="tile-inner">
+          <div class="tile-head">
+            <div class="tile-head-left">
+              <div class="tile-icon">&#9737;</div>
+              <div class="tile-label">Critical Mapper</div>
+            </div>
+            <div class="tile-tag">node 02</div>
+          </div>
+          <div class="tile-body">
+            The nerve center. Every hub, every color, every connection lives here.
+            Add nodes from the terminal, trace relationships across the whole system,
+            and keep the map as the single source of truth for how everything links.
+          </div>
+          <div class="tile-meta">
+            <span class="meta-chip live">active</span>
+            <span class="meta-chip warm">map.html</span>
+            <span class="meta-chip">42 nodes</span>
+            <div class="node-dots" style="margin-left:auto;">
+              <span class="node-dot active"></span>
+              <span class="node-dot active"></span>
+              <span class="node-dot active"></span>
+            </div>
+          </div>
+        </div>
+        <div class="click-hint">click to sizzle</div>
+      </div>
+
+      <div class="pipeline-line"></div>
+
+      <!-- ═══ TILE 03 — Workflow Pipeline ═══ -->
+      <div class="tile">
+        <div class="tile-inner">
+          <div class="tile-head">
+            <div class="tile-head-left">
+              <div class="tile-icon">&#9881;</div>
+              <div class="tile-label">Workflow Pipeline</div>
+            </div>
+            <div class="tile-tag">node 03</div>
+          </div>
+          <div class="tile-body">
+            Chain automations together like factory conveyor belts. Recap form ingestion,
+            n8n webhook triggers, Notion syncs, and downstream card generation all
+            wired into one continuous flow. One input fires everything downstream.
+          </div>
+          <div class="tile-meta">
+            <span class="meta-chip">standby</span>
+            <span class="meta-chip warm">n8n</span>
+            <span class="meta-chip">6 chains</span>
+            <div class="node-dots" style="margin-left:auto;">
+              <span class="node-dot active"></span>
+              <span class="node-dot"></span>
+              <span class="node-dot"></span>
+            </div>
+          </div>
+        </div>
+        <div class="click-hint">click to sizzle</div>
+      </div>
+
+      <div class="pipeline-line"></div>
+
+      <!-- ═══ TILE 04 — Content Drops ═══ -->
+      <div class="tile">
+        <div class="tile-inner">
+          <div class="tile-head">
+            <div class="tile-head-left">
+              <div class="tile-icon">&#9654;</div>
+              <div class="tile-label">Content Drops</div>
+            </div>
+            <div class="tile-tag">node 04</div>
+          </div>
+          <div class="tile-body">
+            YouTube uploads, social media assets, beautiful roses for the timeline.
+            Schedule drops, auto-generate thumbnails, push metadata — everything fires
+            from a single trigger so nothing slips through the cracks.
+          </div>
+          <div class="tile-meta">
+            <span class="meta-chip">queued</span>
+            <span class="meta-chip warm">media</span>
+            <span class="meta-chip">3 pending</span>
+            <div class="node-dots" style="margin-left:auto;">
+              <span class="node-dot active"></span>
+              <span class="node-dot active"></span>
+              <span class="node-dot"></span>
+            </div>
+          </div>
+        </div>
+        <div class="click-hint">click to sizzle</div>
+      </div>
+
+      <div class="pipeline-line"></div>
+
+      <!-- ═══ TILE 05 — Hub Terminal ═══ -->
+      <div class="tile">
+        <div class="tile-inner">
+          <div class="tile-head">
+            <div class="tile-head-left">
+              <div class="tile-icon">&#9783;</div>
+              <div class="tile-label">Hub Terminal</div>
+            </div>
+            <div class="tile-tag">node 05</div>
+          </div>
+          <div class="tile-body">
+            Central command for the whole operation. Quick links to every tool,
+            status readouts from running automations, and a clean launch pad to
+            jump into any workspace. The front door to everything you've built.
+          </div>
+          <div class="tile-meta">
+            <span class="meta-chip live">active</span>
+            <span class="meta-chip warm">hub</span>
+            <span class="meta-chip">12 links</span>
+            <div class="node-dots" style="margin-left:auto;">
+              <span class="node-dot active"></span>
+              <span class="node-dot active"></span>
+              <span class="node-dot active"></span>
+            </div>
+          </div>
+        </div>
+        <div class="click-hint">click to sizzle</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const tiles = document.querySelectorAll('.tile');
+
+    // Click to sizzle — fade out then smoothly re-enter
+    tiles.forEach((tile, i) => {
+      tile.addEventListener('click', () => {
+        if (tile.classList.contains('fading-out')) return;
+
+        tile.classList.add('fading-out');
+
+        setTimeout(() => {
+          tile.classList.remove('fading-out');
+
+          // Strip current animation, force reflow, re-apply entrance
+          const anims = [
+            ['irisOpen 0.85s cubic-bezier(0.34,1.5,0.64,1) forwards', 'glassBreathe 6s ease-in-out 0.85s infinite alternate'],
+            ['glitchSlam 0.75s linear forwards', 'glassBreathe 6s ease-in-out 0.75s infinite alternate'],
+            ['foldDown 1s cubic-bezier(0.34,1.3,0.64,1) forwards', 'glassBreathe 6s ease-in-out 1s infinite alternate'],
+            ['razorWipe 0.75s cubic-bezier(0.22,1,0.36,1) forwards', 'glassBreathe 6s ease-in-out 0.75s infinite alternate'],
+            ['riseAssemble 1s cubic-bezier(0.34,1.4,0.64,1) forwards', 'glassBreathe 6s ease-in-out 1s infinite alternate'],
+          ];
+
+          tile.style.animation = 'none';
+          tile.offsetHeight; // force reflow
+          tile.style.animation = anims[i].join(', ');
+        }, 500);
+      });
+    });
+  </script>
+
+</body>
+
+</html>

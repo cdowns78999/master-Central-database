@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Tiles</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <span>OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="cards.html" class="nav-link">Cards</a>
+            <a href="actions.html" class="nav-link">Actions</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+            <a href="tiles.html" class="nav-link active">Tiles</a>
+        </div>
+
+        <div class="sidebar-actions" style="margin-top: auto;">
+            <div class="sidebar-section-title">Data Management</div>
+            <button onclick="exportJSON()" class="sidebar-action-btn">
+                <span class="action-icon">💾</span> Export JSON
+            </button>
+            <button onclick="document.getElementById('importInput').click()" class="sidebar-action-btn">
+                <span class="action-icon">📂</span> Import JSON
+            </button>
+            <input type="file" id="importInput" style="display: none;" onchange="importJSON(event)" accept=".json">
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <h1>Tile Management</h1>
+
+        <div id="tiles-container" class="tiles-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 2rem;">
+            <!-- Tiles will be dynamically added here -->
+        </div>
+    </main>
+
+    <script src="tile-component.js"></script>
+    <script>
+        window.activeTiles = [];
+
+        async function exportJSON() {
+            const data = {
+                appName: "Ocean Protocol",
+                user: "Chad Admin",
+                tiles: window.activeTiles.map(tile => tile.getData())
+            };
+
+            const json = JSON.stringify(data, null, 4);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ocean_data_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.tiles) {
+                        displayTiles(data.tiles);
+                    } else {
+                        alert("Invalid JSON format. 'tiles' property missing.");
+                    }
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                    alert("Error parsing JSON file.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        function displayTiles(tileData) {
+            const container = document.getElementById('tiles-container');
+            container.innerHTML = '';
+            window.activeTiles = [];
+
+            tileData.forEach((data, index) => {
+                const tileContainer = document.createElement('div');
+                tileContainer.id = `tile-${index}`;
+                container.appendChild(tileContainer);
+
+                const options = {
+                    onDelete: (tile) => {
+                        window.activeTiles = window.activeTiles.filter(t => t !== tile);
+                    }
+                };
+
+                // Check if this is a full state export (contains contactDB or other specific fields)
+                if (data.contactDB || data.currentCat) {
+                    options.fullState = data;
+                } else {
+                    // Initial data format from data.json
+                    options.data = data.projectData;
+                }
+
+                const tile = new StoneTile(data.name || 'New Artist', tileContainer, options);
+                window.activeTiles.push(tile);
+            });
+        }
+
+        // Load data and display all tiles on startup
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                displayTiles(data.tiles || []);
+            })
+            .catch(error => console.error('Error loading data:', error));
+    </script>
+</body>
+
+</html>

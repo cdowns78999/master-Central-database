@@ -1,0 +1,2980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squish — VRChat Avatar Emulators</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --surface3: #222233;
+    --border: #2a2a3a;
+    --text: #e4e4ef;
+    --text-dim: #8888a0;
+    --text-muted: #55556a;
+    --blue: #0ea5e9;
+    --green: #10b981;
+    --purple: #6366f1;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --cyan: #22d3ee;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    z-index: 100;
+    gap: 20px;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .hub-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .hub-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-blue { background: var(--blue); }
+  .dot-green { background: var(--green); }
+  .dot-purple { background: var(--purple); }
+  .dot-red { background: var(--red); }
+  .dot-orange { background: var(--orange); }
+
+  .logo {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── Tab Nav ── */
+  .tab-nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    justify-content: center;
+    position: relative;
+  }
+
+  .tab-btn {
+    padding: 8px 18px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.3px;
+    border-radius: 8px;
+    position: relative;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover:not(.active) {
+    color: var(--text);
+    background: rgba(99, 102, 241, 0.08);
+  }
+
+  .tab-btn.active {
+    color: #fff;
+    background: var(--purple);
+  }
+
+  .tab-btn .tab-icon {
+    margin-right: 6px;
+    font-size: 13px;
+  }
+
+  .tab-indicator {
+    position: absolute;
+    bottom: -1px;
+    height: 2px;
+    background: var(--purple);
+    border-radius: 2px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ── Main Layout ── */
+  .main-wrap {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Slide Container ── */
+  .slide-container {
+    overflow: hidden;
+    position: relative;
+  }
+
+  .slide-track {
+    display: flex;
+    width: 500%;
+    height: 100%;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .slide-panel {
+    width: 20%;
+    height: 100%;
+    flex-shrink: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Emulator Layouts ── */
+  .emu-layout {
+    display: grid;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Blender */
+  .emu-blender {
+    grid-template-columns: 52px 1fr 240px;
+    grid-template-rows: 1fr 44px;
+  }
+
+  /* VRoid */
+  .emu-vroid {
+    grid-template-columns: 200px 1fr 260px;
+    grid-template-rows: 1fr 90px;
+  }
+
+  /* Booth */
+  .emu-booth {
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: 50px 1fr;
+  }
+
+  /* Unity */
+  .emu-unity {
+    grid-template-columns: 220px 1fr 280px;
+    grid-template-rows: 1fr 120px;
+  }
+
+  /* Tafi */
+  .emu-tafi {
+    grid-template-columns: 200px 1fr 240px;
+    grid-template-rows: 44px 1fr 60px;
+  }
+
+  /* ── Common Panel Styles ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .panel-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .viewport-wrap {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .viewport-wrap canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .viewport-label {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .viewport-info {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 10px;
+    color: var(--text-muted);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* ── Blender Tool Strip ── */
+  .tool-strip {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    gap: 2px;
+    grid-row: 1 / 3;
+  }
+
+  .tool-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.15s;
+    color: var(--text-dim);
+    position: relative;
+  }
+
+  .tool-icon:hover {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .tool-icon.active {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--purple);
+  }
+
+  .tool-icon .tip {
+    display: none;
+    position: absolute;
+    left: 44px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    color: var(--text);
+    z-index: 10;
+  }
+
+  .tool-icon:hover .tip { display: block; }
+
+  .tool-sep {
+    width: 24px;
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* ── Properties Panel ── */
+  .prop-group {
+    margin-bottom: 14px;
+  }
+
+  .prop-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .prop-group-title::before {
+    content: '';
+    width: 3px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--purple);
+  }
+
+  .prop-row {
+    display: grid;
+    grid-template-columns: 24px 1fr 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 4px;
+    align-items: center;
+  }
+
+  .prop-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+
+  .prop-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+    width: 100%;
+  }
+
+  .prop-input:focus {
+    outline: none;
+    border-color: var(--purple);
+  }
+
+  /* ── Timeline ── */
+  .timeline-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    grid-column: 2 / 4;
+  }
+
+  .timeline-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+
+  .timeline-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .timeline-progress {
+    width: 35%;
+    height: 100%;
+    background: var(--purple);
+    border-radius: 2px;
+  }
+
+  .timeline-frame {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Export Buttons ── */
+  .export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .export-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  }
+
+  .send-unity-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    margin-top: 6px;
+  }
+
+  .send-unity-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  }
+
+  /* ── VRoid Sliders ── */
+  .slider-row {
+    margin-bottom: 10px;
+  }
+
+  .slider-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .slider-val {
+    color: var(--cyan);
+    font-weight: 600;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    background: var(--surface2);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--purple);
+    cursor: pointer;
+    border: 2px solid var(--surface);
+  }
+
+  /* ── VRoid Category Tabs ── */
+  .cat-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+
+  .cat-tab {
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cat-tab:hover { background: var(--surface2); color: var(--text); }
+  .cat-tab.active { background: rgba(99, 102, 241, 0.15); color: var(--purple); }
+
+  /* ── Preset Gallery ── */
+  .preset-bar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    grid-column: 1 / 4;
+  }
+
+  .preset-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2px solid var(--border);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .preset-thumb:hover { border-color: var(--purple); }
+  .preset-thumb.active { border-color: var(--cyan); }
+
+  /* ── Booth Cards ── */
+  .booth-search {
+    grid-column: 1 / 3;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: inherit;
+    outline: none;
+  }
+
+  .search-input:focus { border-color: var(--purple); }
+
+  .search-input::placeholder { color: var(--text-muted); }
+
+  .search-btn {
+    padding: 8px 16px;
+    background: var(--purple);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* Booth filter sidebar */
+  .booth-filters {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 14px;
+    overflow-y: auto;
+  }
+
+  .filter-section {
+    margin-bottom: 18px;
+  }
+
+  .filter-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .filter-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-dim);
+    transition: color 0.15s;
+  }
+
+  .filter-option:hover { color: var(--text); }
+
+  .filter-check {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+  }
+
+  .filter-option.checked .filter-check {
+    background: var(--purple);
+    border-color: var(--purple);
+    color: #fff;
+  }
+
+  /* Booth product grid */
+  .booth-grid {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    align-content: start;
+    overflow-y: auto;
+  }
+
+  .booth-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .booth-card:hover {
+    border-color: var(--purple);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.12);
+  }
+
+  .booth-card.hidden {
+    display: none;
+  }
+
+  .booth-card-img {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+  }
+
+  .booth-card-info {
+    padding: 10px 12px;
+  }
+
+  .booth-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .booth-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .booth-card-price {
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  .booth-card-style {
+    font-size: 10px;
+    color: var(--text-dim);
+    padding: 2px 8px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 4px;
+  }
+
+  .booth-card-eco {
+    font-size: 10px;
+    color: var(--blue);
+    margin-top: 4px;
+  }
+
+  /* No results message */
+  .booth-no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    display: none;
+  }
+
+  .booth-no-results.show {
+    display: block;
+  }
+
+  /* Booth detail panel */
+  .booth-detail {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 340px;
+    height: 100%;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 20;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .booth-detail.open { transform: translateX(0); }
+
+  .booth-detail-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+
+  .booth-detail-preview {
+    width: 100%;
+    height: 200px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+  }
+
+  .booth-detail h3 {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .booth-detail .price-tag {
+    font-size: 20px;
+    color: var(--green);
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  .booth-detail .detail-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .import-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Unity Hierarchy ── */
+  .hierarchy {
+    padding: 8px;
+  }
+
+  .hier-node {
+    padding: 4px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-dim);
+  }
+
+  .hier-node:hover { background: var(--surface2); color: var(--text); }
+  .hier-node.active { background: rgba(99, 102, 241, 0.15); color: var(--purple); }
+  .hier-node .hier-indent { display: inline-block; }
+  .hier-node .hier-arrow { color: var(--text-muted); font-size: 10px; width: 12px; }
+  .hier-node .hier-icon { font-size: 13px; }
+
+  /* Unity inspector tabs */
+  .inspector-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .insp-tab {
+    padding: 6px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .insp-tab:hover { color: var(--text); }
+  .insp-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+  /* Unity console */
+  .console-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    grid-column: 1 / 4;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .console-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+
+  .console-toolbar span {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+
+  .sdk-btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+
+  .sdk-btn.build {
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    color: #fff;
+    margin-left: auto;
+  }
+
+  .sdk-btn.publish {
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    color: #fff;
+  }
+
+  .console-log {
+    flex: 1;
+    padding: 8px 12px;
+    overflow-y: auto;
+    font-size: 11px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    line-height: 1.6;
+  }
+
+  .log-info { color: var(--text-dim); }
+  .log-warn { color: var(--orange); }
+  .log-ok { color: var(--green); }
+  .log-err { color: var(--red); }
+
+  /* ── Tafi Component Bar ── */
+  .tafi-catbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 2px;
+    grid-column: 1 / 4;
+  }
+
+  .tafi-cat-btn {
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    letter-spacing: 0.3px;
+    transition: all 0.15s;
+  }
+
+  .tafi-cat-btn:hover { color: var(--text); background: var(--surface2); }
+  .tafi-cat-btn.active { color: #fff; background: var(--purple); }
+
+  /* Tafi component grid */
+  .comp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  .comp-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .comp-card:hover { border-color: var(--cyan); }
+  .comp-card.selected { border-color: var(--purple); background: rgba(99, 102, 241, 0.1); }
+
+  .comp-card-icon { font-size: 24px; margin-bottom: 4px; }
+  .comp-card-name { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+
+  /* Tafi bottom bar */
+  .tafi-bottom {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 16px;
+    grid-column: 1 / 4;
+  }
+
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .toggle-switch {
+    width: 36px;
+    height: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .toggle-switch.on { background: var(--green); border-color: var(--green); }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    top: 2px;
+    left: 2px;
+    transition: all 0.2s;
+  }
+
+  .toggle-switch.on::after { left: 18px; }
+
+  .platform-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 11px;
+    outline: none;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    padding: 20px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .progress-text {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    text-align: right;
+  }
+
+  .progress-bar-wrap {
+    background: var(--surface2);
+    border-radius: 4px;
+    height: 5px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--green), var(--cyan));
+    transition: width 0.5s ease;
+  }
+
+  .todo-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+
+  .todo-item.done { opacity: 0.5; border-color: var(--green); }
+  .todo-item.active { border-color: var(--purple); background: rgba(99, 102, 241, 0.06); }
+
+  .todo-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    transition: all 0.2s;
+  }
+
+  .todo-item.done .todo-check {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
+
+  .todo-item.active .todo-check {
+    border-color: var(--purple);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.3); }
+    50% { box-shadow: 0 0 0 5px rgba(99, 102, 241, 0); }
+  }
+
+  .todo-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .todo-text {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .todo-item.done .todo-text {
+    text-decoration: line-through;
+    color: var(--text-dim);
+  }
+
+  .todo-status {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ── Sidebar Section Dividers ── */
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 14px 0;
+  }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .status-badge.draft { background: rgba(245, 158, 11, 0.15); color: var(--orange); }
+  .status-badge.wip { background: rgba(99, 102, 241, 0.15); color: var(--purple); }
+
+  /* Active emulator label */
+  .active-emu-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .active-emu-name {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Inspector content panels */
+  .insp-content { display: none; }
+  .insp-content.active { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* Toast notification */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1a1a26; border: 1px solid #6366f1; color: #e4e4ef;
+    padding: 10px 24px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 1000;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<div class="header">
+  <div class="header-brand">
+    <div class="hub-dots">
+      <span class="dot-blue"></span>
+      <span class="dot-green"></span>
+      <span class="dot-purple"></span>
+      <span class="dot-red"></span>
+      <span class="dot-orange"></span>
+    </div>
+    <div class="logo">squish</div>
+    <span class="logo-sub">Emulators</span>
+  </div>
+  <div class="tab-nav" id="tabNav">
+    <button class="tab-btn active" data-tab="0"><span class="tab-icon">🔷</span>Blender</button>
+    <button class="tab-btn" data-tab="1"><span class="tab-icon">👤</span>VRoid</button>
+    <button class="tab-btn" data-tab="2"><span class="tab-icon">🛒</span>Booth.pm</button>
+    <button class="tab-btn" data-tab="3"><span class="tab-icon">⚙️</span>Unity + SDK</button>
+    <button class="tab-btn" data-tab="4"><span class="tab-icon">🎨</span>Tafi</button>
+  </div>
+  <div class="status-badge wip">WIP</div>
+</div>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div class="main-wrap">
+  <div class="slide-container">
+    <div class="slide-track" id="slideTrack">
+
+      <!-- ━━━━━━ TAB 0: BLENDER ━━━━━━ -->
+      <div class="slide-panel" id="panel-0">
+        <div class="emu-layout emu-blender">
+          <!-- Tool strip -->
+          <div class="tool-strip" id="blenderToolStrip">
+            <div class="tool-icon active" data-tool="move">↕<span class="tip">Move (G)</span></div>
+            <div class="tool-icon" data-tool="scale">⤡<span class="tip">Scale (S)</span></div>
+            <div class="tool-icon" data-tool="rotate">↻<span class="tip">Rotate (R)</span></div>
+            <div class="tool-sep"></div>
+            <div class="tool-icon" data-tool="edit">✎<span class="tip">Edit Mode</span></div>
+            <div class="tool-icon" data-tool="sculpt">🗻<span class="tip">Sculpt</span></div>
+            <div class="tool-icon" data-tool="paint">🎨<span class="tip">Texture Paint</span></div>
+            <div class="tool-sep"></div>
+            <div class="tool-icon" data-tool="addmesh">⊞<span class="tip">Add Mesh</span></div>
+            <div class="tool-icon" data-tool="armature">🦴<span class="tip">Armature</span></div>
+            <div class="tool-icon" data-tool="light">💡<span class="tip">Light</span></div>
+            <div class="tool-icon" data-tool="camera">📷<span class="tip">Camera</span></div>
+            <div class="tool-sep"></div>
+            <div class="tool-icon" data-tool="snap">🧲<span class="tip">Snap</span></div>
+            <div class="tool-icon" data-tool="measure">📐<span class="tip">Measure</span></div>
+          </div>
+          <!-- Viewport -->
+          <div class="viewport-wrap" id="blender-viewport">
+            <div class="viewport-label" id="blenderViewportLabel">3D Viewport — Object Mode</div>
+            <div class="viewport-info" id="blenderViewportInfo">Verts: 8 | Faces: 6 | Tris: 12</div>
+          </div>
+          <!-- Properties -->
+          <div class="panel" style="grid-row: 1/2;">
+            <div class="panel-header">Properties</div>
+            <div class="prop-group">
+              <div class="prop-group-title">Transform</div>
+              <div class="prop-row">
+                <span class="prop-label" style="color:var(--red)">X</span>
+                <input class="prop-input" id="propLocX" value="0.000">
+                <input class="prop-input" id="propRotX" value="0.000">
+                <input class="prop-input" id="propScaX" value="1.000">
+              </div>
+              <div class="prop-row">
+                <span class="prop-label" style="color:var(--green)">Y</span>
+                <input class="prop-input" id="propLocY" value="0.500">
+                <input class="prop-input" id="propRotY" value="0.000">
+                <input class="prop-input" id="propScaY" value="1.000">
+              </div>
+              <div class="prop-row">
+                <span class="prop-label" style="color:var(--blue)">Z</span>
+                <input class="prop-input" id="propLocZ" value="0.000">
+                <input class="prop-input" id="propRotZ" value="0.000">
+                <input class="prop-input" id="propScaZ" value="1.000">
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px;">
+                <span class="prop-label" style="font-size:10px;color:var(--text-muted)">Location</span>
+                <span class="prop-label" style="font-size:10px;color:var(--text-muted)">Rotation</span>
+                <span class="prop-label" style="font-size:10px;color:var(--text-muted)">Scale</span>
+              </div>
+            </div>
+            <div class="prop-group">
+              <div class="prop-group-title">Object Data</div>
+              <div id="blenderObjName" style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Name: Cube</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Type: Mesh</div>
+              <div style="font-size:11px;color:var(--text-dim);">Material: Default</div>
+            </div>
+            <div class="prop-group">
+              <div class="prop-group-title">Modifiers</div>
+              <div style="font-size:11px;color:var(--text-muted);font-style:italic;">No modifiers</div>
+            </div>
+            <div style="margin-top:auto; padding-top:16px;">
+              <button class="export-btn" id="blenderExportBtn" style="width:100%;">📦 Export as .glb</button>
+              <button class="send-unity-btn" id="blenderSendUnityBtn" style="width:100%;">⚙️ Send to Unity</button>
+            </div>
+          </div>
+          <!-- Timeline -->
+          <div class="timeline-bar">
+            <button class="timeline-btn">⏮</button>
+            <button class="timeline-btn">◀</button>
+            <button class="timeline-btn">▶</button>
+            <button class="timeline-btn">⏭</button>
+            <div class="timeline-track"><div class="timeline-progress"></div></div>
+            <span class="timeline-frame">Frame: 1 / 250</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ━━━━━━ TAB 1: VROID ━━━━━━ -->
+      <div class="slide-panel" id="panel-1">
+        <div class="emu-layout emu-vroid">
+          <!-- Left: categories -->
+          <div class="panel">
+            <div class="panel-header">Customize</div>
+            <div class="cat-tabs">
+              <button class="cat-tab active">👤 Face</button>
+              <button class="cat-tab">💇 Hair</button>
+              <button class="cat-tab">🧍 Body</button>
+              <button class="cat-tab">👗 Outfit</button>
+              <button class="cat-tab">👟 Shoes</button>
+              <button class="cat-tab">💍 Accessories</button>
+            </div>
+            <div class="prop-group">
+              <div class="prop-group-title">Face Shape</div>
+              <div class="slider-row">
+                <div class="slider-label">Face Width <span class="slider-val">50</span></div>
+                <input type="range" min="0" max="100" value="50" data-vroid="faceWidth">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Jaw Shape <span class="slider-val">40</span></div>
+                <input type="range" min="0" max="100" value="40" data-vroid="jawShape">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Chin Length <span class="slider-val">55</span></div>
+                <input type="range" min="0" max="100" value="55">
+              </div>
+            </div>
+            <div class="prop-group">
+              <div class="prop-group-title">Eyes</div>
+              <div class="slider-row">
+                <div class="slider-label">Eye Size <span class="slider-val">65</span></div>
+                <input type="range" min="0" max="100" value="65" data-vroid="eyeSize">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Eye Spacing <span class="slider-val">50</span></div>
+                <input type="range" min="0" max="100" value="50" data-vroid="eyeSpacing">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Iris Color <span class="slider-val" style="color:var(--purple);">Purple</span></div>
+                <input type="range" min="0" max="100" value="70">
+              </div>
+            </div>
+          </div>
+          <!-- Center: viewport -->
+          <div class="viewport-wrap" id="vroid-viewport">
+            <div class="viewport-label">Avatar Preview — VRoid</div>
+            <div class="viewport-info">Polygons: ~15,000</div>
+          </div>
+          <!-- Right: more sliders -->
+          <div class="panel">
+            <div class="panel-header">Advanced</div>
+            <div class="prop-group">
+              <div class="prop-group-title">Hair</div>
+              <div class="slider-row">
+                <div class="slider-label">Hair Length <span class="slider-val">70</span></div>
+                <input type="range" min="0" max="100" value="70" data-vroid="hairLength">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Hair Volume <span class="slider-val">55</span></div>
+                <input type="range" min="0" max="100" value="55" data-vroid="hairVolume">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Bangs Length <span class="slider-val">60</span></div>
+                <input type="range" min="0" max="100" value="60">
+              </div>
+            </div>
+            <div class="prop-group">
+              <div class="prop-group-title">Body</div>
+              <div class="slider-row">
+                <div class="slider-label">Height <span class="slider-val">50</span></div>
+                <input type="range" min="0" max="100" value="50" data-vroid="height">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Body Width <span class="slider-val">45</span></div>
+                <input type="range" min="0" max="100" value="45" data-vroid="bodyWidth">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Arm Length <span class="slider-val">50</span></div>
+                <input type="range" min="0" max="100" value="50">
+              </div>
+            </div>
+            <div style="margin-top:auto;padding-top:16px;">
+              <button class="export-btn" id="vroidExportBtn" style="width:100%;">📤 Export as .glb</button>
+              <button class="send-unity-btn" id="vroidSendUnityBtn" style="width:100%;">⚙️ Send to Unity</button>
+            </div>
+          </div>
+          <!-- Bottom: presets -->
+          <div class="preset-bar">
+            <div class="preset-thumb active" style="background:linear-gradient(135deg,#e8b4c8,#b48ce8);">👧</div>
+            <div class="preset-thumb" style="background:linear-gradient(135deg,#b4c8e8,#8cb4e8);">👦</div>
+            <div class="preset-thumb" style="background:linear-gradient(135deg,#c8e8b4,#8ce8b4);">🧝</div>
+            <div class="preset-thumb" style="background:linear-gradient(135deg,#e8d4b4,#e8b48c);">🐱</div>
+            <div class="preset-thumb" style="background:linear-gradient(135deg,#e8b4b4,#e88c8c);">😈</div>
+            <div class="preset-thumb" style="background:linear-gradient(135deg,#d4b4e8,#b48ce8);">🤖</div>
+            <div class="preset-thumb" style="background:linear-gradient(135deg,#b4e8e8,#8ce8d4);">🧚</div>
+            <div class="preset-thumb" style="background:linear-gradient(135deg,#e8e8b4,#e8d48c);">👻</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ━━━━━━ TAB 2: BOOTH.PM ━━━━━━ -->
+      <div class="slide-panel" id="panel-2">
+        <div class="emu-layout emu-booth" style="position:relative;">
+          <!-- Search bar -->
+          <div class="booth-search">
+            <input class="search-input" id="boothSearchInput" placeholder="Search avatar bases, accessories, outfits...">
+            <button class="search-btn" id="boothSearchBtn">Search</button>
+          </div>
+          <!-- Filters -->
+          <div class="booth-filters" id="boothFilters">
+            <div class="filter-section">
+              <div class="filter-title">Style</div>
+              <div class="filter-option checked" data-filter-type="style" data-filter-val="Anime"><div class="filter-check">✓</div> Anime</div>
+              <div class="filter-option" data-filter-type="style" data-filter-val="Furry"><div class="filter-check"></div> Furry</div>
+              <div class="filter-option checked" data-filter-type="style" data-filter-val="Western"><div class="filter-check"></div> Western</div>
+              <div class="filter-option" data-filter-type="style" data-filter-val="Chibi"><div class="filter-check"></div> Chibi</div>
+            </div>
+            <div class="filter-section">
+              <div class="filter-title">Price</div>
+              <div class="filter-option" data-filter-type="price" data-filter-val="free"><div class="filter-check"></div> Free</div>
+              <div class="filter-option checked" data-filter-type="price" data-filter-val="under3000"><div class="filter-check">✓</div> Under ¥3000</div>
+              <div class="filter-option checked" data-filter-type="price" data-filter-val="3000-8000"><div class="filter-check">✓</div> ¥3000-8000</div>
+              <div class="filter-option" data-filter-type="price" data-filter-val="8000+"><div class="filter-check"></div> ¥8000+</div>
+            </div>
+            <div class="filter-section">
+              <div class="filter-title">Platform</div>
+              <div class="filter-option checked"><div class="filter-check">✓</div> PC</div>
+              <div class="filter-option"><div class="filter-check"></div> Quest</div>
+              <div class="filter-option checked"><div class="filter-check">✓</div> Cross-platform</div>
+            </div>
+            <div class="filter-section">
+              <div class="filter-title">Format</div>
+              <div class="filter-option checked"><div class="filter-check">✓</div> .fbx</div>
+              <div class="filter-option"><div class="filter-check"></div> .vrm</div>
+              <div class="filter-option"><div class="filter-check"></div> .unitypackage</div>
+            </div>
+          </div>
+          <!-- Product grid -->
+          <div class="booth-grid" id="boothGrid">
+            <div class="booth-card" data-name="Manuka" data-style="Anime" data-price="4500" onclick="openBoothDetail(this,'Manuka','¥4,500','Anime','Hugely popular anime base with massive ecosystem. Thousands of compatible outfits and accessories.','9,000+ compatible items','🍯',0)">
+              <div class="booth-card-img" style="background:linear-gradient(135deg,#1a1a3a,#2a1a3a);">🍯</div>
+              <div class="booth-card-info">
+                <div class="booth-card-name">Manuka</div>
+                <div class="booth-card-meta">
+                  <span class="booth-card-price">¥4,500</span>
+                  <span class="booth-card-style">Anime</span>
+                </div>
+                <div class="booth-card-eco">Ecosystem: 9,000+ items</div>
+              </div>
+            </div>
+            <div class="booth-card" data-name="Kikyo" data-style="Anime" data-price="3800" onclick="openBoothDetail(this,'Kikyo','¥3,800','Anime','Top avatar base with 10,882+ compatible items — biggest ecosystem on Booth. Slim anime with cute proportions.','10,882+ compatible items','🌸',1)">
+              <div class="booth-card-img" style="background:linear-gradient(135deg,#1a2a1a,#1a3a2a);">🌸</div>
+              <div class="booth-card-info">
+                <div class="booth-card-name">Kikyo</div>
+                <div class="booth-card-meta">
+                  <span class="booth-card-price">¥3,800</span>
+                  <span class="booth-card-style">Anime</span>
+                </div>
+                <div class="booth-card-eco">Ecosystem: 10,882+ items</div>
+              </div>
+            </div>
+            <div class="booth-card" data-name="Lime" data-style="Anime" data-price="5200" onclick="openBoothDetail(this,'Lime','¥5,200','Anime','Mature anime body with detailed shaping. Medium ecosystem.','200+ compatible items','🍋',2)">
+              <div class="booth-card-img" style="background:linear-gradient(135deg,#2a2a1a,#3a3a1a);">🍋</div>
+              <div class="booth-card-info">
+                <div class="booth-card-name">Lime</div>
+                <div class="booth-card-meta">
+                  <span class="booth-card-price">¥5,200</span>
+                  <span class="booth-card-style">Anime</span>
+                </div>
+                <div class="booth-card-eco">Ecosystem: 200+ items</div>
+              </div>
+            </div>
+            <div class="booth-card" data-name="Rusk" data-style="Chibi" data-price="3200" onclick="openBoothDetail(this,'Rusk','¥3,200','Chibi','Adorable chibi base, great for beginners. Quest ready.','150+ compatible items','🍞',3)">
+              <div class="booth-card-img" style="background:linear-gradient(135deg,#2a1a1a,#3a2a1a);">🍞</div>
+              <div class="booth-card-info">
+                <div class="booth-card-name">Rusk</div>
+                <div class="booth-card-meta">
+                  <span class="booth-card-price">¥3,200</span>
+                  <span class="booth-card-style">Chibi</span>
+                </div>
+                <div class="booth-card-eco">Ecosystem: 150+ items</div>
+              </div>
+            </div>
+            <div class="booth-card" data-name="Shinra" data-style="Anime" data-price="6000" onclick="openBoothDetail(this,'Shinra','¥6,000','Anime','Male anime body with athletic build. Second largest ecosystem on Booth.','9,767+ compatible items','⚔️',4)">
+              <div class="booth-card-img" style="background:linear-gradient(135deg,#1a1a2a,#1a2a3a);">⚔️</div>
+              <div class="booth-card-info">
+                <div class="booth-card-name">Shinra</div>
+                <div class="booth-card-meta">
+                  <span class="booth-card-price">¥6,000</span>
+                  <span class="booth-card-style">Anime</span>
+                </div>
+                <div class="booth-card-eco">Ecosystem: 9,767+ items</div>
+              </div>
+            </div>
+            <div class="booth-card" data-name="Rex" data-style="Furry" data-price="0" onclick="openBoothDetail(this,'Rex','FREE','Furry','Open-source furry base. Highly customizable, active community.','80+ compatible items','🦊',5)">
+              <div class="booth-card-img" style="background:linear-gradient(135deg,#2a1a2a,#3a1a3a);">🦊</div>
+              <div class="booth-card-info">
+                <div class="booth-card-name">Rex</div>
+                <div class="booth-card-meta">
+                  <span class="booth-card-price">FREE</span>
+                  <span class="booth-card-style">Furry</span>
+                </div>
+                <div class="booth-card-eco">Ecosystem: 80+ items</div>
+              </div>
+            </div>
+            <div class="booth-card" data-name="Selestia" data-style="Anime" data-price="7500" onclick="openBoothDetail(this,'Selestia','¥7,500','Anime','Top-tier anime base with 358 expression shape keys. Massive third-party ecosystem.','Thousands of compatible items','✨',6)">
+              <div class="booth-card-img" style="background:linear-gradient(135deg,#1a2a2a,#1a3a3a);">✨</div>
+              <div class="booth-card-info">
+                <div class="booth-card-name">Selestia</div>
+                <div class="booth-card-meta">
+                  <span class="booth-card-price">¥7,500</span>
+                  <span class="booth-card-style">Anime</span>
+                </div>
+                <div class="booth-card-eco">Ecosystem: Thousands of items</div>
+              </div>
+            </div>
+            <div class="booth-card" data-name="Moe" data-style="Anime" data-price="2800" onclick="openBoothDetail(this,'Moe','¥2,800','Anime','Budget-friendly anime base with cute face. Quest compatible.','90+ compatible items','🎀',7)">
+              <div class="booth-card-img" style="background:linear-gradient(135deg,#2a1a2a,#2a1a3a);">🎀</div>
+              <div class="booth-card-info">
+                <div class="booth-card-name">Moe</div>
+                <div class="booth-card-meta">
+                  <span class="booth-card-price">¥2,800</span>
+                  <span class="booth-card-style">Anime</span>
+                </div>
+                <div class="booth-card-eco">Ecosystem: 90+ items</div>
+              </div>
+            </div>
+            <!-- No results message -->
+            <div class="booth-no-results" id="boothNoResults">No results match your filters.</div>
+          </div>
+          <!-- Detail panel (slides in) -->
+          <div class="booth-detail" id="boothDetail">
+            <button class="booth-detail-close" onclick="closeBoothDetail()">✕</button>
+            <div class="booth-detail-preview" id="boothDetailPreview" style="background:var(--surface2);"></div>
+            <h3 id="boothDetailName">—</h3>
+            <div class="price-tag" id="boothDetailPrice">—</div>
+            <div class="detail-desc" id="boothDetailDesc">—</div>
+            <div style="font-size:11px;color:var(--blue);margin-bottom:16px;" id="boothDetailEco">—</div>
+            <button class="import-btn" id="boothImportBtn">⬇ Import to Editor</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ━━━━━━ TAB 3: UNITY + SDK ━━━━━━ -->
+      <div class="slide-panel" id="panel-3">
+        <div class="emu-layout emu-unity">
+          <!-- Hierarchy -->
+          <div class="panel" style="padding:8px;">
+            <div class="panel-header">Hierarchy</div>
+            <div class="hierarchy" id="unityHierarchy">
+              <div class="hier-node active" data-hier="Avatar_Root"><span class="hier-arrow">▼</span><span class="hier-icon">🎮</span> Avatar_Root</div>
+              <div class="hier-node" data-hier="Armature"><span class="hier-indent" style="width:16px"></span><span class="hier-arrow">▼</span><span class="hier-icon">🦴</span> Armature</div>
+              <div class="hier-node" data-hier="Hips"><span class="hier-indent" style="width:32px"></span><span class="hier-arrow">▼</span><span class="hier-icon">🔵</span> Hips</div>
+              <div class="hier-node" data-hier="Spine"><span class="hier-indent" style="width:48px"></span><span class="hier-arrow">▼</span><span class="hier-icon">🔵</span> Spine</div>
+              <div class="hier-node" data-hier="Chest"><span class="hier-indent" style="width:64px"></span><span class="hier-arrow">▼</span><span class="hier-icon">🔵</span> Chest</div>
+              <div class="hier-node" data-hier="Neck"><span class="hier-indent" style="width:80px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔵</span> Neck</div>
+              <div class="hier-node" data-hier="Head"><span class="hier-indent" style="width:96px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔵</span> Head</div>
+              <div class="hier-node" data-hier="Left Shoulder"><span class="hier-indent" style="width:80px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔵</span> Left Shoulder</div>
+              <div class="hier-node" data-hier="Right Shoulder"><span class="hier-indent" style="width:80px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔵</span> Right Shoulder</div>
+              <div class="hier-node" data-hier="Left Upper Leg"><span class="hier-indent" style="width:48px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔵</span> Left Upper Leg</div>
+              <div class="hier-node" data-hier="Right Upper Leg"><span class="hier-indent" style="width:48px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔵</span> Right Upper Leg</div>
+              <div class="hier-node" data-hier="Body"><span class="hier-indent" style="width:16px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔷</span> Body</div>
+              <div class="hier-node" data-hier="Hair"><span class="hier-indent" style="width:16px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔷</span> Hair</div>
+              <div class="hier-node" data-hier="Outfit"><span class="hier-indent" style="width:16px"></span><span class="hier-arrow">▶</span><span class="hier-icon">🔷</span> Outfit</div>
+            </div>
+          </div>
+          <!-- Viewport -->
+          <div class="viewport-wrap" id="unity-viewport">
+            <div class="viewport-label">Scene View — Unity 2022.3</div>
+            <div class="viewport-info">Draw Calls: 24 | Tris: 18.5K</div>
+          </div>
+          <!-- Inspector -->
+          <div class="panel" style="padding:10px;" id="unityInspectorPanel">
+            <div class="panel-header">Inspector</div>
+            <div class="inspector-tabs" id="inspectorTabs">
+              <button class="insp-tab active" data-insp="descriptor">Descriptor</button>
+              <button class="insp-tab" data-insp="physbones">PhysBones</button>
+              <button class="insp-tab" data-insp="expressions">Expressions</button>
+              <button class="insp-tab" data-insp="materials">Materials</button>
+            </div>
+            <!-- Descriptor content -->
+            <div class="insp-content active" id="inspDescriptor">
+              <div class="prop-group">
+                <div class="prop-group-title">VRC Avatar Descriptor</div>
+                <div id="inspSelectedNode" style="font-size:11px;color:var(--cyan);margin-bottom:8px;font-weight:600;">Selected: Avatar_Root</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">View Position: 0, 1.6, 0.2</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Lip Sync: Viseme Blend Shapes</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Eye Look: Configured ✓</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Playable Layers: 5/5</div>
+              </div>
+              <div class="prop-group">
+                <div class="prop-group-title">Performance Stats</div>
+                <div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="color:var(--text-dim)">Overall</span>
+                  <span style="color:var(--green);font-weight:600;">Good</span>
+                </div>
+                <div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="color:var(--text-dim)">Polygons</span>
+                  <span style="color:var(--green);font-weight:600;">18,500</span>
+                </div>
+                <div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="color:var(--text-dim)">Skinned Meshes</span>
+                  <span style="color:var(--green);font-weight:600;">3</span>
+                </div>
+                <div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="color:var(--text-dim)">Material Slots</span>
+                  <span style="color:var(--orange);font-weight:600;">8</span>
+                </div>
+                <div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:4px;">
+                  <span style="color:var(--text-dim)">PhysBones</span>
+                  <span style="color:var(--green);font-weight:600;">6</span>
+                </div>
+                <div style="font-size:11px;display:flex;justify-content:space-between;">
+                  <span style="color:var(--text-dim)">VRAM</span>
+                  <span style="color:var(--green);font-weight:600;">42 MB</span>
+                </div>
+              </div>
+            </div>
+            <!-- PhysBones content -->
+            <div class="insp-content" id="inspPhysBones">
+              <div class="prop-group">
+                <div class="prop-group-title">PhysBone Components (6)</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+                  <div style="color:var(--cyan);font-weight:600;margin-bottom:4px;">Hair_Front</div>
+                  <div>Spring: 0.2 | Stiffness: 0.4</div>
+                  <div>Gravity: 0.1 | Pull: 0.05</div>
+                  <div style="margin-top:2px;color:var(--green);">Colliders: 2 | Limits: Angle 45°</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+                  <div style="color:var(--cyan);font-weight:600;margin-bottom:4px;">Hair_Back</div>
+                  <div>Spring: 0.3 | Stiffness: 0.3</div>
+                  <div>Gravity: 0.15 | Pull: 0.08</div>
+                  <div style="margin-top:2px;color:var(--green);">Colliders: 3 | Limits: Angle 60°</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+                  <div style="color:var(--cyan);font-weight:600;margin-bottom:4px;">Hair_Side_L</div>
+                  <div>Spring: 0.25 | Stiffness: 0.35</div>
+                  <div>Gravity: 0.12 | Pull: 0.06</div>
+                  <div style="margin-top:2px;color:var(--green);">Colliders: 1 | Limits: Angle 40°</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+                  <div style="color:var(--cyan);font-weight:600;margin-bottom:4px;">Hair_Side_R</div>
+                  <div>Spring: 0.25 | Stiffness: 0.35</div>
+                  <div>Gravity: 0.12 | Pull: 0.06</div>
+                  <div style="margin-top:2px;color:var(--green);">Colliders: 1 | Limits: Angle 40°</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+                  <div style="color:var(--cyan);font-weight:600;margin-bottom:4px;">Skirt_Bones</div>
+                  <div>Spring: 0.4 | Stiffness: 0.5</div>
+                  <div>Gravity: 0.2 | Pull: 0.1</div>
+                  <div style="margin-top:2px;color:var(--green);">Colliders: 4 | Limits: Hinge 30°</div>
+                </div>
+                <div style="font-size:11px;color:var(--text-dim);padding:8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+                  <div style="color:var(--cyan);font-weight:600;margin-bottom:4px;">Tail_Chain</div>
+                  <div>Spring: 0.15 | Stiffness: 0.2</div>
+                  <div>Gravity: 0.3 | Pull: 0.02</div>
+                  <div style="margin-top:2px;color:var(--green);">Colliders: 2 | Limits: Angle 90°</div>
+                </div>
+              </div>
+            </div>
+            <!-- Expressions content -->
+            <div class="insp-content" id="inspExpressions">
+              <div class="prop-group">
+                <div class="prop-group-title">Expression Menu</div>
+                <div style="font-size:11px;color:var(--text-dim);">
+                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <span>Emotes</span>
+                    <span style="color:var(--green);">Submenu (8)</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <span>Outfit Toggle</span>
+                    <span style="color:var(--cyan);">Toggle ON</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <span>Tail Wag</span>
+                    <span style="color:var(--cyan);">Toggle OFF</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <span>Ears Flop</span>
+                    <span style="color:var(--cyan);">Toggle ON</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <span>Blush</span>
+                    <span style="color:var(--orange);">Radial 0.5</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <span>Color Shift</span>
+                    <span style="color:var(--purple);">4-Axis</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:6px 8px;background:var(--surface2);border-radius:4px;border:1px solid var(--border);">
+                    <span>Hand Gestures</span>
+                    <span style="color:var(--green);">Submenu (7)</span>
+                  </div>
+                </div>
+              </div>
+              <div class="prop-group">
+                <div class="prop-group-title">Parameters (24/256)</div>
+                <div style="font-size:11px;color:var(--text-dim);">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span>Synced</span><span style="color:var(--green);">16</span></div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span>Local</span><span style="color:var(--blue);">8</span></div>
+                  <div style="display:flex;justify-content:space-between;"><span>Memory (bits)</span><span style="color:var(--green);">96 / 256</span></div>
+                </div>
+              </div>
+            </div>
+            <!-- Materials content -->
+            <div class="insp-content" id="inspMaterials">
+              <div class="prop-group">
+                <div class="prop-group-title">Material Slots (8)</div>
+                <div style="font-size:11px;color:var(--text-dim);">
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#f4d0b0;flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="font-weight:600;color:var(--text);">Body_Skin</div><div style="font-size:10px;">Shader: lilToon</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#6366f1;flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="font-weight:600;color:var(--text);">Hair_Main</div><div style="font-size:10px;">Shader: lilToon</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#e8b4c8;flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="font-weight:600;color:var(--text);">Outfit_Top</div><div style="font-size:10px;">Shader: lilToon</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#2a2a3a;flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="font-weight:600;color:var(--text);">Outfit_Bottom</div><div style="font-size:10px;">Shader: lilToon</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#ffffff;border:1px solid var(--border);flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="font-weight:600;color:var(--text);">Eyes_Main</div><div style="font-size:10px;">Shader: lilToon (Emission)</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#ef4444;flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="font-weight:600;color:var(--text);">Mouth_Interior</div><div style="font-size:10px;">Shader: Standard</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:4px;margin-bottom:4px;border:1px solid var(--border);">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#8d5524;flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="font-weight:600;color:var(--text);">Shoes</div><div style="font-size:10px;">Shader: lilToon</div></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:4px;border:1px solid var(--border);">
+                    <div style="width:16px;height:16px;border-radius:3px;background:#f59e0b;flex-shrink:0;"></div>
+                    <div style="flex:1;"><div style="font-weight:600;color:var(--text);">Accessories</div><div style="font-size:10px;">Shader: lilToon (Metallic)</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Console -->
+          <div class="console-area">
+            <div class="console-toolbar">
+              <span>Console</span>
+              <button class="sdk-btn build" id="unityBuildBtn">▶ Build &amp; Test</button>
+              <button class="sdk-btn publish" id="unityPublishBtn">🚀 Publish</button>
+            </div>
+            <div class="console-log" id="consoleLog">
+              <div class="log-info">[Info] VRChat SDK 3.10.2 loaded</div>
+              <div class="log-ok">[OK] Avatar descriptor found on Avatar_Root</div>
+              <div class="log-ok">[OK] Humanoid rig validated — all bones mapped</div>
+              <div class="log-warn">[Warn] 8 material slots detected — consider merging for Quest</div>
+              <div class="log-ok">[OK] PhysBone components: 6 (within limits)</div>
+              <div class="log-ok">[OK] Expression parameters: 24/256 used</div>
+              <div class="log-info">[Info] Estimated performance rank: Good (PC) / Medium (Quest)</div>
+              <div class="log-ok">[OK] Ready for build</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ━━━━━━ TAB 4: TAFI ━━━━━━ -->
+      <div class="slide-panel" id="panel-4">
+        <div class="emu-layout emu-tafi">
+          <!-- Top category bar -->
+          <div class="tafi-catbar">
+            <button class="tafi-cat-btn active">🧍 Body</button>
+            <button class="tafi-cat-btn">👤 Head</button>
+            <button class="tafi-cat-btn">💇 Hair</button>
+            <button class="tafi-cat-btn">👗 Outfit</button>
+            <button class="tafi-cat-btn">💍 Accessories</button>
+          </div>
+          <!-- Left: component grid -->
+          <div class="panel">
+            <div class="panel-header">Components</div>
+            <div class="comp-grid">
+              <div class="comp-card selected"><div class="comp-card-icon">🧍</div><div class="comp-card-name">Athletic</div></div>
+              <div class="comp-card"><div class="comp-card-icon">🧍‍♀️</div><div class="comp-card-name">Slim</div></div>
+              <div class="comp-card"><div class="comp-card-icon">🧑</div><div class="comp-card-name">Average</div></div>
+              <div class="comp-card"><div class="comp-card-icon">💪</div><div class="comp-card-name">Muscular</div></div>
+              <div class="comp-card"><div class="comp-card-icon">🧒</div><div class="comp-card-name">Petite</div></div>
+              <div class="comp-card"><div class="comp-card-icon">🧓</div><div class="comp-card-name">Tall</div></div>
+            </div>
+          </div>
+          <!-- Center: viewport -->
+          <div class="viewport-wrap" id="tafi-viewport">
+            <div class="viewport-label">Tafi Avatar Builder</div>
+            <div class="viewport-info">Components: 4 | Optimized: Yes</div>
+          </div>
+          <!-- Right: properties -->
+          <div class="panel">
+            <div class="panel-header">Selected: Athletic Body</div>
+            <div class="prop-group">
+              <div class="prop-group-title">Color</div>
+              <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <div style="width:24px;height:24px;border-radius:6px;background:#f4d0b0;cursor:pointer;border:2px solid var(--purple);"></div>
+                <div style="width:24px;height:24px;border-radius:6px;background:#d4a078;cursor:pointer;border:2px solid transparent;"></div>
+                <div style="width:24px;height:24px;border-radius:6px;background:#8d5524;cursor:pointer;border:2px solid transparent;"></div>
+                <div style="width:24px;height:24px;border-radius:6px;background:#3b1f0a;cursor:pointer;border:2px solid transparent;"></div>
+                <div style="width:24px;height:24px;border-radius:6px;background:#e8b4c8;cursor:pointer;border:2px solid transparent;"></div>
+              </div>
+            </div>
+            <div class="prop-group">
+              <div class="prop-group-title">Scale</div>
+              <div class="slider-row">
+                <div class="slider-label">Height <span class="slider-val">100%</span></div>
+                <input type="range" min="80" max="120" value="100">
+              </div>
+              <div class="slider-row">
+                <div class="slider-label">Width <span class="slider-val">100%</span></div>
+                <input type="range" min="80" max="120" value="100">
+              </div>
+            </div>
+            <div class="prop-group">
+              <div class="prop-group-title">Material</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Shader: Toon Lit</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Emission: Off</div>
+              <div style="font-size:11px;color:var(--text-dim);">Outline: 0.5px</div>
+            </div>
+            <div style="margin-top:auto;padding-top:16px;">
+              <button class="export-btn" id="tafiExportBtn" style="width:100%;">🚀 Export as .glb</button>
+              <button class="send-unity-btn" id="tafiSendUnityBtn" style="width:100%;">⚙️ Send to Unity</button>
+            </div>
+          </div>
+          <!-- Bottom bar -->
+          <div class="tafi-bottom">
+            <div class="toggle-wrap">
+              Auto-Optimize
+              <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="toggle-wrap">
+              Target:
+              <select class="platform-select">
+                <option>PC + Quest</option>
+                <option>PC Only</option>
+                <option>Quest Only</option>
+              </select>
+            </div>
+            <div style="margin-left:auto;font-size:11px;color:var(--text-dim);">
+              Est. Performance: <span style="color:var(--green);font-weight:600;">Good</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /slide-track -->
+  </div><!-- /slide-container -->
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <div class="sidebar">
+    <div class="active-emu-label">Active Emulator</div>
+    <div class="active-emu-name" id="activeEmuName">Blender</div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-title">Build Progress</div>
+    <div class="progress-text" id="progressText">10 / 12 complete</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar" style="width:83%;"></div>
+    </div>
+
+    <ul class="todo-list" id="todoList">
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">Research all 5 tool ecosystems</div>
+          <div class="todo-status">Completed — deep dives done</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">Build emulator shell layout</div>
+          <div class="todo-status">Completed — this file</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">Wire Three.js viewports</div>
+          <div class="todo-status">Completed — all 4 scenes live</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">Blender tool interactions</div>
+          <div class="todo-status">Completed — move/scale/rotate + add mesh</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">VRoid slider → mesh morph</div>
+          <div class="todo-status">Completed — real-time morphing</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">Booth search + filters</div>
+          <div class="todo-status">Completed — name/style/price filtering</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">Unity hierarchy interaction</div>
+          <div class="todo-status">Completed — select/inspect/tabs</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">SDK validation engine</div>
+          <div class="todo-status">Completed — build & publish simulation</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">Tafi component swap system</div>
+          <div class="todo-status">Completed — click → preview</div>
+        </div>
+      </li>
+      <li class="todo-item done">
+        <div class="todo-check">✓</div>
+        <div class="todo-content">
+          <div class="todo-text">Cross-emulator model passing</div>
+          <div class="todo-status">Completed — import/send to Unity</div>
+        </div>
+      </li>
+      <li class="todo-item active">
+        <div class="todo-check"></div>
+        <div class="todo-content">
+          <div class="todo-text">GLB/VRM export logic</div>
+          <div class="todo-status">Live — GLTFExporter wired</div>
+        </div>
+      </li>
+      <li class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-content">
+          <div class="todo-text">Polish + animations</div>
+          <div class="todo-status">Final pass</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+</div><!-- /main-wrap -->
+
+<!-- ══════════════ THREE.JS ══════════════ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.162.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+// ── Toast helper ──
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Tab switching ──
+let activeTab = 0;
+const tabBtns = document.querySelectorAll('.tab-btn');
+const slideTrack = document.getElementById('slideTrack');
+const activeEmuName = document.getElementById('activeEmuName');
+const emuNames = ['Blender', 'VRoid Studio', 'Booth.pm', 'Unity + SDK', 'Tafi Builder'];
+
+function switchToTab(idx) {
+  if (idx === activeTab && idx !== undefined) {
+    // Allow forced switch for cross-emu passing
+  }
+  tabBtns.forEach(b => b.classList.remove('active'));
+  tabBtns[idx].classList.add('active');
+  activeTab = idx;
+  slideTrack.style.transform = `translateX(-${idx * 20}%)`;
+  activeEmuName.textContent = emuNames[idx];
+}
+
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = parseInt(btn.dataset.tab);
+    switchToTab(idx);
+  });
+});
+
+// ── Three.js Scene Builder ──
+const scenes = {};
+const renderers = {};
+const cameras = {};
+const controlsMap = {};
+
+function createScene(containerId, options = {}) {
+  const container = document.getElementById(containerId);
+  if (!container) return null;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a0f);
+
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  // Camera
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+  camera.position.set(
+    options.camX || 3,
+    options.camY || 2.5,
+    options.camZ || 3
+  );
+
+  // Controls
+  const ctrl = new OrbitControls(camera, renderer.domElement);
+  ctrl.enableDamping = true;
+  ctrl.dampingFactor = 0.08;
+  ctrl.target.set(0, options.targetY || 0, 0);
+  ctrl.update();
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0x6366f1, 0.3);
+  scene.add(ambient);
+
+  const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+  dir.position.set(3, 5, 4);
+  dir.castShadow = true;
+  dir.shadow.mapSize.set(1024, 1024);
+  scene.add(dir);
+
+  const fill = new THREE.DirectionalLight(0x0ea5e9, 0.3);
+  fill.position.set(-3, 2, -2);
+  scene.add(fill);
+
+  // Grid
+  const grid = new THREE.GridHelper(10, 20, 0x2a2a3a, 0x1a1a26);
+  scene.add(grid);
+
+  // Resize
+  function resize() {
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    if (w === 0 || h === 0) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
+  resize();
+
+  const id = containerId;
+  scenes[id] = scene;
+  renderers[id] = renderer;
+  cameras[id] = camera;
+  controlsMap[id] = ctrl;
+
+  window.addEventListener('resize', resize);
+
+  // Also observe container resizes
+  const ro = new ResizeObserver(resize);
+  ro.observe(container);
+
+  return { scene, renderer, camera, controls: ctrl };
+}
+
+// ══════════════════════════════════════════════
+// ── 1) BLENDER SCENE + INTERACTIVE TRANSFORM ─
+// ══════════════════════════════════════════════
+
+const blender = createScene('blender-viewport');
+let blenderSelectedObj = null;
+let blenderWire = null;
+let blenderMeshCount = { verts: 8, faces: 6, tris: 12 };
+let blenderActiveTool = 'move';
+let blenderObjects = []; // track all meshes for export
+
+if (blender) {
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0x6366f1,
+    metalness: 0.1,
+    roughness: 0.6
+  });
+  const cube = new THREE.Mesh(geo, mat);
+  cube.position.y = 0.5;
+  cube.castShadow = true;
+  cube.receiveShadow = true;
+  cube.userData.name = 'Cube';
+  blender.scene.add(cube);
+  blenderSelectedObj = cube;
+  blenderObjects.push(cube);
+
+  // Floor plane for shadow
+  const floorGeo = new THREE.PlaneGeometry(10, 10);
+  const floorMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  blender.scene.add(floor);
+
+  // Wireframe overlay
+  const wire = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({ color: 0x8888ff, transparent: true, opacity: 0.3 })
+  );
+  wire.position.y = 0.5;
+  blender.scene.add(wire);
+  blenderWire = wire;
+
+  // ── Blender viewport drag interaction ──
+  const blenderVP = document.getElementById('blender-viewport');
+  let isDragging = false;
+  let dragStartX = 0, dragStartY = 0;
+  let objStartPos = new THREE.Vector3();
+  let objStartScale = new THREE.Vector3();
+  let objStartRot = new THREE.Euler();
+
+  blenderVP.addEventListener('pointerdown', (e) => {
+    // Only activate on left-click and when a transform tool is active
+    if (e.button !== 0) return;
+    if (!['move', 'scale', 'rotate'].includes(blenderActiveTool)) return;
+
+    // Check if clicking on the object using raycasting
+    const rect = blenderVP.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+      ((e.clientX - rect.left) / rect.width) * 2 - 1,
+      -((e.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, cameras['blender-viewport']);
+
+    const clickables = blenderObjects.filter(o => o.visible);
+    const intersects = raycaster.intersectObjects(clickables);
+
+    if (intersects.length > 0) {
+      blenderSelectedObj = intersects[0].object;
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      objStartPos.copy(blenderSelectedObj.position);
+      objStartScale.copy(blenderSelectedObj.scale);
+      objStartRot.copy(blenderSelectedObj.rotation);
+      controlsMap['blender-viewport'].enabled = false;
+      e.preventDefault();
+      blenderVP.setPointerCapture(e.pointerId);
+
+      // Update object data section
+      document.getElementById('blenderObjName').textContent = 'Name: ' + (blenderSelectedObj.userData.name || 'Object');
+    }
+  });
+
+  blenderVP.addEventListener('pointermove', (e) => {
+    if (!isDragging || !blenderSelectedObj) return;
+    const dx = (e.clientX - dragStartX) * 0.01;
+    const dy = (e.clientY - dragStartY) * 0.01;
+
+    if (blenderActiveTool === 'move') {
+      blenderSelectedObj.position.x = objStartPos.x + dx;
+      blenderSelectedObj.position.y = objStartPos.y - dy;
+      // Keep wireframe synced
+      if (blenderWire && blenderSelectedObj === blenderObjects[0]) {
+        blenderWire.position.copy(blenderSelectedObj.position);
+      }
+    } else if (blenderActiveTool === 'scale') {
+      const sf = 1 + dx * 0.5;
+      blenderSelectedObj.scale.set(
+        objStartScale.x * Math.max(0.1, sf),
+        objStartScale.y * Math.max(0.1, 1 - dy * 0.5),
+        objStartScale.z * Math.max(0.1, sf)
+      );
+      if (blenderWire && blenderSelectedObj === blenderObjects[0]) {
+        blenderWire.scale.copy(blenderSelectedObj.scale);
+      }
+    } else if (blenderActiveTool === 'rotate') {
+      blenderSelectedObj.rotation.y = objStartRot.y + dx * 2;
+      blenderSelectedObj.rotation.x = objStartRot.x + dy * 2;
+      if (blenderWire && blenderSelectedObj === blenderObjects[0]) {
+        blenderWire.rotation.copy(blenderSelectedObj.rotation);
+      }
+    }
+
+    updateBlenderProperties();
+  });
+
+  blenderVP.addEventListener('pointerup', () => {
+    if (isDragging) {
+      isDragging = false;
+      controlsMap['blender-viewport'].enabled = true;
+    }
+  });
+}
+
+// Update properties panel from selected object
+function updateBlenderProperties() {
+  if (!blenderSelectedObj) return;
+  const p = blenderSelectedObj.position;
+  const r = blenderSelectedObj.rotation;
+  const s = blenderSelectedObj.scale;
+
+  document.getElementById('propLocX').value = p.x.toFixed(3);
+  document.getElementById('propLocY').value = p.y.toFixed(3);
+  document.getElementById('propLocZ').value = p.z.toFixed(3);
+
+  document.getElementById('propRotX').value = THREE.MathUtils.radToDeg(r.x).toFixed(1);
+  document.getElementById('propRotY').value = THREE.MathUtils.radToDeg(r.y).toFixed(1);
+  document.getElementById('propRotZ').value = THREE.MathUtils.radToDeg(r.z).toFixed(1);
+
+  document.getElementById('propScaX').value = s.x.toFixed(3);
+  document.getElementById('propScaY').value = s.y.toFixed(3);
+  document.getElementById('propScaZ').value = s.z.toFixed(3);
+}
+
+// Properties input → update cube
+['propLocX','propLocY','propLocZ','propRotX','propRotY','propRotZ','propScaX','propScaY','propScaZ'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('change', () => {
+    if (!blenderSelectedObj) return;
+    const v = parseFloat(el.value) || 0;
+    if (id === 'propLocX') blenderSelectedObj.position.x = v;
+    if (id === 'propLocY') blenderSelectedObj.position.y = v;
+    if (id === 'propLocZ') blenderSelectedObj.position.z = v;
+    if (id === 'propRotX') blenderSelectedObj.rotation.x = THREE.MathUtils.degToRad(v);
+    if (id === 'propRotY') blenderSelectedObj.rotation.y = THREE.MathUtils.degToRad(v);
+    if (id === 'propRotZ') blenderSelectedObj.rotation.z = THREE.MathUtils.degToRad(v);
+    if (id === 'propScaX') blenderSelectedObj.scale.x = v;
+    if (id === 'propScaY') blenderSelectedObj.scale.y = v;
+    if (id === 'propScaZ') blenderSelectedObj.scale.z = v;
+    // Sync wireframe
+    if (blenderWire && blenderSelectedObj === blenderObjects[0]) {
+      blenderWire.position.copy(blenderSelectedObj.position);
+      blenderWire.rotation.copy(blenderSelectedObj.rotation);
+      blenderWire.scale.copy(blenderSelectedObj.scale);
+    }
+  });
+});
+
+// Tool strip click → set active tool
+document.querySelectorAll('#blenderToolStrip .tool-icon').forEach(icon => {
+  icon.addEventListener('click', () => {
+    document.querySelectorAll('#blenderToolStrip .tool-icon').forEach(i => i.classList.remove('active'));
+    icon.classList.add('active');
+    const tool = icon.dataset.tool;
+    blenderActiveTool = tool;
+
+    // Update viewport label
+    const label = document.getElementById('blenderViewportLabel');
+    if (tool === 'edit') label.textContent = '3D Viewport — Edit Mode';
+    else if (tool === 'sculpt') label.textContent = '3D Viewport — Sculpt Mode';
+    else if (tool === 'paint') label.textContent = '3D Viewport — Texture Paint';
+    else label.textContent = '3D Viewport — Object Mode';
+
+    // Add Mesh tool
+    if (tool === 'addmesh') {
+      addMeshToBlender();
+    }
+  });
+});
+
+// Add Mesh function
+let meshAddCount = 0;
+function addMeshToBlender() {
+  if (!blender) return;
+  const types = ['sphere', 'cylinder', 'torus', 'cone', 'icosahedron'];
+  const colors = [0x10b981, 0xef4444, 0xf59e0b, 0x22d3ee, 0xe8b4c8];
+  const typeIdx = meshAddCount % types.length;
+  const type = types[typeIdx];
+  let geo;
+  let verts = 0, faces = 0, tris = 0;
+
+  if (type === 'sphere') {
+    geo = new THREE.SphereGeometry(0.4, 16, 12);
+    verts = 145; faces = 224; tris = 224;
+  } else if (type === 'cylinder') {
+    geo = new THREE.CylinderGeometry(0.3, 0.3, 0.8, 16);
+    verts = 66; faces = 48; tris = 96;
+  } else if (type === 'torus') {
+    geo = new THREE.TorusGeometry(0.35, 0.12, 12, 24);
+    verts = 312; faces = 288; tris = 576;
+  } else if (type === 'cone') {
+    geo = new THREE.ConeGeometry(0.35, 0.8, 16);
+    verts = 33; faces = 32; tris = 32;
+  } else {
+    geo = new THREE.IcosahedronGeometry(0.35, 1);
+    verts = 42; faces = 80; tris = 80;
+  }
+
+  const mat = new THREE.MeshStandardMaterial({
+    color: colors[typeIdx],
+    metalness: 0.1,
+    roughness: 0.6
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  // Place randomly near origin
+  mesh.position.set(
+    (Math.random() - 0.5) * 3,
+    0.5 + Math.random() * 1,
+    (Math.random() - 0.5) * 3
+  );
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.userData.name = type.charAt(0).toUpperCase() + type.slice(1) + '.' + (meshAddCount + 1).toString().padStart(3, '0');
+  blender.scene.add(mesh);
+  blenderObjects.push(mesh);
+
+  // Update counts
+  blenderMeshCount.verts += verts;
+  blenderMeshCount.faces += faces;
+  blenderMeshCount.tris += tris;
+  document.getElementById('blenderViewportInfo').textContent =
+    `Verts: ${blenderMeshCount.verts.toLocaleString()} | Faces: ${blenderMeshCount.faces.toLocaleString()} | Tris: ${blenderMeshCount.tris.toLocaleString()}`;
+
+  meshAddCount++;
+  showToast(`Added ${mesh.userData.name} to scene`);
+}
+
+// Initialize properties display
+if (blenderSelectedObj) updateBlenderProperties();
+
+
+// ══════════════════════════════════════════
+// ── 2) VROID SCENE + SLIDER MORPHING ─────
+// ══════════════════════════════════════════
+
+let vroidParts = {};
+const vroid = createScene('vroid-viewport', { camY: 3, targetY: 0.8, camX: 2, camZ: 3 });
+if (vroid) {
+  // Simple humanoid from primitives
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe8b4c8, roughness: 0.7 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xf4d0b0, roughness: 0.8 });
+
+  // Torso
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.6, 8), bodyMat);
+  torso.position.y = 1.1;
+  vroid.scene.add(torso);
+  vroidParts.torso = torso;
+
+  // Head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), skinMat);
+  head.position.y = 1.6;
+  head.scale.set(1, 1.1, 0.95);
+  vroid.scene.add(head);
+  vroidParts.head = head;
+
+  // Hair
+  const hairMat = new THREE.MeshStandardMaterial({ color: 0x6366f1, roughness: 0.5 });
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.7), hairMat);
+  hair.position.y = 1.65;
+  hair.scale.set(1.05, 1.1, 1.05);
+  vroid.scene.add(hair);
+  vroidParts.hair = hair;
+
+  // Eyes
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x6366f1, emissive: 0x6366f1, emissiveIntensity: 0.3 });
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), eyeMat);
+  eyeL.position.set(-0.06, 1.62, 0.15);
+  vroid.scene.add(eyeL);
+  vroidParts.eyeL = eyeL;
+  const eyeR = eyeL.clone();
+  eyeR.position.x = 0.06;
+  vroid.scene.add(eyeR);
+  vroidParts.eyeR = eyeR;
+
+  // Hips
+  const hips = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.2, 8), bodyMat);
+  hips.position.y = 0.75;
+  vroid.scene.add(hips);
+  vroidParts.hips = hips;
+
+  // Legs
+  const legGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.7, 8);
+  const legL = new THREE.Mesh(legGeo, skinMat);
+  legL.position.set(-0.1, 0.35, 0);
+  vroid.scene.add(legL);
+  vroidParts.legL = legL;
+  const legR = legL.clone();
+  legR.position.x = 0.1;
+  vroid.scene.add(legR);
+  vroidParts.legR = legR;
+
+  // Arms
+  const armGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8);
+  const armL = new THREE.Mesh(armGeo, skinMat);
+  armL.position.set(-0.32, 1.1, 0);
+  armL.rotation.z = 0.3;
+  vroid.scene.add(armL);
+  vroidParts.armL = armL;
+  const armR = armL.clone();
+  armR.position.x = 0.32;
+  armR.rotation.z = -0.3;
+  vroid.scene.add(armR);
+  vroidParts.armR = armR;
+
+  // Floor
+  const vFloor = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 10),
+    new THREE.ShadowMaterial({ opacity: 0.2 })
+  );
+  vFloor.rotation.x = -Math.PI / 2;
+  vFloor.receiveShadow = true;
+  vroid.scene.add(vFloor);
+}
+
+// Store initial Y positions for height morphing (relative offset approach)
+const vroidInitialY = {};
+if (vroidParts.torso) {
+  for (const [key, part] of Object.entries(vroidParts)) {
+    if (part && part.position) {
+      vroidInitialY[key] = part.position.y;
+    }
+  }
+}
+
+// VRoid slider morph handlers
+document.querySelectorAll('[data-vroid]').forEach(slider => {
+  slider.addEventListener('input', () => {
+    const param = slider.dataset.vroid;
+    const val = parseFloat(slider.value);
+    const norm = val / 100; // 0 to 1
+    const p = vroidParts;
+    if (!p.head) return;
+
+    switch(param) {
+      case 'faceWidth':
+        // Scale head X: 0.7 to 1.3
+        p.head.scale.x = 0.7 + norm * 0.6;
+        break;
+      case 'jawShape':
+        // Scale head lower Y — use scaleY overall (simplified)
+        p.head.scale.y = 0.9 + norm * 0.4;
+        break;
+      case 'eyeSize': {
+        const s = 0.5 + norm * 1.0;
+        p.eyeL.scale.set(s, s, s);
+        p.eyeR.scale.set(s, s, s);
+        break;
+      }
+      case 'eyeSpacing': {
+        const spacing = 0.03 + norm * 0.08;
+        p.eyeL.position.x = -spacing;
+        p.eyeR.position.x = spacing;
+        break;
+      }
+      case 'hairLength':
+        // Scale hair Y
+        p.hair.scale.y = 0.6 + norm * 1.0;
+        break;
+      case 'hairVolume':
+        // Scale hair X/Z
+        p.hair.scale.x = 0.7 + norm * 0.7;
+        p.hair.scale.z = 0.7 + norm * 0.7;
+        break;
+      case 'height': {
+        // Relative offset from initial positions — slider default is 50
+        const delta = (val - 50) / 50; // -1 to +1 range, 0 at default
+        const hScale = 0.7 + norm * 0.6;
+        p.torso.scale.y = hScale;
+        // Apply delta-based offset to each part's initial Y position
+        // Upper body parts get full delta, lower body gets scaled delta
+        const upperShift = delta * 0.3; // head/hair/eyes/arms shift
+        const midShift = delta * 0.2;   // torso/hips shift
+        const lowerShift = delta * 0.1; // legs shift less
+        p.torso.position.y = vroidInitialY.torso + midShift;
+        p.head.position.y = vroidInitialY.head + upperShift;
+        p.hair.position.y = vroidInitialY.hair + upperShift;
+        p.eyeL.position.y = vroidInitialY.eyeL + upperShift;
+        p.eyeR.position.y = vroidInitialY.eyeR + upperShift;
+        p.hips.position.y = vroidInitialY.hips + lowerShift;
+        p.legL.position.y = vroidInitialY.legL + lowerShift;
+        p.legR.position.y = vroidInitialY.legR + lowerShift;
+        p.armL.position.y = vroidInitialY.armL + upperShift;
+        p.armR.position.y = vroidInitialY.armR + upperShift;
+        break;
+      }
+      case 'bodyWidth': {
+        const w = 0.7 + norm * 0.6;
+        p.torso.scale.x = w;
+        p.torso.scale.z = w;
+        p.hips.scale.x = w;
+        p.hips.scale.z = w;
+        break;
+      }
+    }
+  });
+});
+
+
+// ══════════════════════════════════════════
+// ── 3) UNITY SCENE ───────────────────────
+// ══════════════════════════════════════════
+
+const unity = createScene('unity-viewport', { camY: 3, targetY: 0.7, camX: 2.5, camZ: 2.5 });
+if (unity) {
+  const meshMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.5, metalness: 0.1 });
+  const wireMat = new THREE.LineBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.15 });
+
+  const capsule = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.5, 8, 12), meshMat);
+  capsule.position.y = 1.05;
+  capsule.castShadow = true;
+  unity.scene.add(capsule);
+  unity.scene.add(new THREE.LineSegments(new THREE.EdgesGeometry(capsule.geometry), wireMat).translateY(1.05));
+
+  const uHead = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), meshMat);
+  uHead.position.y = 1.55;
+  uHead.castShadow = true;
+  unity.scene.add(uHead);
+
+  const uLegGeo = new THREE.CapsuleGeometry(0.06, 0.5, 6, 8);
+  const uLegL = new THREE.Mesh(uLegGeo, meshMat);
+  uLegL.position.set(-0.12, 0.35, 0);
+  uLegL.castShadow = true;
+  unity.scene.add(uLegL);
+  const uLegR = uLegL.clone();
+  uLegR.position.x = 0.12;
+  unity.scene.add(uLegR);
+
+  const uArmGeo = new THREE.CapsuleGeometry(0.04, 0.4, 6, 8);
+  const uArmL = new THREE.Mesh(uArmGeo, meshMat);
+  uArmL.position.set(-0.32, 1.05, 0);
+  uArmL.rotation.z = 1.2;
+  uArmL.castShadow = true;
+  unity.scene.add(uArmL);
+  const uArmR = uArmL.clone();
+  uArmR.position.x = 0.32;
+  uArmR.rotation.z = -1.2;
+  unity.scene.add(uArmR);
+
+  const axes = new THREE.AxesHelper(0.5);
+  axes.position.y = 0.01;
+  unity.scene.add(axes);
+
+  const bbox = new THREE.Box3().setFromObject(capsule);
+  bbox.expandByObject(uHead);
+  const bboxHelper = new THREE.Box3Helper(bbox, 0x6366f1);
+  unity.scene.add(bboxHelper);
+
+  const uFloor = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 10),
+    new THREE.ShadowMaterial({ opacity: 0.2 })
+  );
+  uFloor.rotation.x = -Math.PI / 2;
+  uFloor.receiveShadow = true;
+  unity.scene.add(uFloor);
+}
+
+// ── Unity Hierarchy interaction ──
+const hierNodes = document.querySelectorAll('#unityHierarchy .hier-node');
+const inspSelectedNode = document.getElementById('inspSelectedNode');
+
+hierNodes.forEach(node => {
+  node.addEventListener('click', () => {
+    hierNodes.forEach(n => n.classList.remove('active'));
+    node.classList.add('active');
+    const name = node.dataset.hier || node.textContent.trim();
+    if (inspSelectedNode) inspSelectedNode.textContent = 'Selected: ' + name;
+  });
+});
+
+// ── Unity Inspector tabs ──
+const inspTabs = document.querySelectorAll('#inspectorTabs .insp-tab');
+const inspContents = document.querySelectorAll('.insp-content');
+
+inspTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    inspTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.insp;
+    inspContents.forEach(c => c.classList.remove('active'));
+    const targetEl = document.getElementById('insp' + target.charAt(0).toUpperCase() + target.slice(1));
+    // Map names properly
+    const map = {
+      'descriptor': 'inspDescriptor',
+      'physbones': 'inspPhysBones',
+      'expressions': 'inspExpressions',
+      'materials': 'inspMaterials'
+    };
+    const el = document.getElementById(map[target]);
+    if (el) el.classList.add('active');
+  });
+});
+
+// ── Unity Build & Publish ──
+const consoleLog = document.getElementById('consoleLog');
+
+function addConsoleEntry(text, type = 'info') {
+  const div = document.createElement('div');
+  div.className = 'log-' + type;
+  div.textContent = text;
+  consoleLog.appendChild(div);
+  consoleLog.scrollTop = consoleLog.scrollHeight;
+}
+
+document.getElementById('unityBuildBtn').addEventListener('click', () => {
+  addConsoleEntry('[Info] Starting build...', 'info');
+  setTimeout(() => addConsoleEntry('[Info] Compiling scripts...', 'info'), 300);
+  setTimeout(() => addConsoleEntry('[OK] Scripts compiled successfully', 'ok'), 800);
+  setTimeout(() => addConsoleEntry('[Info] Building avatar bundle...', 'info'), 1200);
+  setTimeout(() => addConsoleEntry('[Info] Optimizing textures...', 'info'), 1600);
+  setTimeout(() => addConsoleEntry('[OK] Textures packed — 4 atlases', 'ok'), 2200);
+  setTimeout(() => addConsoleEntry('[Info] Validating PhysBones...', 'info'), 2600);
+  setTimeout(() => addConsoleEntry('[OK] PhysBone validation passed', 'ok'), 3000);
+  setTimeout(() => addConsoleEntry('[Info] Generating content file...', 'info'), 3400);
+  setTimeout(() => addConsoleEntry('[OK] Build completed successfully in 4.2s', 'ok'), 4000);
+  setTimeout(() => addConsoleEntry('[Info] Launching local test client...', 'info'), 4400);
+  setTimeout(() => addConsoleEntry('[OK] Avatar loaded in local test — ready for preview', 'ok'), 5000);
+  setTimeout(() => showToast('Build complete — test client launched'), 5000);
+});
+
+document.getElementById('unityPublishBtn').addEventListener('click', () => {
+  addConsoleEntry('[Info] Publishing avatar...', 'info');
+  setTimeout(() => addConsoleEntry('[Info] Uploading avatar bundle (2.4 MB)...', 'info'), 500);
+  setTimeout(() => addConsoleEntry('[Info] Upload: 25%...', 'info'), 1000);
+  setTimeout(() => addConsoleEntry('[Info] Upload: 50%...', 'info'), 1500);
+  setTimeout(() => addConsoleEntry('[Info] Upload: 75%...', 'info'), 2000);
+  setTimeout(() => addConsoleEntry('[Info] Upload: 100%', 'info'), 2500);
+  setTimeout(() => addConsoleEntry('[OK] Avatar uploaded successfully', 'ok'), 3000);
+  setTimeout(() => addConsoleEntry('[OK] Published successfully! Avatar is now live.', 'ok'), 3500);
+  setTimeout(() => showToast('Published successfully!'), 3500);
+});
+
+
+// ══════════════════════════════════════════
+// ── 4) TAFI SCENE ────────────────────────
+// ══════════════════════════════════════════
+
+const tafi = createScene('tafi-viewport', { camY: 3, targetY: 0.8, camX: 2, camZ: 3 });
+if (tafi) {
+  const tafiMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.4, metalness: 0.2 });
+
+  const tBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.45, 10, 14), tafiMat);
+  tBody.position.y = 1.05;
+  tBody.castShadow = true;
+  tafi.scene.add(tBody);
+
+  const tHead = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), tafiMat);
+  tHead.position.y = 1.55;
+  tHead.castShadow = true;
+  tafi.scene.add(tHead);
+
+  const tHairMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.5 });
+  const tHair = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.65), tHairMat);
+  tHair.position.y = 1.6;
+  tHair.scale.set(1.05, 1.1, 1.05);
+  tafi.scene.add(tHair);
+
+  const tLegL = new THREE.Mesh(new THREE.CapsuleGeometry(0.065, 0.5, 8, 8), tafiMat);
+  tLegL.position.set(-0.1, 0.33, 0);
+  tLegL.castShadow = true;
+  tafi.scene.add(tLegL);
+  const tLegR = tLegL.clone();
+  tLegR.position.x = 0.1;
+  tafi.scene.add(tLegR);
+
+  const tArmL = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.4, 6, 8), tafiMat);
+  tArmL.position.set(-0.35, 1.1, 0);
+  tArmL.rotation.z = Math.PI / 2;
+  tArmL.castShadow = true;
+  tafi.scene.add(tArmL);
+  const tArmR = tArmL.clone();
+  tArmR.position.x = 0.35;
+  tafi.scene.add(tArmR);
+
+  const ringGeo = new THREE.TorusGeometry(0.4, 0.015, 8, 32);
+  const ringMat = new THREE.MeshStandardMaterial({ color: 0x22d3ee, emissive: 0x22d3ee, emissiveIntensity: 0.5 });
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.01;
+  tafi.scene.add(ring);
+
+  const tFloor = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 10),
+    new THREE.ShadowMaterial({ opacity: 0.2 })
+  );
+  tFloor.rotation.x = -Math.PI / 2;
+  tFloor.receiveShadow = true;
+  tafi.scene.add(tFloor);
+}
+
+
+// ══════════════════════════════════════════
+// ── 5) BOOTH SEARCH + FILTER LOGIC ───────
+// ══════════════════════════════════════════
+
+function filterBoothCards() {
+  const searchTerm = document.getElementById('boothSearchInput').value.toLowerCase().trim();
+  const cards = document.querySelectorAll('#boothGrid .booth-card');
+  const noResults = document.getElementById('boothNoResults');
+
+  // Get active style filters
+  const styleFilters = [];
+  document.querySelectorAll('[data-filter-type="style"]').forEach(opt => {
+    if (opt.classList.contains('checked')) {
+      styleFilters.push(opt.dataset.filterVal);
+    }
+  });
+
+  // Get active price filters
+  const priceFilters = [];
+  document.querySelectorAll('[data-filter-type="price"]').forEach(opt => {
+    if (opt.classList.contains('checked')) {
+      priceFilters.push(opt.dataset.filterVal);
+    }
+  });
+
+  let visibleCount = 0;
+
+  cards.forEach(card => {
+    const name = (card.dataset.name || '').toLowerCase();
+    const style = card.dataset.style || '';
+    const price = parseInt(card.dataset.price || '0');
+
+    // Name search
+    let matchesName = !searchTerm || name.includes(searchTerm);
+
+    // Style filter
+    let matchesStyle = styleFilters.length === 0 || styleFilters.includes(style);
+
+    // Price filter
+    let matchesPrice = true;
+    if (priceFilters.length > 0) {
+      matchesPrice = false;
+      if (priceFilters.includes('free') && price === 0) matchesPrice = true;
+      if (priceFilters.includes('under3000') && price > 0 && price < 3000) matchesPrice = true;
+      if (priceFilters.includes('3000-8000') && price >= 3000 && price <= 8000) matchesPrice = true;
+      if (priceFilters.includes('8000+') && price > 8000) matchesPrice = true;
+    }
+
+    if (matchesName && matchesStyle && matchesPrice) {
+      card.classList.remove('hidden');
+      visibleCount++;
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+
+  if (noResults) {
+    noResults.classList.toggle('show', visibleCount === 0);
+  }
+}
+
+// Booth search input (live filter)
+document.getElementById('boothSearchInput').addEventListener('input', filterBoothCards);
+document.getElementById('boothSearchBtn').addEventListener('click', filterBoothCards);
+
+// Booth filter checkboxes
+document.querySelectorAll('.filter-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    opt.classList.toggle('checked');
+    const check = opt.querySelector('.filter-check');
+    check.textContent = opt.classList.contains('checked') ? '✓' : '';
+    // Re-filter if this is a style or price filter
+    if (opt.dataset.filterType) {
+      filterBoothCards();
+    }
+  });
+});
+
+
+// ══════════════════════════════════════════
+// ── 6) BOOTH DETAIL + IMPORT TO EDITOR ───
+// ══════════════════════════════════════════
+
+let currentBoothModelName = '';
+
+window.openBoothDetail = function(card, name, price, style, desc, eco, emoji, idx) {
+  const detail = document.getElementById('boothDetail');
+  document.getElementById('boothDetailName').textContent = name;
+  document.getElementById('boothDetailPrice').textContent = price;
+  document.getElementById('boothDetailDesc').textContent = desc;
+  document.getElementById('boothDetailEco').textContent = eco;
+  const preview = document.getElementById('boothDetailPreview');
+  preview.textContent = emoji;
+  preview.style.background = card.querySelector('.booth-card-img').style.background;
+  detail.classList.add('open');
+  currentBoothModelName = name;
+};
+
+window.closeBoothDetail = function() {
+  document.getElementById('boothDetail').classList.remove('open');
+};
+
+// Import to Editor button → switch to Unity and log
+document.getElementById('boothImportBtn').addEventListener('click', () => {
+  closeBoothDetail();
+  // Switch to Unity tab
+  switchToTab(3);
+  // Add console entry
+  addConsoleEntry(`[Info] Imported ${currentBoothModelName} from Booth.pm`, 'info');
+  addConsoleEntry(`[OK] Model loaded into hierarchy — ready for setup`, 'ok');
+  showToast(`Imported ${currentBoothModelName} to Unity`);
+});
+
+
+// ══════════════════════════════════════════
+// ── 7) GLB EXPORT LOGIC ─────────────────
+// ══════════════════════════════════════════
+
+function exportSceneAsGLB(scene, filename) {
+  const exporter = new GLTFExporter();
+  exporter.parse(scene, (result) => {
+    const blob = new Blob([result], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${filename}`);
+  }, (error) => {
+    console.error('Export error:', error);
+    showToast('Export failed — check console');
+  }, { binary: true });
+}
+
+// Blender export
+document.getElementById('blenderExportBtn').addEventListener('click', () => {
+  if (scenes['blender-viewport']) {
+    exportSceneAsGLB(scenes['blender-viewport'], 'blender-scene.glb');
+  }
+});
+
+// VRoid export
+document.getElementById('vroidExportBtn').addEventListener('click', () => {
+  if (scenes['vroid-viewport']) {
+    exportSceneAsGLB(scenes['vroid-viewport'], 'vroid-avatar.glb');
+  }
+});
+
+// Tafi export
+document.getElementById('tafiExportBtn').addEventListener('click', () => {
+  if (scenes['tafi-viewport']) {
+    exportSceneAsGLB(scenes['tafi-viewport'], 'tafi-avatar.glb');
+  }
+});
+
+
+// ══════════════════════════════════════════
+// ── 8) SEND TO UNITY BUTTONS ─────────────
+// ══════════════════════════════════════════
+
+document.getElementById('blenderSendUnityBtn').addEventListener('click', () => {
+  switchToTab(3);
+  addConsoleEntry('[Info] Received model from Blender — loading into scene', 'info');
+  addConsoleEntry('[OK] Blender mesh imported successfully', 'ok');
+  showToast('Sent Blender scene to Unity');
+});
+
+document.getElementById('vroidSendUnityBtn').addEventListener('click', () => {
+  switchToTab(3);
+  addConsoleEntry('[Info] Received avatar from VRoid Studio — loading into scene', 'info');
+  addConsoleEntry('[OK] VRoid avatar imported successfully', 'ok');
+  showToast('Sent VRoid avatar to Unity');
+});
+
+document.getElementById('tafiSendUnityBtn').addEventListener('click', () => {
+  switchToTab(3);
+  addConsoleEntry('[Info] Received avatar from Tafi Builder — loading into scene', 'info');
+  addConsoleEntry('[OK] Tafi avatar imported successfully', 'ok');
+  showToast('Sent Tafi avatar to Unity');
+});
+
+
+// ══════════════════════════════════════════
+// ── ANIMATION LOOP ───────────────────────
+// ══════════════════════════════════════════
+
+const viewportMap = {
+  0: 'blender-viewport',
+  1: 'vroid-viewport',
+  2: null,
+  3: 'unity-viewport',
+  4: 'tafi-viewport'
+};
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const activeId = viewportMap[activeTab];
+  if (activeId && scenes[activeId]) {
+    controlsMap[activeId].update();
+    renderers[activeId].render(scenes[activeId], cameras[activeId]);
+  }
+}
+
+animate();
+
+
+// ══════════════════════════════════════════
+// ── REMAINING UI INTERACTIONS ────────────
+// ══════════════════════════════════════════
+
+// VRoid cat tabs
+document.querySelectorAll('.cat-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+// Tafi cat buttons
+document.querySelectorAll('.tafi-cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tafi-cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// Component cards
+document.querySelectorAll('.comp-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.comp-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  });
+});
+
+// Preset thumbs
+document.querySelectorAll('.preset-thumb').forEach(thumb => {
+  thumb.addEventListener('click', () => {
+    document.querySelectorAll('.preset-thumb').forEach(t => t.classList.remove('active'));
+    thumb.classList.add('active');
+  });
+});
+
+// Slider value display (for non-vroid sliders)
+document.querySelectorAll('input[type="range"]').forEach(slider => {
+  slider.addEventListener('input', () => {
+    const label = slider.previousElementSibling;
+    if (label) {
+      const val = label.querySelector('.slider-val');
+      if (val && !slider.dataset.vroid) {
+        val.textContent = slider.value;
+      } else if (val && slider.dataset.vroid) {
+        val.textContent = slider.value;
+      }
+    }
+  });
+});
+
+</script>
+</body>
+</html>

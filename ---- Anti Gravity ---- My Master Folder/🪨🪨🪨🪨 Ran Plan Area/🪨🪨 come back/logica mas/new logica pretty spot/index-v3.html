@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Messenger</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif; }
+
+  body {
+    background: #f0f2f5;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+    gap: 12px;
+    padding: 12px;
+    align-items: stretch;
+  }
+
+  /* ─── PANEL 0 — Chat Box ─── */
+  #panel-0 {
+    width: 320px;
+    min-width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e4e4e4;
+    min-height: 62px;
+  }
+  .panel-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0084ff;
+    letter-spacing: -0.5px;
+  }
+  .panel-header-right { display: flex; gap: 10px; align-items: center; }
+  .header-icon {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #f0f0f0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; color: #333; position: relative;
+  }
+  .badge {
+    position: absolute; top: -2px; right: -2px;
+    background: #e41e2a; color: #fff;
+    font-size: 10px; font-weight: 700;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff;
+  }
+
+  .panel-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+  .panel-list::-webkit-scrollbar { width: 0; }
+
+  .chat-item {
+    display: flex; align-items: center;
+    padding: 10px 16px; cursor: pointer;
+    border-radius: 10px; margin: 1px 6px;
+    transition: background 0.12s; position: relative;
+  }
+  .chat-item:hover { background: #f2f2f2; }
+  .chat-item.active { background: #e8f4ff; }
+
+  .avatar-wrap { position: relative; margin-right: 12px; flex-shrink: 0; }
+  .avatar {
+    width: 54px; height: 54px; border-radius: 50%; background: #ddd;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #666; overflow: hidden;
+  }
+  .avatar-group { position: relative; width: 54px; height: 54px; }
+  .avatar-group .av1 {
+    width: 38px; height: 38px; border-radius: 50%; position: absolute; top: 0; left: 0;
+    background: #ccc; display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .avatar-group .av2 {
+    width: 28px; height: 28px; border-radius: 50%; position: absolute; bottom: 0; right: 0;
+    background: #bbb; display: flex; align-items: center; justify-content: center; font-size: 11px;
+    border: 2px solid #fff;
+  }
+  .online-dot {
+    width: 14px; height: 14px; background: #31a24c;
+    border-radius: 50%; border: 2.5px solid #fff;
+    position: absolute; bottom: 1px; right: 1px;
+  }
+  .chat-info { flex: 1; min-width: 0; }
+  .chat-name { font-size: 15px; font-weight: 600; color: #050505; }
+  .chat-preview { font-size: 13.5px; color: #65676b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .chat-preview.unread { color: #050505; font-weight: 500; }
+  .unread-dot { width: 10px; height: 10px; background: #0084ff; border-radius: 50%; margin-left: 8px; flex-shrink: 0; }
+
+  #left-nav { display: flex; border-top: 1px solid #e4e4e4; padding: 6px 0 18px; }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 6px 0; cursor: pointer; position: relative;
+  }
+  .nav-icon { font-size: 22px; color: #65676b; position: relative; }
+  .nav-icon.active-nav { color: #0084ff; }
+  .nav-label { font-size: 10px; color: #65676b; margin-top: 2px; }
+  .nav-label.active-nav { color: #0084ff; }
+  .nav-badge {
+    position: absolute; top: -4px; right: -8px;
+    background: #e41e2a; color: #fff; font-size: 10px; font-weight: 700;
+    min-width: 16px; height: 16px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px; border: 2px solid #fff;
+  }
+
+  /* ─── FEATURE 1: CARDS AREA — Y-TRACKING ─── */
+  #cards-area {
+    position: relative;
+    flex: 1;
+    height: 100%;
+  }
+
+  /* old .floating-col widths removed — now absolutely positioned inside #cards-area */
+  .floating-col {
+    position: absolute;
+    width: 320px;
+  }
+  .floating-col:nth-child(1) { left: 0; }
+  .floating-col:nth-child(2) { left: 332px; }
+  .floating-col:nth-child(3) { left: 664px; }
+
+  .floating-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease, top 0.25s ease;
+    padding: 20px 0;
+  }
+  .floating-card.open { opacity: 1; pointer-events: all; }
+
+  /* ─── UNIFORM CARD ROW (button + field) ─── */
+  .card-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 28px;
+    width: 100%;
+  }
+
+  .card-btn {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #0084ff;
+    flex-shrink: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: #fff;
+    transition: background 0.15s, transform 0.1s;
+    border: none; outline: none;
+  }
+  .card-btn:hover { background: #006edb; transform: scale(1.05); }
+  .card-btn:active { transform: scale(0.97); }
+
+  .card-field {
+    flex: 1;
+    height: 48px;
+    border: 1.5px solid #e4e4e4;
+    border-radius: 24px;
+    padding: 0 18px;
+    font-size: 15px;
+    color: #050505;
+    background: #f8f8f8;
+    display: flex;
+    align-items: center;
+    cursor: default;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-field.placeholder { color: #aaa; }
+
+  /* card-3 field is a real input */
+  input.card-field {
+    cursor: text;
+    outline: none;
+    font-family: inherit;
+  }
+  input.card-field::placeholder { color: #aaa; }
+  input.card-field:focus { border-color: #0084ff; background: #fff; }
+
+  /* ─── FEATURE 2: SHORTCUT BANNER ─── */
+  #shortcut-banner {
+    position: fixed;
+    top: 12px;
+    left: 344px; /* just right of panel-0 */
+    z-index: 500;
+    display: flex;
+    gap: 6px;
+    pointer-events: none;
+  }
+  .sc-pill {
+    background: rgba(255,255,255,0.85);
+    border: 1.5px solid #e4e4e4;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #bbb;
+    backdrop-filter: blur(6px);
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .sc-pill.active {
+    color: #0084ff;
+    border-color: #0084ff;
+  }
+
+  /* ─── FEATURE 3: SIMS 4 CAM BUBBLES ─── */
+  #cam-bubbles {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  #cam-bubbles.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .cam-bubble {
+    background: #fff;
+    border: 1.5px solid #e4e4e4;
+    border-radius: 22px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #050505;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    transform: translateY(10px);
+    transition: transform 0.25s ease, background 0.12s;
+  }
+  #cam-bubbles.open .cam-bubble { transform: translateY(0); }
+  #cam-bubbles.open .cam-bubble:nth-child(1) { transition-delay: 0.05s; }
+  #cam-bubbles.open .cam-bubble:nth-child(2) { transition-delay: 0.11s; }
+  .cam-bubble:hover { background: #f0f7ff; border-color: #0084ff; }
+
+  /* ─── WORK PANEL ─── */
+  #work-cover {
+    display: none; position: fixed; z-index: 900;
+    overflow: hidden; background: #0084ff; box-sizing: border-box;
+  }
+  #work-content {
+    display: flex; flex-direction: column;
+    width: 100%; height: 100%;
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    background: #f8f9fa; box-sizing: border-box;
+  }
+  #work-content.visible { opacity: 1; transform: translateY(0); }
+  #work-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #0084ff; padding: 0 24px; height: 56px; flex-shrink: 0;
+  }
+  #work-title {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700; font-size: 15px;
+    letter-spacing: 0.06em; color: #fff; text-transform: uppercase;
+  }
+  #work-close {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.18); border: none;
+    color: #fff; font-size: 16px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.18s; flex-shrink: 0;
+  }
+  #work-close:hover { background: rgba(255,255,255,0.32); }
+  #work-body {
+    flex: 1; overflow-y: auto; padding: 28px 32px 40px; box-sizing: border-box;
+  }
+  #work-body::-webkit-scrollbar { width: 6px; }
+  #work-body::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 3px; }
+  .wp-section-label {
+    border-left: 4px solid #0084ff; padding-left: 12px;
+    font-size: 13px; font-weight: 700; color: #1a1a2e;
+    letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 16px;
+  }
+  .wp-card {
+    background: #fff; border: 1.5px solid #e4e4e4; border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px 22px; margin-bottom: 20px;
+  }
+  .wp-stat-row { display: flex; gap: 16px; margin-bottom: 20px; }
+  .wp-stat-card {
+    flex: 1; background: #fff; border: 1.5px solid #e4e4e4;
+    border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 18px 16px 16px; text-align: center;
+  }
+  .wp-stat-value { font-size: 28px; font-weight: 700; color: #0084ff; line-height: 1; margin-bottom: 6px; }
+  .wp-stat-label { font-size: 11px; font-weight: 600; color: #8a8a9a; text-transform: uppercase; letter-spacing: 0.06em; }
+  .wp-field-wrap { margin-bottom: 18px; }
+  .wp-field-label {
+    font-size: 12px; font-weight: 600; color: #666;
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block;
+  }
+  .wp-field-readonly { font-size: 15px; font-weight: 500; color: #1a1a2e; }
+  .wp-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .wp-badge-green { background: #d1fae5; color: #065f46; }
+  .wp-input, .wp-select {
+    width: 100%; padding: 10px 14px; border: 1.5px solid #e4e4e4;
+    border-radius: 10px; font-size: 14px; color: #1a1a2e;
+    background: #fafafa; box-sizing: border-box; outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s; font-family: inherit;
+  }
+  .wp-input:focus, .wp-select:focus {
+    border-color: #0084ff; box-shadow: 0 0 0 3px rgba(0,132,255,0.12); background: #fff;
+  }
+  .wp-select {
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8a9a' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer;
+  }
+  .wp-submit {
+    display: block; width: 100%; padding: 14px;
+    background: #0084ff; color: #fff; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 700; letter-spacing: 0.03em;
+    cursor: pointer; margin-top: 8px; transition: background 0.18s, transform 0.1s; font-family: inherit;
+  }
+  .wp-submit:hover { background: #006fd6; }
+  .wp-submit:active { transform: scale(0.98); }
+</style>
+</head>
+<body>
+
+<!-- ═══ PANEL 0 — Chat Box ═══ -->
+<div id="panel-0">
+  <div class="panel-header">
+    <span class="panel-title">messenger</span>
+    <div class="panel-header-right">
+      <div class="header-icon">✏️</div>
+      <div class="header-icon">
+        <span>📘</span>
+        <span class="badge">1</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-list" id="chat-list">
+
+    <div class="chat-item" onclick="handleChatClick('family', this)">
+      <div class="avatar-wrap">
+        <div class="avatar-group"><div class="av1">👩</div><div class="av2">👦</div></div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">FAMILY CHAT</div>
+        <div class="chat-preview">You: Ok · 2:05 pm</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('ray', this)">
+      <div class="avatar-wrap">
+        <div class="avatar">👨</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Ray Downs</div>
+        <div class="chat-preview">You: Thank you ! · 2:05 pm</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('chad', this)">
+      <div class="avatar-wrap"><div class="avatar">🧔</div></div>
+      <div class="chat-info">
+        <div class="chat-name">Chad Downs</div>
+        <div class="chat-preview">You sent a photo. · 2:01 pm</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('raykim', this)">
+      <div class="avatar-wrap">
+        <div class="avatar-group"><div class="av1">👨</div><div class="av2">👩</div></div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Ray, Kim</div>
+        <div class="chat-preview">You: that sounds like... · Sun</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('randy', this)">
+      <div class="avatar-wrap">
+        <div class="avatar">🎸</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Randy Engineersski</div>
+        <div class="chat-preview unread">2 new messages · Sun</div>
+      </div>
+      <div class="unread-dot"></div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('james', this)">
+      <div class="avatar-wrap">
+        <div class="avatar">🧑</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">James Poddubny</div>
+        <div class="chat-preview">❤️❤️❤️ love you... · Sun</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('jenna', this)">
+      <div class="avatar-wrap">
+        <div class="avatar">👩‍🦱</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Jenna Bodley</div>
+        <div class="chat-preview">You: hollar whenever u my fri... · Sat</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('kim', this)">
+      <div class="avatar-wrap">
+        <div class="avatar">👩</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Kim Downs</div>
+        <div class="chat-preview">You: kim · Fri</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('linda', this)">
+      <div class="avatar-wrap"><div class="avatar">👩‍🦳</div></div>
+      <div class="chat-info">
+        <div class="chat-name">Linda-Brooke Thompson</div>
+        <div class="chat-preview unread">4 new messages · Fri</div>
+      </div>
+      <div class="unread-dot"></div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('ed', this)">
+      <div class="avatar-wrap"><div class="avatar">👨‍🦳</div></div>
+      <div class="chat-info">
+        <div class="chat-name">Ed Adkins Sr.</div>
+        <div class="chat-preview">You: work going well th... · Thu</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('kayla', this)">
+      <div class="avatar-wrap">
+        <div class="avatar">🧕</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Kayla Amber</div>
+        <div class="chat-preview">You: That was waay... · Mar 22</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="handleChatClick('ari', this)">
+      <div class="avatar-wrap"><div class="avatar">🧑‍💼</div></div>
+      <div class="chat-info">
+        <div class="chat-name">Ari Aloush</div>
+        <div class="chat-preview unread">Hey, at this rate I thi... · Mar 16</div>
+      </div>
+      <div class="unread-dot"></div>
+    </div>
+
+  </div>
+
+  <div id="left-nav">
+    <div class="nav-item">
+      <div class="nav-icon active-nav" style="position:relative;">💬<span class="nav-badge">7</span></div>
+      <div class="nav-label active-nav">Chats</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">📖<span class="nav-badge">●</span></div>
+      <div class="nav-label">Stories</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">🔔<span class="nav-badge">●</span></div>
+      <div class="nav-label">Notifications</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">☰<span class="nav-badge">●</span></div>
+      <div class="nav-label">Menu</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FEATURE 1: CARDS AREA wrapper — Y-tracking ═══ -->
+<div id="cards-area">
+
+  <!-- ═══ CARD 1 ═══ -->
+  <div class="floating-col">
+    <div class="floating-card" id="card-1">
+      <div class="card-row">
+        <button class="card-btn" onclick="handleCard1Click()">›</button>
+        <div class="card-field placeholder" id="card-1-field">Select a contact</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CARD 2 ═══ -->
+  <div class="floating-col">
+    <div class="floating-card" id="card-2">
+      <!-- FEATURE 3: card-row wrapped for relative positioning, bubbles injected above button -->
+      <div class="card-row" style="position:relative;">
+        <div id="cam-bubbles">
+          <div class="cam-bubble" onclick="handleCamAction('see', event)">See Campaign</div>
+          <div class="cam-bubble" onclick="handleCamAction('add', event)">Add Campaign</div>
+        </div>
+        <button class="card-btn" onclick="toggleBubbles(event)">›</button>
+        <div class="card-field placeholder" id="card-2-field">Choose action</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CARD 3 ═══ -->
+  <div class="floating-col">
+    <div class="floating-card" id="card-3">
+      <div class="card-row">
+        <button class="card-btn" onclick="sendMessage()">↑</button>
+        <input class="card-field" id="msg-input" placeholder="Text Message • RCS" onkeydown="handleKey(event)" />
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FEATURE 2: SHORTCUT BANNER -->
+<div id="shortcut-banner">
+  <div class="sc-pill" id="sc-1">1 · —</div>
+  <div class="sc-pill" id="sc-2">2 · —</div>
+  <div class="sc-pill" id="sc-3">3 · —</div>
+</div>
+
+<script>
+var contacts = {
+  family:  { name:'FAMILY CHAT',           avatars:['👩','👦'], preview:'You: Ok · 2:05 pm',                online:true,  group:true  },
+  ray:     { name:'Ray Downs',             avatars:['👨'],      preview:'You: Thank you ! · 2:05 pm',       online:true              },
+  chad:    { name:'Chad Downs',            avatars:['🧔'],      preview:'You sent a photo. · 2:01 pm',      online:false             },
+  raykim:  { name:'Ray, Kim',              avatars:['👨','👩'], preview:'You: that sounds like... · Sun',   online:true,  group:true  },
+  randy:   { name:'Randy Engineersski',    avatars:['🎸'],      preview:'2 new messages · Sun',             online:true,  unread:true },
+  james:   { name:'James Poddubny',        avatars:['🧑'],      preview:'❤️❤️❤️ love you... · Sun',        online:true              },
+  jenna:   { name:'Jenna Bodley',          avatars:['👩‍🦱'],    preview:'You: hollar whenever... · Sat',    online:true              },
+  kim:     { name:'Kim Downs',             avatars:['👩'],      preview:'You: kim · Fri',                   online:true              },
+  linda:   { name:'Linda-Brooke Thompson', avatars:['👩‍🦳'],    preview:'4 new messages · Fri',             online:false, unread:true },
+  ed:      { name:'Ed Adkins Sr.',         avatars:['👨‍🦳'],    preview:'You: work going well th... · Thu', online:false             },
+  kayla:   { name:'Kayla Amber',           avatars:['🧕'],      preview:'You: That was waay... · Mar 22',   online:true              },
+  ari:     { name:'Ari Aloush',            avatars:['🧑‍💼'],    preview:'Hey, at this rate... · Mar 16',    online:false, unread:true },
+};
+
+var activeId = null;
+window.currentCardY = 0;
+
+/* ─── FEATURE 3: bubble state ─── */
+var bubblesOpen = false;
+
+function toggleBubbles(e) {
+  e.stopPropagation();
+  bubblesOpen = !bubblesOpen;
+  document.getElementById('cam-bubbles').classList.toggle('open', bubblesOpen);
+}
+
+function handleCamAction(type, e) {
+  e.stopPropagation();
+  bubblesOpen = false;
+  document.getElementById('cam-bubbles').classList.remove('open');
+  var btn = document.querySelector('#card-2 .card-btn');
+  openWorkPanel(btn, type);
+}
+
+document.addEventListener('click', function() {
+  if (bubblesOpen) {
+    bubblesOpen = false;
+    document.getElementById('cam-bubbles').classList.remove('open');
+  }
+});
+
+/* ─── FEATURE 2: banner update ─── */
+function updateBanner() {
+  var sc1 = document.getElementById('sc-1');
+  var sc2 = document.getElementById('sc-2');
+  var sc3 = document.getElementById('sc-3');
+
+  var card1Open = document.getElementById('card-1').classList.contains('open');
+  var card2Open = document.getElementById('card-2').classList.contains('open');
+  var card3Open = document.getElementById('card-3').classList.contains('open');
+
+  if (card1Open && activeId) {
+    var name = (contacts[activeId] || { name: activeId }).name;
+    sc1.textContent = '1 · ' + name;
+    sc1.classList.add('active');
+  } else {
+    sc1.textContent = '1 · —';
+    sc1.classList.remove('active');
+  }
+
+  if (card2Open) {
+    sc2.textContent = '2 · Messages';
+    sc2.classList.add('active');
+  } else {
+    sc2.textContent = '2 · —';
+    sc2.classList.remove('active');
+  }
+
+  if (card3Open) {
+    sc3.textContent = '3 · Compose';
+    sc3.classList.add('active');
+  } else {
+    sc3.textContent = '3 · —';
+    sc3.classList.remove('active');
+  }
+}
+
+/* ─── FEATURE 1: apply Y position to all cards ─── */
+function applyCardY(y) {
+  ['card-1', 'card-2', 'card-3'].forEach(function(id) {
+    document.getElementById(id).style.top = y + 'px';
+  });
+}
+
+function setField(id, text, isPlaceholder) {
+  var el = document.getElementById(id);
+  el.textContent = text;
+  if (isPlaceholder) {
+    el.classList.add('placeholder');
+  } else {
+    el.classList.remove('placeholder');
+  }
+}
+
+// Step 1 — click chat in Panel 0
+function handleChatClick(id, el) {
+  document.querySelectorAll('#panel-0 .chat-item').forEach(function(item) {
+    item.classList.remove('active');
+  });
+  el.classList.add('active');
+  activeId = id;
+
+  document.getElementById('card-2').classList.remove('open');
+  document.getElementById('card-3').classList.remove('open');
+
+  /* FEATURE 1: calculate Y offset relative to cards-area and snap all cards */
+  var areaRect = document.getElementById('cards-area').getBoundingClientRect();
+  var chatRect = el.getBoundingClientRect();
+  var cardY = chatRect.top - areaRect.top;
+  window.currentCardY = cardY;
+  applyCardY(cardY);
+
+  var c = contacts[id] || { name: id };
+  setField('card-1-field', c.name, false);
+  document.getElementById('card-1').classList.add('open');
+
+  updateBanner(); /* FEATURE 2 */
+}
+
+// Step 2 — blue button on card 1
+function handleCard1Click() {
+  if (!activeId) return;
+  document.getElementById('card-3').classList.remove('open');
+
+  /* FEATURE 1: re-apply same Y */
+  applyCardY(window.currentCardY);
+
+  setField('card-2-field', 'Messages', false);
+  document.getElementById('card-2').classList.add('open');
+
+  updateBanner(); /* FEATURE 2 */
+}
+
+// Step 3 — blue button on card 2 (now toggleBubbles — compose triggered via cam action or direct)
+function handleCard2Click() {
+  if (!activeId) return;
+
+  /* FEATURE 1: re-apply same Y */
+  applyCardY(window.currentCardY);
+
+  document.getElementById('msg-input').value = '';
+  document.getElementById('card-3').classList.add('open');
+  document.getElementById('msg-input').focus();
+
+  updateBanner(); /* FEATURE 2 */
+}
+
+// Send message
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function sendMessage() {
+  var input = document.getElementById('msg-input');
+  var text = input.value.trim();
+  if (!text || !activeId) return;
+  input.value = '';
+  input.focus();
+}
+</script>
+
+<!-- ═══ WORK PANEL ═══ -->
+<div id="work-cover">
+  <div id="work-content">
+    <div id="work-header">
+      <span id="work-title">Campaign</span>
+      <button id="work-close" onclick="closeWorkPanel()">&#x2715;</button>
+    </div>
+    <div id="work-body"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  window.openWorkPanel = function (triggerEl, mode) {
+    var cover = document.getElementById('work-cover');
+    var btn   = triggerEl.getBoundingClientRect();
+    var vw    = window.innerWidth;
+    var vh    = window.innerHeight;
+
+    document.getElementById('work-title').textContent =
+      mode === 'see' ? 'See Campaign' : 'Add Campaign';
+
+    cover.style.transition   = 'none';
+    cover.style.width        = btn.width  + 'px';
+    cover.style.height       = btn.height + 'px';
+    cover.style.left         = btn.left   + 'px';
+    cover.style.top          = btn.top    + 'px';
+    cover.style.borderRadius = '50%';
+    cover.style.opacity      = '1';
+    cover.style.display      = 'flex';
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        cover.style.transition   = 'all 0.45s cubic-bezier(0.4, 0, 0.2, 1)';
+        cover.style.width        = vw + 'px';
+        cover.style.height       = vh + 'px';
+        cover.style.left         = '0';
+        cover.style.top          = '0';
+        cover.style.borderRadius = '0';
+        setTimeout(function () {
+          document.getElementById('work-content').classList.add('visible');
+          loadPanelMode(mode);
+        }, 380);
+      });
+    });
+  };
+
+  window.closeWorkPanel = function () {
+    var cover = document.getElementById('work-cover');
+    document.getElementById('work-content').classList.remove('visible');
+    setTimeout(function () {
+      cover.style.transition = 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+      cover.style.width      = '0px';
+      cover.style.height     = '0px';
+      cover.style.opacity    = '0';
+      setTimeout(function () {
+        cover.style.display = 'none';
+        document.getElementById('work-body').innerHTML = '';
+      }, 360);
+    }, 50);
+  };
+
+  function loadPanelMode(mode) {
+    document.getElementById('work-body').innerHTML =
+      mode === 'see' ? buildSeeMode() : buildAddMode();
+  }
+
+  function buildSeeMode() {
+    return '<p class="wp-section-label">Performance Overview</p>'
+      + '<div class="wp-stat-row">'
+      + '<div class="wp-stat-card"><div class="wp-stat-value">24.8K</div><div class="wp-stat-label">Reach</div></div>'
+      + '<div class="wp-stat-card"><div class="wp-stat-value">3,142</div><div class="wp-stat-label">Clicks</div></div>'
+      + '<div class="wp-stat-card"><div class="wp-stat-value">187</div><div class="wp-stat-label">Conversions</div></div>'
+      + '</div>'
+      + '<p class="wp-section-label">Campaign Details</p>'
+      + '<div class="wp-card">'
+      + '<div class="wp-field-wrap"><span class="wp-field-label">Campaign Name</span><div class="wp-field-readonly">Spring Outreach 2026</div></div>'
+      + '<div class="wp-field-wrap"><span class="wp-field-label">Type</span><div class="wp-field-readonly">Email &amp; Social</div></div>'
+      + '<div class="wp-field-wrap"><span class="wp-field-label">Target Audience</span><div class="wp-field-readonly">Existing clients — Q1 renewal window</div></div>'
+      + '<div class="wp-field-wrap" style="margin-bottom:0"><span class="wp-field-label">Status</span><span class="wp-badge wp-badge-green">Active</span></div>'
+      + '</div>';
+  }
+
+  function buildAddMode() {
+    return '<p class="wp-section-label">New Campaign</p>'
+      + '<div class="wp-card">'
+      + '<div class="wp-field-wrap"><label class="wp-field-label" for="wp-name">Campaign Name</label><input id="wp-name" class="wp-input" type="text" placeholder="e.g. Summer Re-engagement" autocomplete="off"></div>'
+      + '<div class="wp-field-wrap"><label class="wp-field-label" for="wp-type">Campaign Type</label><select id="wp-type" class="wp-select"><option value="">Select type...</option><option value="email">Email</option><option value="social">Social</option><option value="outreach">Outreach</option></select></div>'
+      + '<div class="wp-field-wrap"><label class="wp-field-label" for="wp-audience">Target Audience</label><input id="wp-audience" class="wp-input" type="text" placeholder="e.g. New leads under 30 days" autocomplete="off"></div>'
+      + '<button class="wp-submit" onclick="handleWorkPanelSubmit(event)">Create Campaign</button>'
+      + '</div>';
+  }
+
+  window.handleWorkPanelSubmit = function (e) {
+    e.preventDefault();
+    var name = (document.getElementById('wp-name') || {}).value || '';
+    if (!name.trim()) { document.getElementById('wp-name').focus(); return; }
+    console.log('[work-panel] submit:', {
+      name: name,
+      type: (document.getElementById('wp-type') || {}).value,
+      audience: (document.getElementById('wp-audience') || {}).value
+    });
+    var btn = document.querySelector('.wp-submit');
+    if (btn) {
+      var orig = btn.textContent;
+      btn.textContent = 'Saved!';
+      btn.style.background = '#059669';
+      setTimeout(function () { btn.textContent = orig; btn.style.background = ''; }, 1800);
+    }
+  };
+}());
+</script>
+</body>
+</html>

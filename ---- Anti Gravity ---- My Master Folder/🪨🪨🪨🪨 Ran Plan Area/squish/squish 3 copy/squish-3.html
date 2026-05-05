@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Squish 3 — Avatar Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#2a2a3a;
+      --text:#e4e4ef;--text-dim:#8888a0;--text-muted:#55556a;
+      --blue:#0ea5e9;--green:#10b981;--purple:#6366f1;--red:#ef4444;--orange:#f59e0b;--cyan:#22d3ee;
+      --squish:cubic-bezier(0.34,1.56,0.64,1);--squish-heavy:cubic-bezier(0.22,1.2,0.36,1);--squish-settle:cubic-bezier(0.4,0,0.2,1);
+      --dur-fast:0.18s;--dur-med:0.35s;--dur-slide:0.45s;
+      --app-blender:#4a9eff;--app-vroid:#f472b6;--app-booth:#fb923c;--app-unity:#34d399;--app-tafi:#22d3ee;
+      --active-accent:var(--app-blender);--nav-height:56px;--status-height:36px;
+    }
+    html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+    .app-container{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+    /* NAV */
+    .top-nav{display:flex;align-items:center;justify-content:space-between;height:var(--nav-height);padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 1px 0 0 color-mix(in srgb,var(--active-accent) 15%,transparent);flex-shrink:0;z-index:100;transition:box-shadow var(--dur-med) var(--squish-settle)}
+    .nav-left{display:flex;align-items:center;gap:14px}
+    .hub-dots{display:flex;gap:6px}.hub-dot{width:10px;height:10px;border-radius:50%;transition:transform var(--dur-fast) var(--squish)}.hub-dot:hover{transform:scale(1.3)}
+    .hub-dot.blue{background:var(--blue)}.hub-dot.green{background:var(--green)}.hub-dot.purple{background:var(--purple)}.hub-dot.red{background:var(--red)}.hub-dot.orange{background:var(--orange)}
+    .logo-text{font-size:20px;font-weight:700;letter-spacing:-0.5px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;user-select:none}
+    .app-switcher{position:relative;display:flex;align-items:center;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:5px}
+    .pill-indicator{position:absolute;top:5px;left:5px;height:calc(100% - 10px);width:calc((100% - 10px)/5);background:var(--surface2);border:1px solid var(--border);border-radius:10px;transition:transform var(--dur-slide) var(--squish);z-index:0;pointer-events:none}
+    .app-tab{position:relative;z-index:1;display:flex;align-items:center;gap:6px;padding:8px 18px;border:none;border-radius:10px;background:transparent;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:color var(--dur-fast) ease;white-space:nowrap;user-select:none}
+    .app-tab:hover{color:var(--text)}.app-tab.active{color:var(--text)}.app-tab:active{transform:scale(0.93)}.app-tab .tab-icon{font-size:14px;line-height:1}
+    .pentagon-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--purple);border:none;clip-path:polygon(50% 0%,100% 38%,81% 100%,19% 100%,0% 38%);cursor:pointer;color:#fff;font-size:14px;transition:filter var(--dur-med) ease,transform var(--dur-med) var(--squish)}
+    .pentagon-btn:hover{filter:brightness(1.2);transform:scale(1.08) rotate(15deg)}.pentagon-btn:active{transform:scale(0.93) rotate(0deg)}
+    /* MAIN */
+    .main-content{flex:1;overflow:hidden;position:relative}
+    .app-panel{width:100%;height:100%;position:absolute;top:0;left:0;display:grid;grid-template-columns:280px 1fr 280px;grid-template-rows:1fr;opacity:0;pointer-events:none;transform:translateX(40px);transition:opacity var(--dur-slide) var(--squish-settle),transform var(--dur-slide) var(--squish-heavy);will-change:transform,opacity}
+    .app-panel.active{opacity:1;pointer-events:auto;transform:translateX(0)}
+    .app-panel.exit-left{transform:translateX(-40px);opacity:0}.app-panel.exit-right{transform:translateX(40px);opacity:0}
+    .app-panel.enter-left{transform:translateX(-40px)}.app-panel.enter-right{transform:translateX(40px)}
+    @keyframes panelChildIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .app-panel.active>:nth-child(1){animation:panelChildIn var(--dur-med) var(--squish-heavy) both 0ms}
+    .app-panel.active>:nth-child(2){animation:panelChildIn var(--dur-med) var(--squish-heavy) both 60ms}
+    .app-panel.active>:nth-child(3){animation:panelChildIn var(--dur-med) var(--squish-heavy) both 120ms}
+    .tools-panel,.market-panel{background:var(--surface);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--surface2) transparent;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;overscroll-behavior:contain;padding-bottom:20px}
+    .tools-panel{border-right:1px solid var(--border)}.market-panel{border-left:1px solid var(--border)}
+    .tools-panel::-webkit-scrollbar,.market-panel::-webkit-scrollbar{width:5px}
+    .tools-panel::-webkit-scrollbar-thumb,.market-panel::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:4px}
+    @keyframes ambientPulse{0%{background-position:0% 0%}50%{background-position:100% 100%}100%{background-position:0% 0%}}
+    .viewport-area{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;background:radial-gradient(ellipse at 30% 40%,color-mix(in srgb,var(--active-accent) 4%,transparent) 0%,transparent 60%),radial-gradient(ellipse at 70% 60%,color-mix(in srgb,var(--active-accent) 3%,transparent) 0%,transparent 50%),var(--bg);background-size:200% 200%;animation:ambientPulse 12s ease-in-out infinite}
+    .viewport-area canvas{width:100%!important;height:100%!important;display:block}
+    /* STATUS BAR */
+    .status-bar{display:flex;align-items:center;justify-content:space-between;height:var(--status-height);padding:0 20px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;font-size:11px;color:var(--text-dim);user-select:none}
+    .status-left{font-weight:500;transition:opacity var(--dur-fast) ease}.status-left.fading{opacity:0}
+    .shell-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted)}
+    .shell-badge::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green)}
+    /* TOAST */
+    .toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(20px);padding:10px 24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transition:all var(--dur-med) var(--squish);z-index:300;pointer-events:none}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    /* TASK OVERLAY */
+    .task-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:199}
+    .task-backdrop.visible{display:block;animation:fadeIn var(--dur-fast) ease}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .task-overlay{display:none;position:fixed;top:calc(var(--nav-height) + 8px);right:20px;width:380px;max-height:calc(100vh - var(--nav-height) - var(--status-height) - 30px);background:var(--surface);border:1px solid var(--border);border-radius:14px;z-index:200;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+    @keyframes overlayIn{from{opacity:0;transform:translateY(-20px) scale(0.96);filter:blur(4px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+    .task-overlay.visible{display:flex;flex-direction:column;animation:overlayIn var(--dur-med) var(--squish-heavy)}
+    .task-overlay-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+    .task-overlay-title{font-size:14px;font-weight:600}.task-overlay-count{font-size:11px;color:var(--text-muted)}
+    .task-overlay-body{flex:1;overflow-y:auto;padding:12px 16px;scrollbar-width:thin;scrollbar-color:var(--surface2) transparent}
+    .task-group-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);padding:10px 0 6px;margin-top:4px;border-top:1px solid var(--border)}
+    .task-group-title:first-child{border-top:none;margin-top:0}
+    .task-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:12px;line-height:1.4;opacity:0;transform:translateX(-10px)}
+    @keyframes taskItemIn{to{opacity:1;transform:translateX(0)}}
+    .task-overlay.visible .task-item{animation:taskItemIn var(--dur-med) var(--squish) forwards}
+    .task-item .t-icon{flex-shrink:0;font-size:11px;margin-top:1px}
+    .task-item.done .t-text{text-decoration:line-through;color:var(--text-muted)}.task-item.done .t-icon{color:var(--green)}
+    .task-item.todo{color:var(--text-dim)}.task-item.todo .t-icon{color:var(--red)}
+    .task-item.handoff{border-left:2px solid var(--red);padding-left:6px}.task-item.handoff .t-text{font-weight:600}
+    /* HANDOFF OVERLAY */
+    .handoff-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:299}
+    .handoff-backdrop.visible{display:flex;align-items:center;justify-content:center;animation:fadeIn var(--dur-fast) ease}
+    .handoff-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:440px;max-width:90vw;padding:28px;box-shadow:0 24px 64px rgba(0,0,0,0.5)}
+    .handoff-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(239,68,68,0.1);border:1px solid var(--red);border-radius:20px;font-size:11px;font-weight:700;color:var(--red);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:16px}
+    .handoff-title{font-size:18px;font-weight:700;margin-bottom:8px}
+    .handoff-squish-msg{font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.5;font-style:italic}
+    .handoff-export-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px}
+    .handoff-export-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px}
+    .handoff-export-format{font-size:14px;font-weight:600}
+    .handoff-steps-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;text-align:center}
+    .handoff-step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--text-dim)}
+    .handoff-step-num{width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);border-radius:50%;font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0}
+    .handoff-btns{display:flex;gap:10px;margin-top:20px}
+    .handoff-btn{flex:1;padding:12px;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all var(--dur-fast) var(--squish)}
+    .handoff-btn:active{transform:scale(0.95)}
+    .handoff-btn-export{background:var(--active-accent);color:#fff}.handoff-btn-export:hover{filter:brightness(1.1)}
+    .handoff-btn-keep{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim)}.handoff-btn-keep:hover{border-color:var(--text-muted);color:var(--text)}
+    .handoff-dismiss{display:flex;align-items:center;gap:6px;margin-top:14px;font-size:11px;color:var(--text-muted);cursor:pointer}.handoff-dismiss input{accent-color:var(--purple)}
+    /* UNITY CONSOLE */
+    .unity-viewport-wrap{display:flex;flex-direction:column;overflow:hidden}
+    .console-area{height:140px;background:var(--bg);border-top:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column}
+    .console-toolbar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--text-dim)}
+    .sdk-btn{padding:4px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;cursor:pointer;transition:all var(--dur-fast) var(--squish);margin-left:6px}
+    .sdk-btn:hover{border-color:var(--active-accent);color:var(--text)}.sdk-btn:active{transform:scale(0.93)}
+    .sdk-btn.build{border-color:var(--green);color:var(--green)}.sdk-btn.publish{border-color:var(--cyan);color:var(--cyan)}
+    .console-log{flex:1;overflow-y:auto;padding:6px 12px;font-family:'Consolas','Monaco',monospace;font-size:11px;scrollbar-width:thin;scrollbar-color:var(--surface2) transparent}
+    .log-info{color:var(--text-muted)}.log-ok{color:var(--green)}.log-warn{color:var(--orange)}.log-err{color:var(--red)}
+    /* BOOTH DETAIL */
+    .booth-detail{position:absolute;top:0;right:0;width:280px;height:100%;background:var(--surface);border-left:1px solid var(--border);z-index:50;transform:translateX(100%);transition:transform var(--dur-med) var(--squish-heavy);padding:20px;overflow-y:auto}
+    .booth-detail.open{transform:translateX(0)}
+    .booth-detail-close{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer}
+    .booth-detail-preview{width:100%;height:120px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:16px}
+    .booth-detail h3{font-size:16px;margin-bottom:6px}
+    .booth-detail .price-tag{font-size:14px;font-weight:700;color:var(--active-accent);margin-bottom:8px}
+    .booth-detail .detail-desc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:12px}
+    .booth-detail .detail-eco{font-size:11px;color:var(--blue);margin-bottom:16px}
+    .import-btn,.purchase-btn{width:100%;padding:10px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:8px;transition:all var(--dur-fast) var(--squish)}
+    .import-btn{background:var(--active-accent);color:#fff}.import-btn:active,.purchase-btn:active{transform:scale(0.95)}
+    .purchase-btn{background:var(--surface2);border:1px solid var(--red);color:var(--red)}
+    .handoff-banner{padding:8px 16px;background:rgba(239,68,68,0.06);border-bottom:1px solid rgba(239,68,68,0.15);font-size:11px;color:var(--text-dim);text-align:center}
+    .handoff-banner strong{color:var(--red);font-weight:600}
+    /* SHARED COMPONENTS */
+    .panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;letter-spacing:0.2px}
+    .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:16px 18px 8px}
+    .slider-row{display:flex;flex-wrap:wrap;align-items:center;padding:6px 18px;position:relative}
+    .slider-label{flex:1;font-size:12px;color:var(--text-dim)}
+    .slider-val{font-size:12px;font-weight:600;color:var(--text);min-width:32px;text-align:right;font-variant-numeric:tabular-nums;transition:transform var(--dur-fast) var(--squish),color var(--dur-fast) ease}
+    .slider-row:has(input:active) .slider-val{color:var(--active-accent);transform:scale(1.15)}
+    .slider-row input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:6px;margin-top:8px;border-radius:3px;outline:none;cursor:pointer;--fill:50%;background:linear-gradient(to right,color-mix(in srgb,var(--active-accent) 70%,transparent) var(--fill),var(--surface2) var(--fill))}
+    .slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--active-accent);border:3px solid var(--bg);box-shadow:0 2px 8px rgba(99,102,241,0.25);cursor:grab;transition:transform var(--dur-fast) var(--squish),box-shadow var(--dur-med) var(--squish-settle)}
+    .slider-row input[type="range"]:hover::-webkit-slider-thumb{transform:scale(1.1);box-shadow:0 2px 12px rgba(99,102,241,0.35),0 0 0 4px rgba(99,102,241,0.08)}
+    .slider-row input[type="range"]:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1.25);box-shadow:0 4px 16px rgba(99,102,241,0.4),0 0 0 6px rgba(99,102,241,0.12)}
+    .slider-row input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--active-accent);border:3px solid var(--bg);cursor:grab}
+    .slider-row input[type="range"]::-moz-range-track{height:6px;background:var(--surface2);border-radius:3px;border:none}
+    .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 18px}
+    .card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;user-select:none;transition:transform var(--dur-fast) var(--squish),border-color var(--dur-fast) ease,box-shadow var(--dur-med) var(--squish-settle),background var(--dur-fast) ease}
+    .card:hover{transform:translateY(-3px) scale(1.02);border-color:var(--active-accent);background:color-mix(in srgb,var(--active-accent) 5%,var(--surface2));box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+    .card:active{transform:translateY(0) scale(0.97)}.card.added{border-color:var(--green);background:rgba(16,185,129,0.06);position:relative}
+    .card.added::after{content:'✓';position:absolute;top:6px;right:8px;font-size:11px;font-weight:700;color:var(--green)}
+    .card.hidden{display:none}
+    .card-icon{font-size:24px;margin-bottom:6px;line-height:1}.card-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}.card-meta{font-size:10px;color:var(--text-muted)}
+    .tool-strip{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px}
+    @keyframes iconPulse{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    .tool-btn{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--text-dim);font-size:16px;cursor:pointer;transition:background var(--dur-fast) ease,border-color var(--dur-fast) ease,color var(--dur-fast) ease,transform var(--dur-fast) var(--squish)}
+    .tool-btn:hover{background:var(--surface2);border-color:var(--border);color:var(--text)}
+    .tool-btn.active{background:var(--surface2);border-color:var(--active-accent);color:var(--active-accent);animation:iconPulse var(--dur-med) var(--squish) 1}
+    .tool-btn:active{transform:scale(0.93)}
+    .cat-tabs{display:flex;flex-wrap:wrap;gap:4px;padding:10px 18px}
+    .cat-tab{display:inline-flex;align-items:center;padding:5px 12px;background:transparent;border:1px solid transparent;border-radius:7px;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all var(--dur-fast) var(--squish)}
+    .cat-tab:hover{color:var(--text);background:var(--surface2)}.cat-tab.active{background:var(--surface2);border-color:var(--border);color:var(--text)}.cat-tab:active{transform:scale(0.93)}
+    .filter-chips{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px}
+    .filter-chip{display:inline-flex;align-items:center;padding:4px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text-dim);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all var(--dur-fast) var(--squish)}
+    .filter-chip:hover{border-color:var(--active-accent);color:var(--text)}
+    .filter-chip.active{background:color-mix(in srgb,var(--active-accent) 12%,transparent);border-color:var(--active-accent);color:var(--active-accent);transform:scale(1.03)}
+    .filter-chip:active{transform:scale(0.93)}
+    .hier-node{font-size:12px;padding:6px 8px;border-radius:4px;cursor:pointer;color:var(--text-dim);border-left:2px solid transparent;transition:background var(--dur-fast) ease,border-color var(--dur-fast) ease}
+    .hier-node:hover{background:var(--surface2);border-left-color:var(--active-accent)}.hier-node.active{color:var(--cyan);background:rgba(34,211,238,0.06);border-left-color:var(--cyan)}
+    .search-input{width:calc(100% - 36px);margin:12px 18px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color var(--dur-fast) ease,box-shadow var(--dur-fast) ease}
+    .search-input:focus{border-color:var(--active-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--active-accent) 10%,transparent)}
+    .sort-option{font-size:12px;color:var(--text-dim);cursor:pointer;padding:4px 18px;transition:color var(--dur-fast) ease}.sort-option:hover{color:var(--text)}.sort-option.active{color:var(--cyan)}
+    .perf-row{font-size:11px;display:flex;justify-content:space-between;padding:3px 18px}
+    .swatch-row{display:flex;gap:6px;padding:4px 18px 12px}
+    .swatch{width:28px;height:28px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:border-color var(--dur-fast) ease,transform var(--dur-fast) var(--squish)}
+    .swatch:hover{transform:scale(1.15)}.swatch.active{border-color:var(--active-accent)}.swatch:active{transform:scale(0.9)}
+    .static-info{font-size:11px;color:var(--text-dim);padding:2px 18px;line-height:1.8}
+    .booth-no-results{display:none;grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);font-size:13px;font-style:italic}.booth-no-results.show{display:block}
+    .export-btn,.send-unity-btn{width:calc(100% - 36px);margin:4px 18px;padding:10px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all var(--dur-fast) var(--squish)}
+    .export-btn{background:var(--active-accent);color:#fff}.export-btn:hover{filter:brightness(1.1)}.export-btn:active{transform:scale(0.95)}
+    .send-unity-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim)}.send-unity-btn:hover{border-color:var(--active-accent);color:var(--text)}.send-unity-btn:active{transform:scale(0.95)}
+    /* L7. Canvas touch */
+    .viewport-area{touch-action:none}
+
+    /* L4. Mobile panel bar (desktop hidden) */
+    .mobile-panel-bar{display:none}
+
+    /* ═══ RESPONSIVE: TABLET ═══ */
+    @media(max-width:1024px){
+      .app-panel.active{grid-template-columns:240px 1fr 240px}
+    }
+
+    /* ═══ RESPONSIVE: MOBILE ═══ */
+    @media(max-width:768px){
+      /* B4. Unlock scroll */
+      html,body{overflow:auto;overflow-x:hidden}
+      .app-container{overflow-x:hidden}.main-content{overflow-x:hidden}
+
+      /* B1. Single column */
+      .app-panel.active{grid-template-columns:1fr;grid-template-rows:1fr}
+      .tools-panel,.market-panel{display:none}
+      .tools-panel.mobile-show,.market-panel.mobile-show{display:block!important;position:fixed;top:var(--nav-height);left:0;right:0;bottom:calc(var(--status-height) + 52px);z-index:80;width:100%;border:none;background:var(--surface)}
+
+      /* B2. Nav collapse */
+      .hub-dots{display:none}
+      .logo-text{font-size:16px}
+      .app-switcher{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+      .app-switcher::-webkit-scrollbar{display:none}
+      .app-tab{padding:8px 12px;font-size:12px}
+
+      /* B3. Overlays → bottom sheets */
+      .task-overlay{top:auto;bottom:0;right:0;left:0;width:100%;max-height:70vh;border-radius:16px 16px 0 0}
+      .booth-detail{top:auto;bottom:0;left:0;right:0;width:100%;height:auto;max-height:70vh;border-radius:16px 16px 0 0;position:fixed;z-index:85;transform:translateY(100%)}
+      .booth-detail.open{transform:translateY(0)}
+
+      /* M1. Booth grid */
+      #boothGrid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;padding:12px!important}
+
+      /* M3. Touch targets */
+      .pentagon-btn{width:44px;height:44px;font-size:16px}
+      .tool-btn{width:48px;height:48px;font-size:18px}
+      .cat-tab{padding:8px 14px;min-height:40px}
+      .filter-chip{padding:8px 14px}
+      .hier-node{padding:10px 10px;min-height:40px}
+      .swatch{width:36px;height:36px}
+      .slider-row input[type="range"]::-webkit-slider-thumb{width:28px;height:28px}
+      .slider-row input[type="range"]::-moz-range-thumb{width:28px;height:28px}
+      .sdk-btn{padding:8px 14px;font-size:12px}
+      .sort-option{padding:8px 18px;min-height:36px}
+
+      /* M4. Handoff modal */
+      .handoff-modal{padding:20px;width:calc(100vw - 32px)}
+      .handoff-title{font-size:16px}.handoff-step{font-size:14px}
+      .handoff-btns{flex-direction:column}
+
+      /* M5. Unity console */
+      .unity-viewport-wrap{display:flex;flex-direction:column}
+      .console-area{height:120px}.console-toolbar{flex-wrap:wrap;gap:6px}
+
+      /* M6. Status bar */
+      .status-bar{padding:0 12px;z-index:91}
+      .status-center{display:none}
+
+      /* M7. Viewport height */
+      .viewport-area{min-height:50vh}
+
+      /* L1. Slider breathing */
+      .slider-row{padding:8px 14px}.slider-label{font-size:13px}.slider-val{font-size:13px}
+
+      /* L2. Panel headers */
+      .panel-header{padding:16px 14px;font-size:14px}
+      .section-title{padding:14px 14px 6px;font-size:11px}
+
+      /* L3. Font bumps */
+      .perf-row{font-size:12px;padding:4px 14px}
+      .static-info{font-size:12px;padding:4px 14px}
+      .console-log{font-size:12px}
+
+      /* L4. Mobile panel bar */
+      .mobile-panel-bar{display:flex;justify-content:center;gap:4px;padding:6px 12px;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:var(--status-height);left:0;right:0;z-index:90}
+      .mpb-btn{flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text-dim);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-align:center;transition:all var(--dur-fast) var(--squish)}
+      .mpb-btn.active{border-color:var(--active-accent);color:var(--active-accent);background:color-mix(in srgb,var(--active-accent) 8%,var(--surface2))}
+      .mpb-btn:active{transform:scale(0.95)}
+
+      /* L6. Panel transitions */
+      .tools-panel,.market-panel{transition:transform var(--dur-med) var(--squish-heavy),opacity var(--dur-med) ease}
+
+      /* L8. Backdrop touch */
+      .handoff-backdrop.visible,.task-backdrop.visible{touch-action:auto}
+    }
+
+    /* ═══ RESPONSIVE: PHONE ═══ */
+    @media(max-width:480px){
+      #boothGrid{grid-template-columns:1fr!important}
+      .status-bar{height:28px;font-size:10px}
+      .app-tab{padding:6px 10px;font-size:11px}
+      .top-nav{padding:0 10px;height:48px}
+      .mobile-panel-bar{padding:4px 8px}
+      .mpb-btn{padding:8px;font-size:11px}
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <nav class="top-nav">
+    <div class="nav-left">
+      <div class="hub-dots"><span class="hub-dot blue"></span><span class="hub-dot green"></span><span class="hub-dot purple"></span><span class="hub-dot red"></span><span class="hub-dot orange"></span></div>
+      <span class="logo-text">squish</span>
+    </div>
+    <div class="nav-center">
+      <div class="app-switcher">
+        <div class="pill-indicator"></div>
+        <button class="app-tab active" data-index="0"><span class="tab-icon">🧊</span> Blender</button>
+        <button class="app-tab" data-index="1"><span class="tab-icon">👤</span> VRoid</button>
+        <button class="app-tab" data-index="2"><span class="tab-icon">🏪</span> Booth</button>
+        <button class="app-tab" data-index="3"><span class="tab-icon">⚙️</span> Unity</button>
+        <button class="app-tab" data-index="4"><span class="tab-icon">✨</span> Tafi</button>
+      </div>
+    </div>
+    <div class="nav-right"><button class="pentagon-btn" id="taskToggle" title="Tasks">📋</button></div>
+  </nav>
+
+  <div class="main-content">
+    <!-- BLENDER -->
+    <div class="app-panel active" data-app="0">
+      <div class="tools-panel">
+        <div class="panel-header">Tools</div>
+        <div class="tool-strip">
+          <button class="tool-btn active" data-tool="move" title="Move">↕</button><button class="tool-btn" data-tool="scale" title="Scale">⤡</button><button class="tool-btn" data-tool="rotate" title="Rotate">↻</button>
+          <button class="tool-btn" data-tool="edit" title="Edit">✎</button><button class="tool-btn" data-tool="sculpt" title="Sculpt">🗻</button><button class="tool-btn" data-tool="paint" title="Paint">🎨</button>
+          <button class="tool-btn" data-tool="addmesh" title="Add Mesh">⊞</button><button class="tool-btn" data-tool="armature" title="Rig">🦴</button>
+        </div>
+        <div class="section-title">Transform</div>
+        <div class="slider-row"><span class="slider-label">Loc X</span><span class="slider-val" id="pLX">0</span><input type="range" min="-10" max="10" value="0" step="0.1" id="sLX"></div>
+        <div class="slider-row"><span class="slider-label">Loc Y</span><span class="slider-val" id="pLY">0.5</span><input type="range" min="-10" max="10" value="0.5" step="0.1" id="sLY"></div>
+        <div class="slider-row"><span class="slider-label">Loc Z</span><span class="slider-val" id="pLZ">0</span><input type="range" min="-10" max="10" value="0" step="0.1" id="sLZ"></div>
+        <div class="section-title">Rotation</div>
+        <div class="slider-row"><span class="slider-label">Rot X</span><span class="slider-val" id="pRX">0</span><input type="range" min="0" max="360" value="0" id="sRX"></div>
+        <div class="slider-row"><span class="slider-label">Rot Y</span><span class="slider-val" id="pRY">0</span><input type="range" min="0" max="360" value="0" id="sRY"></div>
+        <div class="slider-row"><span class="slider-label">Rot Z</span><span class="slider-val" id="pRZ">0</span><input type="range" min="0" max="360" value="0" id="sRZ"></div>
+        <div class="section-title">Scale</div>
+        <div class="slider-row"><span class="slider-label">Uniform</span><span class="slider-val" id="pSc">1</span><input type="range" min="0.1" max="5" value="1" step="0.1" id="sSc"></div>
+        <div class="section-title">Object</div>
+        <div class="static-info" id="bObjData">Name: Cube · Type: Mesh · Material: Default</div>
+        <div style="padding:12px 18px"><button class="export-btn" id="bExport">📦 Export .glb</button><button class="send-unity-btn" id="bSend">⚙️ Send to Unity</button></div>
+      </div>
+      <div class="viewport-area" id="blender-viewport"></div>
+      <div class="market-panel">
+        <div class="panel-header">Mesh Library</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">🟪</div><div class="card-name">Cube</div><div class="card-meta">Primitive</div></div>
+          <div class="card"><div class="card-icon">🔵</div><div class="card-name">Sphere</div><div class="card-meta">Primitive</div></div>
+          <div class="card"><div class="card-icon">🟢</div><div class="card-name">Cylinder</div><div class="card-meta">Primitive</div></div>
+          <div class="card"><div class="card-icon">🔺</div><div class="card-name">Cone</div><div class="card-meta">Primitive</div></div>
+          <div class="card"><div class="card-icon">🍩</div><div class="card-name">Torus</div><div class="card-meta">Primitive</div></div>
+          <div class="card"><div class="card-icon">📦</div><div class="card-name">Imported</div><div class="card-meta">Custom</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VROID -->
+    <div class="app-panel" data-app="1">
+      <div class="tools-panel">
+        <div class="panel-header">Customize</div>
+        <div class="cat-tabs"><button class="cat-tab active">👤 Face</button><button class="cat-tab">💇 Hair</button><button class="cat-tab">🧍 Body</button><button class="cat-tab">👗 Outfit</button></div>
+        <div class="section-title">Face Shape</div>
+        <div class="slider-row"><span class="slider-label">Face Width</span><span class="slider-val">50</span><input type="range" min="0" max="100" value="50" data-vroid="faceWidth"></div>
+        <div class="slider-row"><span class="slider-label">Jaw Shape</span><span class="slider-val">40</span><input type="range" min="0" max="100" value="40" data-vroid="jawShape"></div>
+        <div class="slider-row"><span class="slider-label">Chin Length</span><span class="slider-val">55</span><input type="range" min="0" max="100" value="55" data-vroid="chinLength"></div>
+        <div class="section-title">Eyes</div>
+        <div class="slider-row"><span class="slider-label">Eye Size</span><span class="slider-val">65</span><input type="range" min="0" max="100" value="65" data-vroid="eyeSize"></div>
+        <div class="slider-row"><span class="slider-label">Eye Spacing</span><span class="slider-val">50</span><input type="range" min="0" max="100" value="50" data-vroid="eyeSpacing"></div>
+        <div class="slider-row"><span class="slider-label">Iris Color</span><span class="slider-val">70</span><input type="range" min="0" max="100" value="70" data-vroid="irisColor"></div>
+        <div class="section-title">Hair</div>
+        <div class="slider-row"><span class="slider-label">Hair Length</span><span class="slider-val">70</span><input type="range" min="0" max="100" value="70" data-vroid="hairLength"></div>
+        <div class="slider-row"><span class="slider-label">Hair Volume</span><span class="slider-val">55</span><input type="range" min="0" max="100" value="55" data-vroid="hairVolume"></div>
+        <div class="slider-row"><span class="slider-label">Bangs Length</span><span class="slider-val">60</span><input type="range" min="0" max="100" value="60" data-vroid="bangsLength"></div>
+        <div class="section-title">Body</div>
+        <div class="slider-row"><span class="slider-label">Height</span><span class="slider-val">50</span><input type="range" min="0" max="100" value="50" data-vroid="height"></div>
+        <div class="slider-row"><span class="slider-label">Body Width</span><span class="slider-val">45</span><input type="range" min="0" max="100" value="45" data-vroid="bodyWidth"></div>
+        <div class="slider-row"><span class="slider-label">Arm Length</span><span class="slider-val">50</span><input type="range" min="0" max="100" value="50" data-vroid="armLength"></div>
+        <div style="padding:12px 18px"><button class="export-btn" id="vExport">📤 Export .glb</button><button class="send-unity-btn" id="vSend">⚙️ Send to Unity</button></div>
+      </div>
+      <div class="viewport-area" id="vroid-viewport"></div>
+      <div class="market-panel">
+        <div class="panel-header">Presets · 53,000+ on Booth</div>
+        <div class="section-title">Presets</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">👧</div><div class="card-name">Anime Girl</div><div class="card-meta">Base preset</div></div>
+          <div class="card"><div class="card-icon">👦</div><div class="card-name">Anime Boy</div><div class="card-meta">Base preset</div></div>
+          <div class="card"><div class="card-icon">🧝</div><div class="card-name">Fantasy Elf</div><div class="card-meta">Base preset</div></div>
+          <div class="card"><div class="card-icon">🐱</div><div class="card-name">Cat Ears</div><div class="card-meta">Base preset</div></div>
+        </div>
+        <div class="section-title">Outfits</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">👗</div><div class="card-name">School Uniform</div><div class="card-meta">Outfit</div></div>
+          <div class="card"><div class="card-icon">🧥</div><div class="card-name">Hoodie</div><div class="card-meta">Outfit</div></div>
+          <div class="card"><div class="card-icon">👘</div><div class="card-name">Kimono</div><div class="card-meta">Outfit</div></div>
+          <div class="card"><div class="card-icon">🦸</div><div class="card-name">Hero Suit</div><div class="card-meta">Outfit</div></div>
+        </div>
+        <div class="section-title">Accessories</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">🎀</div><div class="card-name">Hair Bow</div><div class="card-meta">Acc</div></div>
+          <div class="card"><div class="card-icon">👓</div><div class="card-name">Glasses</div><div class="card-meta">Acc</div></div>
+          <div class="card"><div class="card-icon">🎧</div><div class="card-name">Headphones</div><div class="card-meta">Acc</div></div>
+          <div class="card"><div class="card-icon">💍</div><div class="card-name">Ring Set</div><div class="card-meta">Acc</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOTH -->
+    <div class="app-panel" data-app="2">
+      <div class="tools-panel">
+        <div class="panel-header">Search &amp; Filter</div>
+        <input type="text" class="search-input" id="bSearch" placeholder="Search avatars...">
+        <div class="section-title">Style</div>
+        <div class="filter-chips" data-fg="style"><span class="filter-chip active" data-val="Anime">Anime</span><span class="filter-chip" data-val="Furry">Furry</span><span class="filter-chip" data-val="Western">Western</span><span class="filter-chip" data-val="Chibi">Chibi</span></div>
+        <div class="section-title">Price</div>
+        <div class="filter-chips" data-fg="price"><span class="filter-chip" data-val="free">Free</span><span class="filter-chip" data-val="u3k">Under ¥3000</span><span class="filter-chip" data-val="3-8k">¥3000–8000</span><span class="filter-chip" data-val="8k+">¥8000+</span></div>
+        <div class="section-title">Platform</div>
+        <div class="filter-chips" data-fg="plat"><span class="filter-chip" data-val="PC">PC</span><span class="filter-chip" data-val="Quest">Quest</span><span class="filter-chip" data-val="Cross">Cross</span></div>
+        <div class="section-title">Sort By</div>
+        <div class="sort-option active">Popular</div><div class="sort-option">Newest</div><div class="sort-option">Price ↑</div><div class="sort-option">Price ↓</div>
+      </div>
+      <div class="viewport-area" style="align-items:stretch;justify-content:flex-start;overflow-y:auto;position:relative">
+        <div class="card-grid" id="boothGrid" style="grid-template-columns:repeat(3,1fr);gap:12px;padding:20px">
+          <div class="card booth-card" data-name="Manuka" data-style="Anime" data-price="4500" data-plat="PC,Quest"><div class="card-icon">🍯</div><div class="card-name">Manuka</div><div class="card-meta">¥4,500</div><div class="card-meta">Anime · 9,000+ items</div></div>
+          <div class="card booth-card" data-name="Kikyo" data-style="Anime" data-price="3800" data-plat="PC,Quest"><div class="card-icon">🌸</div><div class="card-name">Kikyo</div><div class="card-meta">¥3,800</div><div class="card-meta">Anime · 10,882+ items</div></div>
+          <div class="card booth-card" data-name="Lime" data-style="Anime" data-price="5200" data-plat="PC"><div class="card-icon">🍋</div><div class="card-name">Lime</div><div class="card-meta">¥5,200</div><div class="card-meta">Anime · 200+ items</div></div>
+          <div class="card booth-card" data-name="Rusk" data-style="Chibi" data-price="3200" data-plat="PC,Quest"><div class="card-icon">🍞</div><div class="card-name">Rusk</div><div class="card-meta">¥3,200</div><div class="card-meta">Chibi · 150+ items</div></div>
+          <div class="card booth-card" data-name="Shinra" data-style="Anime" data-price="6000" data-plat="PC"><div class="card-icon">⚔️</div><div class="card-name">Shinra</div><div class="card-meta">¥6,000</div><div class="card-meta">Anime · 9,767+ items</div></div>
+          <div class="card booth-card" data-name="Rex" data-style="Furry" data-price="0" data-plat="PC,Quest"><div class="card-icon">🦊</div><div class="card-name">Rex</div><div class="card-meta">FREE</div><div class="card-meta">Furry · 80+ items</div></div>
+          <div class="card booth-card" data-name="Selestia" data-style="Anime" data-price="7500" data-plat="PC"><div class="card-icon">✨</div><div class="card-name">Selestia</div><div class="card-meta">¥7,500</div><div class="card-meta">Anime · 1000s items</div></div>
+          <div class="card booth-card" data-name="Moe" data-style="Anime" data-price="2800" data-plat="PC,Quest"><div class="card-icon">🎀</div><div class="card-name">Moe</div><div class="card-meta">¥2,800</div><div class="card-meta">Anime · 90+ items</div></div>
+          <div class="card booth-card" data-name="Rindo" data-style="Western" data-price="5800" data-plat="PC"><div class="card-icon">🐉</div><div class="card-name">Rindo</div><div class="card-meta">¥5,800</div><div class="card-meta">Western · 300+ items</div></div>
+        </div>
+        <div class="booth-no-results" id="bNoRes">No results match your filters.</div>
+        <div class="booth-detail" id="bDetail">
+          <button class="booth-detail-close" id="bDetailClose">✕</button>
+          <div class="booth-detail-preview" id="bdPrev" style="background:var(--surface2)"></div>
+          <h3 id="bdName">—</h3><div class="price-tag" id="bdPrice">—</div>
+          <div class="detail-desc" id="bdDesc">—</div><div class="detail-eco" id="bdEco">—</div>
+          <button class="import-btn" id="bImport">⬇ Import to Editor</button>
+          <button class="purchase-btn" id="bPurchase">🔴 Purchase on Booth.pm</button>
+        </div>
+      </div>
+      <div class="market-panel" style="display:flex;flex-direction:column">
+        <div class="panel-header">Selected Items</div>
+        <div id="wlEmpty" style="font-size:12px;color:var(--text-muted);text-align:center;padding:32px 16px;font-style:italic">Click items to add · double-click for wishlist</div>
+        <div class="section-title">Wishlist</div>
+        <div class="card-grid" id="bWishlist"></div>
+        <div style="font-size:12px;color:var(--text-dim);border-top:1px solid var(--border);padding:12px 18px;margin-top:auto"><div>Items: <span id="wlCount">0</span></div><div>Est. Total: <span id="wlTotal">¥0</span></div></div>
+      </div>
+    </div>
+
+    <!-- UNITY -->
+    <div class="app-panel" data-app="3">
+      <div class="tools-panel">
+        <div class="panel-header">Hierarchy</div>
+        <div style="padding:8px" id="uHier">
+          <div class="hier-node active" style="padding-left:8px" data-hier="Avatar_Root">▼ 🎮 Avatar_Root</div>
+          <div class="hier-node" style="padding-left:24px" data-hier="Armature">▼ 🦴 Armature</div>
+          <div class="hier-node" style="padding-left:40px" data-hier="Hips">▼ 🔵 Hips</div>
+          <div class="hier-node" style="padding-left:56px" data-hier="Spine">▶ 🔵 Spine</div>
+          <div class="hier-node" style="padding-left:56px" data-hier="Chest">▶ 🔵 Chest</div>
+          <div class="hier-node" style="padding-left:56px" data-hier="Head">▶ 🔵 Head</div>
+          <div class="hier-node" style="padding-left:56px" data-hier="Left Arm">▶ 🔵 Left Arm</div>
+          <div class="hier-node" style="padding-left:56px" data-hier="Right Arm">▶ 🔵 Right Arm</div>
+          <div class="hier-node" style="padding-left:24px" data-hier="Body">▶ 🔷 Body</div>
+          <div class="hier-node" style="padding-left:24px" data-hier="Hair">▶ 🔷 Hair</div>
+          <div class="hier-node" style="padding-left:24px" data-hier="Outfit">▶ 🔷 Outfit</div>
+        </div>
+        <div class="section-title">Inspector</div>
+        <div class="cat-tabs"><button class="cat-tab active" data-insp="d">Descriptor</button><button class="cat-tab" data-insp="p">PhysBones</button><button class="cat-tab" data-insp="e">Expressions</button><button class="cat-tab" data-insp="m">Materials</button></div>
+        <div id="uInsp" style="font-size:11px;color:var(--cyan);font-weight:600;padding:6px 18px">Selected: Avatar_Root</div>
+        <div class="section-title">Performance (PC Good)</div>
+        <div class="perf-row"><span style="color:var(--text-dim)">Overall</span><span style="color:var(--green);font-weight:600">Good</span></div>
+        <div class="perf-row"><span style="color:var(--text-dim)">Polygons</span><span style="color:var(--green);font-weight:600">18,500 / 70K</span></div>
+        <div class="perf-row"><span style="color:var(--text-dim)">Materials</span><span style="color:var(--orange);font-weight:600">8 / 32</span></div>
+        <div class="perf-row"><span style="color:var(--text-dim)">PhysBones</span><span style="color:var(--green);font-weight:600">6 / 8</span></div>
+        <div class="perf-row"><span style="color:var(--text-dim)">VRAM</span><span style="color:var(--green);font-weight:600">42 MB</span></div>
+        <div class="perf-row"><span style="color:var(--text-dim)">Quest Rank</span><span style="color:var(--orange);font-weight:600">Medium</span></div>
+      </div>
+      <div class="unity-viewport-wrap">
+        <div class="handoff-banner">🔴 <strong>Planning cockpit.</strong> Squish helps you plan — the real build happens in Unity 2022.3.22f1</div>
+        <div class="viewport-area" id="unity-viewport" style="flex:1"></div>
+        <div class="console-area">
+          <div class="console-toolbar"><span>Console · SDK 3.10.2</span><div><button class="sdk-btn build" id="uBuild">▶ Build</button><button class="sdk-btn publish" id="uPublish">🚀 Publish</button></div></div>
+          <div class="console-log" id="cLog">
+            <div class="log-info">[Info] VRChat SDK 3.10.2 loaded</div><div class="log-ok">[OK] Avatar descriptor found</div><div class="log-ok">[OK] Humanoid rig validated</div>
+            <div class="log-warn">[Warn] 8 materials — merge for Quest</div><div class="log-ok">[OK] PhysBones: 6 (within limits)</div><div class="log-info">[Info] Rank: Good (PC) / Medium (Quest)</div>
+          </div>
+        </div>
+      </div>
+      <div class="market-panel">
+        <div class="panel-header">SDK Components</div>
+        <div class="section-title">Prefabs</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">🎮</div><div class="card-name">VRC Descriptor</div><div class="card-meta">Required</div></div>
+          <div class="card"><div class="card-icon">🦴</div><div class="card-name">PhysBone</div><div class="card-meta">Physics</div></div>
+          <div class="card"><div class="card-icon">😊</div><div class="card-name">Expression Menu</div><div class="card-meta">UI</div></div>
+          <div class="card"><div class="card-icon">🎭</div><div class="card-name">FX Layer</div><div class="card-meta">Animation</div></div>
+        </div>
+        <div class="section-title">Animations</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">👋</div><div class="card-name">Wave</div><div class="card-meta">Emote</div></div>
+          <div class="card"><div class="card-icon">💃</div><div class="card-name">Dance 1</div><div class="card-meta">Emote</div></div>
+          <div class="card"><div class="card-icon">🤷</div><div class="card-name">Shrug</div><div class="card-meta">Gesture</div></div>
+          <div class="card"><div class="card-icon">✌️</div><div class="card-name">Peace Sign</div><div class="card-meta">Gesture</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAFI -->
+    <div class="app-panel" data-app="4">
+      <div class="tools-panel">
+        <div class="panel-header">Components · 400+</div>
+        <div class="cat-tabs"><button class="cat-tab active">🧍 Body</button><button class="cat-tab">👤 Head</button><button class="cat-tab">💇 Hair</button><button class="cat-tab">👗 Outfit</button><button class="cat-tab">💍 Acc</button></div>
+        <div class="section-title">Body Type</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">🧍</div><div class="card-name">Athletic</div></div><div class="card"><div class="card-icon">🧍‍♀️</div><div class="card-name">Slim</div></div>
+          <div class="card"><div class="card-icon">🧑</div><div class="card-name">Average</div></div><div class="card"><div class="card-icon">💪</div><div class="card-name">Muscular</div></div>
+          <div class="card"><div class="card-icon">🧒</div><div class="card-name">Petite</div></div><div class="card"><div class="card-icon">🧓</div><div class="card-name">Tall</div></div>
+        </div>
+        <div class="section-title">Skin Color</div>
+        <div class="swatch-row" id="tSwatches"><div class="swatch active" style="background:#f4d0b0" data-color="#f4d0b0"></div><div class="swatch" style="background:#d4a078" data-color="#d4a078"></div><div class="swatch" style="background:#8d5524" data-color="#8d5524"></div><div class="swatch" style="background:#3b1f0a" data-color="#3b1f0a"></div><div class="swatch" style="background:#e8b4c8" data-color="#e8b4c8"></div></div>
+        <div class="section-title">Scale</div>
+        <div class="slider-row"><span class="slider-label">Height</span><span class="slider-val">100</span><input type="range" min="80" max="120" value="100" data-tafi="height"></div>
+        <div class="slider-row"><span class="slider-label">Width</span><span class="slider-val">100</span><input type="range" min="80" max="120" value="100" data-tafi="width"></div>
+        <div class="section-title">Material</div>
+        <div class="static-info">Shader: Toon Lit · Outline: 0.5px<br>Slots: 3 per VRChat account<br>Source: Daz 3D (5M+ assets)</div>
+        <div style="padding:12px 18px"><button class="export-btn" id="tExport">🚀 Export .glb</button><button class="send-unity-btn" id="tSend">⚙️ Send to Unity</button></div>
+      </div>
+      <div class="viewport-area" id="tafi-viewport"></div>
+      <div class="market-panel">
+        <div class="panel-header">Parts Library</div>
+        <div class="section-title">Heads</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">😊</div><div class="card-name">Round Face</div><div class="card-meta">Head</div></div><div class="card"><div class="card-icon">😎</div><div class="card-name">Angular</div><div class="card-meta">Head</div></div>
+          <div class="card"><div class="card-icon">🥰</div><div class="card-name">Soft</div><div class="card-meta">Head</div></div><div class="card"><div class="card-icon">😈</div><div class="card-name">Edgy</div><div class="card-meta">Head</div></div>
+        </div>
+        <div class="section-title">Hair</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">💇‍♀️</div><div class="card-name">Long Straight</div><div class="card-meta">Hair</div></div><div class="card"><div class="card-icon">💇</div><div class="card-name">Short Messy</div><div class="card-meta">Hair</div></div>
+          <div class="card"><div class="card-icon">🦱</div><div class="card-name">Curly</div><div class="card-meta">Hair</div></div><div class="card"><div class="card-icon">🧑‍🦲</div><div class="card-name">Buzz Cut</div><div class="card-meta">Hair</div></div>
+        </div>
+        <div class="section-title">Outfits</div>
+        <div class="card-grid">
+          <div class="card"><div class="card-icon">👕</div><div class="card-name">Casual Tee</div><div class="card-meta">Outfit</div></div><div class="card"><div class="card-icon">🧥</div><div class="card-name">Jacket</div><div class="card-meta">Outfit</div></div>
+          <div class="card"><div class="card-icon">👗</div><div class="card-name">Dress</div><div class="card-meta">Outfit</div></div><div class="card"><div class="card-icon">🦸</div><div class="card-name">Armor Set</div><div class="card-meta">Outfit</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASK OVERLAY -->
+    <div class="task-backdrop" id="taskBG"></div>
+    <div class="task-overlay" id="taskOL">
+      <div class="task-overlay-header"><div class="task-overlay-title">Squish — Build Tracker</div><div class="task-overlay-count">🟢 in-browser · 🔴 real app</div></div>
+      <div class="task-overlay-body">
+        <div class="task-group-title">🧊 Blender</div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Transform tools (move/scale/rotate)</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Add primitives to scene</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Properties panel sync</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Export scene as .glb</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">UV unwrap → real Blender</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Weight painting → real Blender</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Shape keys (visemes) → real Blender</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Sculpt / Modifiers → real Blender</span></div>
+        <div class="task-group-title">👤 VRoid</div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">12-param slider morphing</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Hair length/volume/color</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Export base model as .glb</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Hair strand editing → real VRoid</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Expressions + spring bones → real VRoid</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">VRM export with metadata → real VRoid</span></div>
+        <div class="task-group-title">🏪 Booth</div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Search + filter + sort + wishlist</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Ecosystem comparison</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Purchase → real Booth.pm</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Download files → local disk</span></div>
+        <div class="task-group-title">⚙️ Unity + SDK</div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Hierarchy + inspector preview</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Performance rank calculator</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Build/publish simulation</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Full SDK setup → real Unity</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">PhysBones + Expressions → real Unity</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Build &amp; upload → real Unity + SDK</span></div>
+        <div class="task-group-title">✨ Tafi</div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Component selection + color/scale</span></div>
+        <div class="task-item done"><span class="t-icon">🟢</span><span class="t-text">Export as .glb</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Final optimization → Tafi / Unity</span></div>
+        <div class="task-item handoff todo"><span class="t-icon">🔴</span><span class="t-text">Direct VRChat upload → real Tafi</span></div>
+      </div>
+    </div>
+
+    <!-- HANDOFF OVERLAY -->
+    <div class="handoff-backdrop" id="hoBG">
+      <div class="handoff-modal">
+        <div class="handoff-badge">🔴 HANDOFF POINT</div>
+        <div class="handoff-title" id="hoTitle">—</div>
+        <div class="handoff-squish-msg" id="hoMsg">You've hit the edge of what Squish can do for this step. But that's okay — Squish got you this far.</div>
+        <div class="handoff-export-box"><div class="handoff-export-label">Your work, packed up</div><div class="handoff-export-format" id="hoFmt">📦 Export .glb</div></div>
+        <div class="handoff-steps-title">── what to do next ──</div>
+        <div id="hoSteps"></div>
+        <div class="handoff-btns"><button class="handoff-btn handoff-btn-export" id="hoExport">Export Now</button><button class="handoff-btn handoff-btn-keep" id="hoKeep">Keep Working</button></div>
+        <label class="handoff-dismiss"><input type="checkbox" id="hoDismiss"> Don't remind me for this step</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE PANEL BAR -->
+  <div class="mobile-panel-bar" id="mobilePanelBar">
+    <button class="mpb-btn" data-panel="tools">🔧 Tools</button>
+    <button class="mpb-btn active" data-panel="viewport">👁 View</button>
+    <button class="mpb-btn" data-panel="market">🛒 Market</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="status-bar">
+    <div class="status-left" id="statusName">Blender</div>
+    <div class="status-center"><span class="shell-badge">Shell Mode</span></div>
+    <div class="status-right">squish 3</div>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.162.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.162.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+const APP_NAMES=['Blender','VRoid','Booth','Unity','Tafi'],APP_ACCENTS=['#4a9eff','#f472b6','#fb923c','#34d399','#22d3ee'];
+const container=document.querySelector('.app-container'),tabs=document.querySelectorAll('.app-tab'),pill=document.querySelector('.pill-indicator'),panels=document.querySelectorAll('.app-panel'),statusName=document.getElementById('statusName');
+const scenes={},renderers={},cameras={},controlsMap={};
+let currentApp=0;
+
+// TOAST
+function showToast(msg,dur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
+
+// SCENE FACTORY
+function createScene(id,o={}){const el=document.getElementById(id);if(!el)return null;const s=new THREE.Scene();s.background=new THREE.Color(0x0a0a0f);const r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;el.appendChild(r.domElement);const c=new THREE.PerspectiveCamera(50,1,0.1,100);c.position.set(o.camX||3,o.camY||2.5,o.camZ||3);const ct=new OrbitControls(c,r.domElement);ct.enableDamping=true;ct.dampingFactor=0.08;ct.target.set(0,o.targetY||0,0);ct.update();s.add(new THREE.AmbientLight(0x6366f1,0.3));const d=new THREE.DirectionalLight(0xffffff,1.2);d.position.set(3,5,4);d.castShadow=true;d.shadow.mapSize.set(1024,1024);s.add(d);const f=new THREE.DirectionalLight(0x0ea5e9,0.3);f.position.set(-3,2,-2);s.add(f);s.add(new THREE.GridHelper(10,20,0x2a2a3a,0x1a1a26));function resize(){const w=el.clientWidth,h=el.clientHeight;if(!w||!h)return;c.aspect=w/h;c.updateProjectionMatrix();r.setSize(w,h)}resize();window.addEventListener('resize',resize);new ResizeObserver(resize).observe(el);scenes[id]=s;renderers[id]=r;cameras[id]=c;controlsMap[id]=ct;return{scene:s,renderer:r,camera:c,controls:ct}}
+
+// GLB EXPORT
+function exportGLB(scene,fn){const ex=new GLTFExporter();ex.parse(scene,(res)=>{const b=new Blob([res],{type:'application/octet-stream'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href);showToast('Exported '+fn)},(e)=>{console.error(e);showToast('Export failed')},{binary:true})}
+
+// APP SWITCHING
+function switchApp(i){if(i===currentApp)return;const dir=i>currentApp?'left':'right';const prev=panels[currentApp],next=panels[i];prev.classList.remove('active');prev.classList.add(dir==='left'?'exit-left':'exit-right');next.classList.remove('exit-left','exit-right');next.classList.add(dir==='left'?'enter-right':'enter-left');next.offsetHeight;next.classList.remove('enter-left','enter-right');next.classList.add('active');prev.addEventListener('transitionend',function h(){prev.classList.remove('exit-left','exit-right');prev.removeEventListener('transitionend',h)},{once:true});tabs.forEach(t=>t.classList.remove('active'));tabs[i].classList.add('active');pill.style.transform=`translateX(${i*100}%)`;container.style.setProperty('--active-accent',APP_ACCENTS[i]);statusName.classList.add('fading');setTimeout(()=>{statusName.textContent=APP_NAMES[i];statusName.classList.remove('fading')},150);currentApp=i}
+tabs.forEach(t=>t.addEventListener('click',()=>switchApp(+t.dataset.index)));
+
+// HANDOFF SYSTEM
+const handoffs={blender:{edit:{t:'Edit Mode',app:'Blender',d:'Vertex editing + mesh cleanup',then:'Export .fbx',fmt:'glb'},sculpt:{t:'Sculpt Mode',app:'Blender',d:'Sculpt with brushes',then:'Retopo + export',fmt:'glb'},paint:{t:'Texture Paint',app:'Blender',d:'Paint textures + bake maps',then:'Export .fbx',fmt:'glb'},armature:{t:'Rigging',app:'Blender',d:'Create armature + weight paint',then:'Export .fbx',fmt:'glb'}},vroid:{'hair-strands':{t:'Hair Strands',app:'VRoid Studio',d:'Draw + edit hair guides',then:'Export .vrm',fmt:'glb'},expressions:{t:'Expressions',app:'VRoid Studio',d:'Blend shapes for emotions',then:'Export .vrm',fmt:'glb'}},booth:{buy:{t:'Purchase',app:'Booth.pm',d:'Buy the avatar base/items',then:'Download .unitypackage',fmt:'wishlist'}},unity:{build:{t:'Build & Upload',app:'Unity 2022.3.22f1',d:'Full SDK setup + configuration',then:'Build & publish to VRChat',fmt:'checklist'}},tafi:{export:{t:'Final Export',app:'Tafi / Unity',d:'Optimize + finalize avatar',then:'Upload to VRChat',fmt:'glb'}}};
+const dismissed=new Set();
+function showHandoff(app,step){const k=app+'.'+step;if(dismissed.has(k))return;const h=handoffs[app]?.[step];if(!h)return;document.getElementById('hoTitle').textContent=h.t;document.getElementById('hoMsg').textContent="You've hit the edge of what Squish can do for this step. But that's okay — Squish got you this far.";document.getElementById('hoFmt').textContent=h.fmt==='glb'?'📦 Export .glb':h.fmt==='wishlist'?'📋 Export wishlist':'📝 Export checklist';document.getElementById('hoSteps').innerHTML=`<div class="handoff-step"><span class="handoff-step-num">1</span> Open ➜ <strong>${h.app}</strong></div><div class="handoff-step"><span class="handoff-step-num">2</span> Do ➜ ${h.d}</div><div class="handoff-step"><span class="handoff-step-num">3</span> Then ➜ ${h.then}</div>`;document.getElementById('hoBG').classList.add('visible');document.getElementById('hoExport').onclick=()=>{const vid=app+'-viewport';if(h.fmt==='glb'&&scenes[vid])exportGLB(scenes[vid],app+'-avatar.glb');closeHandoff()}}
+function closeHandoff(){if(document.getElementById('hoDismiss').checked){const title=document.getElementById('hoTitle').textContent;Object.entries(handoffs).forEach(([a,steps])=>{Object.entries(steps).forEach(([s,cfg])=>{if(cfg.t===title)dismissed.add(a+'.'+s)})})}document.getElementById('hoBG').classList.remove('visible');document.getElementById('hoDismiss').checked=false}
+document.getElementById('hoKeep').addEventListener('click',closeHandoff);
+document.getElementById('hoBG').addEventListener('click',e=>{if(e.target===e.currentTarget)closeHandoff()});
+
+// ═══ BLENDER ═══
+const blender=createScene('blender-viewport');
+let bSel=null,bWire=null,bTool='move',bObjs=[],meshN=0;
+if(blender){const g=new THREE.BoxGeometry(1,1,1);const m=new THREE.MeshStandardMaterial({color:0x6366f1,metalness:0.1,roughness:0.6});const cube=new THREE.Mesh(g,m);cube.position.y=0.5;cube.castShadow=true;cube.userData.name='Cube';blender.scene.add(cube);bSel=cube;bObjs.push(cube);const fl=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.ShadowMaterial({opacity:0.3}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;blender.scene.add(fl);bWire=new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x8888ff,transparent:true,opacity:0.3}));bWire.position.y=0.5;blender.scene.add(bWire);
+const vp=document.getElementById('blender-viewport');let drag=false,dsx=0,dsy=0,osp=new THREE.Vector3(),oss=new THREE.Vector3(),osr=new THREE.Euler();
+vp.addEventListener('pointerdown',e=>{if(e.button!==0||!['move','scale','rotate'].includes(bTool))return;const r=vp.getBoundingClientRect();const mo=new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);const rc=new THREE.Raycaster();rc.setFromCamera(mo,cameras['blender-viewport']);const h=rc.intersectObjects(bObjs);if(h.length){bSel=h[0].object;drag=true;dsx=e.clientX;dsy=e.clientY;osp.copy(bSel.position);oss.copy(bSel.scale);osr.copy(bSel.rotation);controlsMap['blender-viewport'].enabled=false;vp.setPointerCapture(e.pointerId)}});
+vp.addEventListener('pointermove',e=>{if(!drag||!bSel)return;const dx=(e.clientX-dsx)*0.01,dy=(e.clientY-dsy)*0.01;if(bTool==='move'){bSel.position.x=osp.x+dx;bSel.position.y=osp.y-dy}else if(bTool==='scale'){const s=Math.max(0.1,1+dx*0.5);bSel.scale.set(oss.x*s,oss.y*Math.max(0.1,1-dy*0.5),oss.z*s)}else if(bTool==='rotate'){bSel.rotation.y=osr.y+dx*2;bSel.rotation.x=osr.x+dy*2}if(bWire&&bSel===bObjs[0]){bWire.position.copy(bSel.position);bWire.rotation.copy(bSel.rotation);bWire.scale.copy(bSel.scale)}syncBProps()});
+vp.addEventListener('pointerup',()=>{if(drag){drag=false;controlsMap['blender-viewport'].enabled=true}})}
+function syncBProps(){if(!bSel)return;const p=bSel.position,r=bSel.rotation,s=bSel.scale;document.getElementById('pLX').textContent=p.x.toFixed(1);document.getElementById('pLY').textContent=p.y.toFixed(1);document.getElementById('pLZ').textContent=p.z.toFixed(1);document.getElementById('pRX').textContent=THREE.MathUtils.radToDeg(r.x).toFixed(0);document.getElementById('pRY').textContent=THREE.MathUtils.radToDeg(r.y).toFixed(0);document.getElementById('pRZ').textContent=THREE.MathUtils.radToDeg(r.z).toFixed(0);document.getElementById('pSc').textContent=s.x.toFixed(1)}
+['sLX','sLY','sLZ','sRX','sRY','sRZ','sSc'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',()=>{if(!bSel)return;const v=parseFloat(el.value);if(id==='sLX')bSel.position.x=v;if(id==='sLY')bSel.position.y=v;if(id==='sLZ')bSel.position.z=v;if(id==='sRX')bSel.rotation.x=THREE.MathUtils.degToRad(v);if(id==='sRY')bSel.rotation.y=THREE.MathUtils.degToRad(v);if(id==='sRZ')bSel.rotation.z=THREE.MathUtils.degToRad(v);if(id==='sSc')bSel.scale.set(v,v,v);if(bWire&&bSel===bObjs[0]){bWire.position.copy(bSel.position);bWire.rotation.copy(bSel.rotation);bWire.scale.copy(bSel.scale)}})});
+document.querySelectorAll('[data-app="0"] .tool-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('[data-app="0"] .tool-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');bTool=b.dataset.tool;if(['edit','sculpt','paint','armature'].includes(bTool))showHandoff('blender',bTool);if(bTool==='addmesh')addMesh()})});
+function addMesh(){if(!blender)return;const types=['sphere','cylinder','torus','cone','icosahedron'],colors=[0x10b981,0xef4444,0xf59e0b,0x22d3ee,0xe8b4c8];const ti=meshN%5;let g;if(ti===0)g=new THREE.SphereGeometry(0.4,16,12);else if(ti===1)g=new THREE.CylinderGeometry(0.3,0.3,0.8,16);else if(ti===2)g=new THREE.TorusGeometry(0.35,0.12,12,24);else if(ti===3)g=new THREE.ConeGeometry(0.35,0.8,16);else g=new THREE.IcosahedronGeometry(0.35,1);const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:colors[ti],metalness:0.1,roughness:0.6}));mesh.position.set((Math.random()-0.5)*3,0.5+Math.random(),(Math.random()-0.5)*3);mesh.castShadow=true;mesh.userData.name=types[ti]+'.'+String(meshN+1).padStart(3,'0');blender.scene.add(mesh);bObjs.push(mesh);meshN++;showToast('Added '+mesh.userData.name)}
+document.getElementById('bExport').addEventListener('click',()=>{if(scenes['blender-viewport'])exportGLB(scenes['blender-viewport'],'blender-scene.glb')});
+document.getElementById('bSend').addEventListener('click',()=>{switchApp(3);addCon('[Info] Received model from Blender','info');addCon('[OK] Blender mesh imported','ok');showToast('Sent to Unity')});
+
+// ═══ VROID ═══
+let vP={},vIY={};
+const vroid=createScene('vroid-viewport',{camY:3,targetY:0.8,camX:2,camZ:3});
+if(vroid){const bm=new THREE.MeshStandardMaterial({color:0xe8b4c8,roughness:0.7}),sm=new THREE.MeshStandardMaterial({color:0xf4d0b0,roughness:0.8});const hm=new THREE.MeshStandardMaterial({color:0x6366f1,roughness:0.5});const em=new THREE.MeshStandardMaterial({color:0x6366f1,emissive:0x6366f1,emissiveIntensity:0.3});
+const torso=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.2,0.6,8),bm);torso.position.y=1.1;vroid.scene.add(torso);vP.torso=torso;
+const head=new THREE.Mesh(new THREE.SphereGeometry(0.18,12,10),sm);head.position.y=1.6;head.scale.set(1,1.1,0.95);vroid.scene.add(head);vP.head=head;
+const hair=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,10,0,Math.PI*2,0,Math.PI*0.7),hm);hair.position.y=1.65;hair.scale.set(1.05,1.1,1.05);vroid.scene.add(hair);vP.hair=hair;
+const bangs=new THREE.Mesh(new THREE.SphereGeometry(0.12,10,8,0,Math.PI*2,0,Math.PI*0.4),hm);bangs.position.set(0,1.7,0.12);bangs.scale.set(1.2,0.8,0.6);vroid.scene.add(bangs);vP.bangs=bangs;
+const eL=new THREE.Mesh(new THREE.SphereGeometry(0.04,8,8),em);eL.position.set(-0.06,1.62,0.15);vroid.scene.add(eL);vP.eyeL=eL;const eR=eL.clone();eR.position.x=0.06;vroid.scene.add(eR);vP.eyeR=eR;
+const chin=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,6),sm);chin.position.set(0,1.45,0.1);chin.scale.set(1,0.6,0.8);vroid.scene.add(chin);vP.chin=chin;
+const hips=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.22,0.2,8),bm);hips.position.y=0.75;vroid.scene.add(hips);vP.hips=hips;
+const lL=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.06,0.7,8),sm);lL.position.set(-0.1,0.35,0);vroid.scene.add(lL);vP.legL=lL;const lR=lL.clone();lR.position.x=0.1;vroid.scene.add(lR);vP.legR=lR;
+const aL=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.5,8),sm);aL.position.set(-0.32,1.1,0);aL.rotation.z=0.3;vroid.scene.add(aL);vP.armL=aL;const aR=aL.clone();aR.position.x=0.32;aR.rotation.z=-0.3;vroid.scene.add(aR);vP.armR=aR;
+vroid.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.ShadowMaterial({opacity:0.2})).rotateX(-Math.PI/2));
+for(const[k,p]of Object.entries(vP))if(p?.position)vIY[k]=p.position.y}
+document.querySelectorAll('[data-vroid]').forEach(s=>{s.addEventListener('input',()=>{const param=s.dataset.vroid,val=+s.value,n=val/100,p=vP;if(!p.head)return;switch(param){case'faceWidth':p.head.scale.x=0.7+n*0.6;break;case'jawShape':p.head.scale.y=0.9+n*0.4;break;case'chinLength':p.chin.scale.y=0.3+n*0.8;p.chin.position.y=1.42+n*0.06;break;case'eyeSize':{const es=0.5+n;p.eyeL.scale.set(es,es,es);p.eyeR.scale.set(es,es,es);break}case'eyeSpacing':{const sp=0.03+n*0.08;p.eyeL.position.x=-sp;p.eyeR.position.x=sp;break}case'irisColor':{const c=new THREE.Color().setHSL(n,0.7,0.5);p.eyeL.material.color.copy(c);p.eyeL.material.emissive.copy(c);p.eyeR.material.color.copy(c);p.eyeR.material.emissive.copy(c);break}case'hairLength':p.hair.scale.y=0.6+n;break;case'hairVolume':p.hair.scale.x=0.7+n*0.7;p.hair.scale.z=0.7+n*0.7;break;case'bangsLength':p.bangs.scale.y=0.4+n*0.8;p.bangs.position.z=0.1+n*0.06;break;case'height':{const delta=(val-50)/50,us=delta*0.3,ms=delta*0.2,ls=delta*0.1;p.torso.scale.y=0.7+n*0.6;p.torso.position.y=vIY.torso+ms;['head','hair','bangs','eyeL','eyeR','armL','armR'].forEach(k=>{if(p[k])p[k].position.y=vIY[k]+us});['hips','legL','legR','chin'].forEach(k=>{if(p[k])p[k].position.y=vIY[k]+ls});break}case'bodyWidth':{const w=0.7+n*0.6;p.torso.scale.x=w;p.torso.scale.z=w;p.hips.scale.x=w;p.hips.scale.z=w;break}case'armLength':{const al=0.7+n*0.6;p.armL.scale.y=al;p.armR.scale.y=al;break}}})});
+document.getElementById('vExport').addEventListener('click',()=>{if(scenes['vroid-viewport'])exportGLB(scenes['vroid-viewport'],'vroid-avatar.glb')});
+document.getElementById('vSend').addEventListener('click',()=>{switchApp(3);addCon('[Info] Received VRoid avatar','info');addCon('[OK] VRoid imported','ok');showToast('Sent to Unity')});
+
+// ═══ UNITY ═══
+const unity=createScene('unity-viewport',{camY:3,targetY:0.7,camX:2.5,camZ:2.5});
+if(unity){const um=new THREE.MeshStandardMaterial({color:0x10b981,roughness:0.5,metalness:0.1});const b=new THREE.Mesh(new THREE.CapsuleGeometry(0.2,0.5,8,12),um);b.position.y=1.05;b.castShadow=true;unity.scene.add(b);unity.scene.add(new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry),new THREE.LineBasicMaterial({color:0x22d3ee,transparent:true,opacity:0.15})).translateY(1.05));const h=new THREE.Mesh(new THREE.SphereGeometry(0.16,12,10),um);h.position.y=1.55;unity.scene.add(h);const lg=new THREE.CapsuleGeometry(0.06,0.5,6,8);const ll=new THREE.Mesh(lg,um);ll.position.set(-0.12,0.35,0);unity.scene.add(ll);const lr=ll.clone();lr.position.x=0.12;unity.scene.add(lr);const ag=new THREE.CapsuleGeometry(0.04,0.4,6,8);const al=new THREE.Mesh(ag,um);al.position.set(-0.32,1.05,0);al.rotation.z=1.2;unity.scene.add(al);const ar=al.clone();ar.position.x=0.32;ar.rotation.z=-1.2;unity.scene.add(ar);unity.scene.add(new THREE.AxesHelper(0.5).translateY(0.01));unity.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.ShadowMaterial({opacity:0.2})).rotateX(-Math.PI/2))}
+const cLog=document.getElementById('cLog');
+function addCon(t,type='info'){const d=document.createElement('div');d.className='log-'+type;d.textContent=t;cLog.appendChild(d);cLog.scrollTop=cLog.scrollHeight}
+document.getElementById('uBuild').addEventListener('click',()=>{showHandoff('unity','build');addCon('[Info] Starting build...','info');setTimeout(()=>addCon('[OK] Scripts compiled','ok'),400);setTimeout(()=>addCon('[Info] Building bundle...','info'),800);setTimeout(()=>addCon('[OK] Textures packed','ok'),1400);setTimeout(()=>addCon('[OK] PhysBones validated','ok'),2000);setTimeout(()=>{addCon('[OK] Build complete — 4.2s','ok');showToast('Build complete')},2600)});
+document.getElementById('uPublish').addEventListener('click',()=>{showHandoff('unity','build');addCon('[Info] Publishing...','info');setTimeout(()=>addCon('[Info] Upload: 50%','info'),800);setTimeout(()=>addCon('[Info] Upload: 100%','info'),1600);setTimeout(()=>{addCon('[OK] Published!','ok');showToast('Published!')},2200)});
+document.querySelectorAll('#uHier .hier-node').forEach(n=>{n.addEventListener('click',()=>{document.querySelectorAll('#uHier .hier-node').forEach(x=>x.classList.remove('active'));n.classList.add('active');document.getElementById('uInsp').textContent='Selected: '+(n.dataset.hier||'')})});
+
+// ═══ TAFI ═══
+let tP={};
+const tafi=createScene('tafi-viewport',{camY:3,targetY:0.8,camX:2,camZ:3});
+if(tafi){const tm=new THREE.MeshStandardMaterial({color:0x0ea5e9,roughness:0.4,metalness:0.2});const tb=new THREE.Mesh(new THREE.CapsuleGeometry(0.22,0.45,10,14),tm);tb.position.y=1.05;tb.castShadow=true;tafi.scene.add(tb);tP.body=tb;const th=new THREE.Mesh(new THREE.SphereGeometry(0.17,14,12),tm);th.position.y=1.55;tafi.scene.add(th);tP.head=th;const hm=new THREE.MeshStandardMaterial({color:0xf59e0b,roughness:0.5});const thr=new THREE.Mesh(new THREE.SphereGeometry(0.19,14,12,0,Math.PI*2,0,Math.PI*0.65),hm);thr.position.y=1.6;thr.scale.set(1.05,1.1,1.05);tafi.scene.add(thr);tP.hair=thr;const tll=new THREE.Mesh(new THREE.CapsuleGeometry(0.065,0.5,8,8),tm);tll.position.set(-0.1,0.33,0);tafi.scene.add(tll);tP.legL=tll;const tlr=tll.clone();tlr.position.x=0.1;tafi.scene.add(tlr);tP.legR=tlr;const tal=new THREE.Mesh(new THREE.CapsuleGeometry(0.04,0.4,6,8),tm);tal.position.set(-0.35,1.1,0);tal.rotation.z=Math.PI/2;tafi.scene.add(tal);tP.armL=tal;const tar=tal.clone();tar.position.x=0.35;tafi.scene.add(tar);tP.armR=tar;const ring=new THREE.Mesh(new THREE.TorusGeometry(0.4,0.015,8,32),new THREE.MeshStandardMaterial({color:0x22d3ee,emissive:0x22d3ee,emissiveIntensity:0.5}));ring.rotation.x=Math.PI/2;ring.position.y=0.01;tafi.scene.add(ring);tafi.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.ShadowMaterial({opacity:0.2})).rotateX(-Math.PI/2))}
+document.querySelectorAll('#tSwatches .swatch').forEach(sw=>{sw.addEventListener('click',()=>{document.querySelectorAll('#tSwatches .swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active');const c=new THREE.Color(sw.dataset.color);if(tP.body){[tP.body,tP.head,tP.legL,tP.legR,tP.armL,tP.armR].forEach(p=>p.material.color.copy(c))}})});
+document.querySelectorAll('[data-tafi]').forEach(s=>{s.addEventListener('input',()=>{const p=s.dataset.tafi,v=+s.value/100;if(!tP.body)return;if(p==='height'){tP.body.scale.y=v;tP.legL.scale.y=v;tP.legR.scale.y=v}if(p==='width'){tP.body.scale.x=v;tP.body.scale.z=v}})});
+document.getElementById('tExport').addEventListener('click',()=>{if(scenes['tafi-viewport'])exportGLB(scenes['tafi-viewport'],'tafi-avatar.glb');showHandoff('tafi','export')});
+document.getElementById('tSend').addEventListener('click',()=>{switchApp(3);addCon('[Info] Received Tafi avatar','info');addCon('[OK] Tafi imported','ok');showToast('Sent to Unity')});
+
+// ═══ BOOTH ═══
+function filterBooth(){const q=document.getElementById('bSearch').value.toLowerCase().trim();const cards=document.querySelectorAll('.booth-card');const sChips=[...document.querySelectorAll('[data-fg="style"] .filter-chip.active')].map(c=>c.dataset.val);const pChips=[...document.querySelectorAll('[data-fg="price"] .filter-chip.active')].map(c=>c.dataset.val);const plChips=[...document.querySelectorAll('[data-fg="plat"] .filter-chip.active')].map(c=>c.dataset.val);let vis=0;cards.forEach(c=>{const name=(c.dataset.name||'').toLowerCase(),style=c.dataset.style,price=+c.dataset.price,plat=c.dataset.plat||'';let ok=true;if(q&&!name.includes(q))ok=false;if(sChips.length&&!sChips.includes(style))ok=false;if(pChips.length){let pm=false;if(pChips.includes('free')&&price===0)pm=true;if(pChips.includes('u3k')&&price>0&&price<3000)pm=true;if(pChips.includes('3-8k')&&price>=3000&&price<=8000)pm=true;if(pChips.includes('8k+')&&price>8000)pm=true;if(!pm)ok=false}if(plChips.length){let pm=false;plChips.forEach(p=>{if(plat.includes(p))pm=true});if(!pm)ok=false}c.classList.toggle('hidden',!ok);if(ok)vis++});document.getElementById('bNoRes').classList.toggle('show',vis===0)}
+document.getElementById('bSearch').addEventListener('input',filterBooth);
+let curBoothName='';
+document.querySelectorAll('.booth-card').forEach(c=>{c.addEventListener('click',e=>{e.stopPropagation();curBoothName=c.dataset.name;document.getElementById('bdName').textContent=c.dataset.name;document.getElementById('bdPrice').textContent=+c.dataset.price===0?'FREE':'¥'+Number(c.dataset.price).toLocaleString();document.getElementById('bdEco').textContent='Compatible ecosystem · '+c.querySelector('.card-meta:last-child').textContent.split('·')[1];document.getElementById('bdPrev').textContent=c.querySelector('.card-icon').textContent;document.getElementById('bdDesc').textContent=c.dataset.style+' style avatar base';document.getElementById('bDetail').classList.add('open')})});
+document.getElementById('bDetailClose').addEventListener('click',()=>document.getElementById('bDetail').classList.remove('open'));
+document.getElementById('bImport').addEventListener('click',()=>{document.getElementById('bDetail').classList.remove('open');switchApp(3);addCon('[Info] Imported '+curBoothName+' from Booth','info');addCon('[OK] Model loaded','ok');showToast('Imported '+curBoothName)});
+document.getElementById('bPurchase').addEventListener('click',()=>showHandoff('booth','buy'));
+let wishlist=[];
+document.querySelectorAll('.booth-card').forEach(c=>{c.addEventListener('dblclick',()=>{const name=c.dataset.name,price=+c.dataset.price;if(wishlist.find(w=>w.name===name))return;wishlist.push({name,price});const wl=document.getElementById('bWishlist');const card=document.createElement('div');card.className='card';card.innerHTML=`<div class="card-name">${name}</div><div class="card-meta">${price===0?'FREE':'¥'+price.toLocaleString()}</div>`;wl.appendChild(card);document.getElementById('wlCount').textContent=wishlist.length;document.getElementById('wlTotal').textContent='¥'+wishlist.reduce((s,w)=>s+w.price,0).toLocaleString();document.getElementById('wlEmpty').style.display='none';showToast(name+' → wishlist')})});
+
+// ═══ ANIMATION LOOP ═══
+const vpMap={0:'blender-viewport',1:'vroid-viewport',2:null,3:'unity-viewport',4:'tafi-viewport'};
+function animate(){requestAnimationFrame(animate);const id=vpMap[currentApp];if(id&&scenes[id]){controlsMap[id].update();renderers[id].render(scenes[id],cameras[id])}}
+animate();
+
+// ═══ UI HANDLERS ═══
+function updateFill(s){const pct=((s.value-s.min)/(s.max-s.min))*100;s.style.setProperty('--fill',pct+'%')}
+document.querySelectorAll('input[type="range"]').forEach(updateFill);
+document.addEventListener('input',e=>{if(e.target.type==='range'){const row=e.target.closest('.slider-row');if(row){const v=row.querySelector('.slider-val');if(v)v.textContent=e.target.value}updateFill(e.target)}});
+document.addEventListener('click',e=>{const ct=e.target.closest('.cat-tab');if(ct&&!ct.dataset.insp){ct.parentElement.querySelectorAll('.cat-tab').forEach(s=>s.classList.remove('active'));ct.classList.add('active')}});
+document.querySelectorAll('[data-insp]').forEach(t=>{t.addEventListener('click',()=>{document.querySelectorAll('[data-insp]').forEach(x=>x.classList.remove('active'));t.classList.add('active')})});
+document.querySelectorAll('.filter-chip').forEach(fc=>{fc.addEventListener('click',()=>{fc.classList.toggle('active');filterBooth()})});
+document.querySelectorAll('.sort-option').forEach(so=>{so.addEventListener('click',()=>{so.parentElement?.querySelectorAll('.sort-option').forEach(s=>s.classList.remove('active'));so.classList.add('active')})});
+const taskToggle=document.getElementById('taskToggle'),taskOL=document.getElementById('taskOL'),taskBG=document.getElementById('taskBG');
+function toggleTasks(){const vis=taskOL.classList.toggle('visible');taskBG.classList.toggle('visible',vis);if(vis)taskOL.querySelectorAll('.task-item').forEach((item,i)=>{item.style.animationDelay=(i*15)+'ms'})}
+taskToggle.addEventListener('click',e=>{e.stopPropagation();toggleTasks()});
+taskBG.addEventListener('click',toggleTasks);
+document.addEventListener('click',e=>{const sw=e.target.closest('.swatch');if(sw&&!sw.closest('#tSwatches')){sw.parentElement.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));sw.classList.add('active')}});
+document.addEventListener('click',e=>{const c=e.target.closest('.card');if(c&&!c.classList.contains('booth-card'))c.classList.toggle('added')});
+// ═══ MOBILE PANEL BAR ═══
+const isMobile=()=>window.innerWidth<=768;
+document.querySelectorAll('.mpb-btn').forEach(btn=>{btn.addEventListener('click',()=>{
+  document.querySelectorAll('.mpb-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const p=btn.dataset.panel,ap=panels[currentApp];if(!ap)return;
+  const tools=ap.querySelector('.tools-panel'),market=ap.querySelector('.market-panel');
+  if(tools)tools.classList.remove('mobile-show');if(market)market.classList.remove('mobile-show');
+  if(p==='tools'&&tools)tools.classList.add('mobile-show');
+  else if(p==='market'&&market)market.classList.add('mobile-show');
+})});
+// Reset mobile panels on app switch — inject into switchApp
+const origSwitch=switchApp;
+function resetMobilePanels(){document.querySelectorAll('.mpb-btn').forEach(b=>b.classList.remove('active'));document.querySelector('.mpb-btn[data-panel="viewport"]')?.classList.add('active');document.querySelectorAll('.tools-panel,.market-panel').forEach(p=>p.classList.remove('mobile-show'))}
+// Patch: after each tab click, reset
+tabs.forEach(t=>{t.addEventListener('click',()=>{if(isMobile())setTimeout(resetMobilePanels,50)})});
+// Resize: clear mobile state on desktop
+window.addEventListener('resize',()=>{if(!isMobile())document.querySelectorAll('.tools-panel,.market-panel').forEach(p=>p.classList.remove('mobile-show'))});
+
+container.style.setProperty('--active-accent',APP_ACCENTS[0]);
+</script>
+</body>
+</html>

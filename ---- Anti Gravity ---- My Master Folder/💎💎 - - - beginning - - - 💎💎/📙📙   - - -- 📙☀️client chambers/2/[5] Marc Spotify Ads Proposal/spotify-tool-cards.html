@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Campaign Tools — Overview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body {
+            background: #020617;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.06) 0%, transparent 40%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            padding: 40px 20px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .page-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: rgba(255,255,255,0.2);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Mini Card */
+        .mini-card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1.5px solid rgba(56, 189, 248, 0.25);
+            border-radius: 24px;
+            padding: 2rem 2.25rem;
+            width: 100%;
+            max-width: 480px;
+            backdrop-filter: blur(40px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            color: white;
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+        .mini-card:nth-child(2) { animation-delay: 0.15s; }
+        .mini-card:nth-child(3) { animation-delay: 0.3s; }
+        .mini-card:nth-child(4) { animation-delay: 0.45s; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Step label */
+        .step-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(255,255,255,0.2);
+            margin-bottom: 1rem;
+        }
+
+        /* Mapper p-btn */
+        .svc-btn {
+            --shimmer-speed: 4s;
+            --delay: 0s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 100px;
+            color: #0f172a;
+            cursor: default;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1),
+                        border-color 0.4s cubic-bezier(0.4,0,0.2,1),
+                        background 0.4s cubic-bezier(0.4,0,0.2,1),
+                        box-shadow 0.4s cubic-bezier(0.4,0,0.2,1);
+            box-shadow:
+                0 4px 6px -1px rgba(0,0,0,0.05),
+                0 2px 4px -1px rgba(0,0,0,0.03),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+            margin-bottom: 1.25rem;
+        }
+        .svc-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 300%; height: 100%;
+            background: linear-gradient(90deg,
+                rgba(14,165,233,0) 0%,
+                rgba(14,165,233,0.12) 10%,
+                rgba(99,102,241,0.15) 20%,
+                rgba(168,85,247,0.12) 30%,
+                rgba(244,63,94,0.1) 40%,
+                rgba(245,158,11,0.08) 50%,
+                rgba(244,63,94,0.1) 60%,
+                rgba(168,85,247,0.12) 70%,
+                rgba(99,102,241,0.15) 80%,
+                rgba(14,165,233,0.12) 90%,
+                rgba(14,165,233,0) 100%);
+            transform: translateX(-100%) translateZ(0);
+            animation: svcShimmer var(--shimmer-speed) ease-in-out infinite;
+            animation-delay: var(--delay);
+            pointer-events: none;
+            z-index: 2;
+        }
+        @keyframes svcShimmer {
+            0% { transform: translateX(-100%) translateZ(0); }
+            100% { transform: translateX(100%) translateZ(0); }
+        }
+        .svc-btn:hover {
+            transform: translateY(-3px) scale(1.01);
+            background: rgba(255,255,255,0.65);
+            border-color: rgba(255,255,255,1);
+            box-shadow:
+                0 16px 25px -5px rgba(0,0,0,0.08),
+                0 10px 10px -5px rgba(0,0,0,0.04),
+                0 0 20px rgba(14,165,233,0.1);
+        }
+        .svc-dot {
+            width: 5px; height: 5px; min-width: 5px;
+            border-radius: 50%;
+            position: relative;
+            z-index: 5;
+            animation: dotPulse 3s ease-in-out infinite;
+        }
+        @keyframes dotPulse {
+            0%, 100% { box-shadow: 0 0 8px var(--dot-color, #0ea5e9), 0 0 16px rgba(76,201,240,0.3); }
+            50% { box-shadow: 0 0 12px var(--dot-color, #0ea5e9), 0 0 24px rgba(76,201,240,0.5); }
+        }
+        .svc-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            position: relative;
+            z-index: 5;
+        }
+        .svc-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .svc-sub {
+            font-size: 0.6rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(15,23,42,0.45);
+            letter-spacing: 0.3px;
+        }
+
+        /* Stats grid */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .stat {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+        }
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-bottom: 2px;
+        }
+        .stat-value.green { color: #1ed760; }
+        .stat-value.purple { color: #a78bfa; }
+        .stat-label {
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.5px;
+        }
+
+        /* Source pills */
+        .sources {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            margin-bottom: 1rem;
+        }
+        .source-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 100px;
+            padding: 3px 10px;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .source-pill .pill-dot {
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Insight quote */
+        .insight {
+            font-size: 0.65rem;
+            font-style: italic;
+            color: rgba(255,255,255,0.25);
+            line-height: 1.5;
+            padding-left: 0.75rem;
+            border-left: 2px solid rgba(255,255,255,0.06);
+        }
+
+        /* Price tag */
+        .price-tag {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-top: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .price-tag .amount {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #38bdf8;
+        }
+        .price-tag .amount.free {
+            color: #1ed760;
+        }
+        .price-tag .suffix {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 0.5px;
+        }
+
+        /* Requirement pill */
+        .req {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            color: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 5px 10px;
+            margin-bottom: 1.25rem;
+        }
+        .req-icon {
+            font-size: 0.5rem;
+            opacity: 0.5;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.55rem;
+            color: rgba(255,255,255,0.1);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 500px) {
+            .mini-card { padding: 1.5rem; }
+            .stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-title">The 3-Step Campaign Kit</div>
+
+    <!-- STEP 1 — DISCOVERY MODE -->
+    <div class="mini-card">
+        <div class="step-label">Step 1 — Foundation</div>
+        <div class="svc-btn" style="--delay: 0s;">
+            <div class="svc-dot" style="--dot-color: #1ed760; background: #1ed760;"></div>
+            <div class="svc-text">
+                <span class="svc-label">Discovery Mode</span>
+                <span class="svc-sub">algorithmic amplification</span>
+            </div>
+        </div>
+        <div class="price-tag">
+            <span class="amount free">FREE</span>
+            <span class="suffix">no upfront cost</span>
+        </div>
+        <div class="req"><span class="req-icon">&#9679;</span> Available to all artists — no threshold</div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value green">440%</div>
+                <div class="stat-label">stream lift on EP tracks</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value green">58%</div>
+                <div class="stat-label">discoveries are overseas</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value green">3x</div>
+                <div class="stat-label">audience multiplier</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value green">385%</div>
+                <div class="stat-label">pre-release lift</div>
+            </div>
+        </div>
+        <div class="sources">
+            <span class="source-pill"><span class="pill-dot" style="background: #1ed760;"></span>Khalia — 440% lift on 6 EP tracks (December)</span>
+            <span class="source-pill"><span class="pill-dot" style="background: #1ed760;"></span>William Black — 385% pre-release lift</span>
+            <span class="source-pill"><span class="pill-dot" style="background: #1ed760;"></span>NERIAH — 500K new listeners in 3 months</span>
+        </div>
+        <div class="insight">"More than tripled their audience in Discovery Mode contexts." — Magic City Hippies</div>
+    </div>
+
+    <!-- STEP 2 — MARQUEE -->
+    <div class="mini-card">
+        <div class="step-label">Step 2 — Launch</div>
+        <div class="svc-btn" style="--delay: 0.5s;">
+            <div class="svc-dot" style="--dot-color: #6366f1; background: #6366f1;"></div>
+            <div class="svc-text">
+                <span class="svc-label">Marquee</span>
+                <span class="svc-sub">full-screen recommendation</span>
+            </div>
+        </div>
+        <div class="price-tag">
+            <span class="amount">$100</span>
+            <span class="suffix">minimum per campaign</span>
+        </div>
+        <div class="req"><span class="req-icon">&#9679;</span> Requires 5,000 monthly active listeners</div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value purple">10x</div>
+                <div class="stat-label">more listeners/$ vs social ads</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value purple">24-38%</div>
+                <div class="stat-label">save / playlist rate</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value purple">8x</div>
+                <div class="stat-label">new active listener lift</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value purple">25%</div>
+                <div class="stat-label">lapsed listener reactivation</div>
+            </div>
+        </div>
+        <div class="sources">
+            <span class="source-pill"><span class="pill-dot" style="background: #6366f1;"></span>Jelani Aryeh — 38% save rate on debut album</span>
+            <span class="source-pill"><span class="pill-dot" style="background: #6366f1;"></span>Magic City Hippies — 13.5 streams per listener</span>
+            <span class="source-pill"><span class="pill-dot" style="background: #6366f1;"></span>Jillian Rossi — 30x streams after 30 days</span>
+        </div>
+        <div class="insight">"On average, releases promoted with Marquee drive 10x more listeners per dollar than social ads." — Spotify Campaign Kit</div>
+    </div>
+
+    <!-- STEP 3 — SHOWCASE -->
+    <div class="mini-card">
+        <div class="step-label">Step 3 — Amplify</div>
+        <div class="svc-btn" style="--delay: 1s;">
+            <div class="svc-dot" style="--dot-color: #f59e0b; background: #f59e0b;"></div>
+            <div class="svc-text">
+                <span class="svc-label">Showcase</span>
+                <span class="svc-sub">spotify home feed placement</span>
+            </div>
+        </div>
+        <div class="price-tag">
+            <span class="amount">$100</span>
+            <span class="suffix">minimum per campaign</span>
+        </div>
+        <div class="req"><span class="req-icon">&#9679;</span> Requires 1,000 streams in last 28 days</div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" style="color: #f59e0b;">40x</div>
+                <div class="stat-label">lift when paired with Marquee</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" style="color: #f59e0b;">6x</div>
+                <div class="stat-label">more streams vs non-reached</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" style="color: #f59e0b;">50%</div>
+                <div class="stat-label">listeners were new-to-artist</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" style="color: #f59e0b;">5x</div>
+                <div class="stat-label">more lift than Marquee alone</div>
+            </div>
+        </div>
+        <div class="sources">
+            <span class="source-pill"><span class="pill-dot" style="background: #f59e0b;"></span>William Black — 6x streams with "Getting buzz"</span>
+            <span class="source-pill"><span class="pill-dot" style="background: #f59e0b;"></span>William Black + ILLENIUM — 50% new-to-artist</span>
+            <span class="source-pill"><span class="pill-dot" style="background: #f59e0b;"></span>Money Man — 1 in 4 saved with "On tour"</span>
+        </div>
+        <div class="insight">"The real magic happens when pairing tools… regardless of how much you spend." — Spotify Campaign Kit</div>
+    </div>
+
+    <div class="footer">Ahead Artist Solutions &copy; 2026 — Spotify Campaign Kit Data</div>
+</body>
+</html>

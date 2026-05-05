@@ -1,0 +1,4164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wing Menu | Ahead Command Center</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ══════════════and ════════════════════════════════
+           Phase 2 — App Shell + Layout Grid
+           Salt rock lamp palette from triple-brain
+           ══════════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Theme-able palette */
+            --lamp-deep: #c2560a;
+            --lamp-mid: #e07b2e;
+            --lamp-warm: #f2a54a;
+            --lamp-soft: #f8c97d;
+            --lamp-glow: #fde8c8;
+            --white: #ffffff;
+            --text: #3b1a04;
+            --text-dim: rgba(59, 26, 4, 0.55);
+            --toolbar-bg: linear-gradient(180deg, #9a4208 0%, #7a3506 100%);
+            /* Background layers (theme-switched via JS) */
+            --bg-layer1: radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%);
+            --bg-layer2: radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%);
+            --bg-layer3: radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%);
+            --bg-base: linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%);
+            /* Layout */
+            --border-thick: 4px;
+            --radius: 16px;
+            --wing-width: 280px;
+            --toolbar-height: 60px;
+            --transition-slide: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            /* POS Inline Variables */
+            --pos-bg: rgba(15, 23, 42, 0.95);
+            --pos-primary: #38bdf8;
+            --pos-accent: #6366f1;
+            --pos-border: rgba(255, 255, 255, 0.1);
+            --pos-glass: rgba(15, 23, 42, 0.8);
+            --pos-radius: 16px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            background: var(--bg-layer1), var(--bg-layer2), var(--bg-layer3), var(--bg-base);
+            transition: background 0.6s ease, color 0.4s ease;
+        }
+
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 3 — Wing Containers + Track Structure
+           Pattern: CodePen #3 (Suzannah) — overflow:hidden
+           on wrapper, translateX on track, each panel
+           scrolls independently
+           ══════════════════════════════════════════════ */
+
+        /* — Shared wing base — */
+        .wing {
+            position: fixed;
+            top: 0;
+            bottom: var(--toolbar-height);
+            width: var(--wing-width);
+            z-index: 10;
+            overflow: hidden;
+            /* CRITICAL: clips offscreen panels */
+            display: flex;
+            flex-direction: column;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .wing-left {
+            left: 0;
+        }
+
+        .wing-right {
+            right: 0;
+        }
+
+        /* — Wing header label — */
+        .wing-header {
+            padding: 14px 16px 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .wing-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--white);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .wing-page-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* — Track (flex row of section panels) — */
+        .wing-track {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            /* allow flex child to shrink */
+            transition: var(--transition-slide);
+        }
+
+        /* — Individual section panel — */
+        .wing-section {
+            min-width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            /* Half-pill peek: top padding starts mid-pill, bottom same */
+            padding: 28px 12px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* Scroll-snap: pills snap into position on scroll stop */
+            scroll-snap-type: y proximity;
+            scroll-behavior: smooth;
+            /* Fade edges: half-pill peek indicator at top + bottom */
+            mask-image: linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%);
+        }
+
+        /* Custom scrollbar for wing sections */
+        .wing-section::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .wing-section::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .wing-section::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 4 — Wing Navigation Controls
+           Pattern: radialMenu directional intent detection
+           ══════════════════════════════════════════════ */
+
+        /* — Arrow buttons — */
+        .wing-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 30;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 3px solid var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--lamp-deep);
+            font-weight: 800;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+            transition: opacity 0.25s ease, transform 0.2s ease;
+            opacity: 1;
+            user-select: none;
+        }
+
+        .wing-arrow:hover {
+            transform: translateY(-50%) translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .wing-arrow.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .wing-left .wing-arrow-prev {
+            left: 6px;
+        }
+
+        .wing-left .wing-arrow-next {
+            right: 6px;
+        }
+
+        .wing-right .wing-arrow-prev {
+            left: 6px;
+        }
+
+        .wing-right .wing-arrow-next {
+            right: 6px;
+        }
+
+        /* — Dot indicators — */
+        .wing-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 0 10px;
+            flex-shrink: 0;
+        }
+
+        .wing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: background 0.2s ease;
+        }
+
+        .wing-dot.active {
+            background: var(--white);
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 5 — Wing Section Content (Pill Buttons)
+           Pattern: vrc-ui Atomic Design — pills are
+           molecules (icon + label + chevron)
+           ══════════════════════════════════════════════ */
+
+        .section-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: rgba(255, 255, 255, 0.75);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            padding: 4px 4px 2px;
+        }
+
+        .pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+            text-decoration: none;
+            color: var(--text);
+            scroll-snap-align: start;
+        }
+
+        .pill:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 16px rgba(0, 0, 0, 0.12),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+        }
+
+        .pill:active {
+            transform: translateY(0);
+        }
+
+        .pill-icon {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+        }
+
+        .pill-text {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .pill-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .pill-sub {
+            font-size: 0.58rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
+        }
+
+        .pill-chevron {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 6 — Center Launch Pad
+           Pattern: VRChat Launch Pad — banner + Quick
+           Links + Quick Actions, always default view
+           ══════════════════════════════════════════════ */
+
+        .center-pad {
+            position: fixed;
+            top: 0;
+            left: var(--wing-width);
+            right: var(--wing-width);
+            bottom: var(--toolbar-height);
+            z-index: 20;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .center-pad::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .center-pad::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .center-pad::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        /* — Top status bar — */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2px;
+        }
+
+        .status-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+
+        .status-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--white);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .status-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* — Banner card — */
+        .banner {
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+            padding: 20px 24px;
+            text-align: center;
+        }
+
+        .banner-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+
+        .banner-sub {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .banner-obsidian {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .banner-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 12px;
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            color: var(--lamp-deep);
+            border: 2px solid var(--white);
+        }
+
+        /* — Section headers in center — */
+        .center-section-header {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--white);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 2px;
+        }
+
+        .center-section-header::before {
+            content: '';
+            width: var(--border-thick);
+            height: 16px;
+            background: var(--white);
+            border-radius: 2px;
+        }
+
+        /* — Tile grids — */
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .tile {
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+            padding: 16px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            text-align: center;
+        }
+
+        .tile:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 16px rgba(0, 0, 0, 0.12),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+        }
+
+        .tile:active {
+            transform: translateY(0);
+            border-color: var(--lamp-deep);
+        }
+
+        .tile-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--lamp-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+        }
+
+        .tile-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.01em;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 7 — Bottom Icon Toolbar
+           Pattern: VRChat bottom tab bar — always
+           visible, always accessible, z-index 100
+           ══════════════════════════════════════════════ */
+
+        .toolbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: var(--toolbar-height);
+            z-index: 100;
+            background: var(--toolbar-bg);
+            border-top: var(--border-thick) solid rgba(255, 255, 255, 0.25);
+            transition: background 0.6s ease;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 0 20px;
+        }
+
+        .toolbar-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: var(--border-thick) solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 800;
+            transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+            position: relative;
+        }
+
+        .toolbar-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .toolbar-btn.active {
+            background: var(--white);
+            color: var(--lamp-deep);
+            border-color: var(--white);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .toolbar-btn-label {
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.4rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+            color: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 8 — Polish + Transitions
+           No shimmer, no glow, no pulse — clean solid
+           transitions only
+           ══════════════════════════════════════════════ */
+
+        /* Focus states for keyboard accessibility */
+        .pill:focus-visible,
+        .tile:focus-visible,
+        .toolbar-btn:focus-visible,
+        .wing-arrow:focus-visible {
+            outline: 3px solid var(--lamp-deep);
+            outline-offset: 2px;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 10 — Responsive + Edge Cases
+           ══════════════════════════════════════════════ */
+
+        /* < 1000px: collapse wings behind toggle buttons */
+        @media (max-width: 1000px) {
+            :root {
+                --wing-width: 0px;
+            }
+
+            .wing {
+                width: 280px;
+                transform: translateX(-100%);
+                transition: var(--transition-slide);
+                background: var(--bg-layer1), var(--bg-layer2), var(--bg-base);
+                z-index: 50;
+            }
+
+            .wing-right {
+                transform: translateX(100%);
+            }
+
+            .wing.wing-open {
+                transform: translateX(0);
+            }
+
+            .wing-toggle {
+                display: flex;
+            }
+
+            .center-pad {
+                left: 0;
+                right: 0;
+                padding: 16px;
+            }
+
+            .tile-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1001px) {
+            .wing-toggle {
+                display: none;
+            }
+        }
+
+        /* Wing toggle buttons (mobile/tablet) */
+        .wing-toggle {
+            position: fixed;
+            top: 12px;
+            z-index: 55;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid var(--white);
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .wing-toggle:hover {
+            transform: translateY(-2px);
+        }
+
+        .wing-toggle-left {
+            left: 12px;
+        }
+
+        .wing-toggle-right {
+            right: 12px;
+        }
+
+        /* Backdrop overlay when wing is open on mobile */
+        .wing-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(59, 26, 4, 0.4);
+            z-index: 45;
+        }
+
+        .wing-backdrop.show {
+            display: block;
+        }
+
+        /* ══════════════════════════════════════════════
+           Star Card System — Expanding detail card
+           Pokemon TCG card travel animation
+           ══════════════════════════════════════════════ */
+
+        /* ══════════════════════════════════════════════
+           Floating Star Button — above toolbar
+           ══════════════════════════════════════════════ */
+
+        .star-float-btn {
+            position: fixed;
+            bottom: calc(var(--toolbar-height) + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 110;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            border: 4px solid var(--white);
+            color: var(--white);
+            font-size: 1.4rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4), 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+        }
+
+        .star-float-btn:hover {
+            transform: translateX(-50%) translateY(-3px);
+            box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5), 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .star-float-btn.active {
+            background: linear-gradient(145deg, #fde68a, #fbbf24);
+            box-shadow: 0 0 24px rgba(245, 158, 11, 0.6), 0 4px 16px rgba(245, 158, 11, 0.4);
+            transform: translateX(-50%) scale(1.08);
+        }
+
+        .star-float-btn.active:hover {
+            transform: translateX(-50%) scale(1.08) translateY(-3px);
+        }
+
+        /* ══════════════════════════════════════════════
+           Drop Zone — inside star card
+           ══════════════════════════════════════════════ */
+
+        .drop-zone {
+            min-height: 120px;
+            border: 3px dashed rgba(245, 158, 11, 0.4);
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.04);
+            transition: border-color 0.2s ease, background 0.2s ease;
+            padding: 16px;
+            position: relative;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+        }
+
+        .drop-zone-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 88px;
+            opacity: 0.5;
+        }
+
+        .drop-zone-empty.hidden {
+            display: none;
+        }
+
+        .drop-zone-icon {
+            font-size: 1.6rem;
+            color: #f59e0b;
+        }
+
+        .drop-zone-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-dim);
+        }
+
+        .drop-zone-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .drop-zone-items .pill {
+            position: relative;
+        }
+
+        .drop-zone-items .pill .pill-remove {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 2px solid var(--white);
+            color: var(--white);
+            font-size: 0.55rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            transition: transform 0.15s ease;
+        }
+
+        .drop-zone-items .pill .pill-remove:hover {
+            transform: scale(1.2);
+        }
+
+        /* Wing pills draggable state */
+        body.star-active .wing .pill {
+            cursor: grab;
+        }
+
+        body.star-active .wing .pill:active {
+            cursor: grabbing;
+            opacity: 0.7;
+        }
+
+        body.star-active .wing .pill.dragging {
+            opacity: 0.4;
+            transform: scale(0.95);
+        }
+
+        /* Minimal mode overrides for drop zone */
+        body.minimal-mode .drop-zone {
+            border-color: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.03);
+        }
+
+        body.minimal-mode .drop-zone.drag-over {
+            border-color: rgba(245, 158, 11, 0.5);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        body.minimal-mode .drop-zone-text {
+            color: rgba(255,255,255,0.3);
+        }
+
+        body.minimal-mode .star-float-btn {
+            background: rgba(245, 158, 11, 0.8);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        /* Star card — visible by default */
+        .star-card {
+            max-height: 500px;
+            opacity: 1;
+            transform: scale(1) translateZ(0.1px);
+            transform-style: preserve-3d;
+            perspective: 800px;
+            transition:
+                max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease,
+                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+            padding: 20px 24px;
+        }
+
+        /* Star card — paused/hidden */
+        .star-card.paused {
+            max-height: 0;
+            opacity: 0;
+            transform: scale(0.92) translateZ(0);
+            padding: 0 24px;
+            overflow: hidden;
+        }
+
+        .star-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .star-card-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .star-card-sub {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .star-card-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            border: 2px solid var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+            transition: transform 0.2s ease;
+        }
+
+        .star-card-close:hover {
+            transform: scale(1.1);
+        }
+
+        .star-card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* Tile hide/show transitions */
+        .center-section-header,
+        .tile-grid {
+            max-height: 500px;
+            transition: opacity 0.25s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+        }
+
+        .tiles-hidden {
+            opacity: 0 !important;
+            max-height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Wing arrow buttons inside header */
+        .wing-header .wing-arrow {
+            position: static;
+            transform: none;
+            width: 24px;
+            height: 24px;
+            font-size: 0.55rem;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .wing-header .wing-arrow:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Wings interactive by default (star active on load) */
+        body.star-paused .wing .pill {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* Wing grow on star activation */
+        body.star-active {
+            --wing-width: 283px;
+        }
+
+        /* ══════════════════════════════════════════════
+           iOS 14 Toggle Switch
+           ══════════════════════════════════════════════ */
+
+        .mode-toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.6);
+            transition: color 0.3s ease;
+        }
+
+        .mode-label.active-label {
+            color: var(--white);
+        }
+
+        .ios-toggle {
+            position: relative;
+            width: 51px;
+            height: 31px;
+            flex-shrink: 0;
+        }
+
+        .ios-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .ios-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 31px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .ios-slider::before {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            left: 1px;
+            top: 1px;
+            background: var(--white);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ios-toggle input:checked+.ios-slider {
+            background: var(--lamp-deep);
+            border-color: var(--lamp-mid);
+        }
+
+        .ios-toggle input:checked+.ios-slider::before {
+            transform: translateX(20px);
+        }
+
+        /* ══════════════════════════════════════════════
+           Minimal Text Mode
+           ══════════════════════════════════════════════ */
+
+        body.minimal-mode .pill {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 6px 8px !important;
+            border-radius: 0 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        body.minimal-mode .pill:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        body.minimal-mode .pill-icon {
+            display: none;
+        }
+
+        body.minimal-mode .pill-chevron {
+            display: none;
+        }
+
+        body.minimal-mode .pill-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 400;
+            color: var(--white);
+        }
+
+        body.minimal-mode .pill-sub {
+            display: none;
+        }
+
+        body.minimal-mode .section-label {
+            font-size: 0.5rem;
+            color: rgba(255, 255, 255, 0.4);
+            padding: 8px 8px 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        body.minimal-mode .banner {
+            background: transparent !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: none !important;
+            padding: 12px 16px !important;
+        }
+
+        body.minimal-mode .banner-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--white);
+        }
+
+        body.minimal-mode .banner-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        body.minimal-mode .banner-obsidian {
+            display: none;
+        }
+
+        body.minimal-mode .tile {
+            background: transparent !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: none !important;
+            padding: 10px 8px !important;
+            border-radius: 8px !important;
+        }
+
+        body.minimal-mode .tile:hover {
+            background: rgba(255, 255, 255, 0.06) !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        body.minimal-mode .tile-icon {
+            display: none;
+        }
+
+        body.minimal-mode .tile-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: var(--white);
+        }
+
+        body.minimal-mode .tile-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        body.minimal-mode .center-section-header {
+            font-size: 0.5rem;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        body.minimal-mode .center-section-header::before {
+            height: 10px;
+            width: 2px;
+        }
+
+        body.minimal-mode .wing-header {
+            padding: 10px 12px 4px;
+        }
+
+        body.minimal-mode .wing-dots .wing-dot {
+            width: 5px;
+            height: 5px;
+        }
+
+        body.minimal-mode .star-card {
+            background: transparent !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: none !important;
+        }
+
+        body.minimal-mode .star-card-title {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--white);
+        }
+
+        body.minimal-mode .star-card-close {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--white);
+        }
+
+        body.minimal-mode .toolbar {
+            background: rgba(0, 0, 0, 0.6) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: none !important;
+        }
+
+        body.minimal-mode .toolbar-btn {
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            background: transparent !important;
+            font-size: 0.85rem;
+        }
+
+        body.minimal-mode .toolbar-btn.active {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: var(--white) !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        body.minimal-mode .wing {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        body.minimal-mode .center-pad {
+            gap: 10px;
+        }
+
+        /* ══════════════════════════════════════════════
+           Wing Drop Input Box
+           ══════════════════════════════════════════════ */
+
+        .wing-input-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px 12px;
+            flex-shrink: 0;
+        }
+
+        .wing-prompt-input {
+            flex: 1;
+            height: 36px;
+            padding: 0 12px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--white);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 400;
+            outline: none;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .wing-prompt-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .wing-prompt-input:focus {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .wing-prompt-send {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .wing-prompt-send:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.minimal-mode .wing-prompt-input {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        body.minimal-mode .wing-prompt-input:focus {
+            border-color: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.minimal-mode .wing-prompt-send {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* ══════════════════════════════════════════════
+           Wing Import Bar + Style Cycler
+           ══════════════════════════════════════════════ */
+
+        .wing-import-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px 4px;
+            flex-shrink: 0;
+        }
+
+        .wing-import-input {
+            flex: 1;
+            height: 32px;
+            padding: 0 10px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--white);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 400;
+            outline: none;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .wing-import-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .wing-import-input:focus {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .wing-style-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 2px solid var(--white);
+            background: var(--lamp-deep);
+            color: var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            flex-shrink: 0;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .wing-style-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .wing-style-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.42rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            padding: 0 0 2px;
+            flex-shrink: 0;
+        }
+
+        body.minimal-mode .wing-import-input {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        body.minimal-mode .wing-import-input:focus {
+            border-color: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.minimal-mode .wing-style-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* ══════════════════════════════════════════════
+           Pill Style Mode 2: Quiet
+           Ghost pills — stripped, breathable, muted
+           ══════════════════════════════════════════════ */
+
+        .wing.pill-style-quiet .pill {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 0;
+            box-shadow: none;
+            padding: 10px 8px;
+        }
+
+        .wing.pill-style-quiet .pill:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .wing.pill-style-quiet .pill-icon {
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .wing.pill-style-quiet .pill-label {
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .wing.pill-style-quiet .pill-sub {
+            font-size: 0.52rem;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .wing.pill-style-quiet .pill-chevron {
+            display: none;
+        }
+
+        /* ══════════════════════════════════════════════
+           Pill Style Mode 3: Glass
+           Frosted premium — backdrop blur, soft glow
+           ══════════════════════════════════════════════ */
+
+        .wing.pill-style-glass .pill {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            box-shadow:
+                0 4px 16px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            padding: 12px 14px;
+            color: var(--white);
+        }
+
+        .wing.pill-style-glass .pill:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 20px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .wing.pill-style-glass .pill-icon {
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--white);
+            border-radius: 10px;
+        }
+
+        .wing.pill-style-glass .pill-label {
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .wing.pill-style-glass .pill-sub {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .wing.pill-style-glass .pill-chevron {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ══════════════════════════════════════════════
+           Pill Style Mode 4: Neo
+           Bold trendy — hard offset shadow, accent bar
+           ══════════════════════════════════════════════ */
+
+        .wing.pill-style-neo .pill {
+            background: var(--white);
+            border: 2px solid var(--text);
+            border-radius: 10px;
+            box-shadow: 3px 3px 0 var(--text);
+            padding: 10px 12px;
+            position: relative;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .wing.pill-style-neo .pill:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0 var(--text);
+        }
+
+        .wing.pill-style-neo .pill:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 var(--text);
+        }
+
+        .wing.pill-style-neo .pill-icon {
+            background: var(--lamp-deep);
+            color: var(--white);
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+
+        .wing.pill-style-neo .pill-label {
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .wing.pill-style-neo .pill-sub {
+            font-size: 0.55rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--lamp-deep);
+        }
+
+        .wing.pill-style-neo .pill-chevron {
+            color: var(--lamp-deep);
+            font-weight: 800;
+        }
+
+        /* ══════════════════════════════════════════════
+           Wing Prompt Toast
+           ══════════════════════════════════════════════ */
+
+        .wing-toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 14px 22px;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            max-width: 520px;
+            text-align: center;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .wing-toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .wing-toast .toast-cmd {
+            display: block;
+            margin-top: 6px;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: #0ea5e9;
+            word-break: break-all;
+            user-select: all;
+        }
+
+        /* ══════════════════════════════════════════════
+           Dynamic Island Notch — expand/collapse
+           Pattern: tommyxst + Apple bounce overshoot
+           ══════════════════════════════════════════════ */
+
+        .notch {
+            position: fixed;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 200;
+            width: 180px;
+            height: 30px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            cursor: pointer;
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        border-radius 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        background 0.3s ease,
+                        border-color 0.3s ease,
+                        box-shadow 0.3s ease;
+        }
+
+        .notch:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* — Notch bar (always visible pill row) — */
+        .notch-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 30px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .notch-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .notch-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(255, 255, 255, 0.4);
+            transition: color 0.3s ease;
+        }
+
+        /* — Notch content (hidden until expanded) — */
+        .notch-content {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            width: 100%;
+            padding: 0 12px;
+            transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.35s ease;
+            transition-delay: 0s;
+        }
+
+        /* — Expanded Dynamic Island state — */
+        .notch.expanded {
+            width: 340px;
+            height: 280px;
+            border-radius: 24px;
+            background: rgba(0, 0, 0, 0.92);
+            animation: notch-expand 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .notch.expanded .notch-content {
+            max-height: 400px;
+            opacity: 1;
+            padding: 8px 12px 12px;
+            transition-delay: 0.15s;
+        }
+
+        /* — Expand keyframes (Apple bounce overshoot) — */
+        @keyframes notch-expand {
+            0% { transform: translateX(-50%) scale(1); }
+            80% { transform: translateX(-50%) scale(1.06); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* — Collapse keyframes (snappy) — */
+        .notch.collapsing {
+            animation: notch-collapse 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes notch-collapse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(0.96); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* — Notch active — assistant mode on — */
+        .notch.active {
+            background: rgba(0, 0, 0, 0.92);
+            border-color: #10b981;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.3), 0 0 4px rgba(16, 185, 129, 0.5);
+        }
+
+        .notch.active .notch-dot {
+            background: #10b981;
+            box-shadow: 0 0 6px #10b981;
+        }
+
+        .notch.active .notch-label {
+            color: #10b981;
+        }
+
+        /* — Phone ring shake animation — */
+        @keyframes phone-ring {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            10% { transform: translateX(-50%) rotate(-8deg); }
+            20% { transform: translateX(-50%) rotate(8deg); }
+            30% { transform: translateX(-50%) rotate(-6deg); }
+            40% { transform: translateX(-50%) rotate(6deg); }
+            50% { transform: translateX(-50%) rotate(-3deg); }
+            60% { transform: translateX(-50%) rotate(3deg); }
+            70% { transform: translateX(-50%) rotate(-1deg); }
+            80% { transform: translateX(-50%) rotate(1deg); }
+            100% { transform: translateX(-50%) rotate(0deg); }
+        }
+
+        .notch.ringing {
+            animation: phone-ring 0.6s ease-in-out;
+        }
+
+        /* — Assistant mode — wings fully unlock — */
+        body.assistant-active .wing .pill {
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        /* — Minimal mode notch — */
+        body.minimal-mode .notch {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        /* ══════════════════════════════════════════════
+           Dynamic Island — Call Grid (4x3)
+           Pattern: glossy black buttons + vibrate
+           ══════════════════════════════════════════════ */
+
+        .call-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            width: 100%;
+        }
+
+        .call-btn {
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px 4px;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.55rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: background 0.2s ease, transform 0.15s ease;
+            user-select: none;
+        }
+
+        .call-btn:hover {
+            background: linear-gradient(145deg, #2a2a2a, #151515);
+        }
+
+        .call-btn:active {
+            transform: scale(0.95);
+        }
+
+        .call-btn.vibrating {
+            animation: btn-vibrate 0.3s ease-in-out;
+        }
+
+        @keyframes btn-vibrate {
+            0% { transform: rotate(0deg); }
+            10% { transform: rotate(-2deg); }
+            20% { transform: rotate(2deg); }
+            30% { transform: rotate(-2deg); }
+            40% { transform: rotate(2deg); }
+            50% { transform: rotate(-1deg); }
+            60% { transform: rotate(1deg); }
+            70% { transform: rotate(-0.5deg); }
+            80% { transform: rotate(0.5deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .call-grid-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .call-grid-phone {
+            font-size: 0.9rem;
+            color: #ef4444;
+            filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.5));
+        }
+
+        .call-grid-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* ══════════════════════════════════════════════
+           Notch Launcher Button — left of notch
+           ══════════════════════════════════════════════ */
+
+        .notch-launcher {
+            position: fixed;
+            top: 7px;
+            left: 50%;
+            transform: translateX(calc(-50% - 120px));
+            z-index: 200;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1.5px solid rgba(16, 185, 129, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            color: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.15), 0 0 2px rgba(16, 185, 129, 0.3);
+            transition: box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+
+        .notch-launcher:hover {
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.3), 0 0 4px rgba(16, 185, 129, 0.5);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .notch-launcher.launcher-active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10b981;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.4), 0 0 6px rgba(16, 185, 129, 0.6);
+        }
+
+        .notch-launcher-label {
+            position: fixed;
+            top: 38px;
+            left: 50%;
+            transform: translateX(calc(-50% - 120px));
+            z-index: 200;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.35rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(16, 185, 129, 0.4);
+            text-align: center;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: color 0.3s ease;
+        }
+
+        .notch-launcher.launcher-active ~ .notch-launcher-label {
+            color: rgba(16, 185, 129, 0.7);
+        }
+
+        /* — "ready for chad's special mode assistant" label — */
+        .notch-mode-label {
+            position: fixed;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 199;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.4rem;
+            font-weight: 700;
+            text-transform: lowercase;
+            letter-spacing: 0.06em;
+            color: rgba(255, 255, 255, 0.2);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        /* ══════════════════════════════════════════════
+           Dynamic Active Tile — Sales Funnel Card
+           ══════════════════════════════════════════════ */
+
+        .active-tile {
+            background: rgba(255, 255, 255, 0.95);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 8px 24px rgba(0, 0, 0, 0.15),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: tileSpawnIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            max-height: 700px;
+            transition: max-height 0.4s ease, opacity 0.3s ease, transform 0.3s ease;
+            margin-bottom: 12px;
+        }
+
+        @keyframes tileSpawnIn {
+            from { opacity: 0; transform: scale(0.92) translateY(12px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .active-tile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--lamp-glow);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .active-tile-header-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .active-tile-header-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+        }
+
+        .active-tile-header-text {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .active-tile-header-sub {
+            font-size: 0.55rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
+        }
+
+        .active-tile-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-dim);
+            transition: all 0.2s ease;
+        }
+
+        .active-tile-close:hover {
+            background: rgba(244, 63, 94, 0.1);
+            color: #f43f5e;
+        }
+
+        /* Sales Funnel Fields inside Active Tile */
+        .funnel-body {
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+
+        .funnel-field {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .funnel-label {
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--text-dim);
+        }
+
+        .funnel-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+            background: var(--white);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            outline: none;
+        }
+
+        .funnel-input:focus {
+            border-color: var(--lamp-deep);
+            box-shadow: 0 0 0 3px rgba(194, 86, 10, 0.1);
+        }
+
+        .funnel-input.filled {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.04);
+        }
+
+        .funnel-packages {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .funnel-pkg-pill {
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text);
+        }
+
+        .funnel-pkg-pill:hover {
+            transform: translateY(-1px);
+            border-color: var(--lamp-mid);
+        }
+
+        .funnel-pkg-pill.selected {
+            background: var(--lamp-deep);
+            color: var(--white);
+            border-color: var(--lamp-deep);
+        }
+
+        /* ══════════════════════════════════════════════
+           Inline POS Strip — Compact Checkout
+           ══════════════════════════════════════════════ */
+
+        .pos-strip {
+            background: var(--pos-bg);
+            border-top: 2px solid var(--pos-primary);
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border-radius: 0 0 calc(var(--radius) - var(--border-thick)) calc(var(--radius) - var(--border-thick));
+        }
+
+        .pos-strip-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pos-strip-title {
+            font-size: 0.55rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--pos-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pos-strip-count {
+            font-size: 0.55rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .pos-strip-ledger {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .pos-strip-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--pos-border);
+            animation: posStripItemIn 0.35s ease-out forwards;
+        }
+
+        @keyframes posStripItemIn {
+            from { opacity: 0; transform: translateX(16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .pos-strip-item-name {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .pos-strip-item-price {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--pos-primary);
+        }
+
+        .pos-strip-item-delete {
+            color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            font-size: 0.65rem;
+            margin-left: 8px;
+            transition: color 0.3s ease;
+            background: none;
+            border: none;
+        }
+
+        .pos-strip-item-delete:hover {
+            color: #f43f5e;
+        }
+
+        .pos-strip-totals {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 6px;
+            border-top: 1px solid var(--pos-primary);
+        }
+
+        .pos-strip-total-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 700;
+        }
+
+        .pos-strip-total-amount {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--pos-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pos-strip-discount {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pos-strip-discount-input {
+            width: 50px;
+            background: transparent;
+            border: 1px solid var(--pos-border);
+            border-radius: 6px;
+            padding: 4px 6px;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            text-align: center;
+            outline: none;
+        }
+
+        .pos-strip-discount-input:focus {
+            border-color: var(--pos-accent);
+        }
+
+        .pos-strip-lock {
+            width: 100%;
+            padding: 10px;
+            background: var(--pos-primary);
+            color: #0f172a;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pos-strip-lock:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(56, 189, 248, 0.4);
+        }
+
+        .pos-strip-lock:active {
+            transform: translateY(0);
+        }
+
+        .pos-strip-search-wrap {
+            position: relative;
+        }
+
+        .pos-strip-search {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--pos-border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .pos-strip-search:focus {
+            border-color: var(--pos-primary);
+        }
+
+        .pos-strip-results {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: #0f172a;
+            border: 1px solid var(--pos-primary);
+            border-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+            z-index: 50;
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+            margin-bottom: 4px;
+        }
+
+        .pos-strip-results.active { display: block; }
+
+        .pos-strip-result-item {
+            padding: 6px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s ease;
+            font-size: 0.72rem;
+            color: #fff;
+        }
+
+        .pos-strip-result-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        /* Wing pill "sending" animation */
+        .pill.sending {
+            animation: pillSend 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes pillSend {
+            0% { transform: translateX(0); opacity: 1; }
+            50% { transform: translateX(40px); opacity: 0.3; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Enable pills when tiles exist */
+        body.tile-active .wing .pill {
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        /* Test button cyan accent */
+        .toolbar-btn-test {
+            color: var(--pos-primary) !important;
+            border-color: rgba(56, 189, 248, 0.4) !important;
+        }
+
+        .toolbar-btn-test:hover {
+            color: var(--pos-primary) !important;
+            border-color: rgba(56, 189, 248, 0.6) !important;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+        }
+
+        /* ══════════════════════════════════════════════
+           Lift Animation — First-Drop Feedback
+           ══════════════════════════════════════════════ */
+
+        @keyframes tileLift {
+            0%   { transform: translateY(0) scale(1); border-color: transparent; }
+            40%  { transform: translateY(-4px) scale(1.01); border-color: rgba(245, 158, 11, 0.4); }
+            100% { transform: translateY(0) scale(1); border-color: transparent; }
+        }
+
+        .active-tiles-lifting {
+            animation: tileLift 0.5s ease-out;
+            border-radius: var(--radius);
+            border: 2px solid transparent;
+        }
+
+        .drop-zone.first-drop {
+            animation: dropFlash 0.4s ease-out;
+        }
+
+        @keyframes dropFlash {
+            0%   { border-color: rgba(245, 158, 11, 0.4); }
+            50%  { border-color: #f59e0b; box-shadow: 0 0 16px rgba(245, 158, 11, 0.3); }
+            100% { border-color: rgba(245, 158, 11, 0.4); }
+        }
+
+        /* ══════════════════════════════════════════════
+           Summary Orb — Live POS Total at Tile Bottom
+           ══════════════════════════════════════════════ */
+
+        .pos-orb-wrap {
+            display: flex;
+            justify-content: center;
+            padding: 10px 0 6px;
+            position: relative;
+        }
+
+        .pos-orb {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, var(--lamp-warm, #f2a54a), var(--pos-primary, #38bdf8));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 3px solid var(--white, #fff);
+            box-shadow:
+                0 2px 12px rgba(56, 189, 248, 0.25),
+                0 0 8px rgba(242, 165, 74, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: orbPulse 2s ease-in-out infinite;
+            position: relative;
+            z-index: 5;
+        }
+
+        .pos-orb:hover {
+            transform: scale(1.08);
+            box-shadow:
+                0 4px 20px rgba(56, 189, 248, 0.4),
+                0 0 14px rgba(242, 165, 74, 0.3);
+        }
+
+        .pos-orb:active {
+            transform: scale(1.02);
+        }
+
+        .pos-orb-total {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 800;
+            color: #0f172a;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+            white-space: nowrap;
+            letter-spacing: -0.03em;
+        }
+
+        @keyframes orbPulse {
+            0%, 100% { box-shadow: 0 2px 12px rgba(56, 189, 248, 0.25), 0 0 8px rgba(242, 165, 74, 0.2); }
+            50%      { box-shadow: 0 2px 18px rgba(56, 189, 248, 0.4), 0 0 14px rgba(242, 165, 74, 0.35); }
+        }
+
+        /* Orb panel — POS strip slides up from behind orb */
+        .pos-orb-panel {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.25s ease;
+        }
+
+        .pos-orb-panel.open {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+        /* Minimal mode overrides for orb */
+        body.minimal-mode .pos-orb {
+            border-width: 2px;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        body.minimal-mode .pos-orb-panel .pos-strip {
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 0 0 calc(var(--radius) - var(--border-thick)) calc(var(--radius) - var(--border-thick));
+        }
+
+        /* ══════════════════════════════════════════════
+           AI Tool Overlay System
+           ══════════════════════════════════════════════ */
+        .ai-tool-overlay {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            max-width: 90vw;
+            background: linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%);
+            border: var(--border-thick) solid var(--lamp-deep);
+            border-radius: var(--radius);
+            z-index: 1000;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(242,165,74,0.3);
+            flex-direction: column;
+            overflow: hidden;
+            animation: ato-fade-in 0.25s ease;
+        }
+
+        .ai-tool-overlay.active {
+            display: flex;
+        }
+
+        @keyframes ato-fade-in {
+            from { opacity: 0; transform: translate(-50%, -48%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+
+        .ato-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            padding: 20px 24px 4px;
+        }
+
+        .ato-sub {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            padding: 0 24px 16px;
+            font-weight: 400;
+        }
+
+        .ato-body {
+            min-height: 180px;
+            padding: 16px 24px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(59,26,4,0.15);
+        }
+
+        .ato-close {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text);
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            line-height: 1;
+        }
+
+        .ato-close:hover {
+            opacity: 1;
+        }
+
+        .ato-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+        }
+
+        .ato-backdrop.active {
+            display: block;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <!-- ═══════ MODE LABEL (above notch) ═══════ -->
+        <div class="notch-mode-label">ready for chad's special mode assistant</div>
+
+        <!-- ═══════ LAUNCHER BUTTON (left of notch) ═══════ -->
+        <button class="notch-launcher" id="notchLauncher" title="Copy /mode-2 command">▶</button>
+        <div class="notch-launcher-label" id="notchLauncherLabel">assistant ready</div>
+
+        <!-- ═══════ DYNAMIC ISLAND NOTCH ═══════ -->
+        <div class="notch" id="notch" title="Toggle Dynamic Island">
+            <div class="notch-bar" id="notchBar">
+                <div class="notch-dot"></div>
+                <span class="notch-label">Standby</span>
+                <div class="notch-dot"></div>
+            </div>
+            <div class="notch-content" id="notchContent">
+                <div class="call-grid-header">
+                    <span class="call-grid-phone">☎</span>
+                    <span class="call-grid-title">Quick Actions</span>
+                </div>
+                <div class="call-grid" id="callGrid">
+                    <button class="call-btn" data-action="hello">Hello?</button>
+                    <button class="call-btn" data-action="grab-client">Grab Client</button>
+                    <button class="call-btn" data-action="voice-cmd">Voice Command</button>
+                    <button class="call-btn" data-action="quick-note">Quick Note</button>
+                    <button class="call-btn" data-action="check-status">Check Status</button>
+                    <button class="call-btn" data-action="run-report">Run Report</button>
+                    <button class="call-btn" data-action="open-wing">Open Wing</button>
+                    <button class="call-btn" data-action="star-mode">Star Mode</button>
+                    <button class="call-btn" data-action="new-task">New Task</button>
+                    <button class="call-btn" data-action="follow-up">Follow Up</button>
+                    <button class="call-btn" data-action="send-quote">Send Quote</button>
+                    <button class="call-btn" data-action="end-call">End Call</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ Wing Toggle Buttons (mobile only) ═══════ -->
+        <button class="wing-toggle wing-toggle-left" id="toggleLeft" title="Toggle left wing">◀</button>
+        <button class="wing-toggle wing-toggle-right" id="toggleRight" title="Toggle right wing">▶</button>
+        <div class="wing-backdrop" id="wingBackdrop"></div>
+
+        <!-- ═══════ LEFT WING ═══════ -->
+        <div class="wing wing-left" id="wingLeft">
+            <div class="wing-header">
+                <button class="wing-arrow wing-arrow-prev hidden" data-wing="left" data-dir="-1">◀</button>
+                <span class="wing-title">Clients</span>
+                <span class="wing-page-label" id="leftPageLabel">1 / 4</span>
+                <button class="wing-arrow wing-arrow-next" data-wing="left" data-dir="1">▶</button>
+            </div>
+
+            <!-- Import Data Bar -->
+            <div class="wing-import-bar">
+                <input type="text" class="wing-import-input" id="leftImportInput" placeholder="Import data..." spellcheck="false">
+                <button class="wing-style-btn" id="leftStyleBtn" data-wing="left" title="Cycle pill style">■</button>
+            </div>
+
+            <div class="wing-track" id="leftTrack">
+                <!-- Section 1: Clients (pills rendered by JS) -->
+                <div class="wing-section">
+                    <div class="section-label">Clients</div>
+                </div>
+
+                <!-- Section 2: Pricing (pills rendered by JS) -->
+                <div class="wing-section">
+                    <div class="section-label">Pricing</div>
+                </div>
+
+                <!-- Section 3: Projects (pills rendered by JS) -->
+                <div class="wing-section">
+                    <div class="section-label">Projects</div>
+                </div>
+
+                <!-- Section 4: Pipeline (pills rendered by JS) -->
+                <div class="wing-section">
+                    <div class="section-label">Pipeline</div>
+                </div>
+            </div>
+
+            <div class="wing-dots" id="leftDots">
+                <div class="wing-dot active"></div>
+                <div class="wing-dot"></div>
+                <div class="wing-dot"></div>
+                <div class="wing-dot"></div>
+            </div>
+
+            <!-- Drop Input Box -->
+            <div class="wing-input-box">
+                <input type="text" class="wing-prompt-input" id="leftPromptInput" placeholder="Type a prompt..."
+                    spellcheck="false">
+                <button class="wing-prompt-send" id="leftPromptSend">▶</button>
+            </div>
+        </div>
+
+        <!-- ═══════ RIGHT WING ═══════ -->
+        <div class="wing wing-right" id="wingRight">
+            <div class="wing-header">
+                <button class="wing-arrow wing-arrow-prev hidden" data-wing="right" data-dir="-1">◀</button>
+                <span class="wing-title">AI Tools</span>
+                <span class="wing-page-label" id="rightPageLabel">1 / 2</span>
+                <button class="wing-arrow wing-arrow-next" data-wing="right" data-dir="1">▶</button>
+            </div>
+
+            <!-- Import Data Bar -->
+            <div class="wing-import-bar">
+                <input type="text" class="wing-import-input" id="rightImportInput" placeholder="Import data..." spellcheck="false">
+                <button class="wing-style-btn" id="rightStyleBtn" data-wing="right" title="Cycle pill style">■</button>
+            </div>
+
+            <div class="wing-track" id="rightTrack">
+                <!-- Section 1: AI Tools (pills rendered by JS) -->
+                <div class="wing-section">
+                    <div class="section-label">AI Tools</div>
+                </div>
+
+                <!-- Section 2: Comms (pills rendered by JS) -->
+                <div class="wing-section">
+                    <div class="section-label">Comms</div>
+                </div>
+            </div>
+
+            <div class="wing-dots" id="rightDots">
+                <div class="wing-dot active"></div>
+                <div class="wing-dot"></div>
+            </div>
+
+            <!-- Drop Input Box -->
+            <div class="wing-input-box">
+                <input type="text" class="wing-prompt-input" id="rightPromptInput" placeholder="Type a prompt..."
+                    spellcheck="false">
+                <button class="wing-prompt-send" id="rightPromptSend">▶</button>
+            </div>
+        </div>
+
+        <!-- ═══════ AI TOOL OVERLAYS ═══════ -->
+        <div class="ato-backdrop" id="atoBackdrop"></div>
+
+        <div class="ai-tool-overlay" id="ato-manis" data-tool="manis">
+            <div class="ato-header">Manis // Claude</div>
+            <div class="ato-sub">Lead Generation</div>
+            <div class="ato-body"><!-- future space --></div>
+            <button class="ato-close">&times;</button>
+        </div>
+
+        <div class="ai-tool-overlay" id="ato-social-sweep" data-tool="social-sweep">
+            <div class="ato-header">Social Sweep // Claude</div>
+            <div class="ato-sub">Social Listening</div>
+            <div class="ato-body"><!-- future space --></div>
+            <button class="ato-close">&times;</button>
+        </div>
+
+        <div class="ai-tool-overlay" id="ato-revio" data-tool="revio">
+            <div class="ato-header">Revio // Claude</div>
+            <div class="ato-sub">Review Management</div>
+            <div class="ato-body"><!-- future space --></div>
+            <button class="ato-close">&times;</button>
+        </div>
+
+        <div class="ai-tool-overlay" id="ato-alley" data-tool="alley">
+            <div class="ato-header">Alley // Claude</div>
+            <div class="ato-sub">Smart Outreach</div>
+            <div class="ato-body"><!-- future space --></div>
+            <button class="ato-close">&times;</button>
+        </div>
+
+        <!-- ═══════ CENTER LAUNCH PAD ═══════ -->
+        <div class="center-pad" id="centerPad">
+
+            <!-- Status bar -->
+            <div class="status-bar">
+                <div class="status-user">
+                    <div class="status-dot"></div>
+                    <span class="status-name">Chad</span>
+                    <span class="status-label">Online</span>
+                </div>
+                <span class="status-time" id="statusTime"></span>
+                <div class="mode-toggle-wrap">
+                    <span class="mode-label active-label" id="labelFull">Full</span>
+                    <label class="ios-toggle">
+                        <input type="checkbox" id="modeToggle">
+                        <span class="ios-slider"></span>
+                    </label>
+                    <span class="mode-label" id="labelMin">Minimal</span>
+                </div>
+            </div>
+
+            <!-- Banner -->
+            <div class="banner">
+                <div class="banner-title">Ahead Command Center</div>
+                <div class="banner-sub">Ahead Artist Solutions — Obsidian Memory System</div>
+                <div class="banner-obsidian">
+                    <span class="banner-tag">HTML Obsidian</span>
+                    <span class="banner-tag">Obsidian Vault</span>
+                </div>
+            </div>
+
+            <!-- Star Card — Drag & Drop Zone -->
+            <div class="star-card" id="starCard">
+                <div class="star-card-header">
+                    <div>
+                        <div class="star-card-title">★ Drop Zone</div>
+                        <div class="star-card-sub">Drag items from wings to build</div>
+                    </div>
+                    <button class="star-card-close" id="starCardClose" title="Close">✕</button>
+                </div>
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-empty" id="dropZoneEmpty">
+                        <div class="drop-zone-icon">★</div>
+                        <div class="drop-zone-text">Drop pills here from wings</div>
+                    </div>
+                    <div class="drop-zone-items" id="dropZoneItems"></div>
+                </div>
+            </div>
+
+            <!-- Dynamic Active Tiles Container -->
+            <div id="activeTilesContainer"></div>
+
+            <!-- Quick Links -->
+            <div class="center-section-header tiles-hidden">Quick Links</div>
+            <div class="tile-grid tiles-hidden">
+                <div class="tile" data-action="clients">
+                    <div class="tile-icon">➤</div>
+                    <div class="tile-label">Clients</div>
+                </div>
+                <div class="tile" data-action="pricing">
+                    <div class="tile-icon">⇅</div>
+                    <div class="tile-label">Pricing</div>
+                </div>
+                <div class="tile" data-action="suppliers">
+                    <div class="tile-icon">★</div>
+                    <div class="tile-label">Suppliers</div>
+                </div>
+                <div class="tile" data-action="services">
+                    <div class="tile-icon">↻</div>
+                    <div class="tile-label">Services</div>
+                </div>
+                <div class="tile" data-action="projects">
+                    <div class="tile-icon">◆</div>
+                    <div class="tile-label">Projects</div>
+                </div>
+                <div class="tile" data-action="pipeline">
+                    <div class="tile-icon">⇒</div>
+                    <div class="tile-label">Pipeline</div>
+                </div>
+                <div class="tile" data-action="inventory">
+                    <div class="tile-icon">⇄</div>
+                    <div class="tile-label">Inventory</div>
+                </div>
+                <div class="tile" data-action="analytics">
+                    <div class="tile-icon">↑</div>
+                    <div class="tile-label">Analytics</div>
+                </div>
+            </div>
+
+            <!-- Tools -->
+            <div class="center-section-header tiles-hidden">Tools</div>
+            <div class="tile-grid tiles-hidden">
+                <div class="tile" data-action="goal">
+                    <div class="tile-icon">✓</div>
+                    <div class="tile-label">Set Goal</div>
+                </div>
+                <div class="tile" data-action="plan">
+                    <div class="tile-icon">➤</div>
+                    <div class="tile-label">Phase Plan</div>
+                </div>
+                <div class="tile" data-action="contact">
+                    <div class="tile-icon">↵</div>
+                    <div class="tile-label">Contact</div>
+                </div>
+                <div class="tile" data-action="followup">
+                    <div class="tile-icon">⇒</div>
+                    <div class="tile-label">Follow Up</div>
+                </div>
+                <div class="tile" data-action="close">
+                    <div class="tile-icon">★</div>
+                    <div class="tile-label">Close Deal</div>
+                </div>
+                <div class="tile" data-action="track">
+                    <div class="tile-icon">⇄</div>
+                    <div class="tile-label">Track Order</div>
+                </div>
+                <div class="tile" data-action="templates">
+                    <div class="tile-icon">↵</div>
+                    <div class="tile-label">Templates</div>
+                </div>
+                <div class="tile" data-action="history">
+                    <div class="tile-icon">↻</div>
+                    <div class="tile-label">History</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ═══════ FLOATING STAR BUTTON ═══════ -->
+        <button class="star-float-btn" id="starBtn" title="Star Mode">★</button>
+
+        <!-- ═══════ BOTTOM TOOLBAR ═══════ -->
+        <div class="toolbar">
+            <button class="toolbar-btn" data-tool="mic" title="Microphone">●</button>
+            <button class="toolbar-btn active" data-tool="home" title="Home">▲</button>
+            <button class="toolbar-btn" data-tool="notifications" title="Notifications">▼</button>
+            <button class="toolbar-btn" data-tool="location" title="Here">◆</button>
+            <button class="toolbar-btn" data-tool="camera" title="Theme" id="themeBtn">■</button>
+            <button class="toolbar-btn" data-tool="audio" title="Audio">♦</button>
+            <button class="toolbar-btn toolbar-btn-test" data-tool="test" title="Test POS Flow" id="testPosBtn">⚡</button>
+        </div>
+
+    </div>
+
+    <!-- Wing Prompt Toast -->
+    <div class="wing-toast" id="wingToast"></div>
+
+    <script>
+        /* ══════════════════════════════════════════════
+           Wing Paging System
+           Pattern: CodePen #3 translateX paging +
+           radialMenu directional intent detection
+           ══════════════════════════════════════════════ */
+
+        /* ══════════════════════════════════════════════
+           Pricing Catalog — POS Strip Data Pool
+           ══════════════════════════════════════════════ */
+
+        const pricingCatalog = {
+            services: [
+                { name: 'Press Campaign - Starter', price: '$500', category: 'service' },
+                { name: 'Press Campaign - Pro', price: '$1,500', category: 'service' },
+                { name: 'Press Campaign - Elite', price: '$3,500', category: 'service' },
+                { name: 'Playlist Push - Basic', price: '$300', category: 'service' },
+                { name: 'Playlist Push - Premium', price: '$800', category: 'service' },
+                { name: 'Social Media Campaign', price: '$1,200', category: 'service' },
+                { name: 'Radio Promotion', price: '$2,000', category: 'service' },
+                { name: 'PR + Blog Feature', price: '$750', category: 'service' },
+                { name: 'Full Marketing Suite', price: '$5,000', category: 'service' },
+                { name: 'Video Production', price: '$2,500', category: 'service' },
+                { name: 'Brand Identity Package', price: '$1,800', category: 'service' },
+                { name: 'Consulting Session (1hr)', price: '$250', category: 'service' }
+            ],
+            packages: [
+                { name: 'Bronze', price: '$1,000', items: 3 },
+                { name: 'Silver', price: '$2,500', items: 5 },
+                { name: 'Gold', price: '$5,000', items: 8 },
+                { name: 'Platinum', price: '$10,000', items: 12 },
+                { name: 'Custom', price: 'TBD', items: 0 }
+            ]
+        };
+
+        const state = {
+            left: 0,
+            right: 0,
+            maxIndex: { left: 3, right: 1 },
+            tiles: [],
+            nextTileId: 1,
+            maxTiles: 5
+        };
+
+        const elements = {
+            leftTrack: document.getElementById('leftTrack'),
+            rightTrack: document.getElementById('rightTrack'),
+            leftDots: document.getElementById('leftDots'),
+            rightDots: document.getElementById('rightDots'),
+            leftPageLabel: document.getElementById('leftPageLabel'),
+            rightPageLabel: document.getElementById('rightPageLabel'),
+            wingLeft: document.getElementById('wingLeft'),
+            wingRight: document.getElementById('wingRight')
+        };
+
+        // Section names for each wing
+        const sectionNames = {
+            left: ['Clients', 'Pricing', 'Projects', 'Pipeline'],
+            right: ['AI Tools', 'Comms']
+        };
+
+        /* ══════════════════════════════════════════════
+           Pill Data Arrays — scrollable database
+           Each section supports up to 50 pills
+           ══════════════════════════════════════════════ */
+
+        const pillData = {
+            left: [
+                // Section 0: Clients (15 pills to test scroll)
+                [
+                    { icon: '➤', label: 'View All Clients', sub: 'Browse roster' },
+                    { icon: '★', label: 'Starred Clients', sub: 'Favorites' },
+                    { icon: '✓', label: 'Active Projects', sub: 'In progress' },
+                    { icon: '↻', label: 'Recent Activity', sub: 'Last 7 days' },
+                    { icon: '↵', label: 'Follow-Ups Due', sub: 'Needs attention' },
+                    { icon: '⇒', label: 'Onboard New', sub: 'Add client' },
+                    { icon: '◆', label: 'VIP Clients', sub: 'Priority tier' },
+                    { icon: '⇄', label: 'Pending Contracts', sub: 'Awaiting sign' },
+                    { icon: '↑', label: 'Revenue Leaders', sub: 'Top earners' },
+                    { icon: '✓', label: 'Completed Projects', sub: 'Archive' },
+                    { icon: '★', label: 'Referral Sources', sub: 'Who sent them' },
+                    { icon: '➤', label: 'Client Notes', sub: 'Quick notes' },
+                    { icon: '↻', label: 'Renewal Queue', sub: 'Coming up' },
+                    { icon: '⇒', label: 'Send Proposal', sub: 'New pitch' },
+                    { icon: '↵', label: 'Inactive Clients', sub: 'Re-engage' }
+                ],
+                // Section 1: Pricing
+                [
+                    { icon: '➤', label: 'Price Sheets', sub: 'All tiers' },
+                    { icon: '★', label: 'Best Sellers', sub: 'Top packages' },
+                    { icon: '⇅', label: 'Compare Plans', sub: 'Side by side' },
+                    { icon: '✓', label: 'Custom Quotes', sub: 'Client-specific' },
+                    { icon: '↻', label: 'Invoice History', sub: 'Past billing' },
+                    { icon: '⇒', label: 'New Quote', sub: 'Build pricing' }
+                ],
+                // Section 2: Projects
+                [
+                    { icon: '➤', label: 'All Projects', sub: 'Full list' },
+                    { icon: '★', label: 'Starred Projects', sub: 'Pinned' },
+                    { icon: '✓', label: 'In Progress', sub: 'Active builds' },
+                    { icon: '↻', label: 'Recent Updates', sub: 'Last 7 days' },
+                    { icon: '◆', label: 'Milestones', sub: 'Key dates' },
+                    { icon: '⇒', label: 'New Project', sub: 'Start build' }
+                ],
+                // Section 3: Pipeline
+                [
+                    { icon: '➤', label: 'Full Pipeline', sub: 'All stages' },
+                    { icon: '★', label: 'Hot Leads', sub: 'High priority' },
+                    { icon: '⇄', label: 'In Negotiation', sub: 'Active deals' },
+                    { icon: '✓', label: 'Won Deals', sub: 'Closed revenue' },
+                    { icon: '↻', label: 'Follow-Up Queue', sub: 'Needs touch' },
+                    { icon: '⇒', label: 'Add Opportunity', sub: 'New lead' }
+                ]
+            ],
+            right: [
+                // Section 0: AI Tools
+                [
+                    { icon: '🤖', label: 'Manis // Claude', sub: 'Lead Generation' },
+                    { icon: '📡', label: 'Social Sweep // Claude', sub: 'Social Listening' },
+                    { icon: '💬', label: 'Revio // Claude', sub: 'Review Management' },
+                    { icon: '🎯', label: 'Alley // Claude', sub: 'Smart Outreach' }
+                ],
+                // Section 1: Comms
+                [
+                    { icon: '✉', label: 'Gmail', sub: 'Email' },
+                    { icon: '💬', label: 'WhatsApp', sub: 'Messaging' },
+                    { icon: '💎', label: 'iMessage', sub: 'Apple' },
+                    { icon: '🔵', label: 'Messenger', sub: 'Meta' },
+                    { icon: '🎮', label: 'Discord', sub: 'Community' },
+                    { icon: '🌐', label: 'VRChat', sub: 'Virtual' },
+                    { icon: '📍', label: 'Local', sub: 'Nearby' }
+                ]
+            ]
+        };
+
+        // Track which sections have been rendered (lazy render)
+        const rendered = { left: {}, right: {} };
+
+        function renderPills(wing, sectionIndex) {
+            if (rendered[wing][sectionIndex]) return;
+
+            const track = elements[wing + 'Track'];
+            const section = track.querySelectorAll('.wing-section')[sectionIndex];
+            if (!section) return;
+
+            const pills = pillData[wing][sectionIndex];
+            if (!pills) return;
+
+            // Clear existing pills (keep section-label)
+            const label = section.querySelector('.section-label');
+            section.innerHTML = '';
+            if (label) section.appendChild(label);
+
+            // Build pills from data
+            pills.forEach(p => {
+                const pill = document.createElement('div');
+                pill.className = 'pill';
+                pill.innerHTML = `
+                    <div class="pill-icon">${p.icon}</div>
+                    <div class="pill-text">
+                        <div class="pill-label">${p.label}</div>
+                        <div class="pill-sub">${p.sub}</div>
+                    </div>
+                    <div class="pill-chevron">▶</div>
+                `;
+                section.appendChild(pill);
+            });
+
+            rendered[wing][sectionIndex] = true;
+
+            // Re-enable drag if star mode is active
+            if (document.body.classList.contains('star-active')) {
+                section.querySelectorAll('.pill').forEach(pill => {
+                    pill.setAttribute('draggable', 'true');
+                    pill.addEventListener('dragstart', handleDragStart);
+                    pill.addEventListener('dragend', handleDragEnd);
+                });
+            }
+        }
+
+        function goToSection(wing, index) {
+            // Clamp 0–maxIndex per wing
+            const max = state.maxIndex[wing];
+            index = Math.max(0, Math.min(max, index));
+            state[wing] = index;
+
+            // Update track transform
+            const track = elements[wing + 'Track'];
+            track.style.transform = `translateX(-${index * 100}%)`;
+
+            // Update page label
+            const label = elements[wing + 'PageLabel'];
+            label.textContent = `${index + 1} / ${max + 1}`;
+
+            // Update dots
+            const dotsContainer = elements[wing + 'Dots'];
+            const dots = dotsContainer.querySelectorAll('.wing-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            // Update arrow visibility (opacity transition, not display toggle)
+            const wingEl = elements['wing' + wing.charAt(0).toUpperCase() + wing.slice(1)];
+            const prevArrow = wingEl.querySelector('.wing-arrow-prev');
+            const nextArrow = wingEl.querySelector('.wing-arrow-next');
+            prevArrow.classList.toggle('hidden', index === 0);
+            nextArrow.classList.toggle('hidden', index === max);
+
+            // Update wing header title to current section name
+            const title = wingEl.querySelector('.wing-title');
+            title.textContent = sectionNames[wing][index];
+
+            // Lazy render pills for this section
+            renderPills(wing, index);
+        }
+
+        // Arrow button clicks
+        document.querySelectorAll('.wing-arrow').forEach(arrow => {
+            arrow.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const wing = arrow.dataset.wing;
+                const dir = parseInt(arrow.dataset.dir);
+                goToSection(wing, state[wing] + dir);
+            });
+        });
+
+        // Touch/pointer swipe detection
+        // Pattern: radialMenu directional intent — abs(deltaX) > abs(deltaY) * 1.5
+        function setupSwipe(wingEl, wingName) {
+            let startX = 0;
+            let startY = 0;
+            let tracking = false;
+
+            wingEl.addEventListener('pointerdown', (e) => {
+                // Only track on the wing track area, not arrows
+                if (e.target.closest('.wing-arrow')) return;
+                startX = e.clientX;
+                startY = e.clientY;
+                tracking = true;
+            });
+
+            wingEl.addEventListener('pointerup', (e) => {
+                if (!tracking) return;
+                tracking = false;
+
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                // Dead zone: 10px before deciding axis
+                if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) return;
+
+                // Horizontal intent: abs(deltaX) > abs(deltaY) * 1.5
+                if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && Math.abs(deltaX) > 50) {
+                    if (deltaX < 0) {
+                        goToSection(wingName, state[wingName] + 1);
+                    } else {
+                        goToSection(wingName, state[wingName] - 1);
+                    }
+                }
+            });
+
+            // Prevent text selection during swipe (but allow drag in star mode)
+            wingEl.addEventListener('dragstart', (e) => {
+                if (!document.body.classList.contains('star-active')) e.preventDefault();
+            });
+        }
+
+        setupSwipe(elements.wingLeft, 'left');
+        setupSwipe(elements.wingRight, 'right');
+
+        /* ══════════════════════════════════════════════
+           Toolbar interaction
+           ══════════════════════════════════════════════ */
+
+        document.querySelectorAll('.toolbar-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.id === 'themeBtn') return;
+                document.querySelectorAll('.toolbar-btn:not(#themeBtn)').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        /* ══════════════════════════════════════════════
+           Center tile Quick Links → navigate wings
+           ══════════════════════════════════════════════ */
+
+        document.querySelectorAll('.tile[data-action]').forEach(tile => {
+            tile.addEventListener('click', () => {
+                const action = tile.dataset.action;
+                switch (action) {
+                    case 'clients': goToSection('left', 0); break;
+                    case 'pricing': goToSection('left', 1); break;
+                    case 'suppliers': goToSection('right', 0); break;
+                    case 'services': goToSection('right', 1); break;
+                    case 'projects': goToSection('left', 2); break;
+                    case 'pipeline': goToSection('left', 3); break;
+                    case 'inventory': goToSection('right', 2); break;
+                    case 'analytics': goToSection('right', 3); break;
+                    case 'home': goToSection('left', 0); goToSection('right', 0); break;
+                    case 'refresh': location.reload(); break;
+                }
+            });
+        });
+
+        /* ══════════════════════════════════════════════
+           Status bar — current date/time
+           ══════════════════════════════════════════════ */
+
+        function updateTime() {
+            const now = new Date();
+            const opts = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('statusTime').textContent = now.toLocaleDateString('en-US', opts);
+        }
+        updateTime();
+        setInterval(updateTime, 60000);
+
+        /* ══════════════════════════════════════════════
+           Mobile wing toggle (< 1000px)
+           ══════════════════════════════════════════════ */
+
+        const backdrop = document.getElementById('wingBackdrop');
+
+        function closeAllWings() {
+            elements.wingLeft.classList.remove('wing-open');
+            elements.wingRight.classList.remove('wing-open');
+            backdrop.classList.remove('show');
+        }
+
+        document.getElementById('toggleLeft').addEventListener('click', () => {
+            const isOpen = elements.wingLeft.classList.contains('wing-open');
+            closeAllWings();
+            if (!isOpen) {
+                elements.wingLeft.classList.add('wing-open');
+                backdrop.classList.add('show');
+            }
+        });
+
+        document.getElementById('toggleRight').addEventListener('click', () => {
+            const isOpen = elements.wingRight.classList.contains('wing-open');
+            closeAllWings();
+            if (!isOpen) {
+                elements.wingRight.classList.add('wing-open');
+                backdrop.classList.add('show');
+            }
+        });
+
+        backdrop.addEventListener('click', closeAllWings);
+
+        /* ══════════════════════════════════════════════
+           Theme Cycler — ■ Square Button
+           4 gradient themes: Warm Sunset, Midnight Moon,
+           Forest Ember, Arctic Dawn
+           ══════════════════════════════════════════════ */
+
+        const themes = [
+            {
+                name: 'Warm Sunset',
+                deep: '#c2560a', mid: '#e07b2e', warm: '#f2a54a', soft: '#f8c97d', glow: '#fde8c8',
+                white: '#ffffff', text: '#3b1a04', textDim: 'rgba(59, 26, 4, 0.55)',
+                toolbarBg: 'linear-gradient(180deg, #9a4208 0%, #7a3506 100%)',
+                bgLayer1: 'radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%)',
+                bgLayer2: 'radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%)',
+                bgLayer3: 'radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%)',
+                bgBase: 'linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%)'
+            },
+            {
+                name: 'Midnight Moon',
+                deep: '#1e3a5f', mid: '#2d5a8e', warm: '#4a7fb5', soft: '#7bafd4', glow: '#c8dff0',
+                white: '#e8f0f8', text: '#0f1f33', textDim: 'rgba(15, 31, 51, 0.55)',
+                toolbarBg: 'linear-gradient(180deg, #1a2d4a 0%, #0f1b2d 100%)',
+                bgLayer1: 'radial-gradient(ellipse at 30% 20%, #4a7fb5 0%, transparent 50%)',
+                bgLayer2: 'radial-gradient(ellipse at 70% 80%, #2d5a8e 0%, transparent 50%)',
+                bgLayer3: 'radial-gradient(ellipse at 50% 50%, #1e3a5f 0%, transparent 60%)',
+                bgBase: 'linear-gradient(160deg, #c8dff0 0%, #4a7fb5 35%, #1e3a5f 65%, #0f1b2d 100%)'
+            },
+            {
+                name: 'Forest Ember',
+                deep: '#2d5016', mid: '#4a7a2e', warm: '#6ba342', soft: '#9cc878', glow: '#d4ebc4',
+                white: '#f0f8ea', text: '#1a2e0d', textDim: 'rgba(26, 46, 13, 0.55)',
+                toolbarBg: 'linear-gradient(180deg, #2d5016 0%, #1a3008 100%)',
+                bgLayer1: 'radial-gradient(ellipse at 30% 20%, #9cc878 0%, transparent 50%)',
+                bgLayer2: 'radial-gradient(ellipse at 70% 80%, #6ba342 0%, transparent 50%)',
+                bgLayer3: 'radial-gradient(ellipse at 50% 50%, #4a7a2e 0%, transparent 60%)',
+                bgBase: 'linear-gradient(160deg, #d4ebc4 0%, #6ba342 35%, #2d5016 65%, #1a3008 100%)'
+            },
+            {
+                name: 'Arctic Dawn',
+                deep: '#4a5568', mid: '#718096', warm: '#a0aec0', soft: '#cbd5e0', glow: '#edf2f7',
+                white: '#f7fafc', text: '#1a202c', textDim: 'rgba(26, 32, 44, 0.55)',
+                toolbarBg: 'linear-gradient(180deg, #4a5568 0%, #2d3748 100%)',
+                bgLayer1: 'radial-gradient(ellipse at 30% 20%, #cbd5e0 0%, transparent 50%)',
+                bgLayer2: 'radial-gradient(ellipse at 70% 80%, #a0aec0 0%, transparent 50%)',
+                bgLayer3: 'radial-gradient(ellipse at 50% 50%, #718096 0%, transparent 60%)',
+                bgBase: 'linear-gradient(160deg, #edf2f7 0%, #a0aec0 35%, #4a5568 65%, #2d3748 100%)'
+            }
+        ];
+
+        let currentTheme = 0;
+        const themeBtn = document.getElementById('themeBtn');
+
+        function applyTheme(index) {
+            const t = themes[index];
+            const r = document.documentElement.style;
+            r.setProperty('--lamp-deep', t.deep);
+            r.setProperty('--lamp-mid', t.mid);
+            r.setProperty('--lamp-warm', t.warm);
+            r.setProperty('--lamp-soft', t.soft);
+            r.setProperty('--lamp-glow', t.glow);
+            r.setProperty('--white', t.white);
+            r.setProperty('--text', t.text);
+            r.setProperty('--text-dim', t.textDim);
+            r.setProperty('--toolbar-bg', t.toolbarBg);
+            r.setProperty('--bg-layer1', t.bgLayer1);
+            r.setProperty('--bg-layer2', t.bgLayer2);
+            r.setProperty('--bg-layer3', t.bgLayer3);
+            r.setProperty('--bg-base', t.bgBase);
+        }
+
+        themeBtn.addEventListener('click', () => {
+            currentTheme = (currentTheme + 1) % themes.length;
+            applyTheme(currentTheme);
+        });
+
+        /* ══════════════════════════════════════════════
+           Star Card Toggle + Drag & Drop System
+           ══════════════════════════════════════════════ */
+
+        const starBtn = document.getElementById('starBtn');
+        const starCard = document.getElementById('starCard');
+        const starCardClose = document.getElementById('starCardClose');
+        const dropZone = document.getElementById('dropZone');
+        const dropZoneEmpty = document.getElementById('dropZoneEmpty');
+        const dropZoneItems = document.getElementById('dropZoneItems');
+        let starOpen = true;
+
+        function toggleStar() {
+            starOpen = !starOpen;
+            const tileHeaders = document.querySelectorAll('.center-pad .center-section-header');
+            const tileGrids = document.querySelectorAll('.center-pad .tile-grid');
+
+            if (starOpen) {
+                // Star ON — show drop zone, hide tiles
+                tileHeaders.forEach(el => el.classList.add('tiles-hidden'));
+                tileGrids.forEach(el => el.classList.add('tiles-hidden'));
+                starCard.classList.remove('paused');
+                document.body.classList.add('star-active');
+                document.body.classList.remove('star-paused');
+                starBtn.classList.add('active');
+                enableDrag();
+            } else {
+                // Star OFF — hide drop zone, show tiles
+                starCard.classList.add('paused');
+                tileHeaders.forEach(el => el.classList.remove('tiles-hidden'));
+                tileGrids.forEach(el => el.classList.remove('tiles-hidden'));
+                document.body.classList.remove('star-active');
+                document.body.classList.add('star-paused');
+                starBtn.classList.remove('active');
+                disableDrag();
+            }
+        }
+
+        starBtn.addEventListener('click', toggleStar);
+        starCardClose.addEventListener('click', () => { if (starOpen) toggleStar(); });
+
+        /* — Drag & Drop — */
+        let draggedPill = null;
+
+        function enableDrag() {
+            document.querySelectorAll('.wing .pill').forEach(pill => {
+                pill.setAttribute('draggable', 'true');
+                pill.addEventListener('dragstart', handleDragStart);
+                pill.addEventListener('dragend', handleDragEnd);
+            });
+
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+        }
+
+        function disableDrag() {
+            document.querySelectorAll('.wing .pill').forEach(pill => {
+                pill.removeAttribute('draggable');
+                pill.removeEventListener('dragstart', handleDragStart);
+                pill.removeEventListener('dragend', handleDragEnd);
+            });
+
+            dropZone.removeEventListener('dragover', handleDragOver);
+            dropZone.removeEventListener('dragleave', handleDragLeave);
+            dropZone.removeEventListener('drop', handleDrop);
+        }
+
+        function handleDragStart(e) {
+            draggedPill = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'copy';
+            const label = this.querySelector('.pill-label')?.textContent || '';
+            const sub = this.querySelector('.pill-sub')?.textContent || '';
+            const icon = this.querySelector('.pill-icon')?.textContent || '★';
+            e.dataTransfer.setData('text/plain', JSON.stringify({ label, sub, icon }));
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedPill = null;
+            dropZone.classList.remove('drag-over');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            dropZone.classList.add('drag-over');
+        }
+
+        function handleDragLeave() {
+            dropZone.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+
+            try {
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                addToDropZone(data.icon, data.label, data.sub);
+
+                // Lift animation on first drop (no tiles exist yet)
+                var isFirstDrop = state.tiles.length === 0;
+
+                // Also create/populate a sales funnel tile
+                // Determine pill type from the dragged pill's section
+                var dragSection = draggedPill ? draggedPill.closest('.wing-section') : null;
+                var sectionLabel = dragSection ? (dragSection.querySelector('.section-label') || {}).textContent || '' : '';
+                var typeMap = { 'Clients': 'client', 'Pricing': 'price', 'Projects': 'service', 'Pipeline': 'service',
+                                'Suppliers': 'supplier', 'Services': 'service', 'Inventory': 'service', 'Analytics': 'manual' };
+                var sourceType = typeMap[sectionLabel.trim()] || 'manual';
+
+                TileManager.getOrCreate({
+                    sourceType: sourceType,
+                    sourceLabel: data.label,
+                    sourceIcon: data.icon,
+                    client: sourceType === 'client' ? data.label : '',
+                    service: sourceType === 'service' ? data.label : '',
+                    price: sourceType === 'price' ? data.sub : ''
+                });
+
+                // Trigger lift animation on first drop
+                if (isFirstDrop) {
+                    var tilesContainer = document.getElementById('activeTilesContainer');
+                    tilesContainer.classList.add('active-tiles-lifting');
+                    dropZone.classList.add('first-drop');
+                    setTimeout(function() {
+                        tilesContainer.classList.remove('active-tiles-lifting');
+                        dropZone.classList.remove('first-drop');
+                    }, 600);
+                }
+            } catch (err) {
+                // fallback
+            }
+        }
+
+        function addToDropZone(icon, label, sub) {
+            // Hide empty state
+            dropZoneEmpty.classList.add('hidden');
+
+            // Create dropped pill
+            const pill = document.createElement('div');
+            pill.className = 'pill';
+            pill.innerHTML = `
+                <div class="pill-icon">${icon}</div>
+                <div class="pill-text">
+                    <div class="pill-label">${label}</div>
+                    <div class="pill-sub">${sub}</div>
+                </div>
+                <button class="pill-remove" title="Remove">✕</button>
+            `;
+
+            // Remove button
+            pill.querySelector('.pill-remove').addEventListener('click', () => {
+                pill.remove();
+                if (dropZoneItems.children.length === 0) {
+                    dropZoneEmpty.classList.remove('hidden');
+                }
+            });
+
+            dropZoneItems.appendChild(pill);
+        }
+
+        /* ══════════════════════════════════════════════
+           Minimal / Full Mode Toggle (iOS 14 switch)
+           ══════════════════════════════════════════════ */
+
+        const modeToggle = document.getElementById('modeToggle');
+        const labelFull = document.getElementById('labelFull');
+        const labelMin = document.getElementById('labelMin');
+
+        modeToggle.addEventListener('change', () => {
+            if (modeToggle.checked) {
+                document.body.classList.add('minimal-mode');
+                labelFull.classList.remove('active-label');
+                labelMin.classList.add('active-label');
+            } else {
+                document.body.classList.remove('minimal-mode');
+                labelFull.classList.add('active-label');
+                labelMin.classList.remove('active-label');
+            }
+        });
+
+        /* ══════════════════════════════════════════════
+           Wing Drop Input → /c19-asst-change-wing
+           ══════════════════════════════════════════════ */
+
+        const wingToast = document.getElementById('wingToast');
+        let toastTimer = null;
+
+        function showWingToast(msg, cmd) {
+            wingToast.innerHTML = msg + (cmd ? '<span class="toast-cmd">' + cmd + '</span>' : '');
+            wingToast.classList.add('visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => wingToast.classList.remove('visible'), 5000);
+        }
+
+        function handleWingPrompt(inputEl) {
+            const text = inputEl.value.trim();
+            if (!text) return;
+            inputEl.value = '';
+
+            const cmd = 'claude "/c19-asst-change-wing" --prompt "' + text.replace(/"/g, '\\"') + '"';
+
+            // Try to copy command to clipboard automatically
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(cmd).then(() => {
+                    showWingToast('Copied to clipboard — paste in terminal ↓', cmd);
+                }).catch(() => {
+                    showWingToast('Run this in your terminal ↓', cmd);
+                });
+            } else {
+                showWingToast('Run this in your terminal ↓', cmd);
+            }
+        }
+
+        // Left wing input
+        document.getElementById('leftPromptInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); handleWingPrompt(e.target); }
+        });
+        document.getElementById('leftPromptSend').addEventListener('click', () => {
+            handleWingPrompt(document.getElementById('leftPromptInput'));
+        });
+
+        // Right wing input
+        document.getElementById('rightPromptInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); handleWingPrompt(e.target); }
+        });
+        document.getElementById('rightPromptSend').addEventListener('click', () => {
+            handleWingPrompt(document.getElementById('rightPromptInput'));
+        });
+
+        /* ══════════════════════════════════════════════
+           Wing Pill Style Cycler
+           4 modes: Standard → Quiet → Glass → Neo
+           ══════════════════════════════════════════════ */
+
+        const pillStyles = ['standard', 'quiet', 'glass', 'neo'];
+        const pillStyleLabels = ['■', '□', '◈', '◼'];
+        const wingStyleState = { left: 0, right: 0 };
+
+        function cyclePillStyle(wing) {
+            const wingEl = elements['wing' + wing.charAt(0).toUpperCase() + wing.slice(1)];
+            const btn = document.getElementById(wing + 'StyleBtn');
+
+            // Remove current style class
+            pillStyles.forEach(s => wingEl.classList.remove('pill-style-' + s));
+
+            // Advance to next
+            wingStyleState[wing] = (wingStyleState[wing] + 1) % pillStyles.length;
+            const newStyle = pillStyles[wingStyleState[wing]];
+
+            // Apply new style (standard = no class needed)
+            if (newStyle !== 'standard') {
+                wingEl.classList.add('pill-style-' + newStyle);
+            }
+
+            // Update button icon
+            btn.textContent = pillStyleLabels[wingStyleState[wing]];
+
+            // style applied
+        }
+
+        document.getElementById('leftStyleBtn').addEventListener('click', () => cyclePillStyle('left'));
+        document.getElementById('rightStyleBtn').addEventListener('click', () => cyclePillStyle('right'));
+
+        /* ══════════════════════════════════════════════
+           TileManager — Dynamic Sales Funnel Tiles
+           ══════════════════════════════════════════════ */
+
+        const TileManager = {
+
+            create(sourceData = {}) {
+                if (state.tiles.length >= state.maxTiles) {
+                    showWingToast('Max tiles reached (' + state.maxTiles + ')');
+                    return null;
+                }
+
+                const id = state.nextTileId++;
+                const tileData = {
+                    id,
+                    client: sourceData.client || '',
+                    service: sourceData.service || '',
+                    package: sourceData.package || '',
+                    price: sourceData.price || '',
+                    timeline: sourceData.timeline || '',
+                    sourceType: sourceData.sourceType || 'manual',
+                    sourceIcon: sourceData.sourceIcon || '➤',
+                    sourceLabel: sourceData.sourceLabel || 'New Order',
+                    orders: [],
+                    discount: 0,
+                    subtotal: 0,
+                    grandTotal: 0
+                };
+
+                state.tiles.push(tileData);
+                document.body.classList.add('tile-active');
+                this.render(tileData);
+                return tileData;
+            },
+
+            render(tileData) {
+                const container = document.getElementById('activeTilesContainer');
+                const el = document.createElement('div');
+                el.className = 'active-tile';
+                el.id = 'tile-' + tileData.id;
+                el.innerHTML =
+                    '<div class="active-tile-header">' +
+                        '<div class="active-tile-header-info">' +
+                            '<div class="active-tile-header-icon">' + tileData.sourceIcon + '</div>' +
+                            '<div>' +
+                                '<div class="active-tile-header-text">' + tileData.sourceLabel + '</div>' +
+                                '<div class="active-tile-header-sub">ORDER #' + String(tileData.id).padStart(4, '0') + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="active-tile-close" onclick="TileManager.destroy(' + tileData.id + ')">✕</button>' +
+                    '</div>' +
+                    '<div class="funnel-body">' +
+                        '<div class="funnel-field">' +
+                            '<label class="funnel-label">Client Name</label>' +
+                            '<input class="funnel-input" type="text" placeholder="Enter client name..." ' +
+                                'value="' + tileData.client + '" ' +
+                                'oninput="TileManager.updateField(' + tileData.id + ', \'client\', this.value)" ' +
+                                'id="tile-' + tileData.id + '-client">' +
+                        '</div>' +
+                        '<div class="funnel-field">' +
+                            '<label class="funnel-label">Package</label>' +
+                            '<div class="funnel-packages" id="tile-' + tileData.id + '-packages">' +
+                                pricingCatalog.packages.map(function(pkg) {
+                                    return '<div class="funnel-pkg-pill' + (tileData.package === pkg.name ? ' selected' : '') + '" ' +
+                                        'onclick="TileManager.selectPackage(' + tileData.id + ', \'' + pkg.name + '\', \'' + pkg.price + '\')">' +
+                                        pkg.name + '</div>';
+                                }).join('') +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="funnel-field">' +
+                            '<label class="funnel-label">Price</label>' +
+                            '<input class="funnel-input" type="text" placeholder="$0.00" ' +
+                                'value="' + tileData.price + '" ' +
+                                'oninput="TileManager.updateField(' + tileData.id + ', \'price\', this.value)" ' +
+                                'id="tile-' + tileData.id + '-price">' +
+                        '</div>' +
+                        '<div class="funnel-field">' +
+                            '<label class="funnel-label">Timeline</label>' +
+                            '<input class="funnel-input" type="date" ' +
+                                'value="' + tileData.timeline + '" ' +
+                                'oninput="TileManager.updateField(' + tileData.id + ', \'timeline\', this.value)" ' +
+                                'id="tile-' + tileData.id + '-timeline">' +
+                        '</div>' +
+                    '</div>' +
+                    /* — Summary Orb + POS Panel — */
+                    '<div class="pos-orb-wrap">' +
+                        '<div class="pos-orb" onclick="TileManager.toggleOrbPanel(' + tileData.id + ')" title="Toggle checkout">' +
+                            '<span class="pos-orb-total" id="tile-' + tileData.id + '-orb-total">$0</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="pos-orb-panel" id="tile-' + tileData.id + '-orb-panel">' +
+                        '<div class="pos-strip" id="tile-' + tileData.id + '-pos">' +
+                            '<div class="pos-strip-header">' +
+                                '<span class="pos-strip-title">Checkout</span>' +
+                                '<span class="pos-strip-count" id="tile-' + tileData.id + '-pos-count">0 items</span>' +
+                            '</div>' +
+                            '<div class="pos-strip-search-wrap">' +
+                                '<input class="pos-strip-search" type="text" placeholder="Search services..." ' +
+                                    'oninput="InlinePOS.handleSearch(' + tileData.id + ', this.value)" ' +
+                                    'id="tile-' + tileData.id + '-pos-search">' +
+                                '<div class="pos-strip-results" id="tile-' + tileData.id + '-pos-results"></div>' +
+                            '</div>' +
+                            '<div class="pos-strip-ledger" id="tile-' + tileData.id + '-pos-ledger"></div>' +
+                            '<div class="pos-strip-totals">' +
+                                '<div>' +
+                                    '<div class="pos-strip-total-label">Total</div>' +
+                                    '<div class="pos-strip-discount">' +
+                                        '<span style="color:rgba(255,255,255,0.3);font-size:0.55rem;">Discount</span>' +
+                                        '<input class="pos-strip-discount-input" type="number" placeholder="0%" ' +
+                                            'oninput="InlinePOS.setDiscount(' + tileData.id + ', this.value)" ' +
+                                            'id="tile-' + tileData.id + '-pos-discount">' +
+                                    '</div>' +
+                                '</div>' +
+                                '<span class="pos-strip-total-amount" id="tile-' + tileData.id + '-pos-total">$0</span>' +
+                            '</div>' +
+                            '<button class="pos-strip-lock" onclick="InlinePOS.lockOrder(' + tileData.id + ')">Lock Order</button>' +
+                        '</div>' +
+                    '</div>';
+
+                container.prepend(el);
+
+                // Auto-focus client name if empty
+                if (!tileData.client) {
+                    setTimeout(function() {
+                        var ci = document.getElementById('tile-' + tileData.id + '-client');
+                        if (ci) ci.focus();
+                    }, 400);
+                }
+
+                // Scroll to tile
+                setTimeout(function() {
+                    var tileEl = document.getElementById('tile-' + tileData.id);
+                    if (tileEl) tileEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 200);
+            },
+
+            updateField(tileId, field, value) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (tile) {
+                    tile[field] = value;
+                    var input = document.getElementById('tile-' + tileId + '-' + field);
+                    if (input) input.classList.toggle('filled', value.trim().length > 0);
+                }
+            },
+
+            selectPackage(tileId, packageName, packagePrice) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (!tile) return;
+
+                tile.package = packageName;
+                if (packagePrice !== 'TBD') {
+                    tile.price = packagePrice;
+                    var priceInput = document.getElementById('tile-' + tileId + '-price');
+                    if (priceInput) {
+                        priceInput.value = packagePrice;
+                        priceInput.classList.add('filled');
+                    }
+                }
+
+                var pkgContainer = document.getElementById('tile-' + tileId + '-packages');
+                if (pkgContainer) {
+                    pkgContainer.querySelectorAll('.funnel-pkg-pill').forEach(function(pill) {
+                        pill.classList.toggle('selected', pill.textContent.trim() === packageName);
+                    });
+                }
+            },
+
+            destroy(tileId) {
+                var el = document.getElementById('tile-' + tileId);
+                if (el) {
+                    el.style.opacity = '0';
+                    el.style.transform = 'scale(0.95)';
+                    el.style.maxHeight = '0';
+                    setTimeout(function() { el.remove(); }, 350);
+                }
+                state.tiles = state.tiles.filter(function(t) { return t.id !== tileId; });
+                if (state.tiles.length === 0) document.body.classList.remove('tile-active');
+            },
+
+            getOrCreate(sourceData) {
+                var emptyTile = state.tiles.find(function(t) { return !t.client && !t.service; });
+                if (emptyTile) {
+                    this.populateFromSource(emptyTile.id, sourceData);
+                    return emptyTile;
+                }
+                return this.create(sourceData);
+            },
+
+            updateOrb(tileId) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (!tile) return;
+                var orbTotal = document.getElementById('tile-' + tileId + '-orb-total');
+                if (orbTotal) {
+                    var amount = tile.grandTotal || 0;
+                    orbTotal.textContent = '$' + (amount > 999 ? (amount / 1000).toFixed(1) + 'k' : amount.toLocaleString());
+                }
+            },
+
+            toggleOrbPanel(tileId) {
+                var panel = document.getElementById('tile-' + tileId + '-orb-panel');
+                if (panel) panel.classList.toggle('open');
+            },
+
+            populateFromSource(tileId, sourceData) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (!tile) return;
+
+                if (sourceData.sourceType === 'client') {
+                    tile.client = sourceData.client || sourceData.sourceLabel || '';
+                    var input = document.getElementById('tile-' + tileId + '-client');
+                    if (input) { input.value = tile.client; input.classList.add('filled'); }
+                }
+                else if (sourceData.sourceType === 'service') {
+                    InlinePOS.addItem(tileId, {
+                        name: sourceData.sourceLabel || 'Service',
+                        price: sourceData.price || '$0'
+                    });
+                }
+                else if (sourceData.sourceType === 'price') {
+                    tile.price = sourceData.price || '';
+                    var pi = document.getElementById('tile-' + tileId + '-price');
+                    if (pi) { pi.value = tile.price; pi.classList.add('filled'); }
+                }
+                else if (sourceData.sourceType === 'supplier') {
+                    var header = document.querySelector('#tile-' + tileId + ' .active-tile-header-text');
+                    if (header) header.textContent += ' via ' + sourceData.sourceLabel;
+                }
+            }
+        };
+
+        /* ══════════════════════════════════════════════
+           InlinePOS — Compact checkout strip logic
+           ══════════════════════════════════════════════ */
+
+        const InlinePOS = {
+
+            handleSearch(tileId, query) {
+                var results = document.getElementById('tile-' + tileId + '-pos-results');
+                if (!results) return;
+
+                if (!query.trim()) {
+                    results.classList.remove('active');
+                    return;
+                }
+
+                var matches = pricingCatalog.services.filter(function(item) {
+                    return item.name.toLowerCase().includes(query.toLowerCase());
+                });
+
+                this.renderResults(tileId, matches);
+            },
+
+            renderResults(tileId, matches) {
+                var results = document.getElementById('tile-' + tileId + '-pos-results');
+                results.innerHTML = '';
+
+                matches.slice(0, 6).forEach(function(match) {
+                    var div = document.createElement('div');
+                    div.className = 'pos-strip-result-item';
+                    div.innerHTML = '<span>' + match.name + '</span>' +
+                        '<span style="color:var(--pos-primary);font-family:\'JetBrains Mono\';font-weight:700;">' + match.price + '</span>';
+                    div.onclick = function() { InlinePOS.addItem(tileId, match); };
+                    results.appendChild(div);
+                });
+
+                if (matches.length > 0) results.classList.add('active');
+                else results.classList.remove('active');
+            },
+
+            addItem(tileId, item) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (!tile) return;
+
+                tile.orders.push({ name: item.name, price: item.price });
+
+                var search = document.getElementById('tile-' + tileId + '-pos-search');
+                if (search) search.value = '';
+                var results = document.getElementById('tile-' + tileId + '-pos-results');
+                if (results) results.classList.remove('active');
+
+                this.updateLedger(tileId);
+            },
+
+            removeItem(tileId, index) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (!tile) return;
+
+                tile.orders.splice(index, 1);
+                this.updateLedger(tileId);
+            },
+
+            updateLedger(tileId) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (!tile) return;
+
+                var ledger = document.getElementById('tile-' + tileId + '-pos-ledger');
+                if (!ledger) return;
+
+                ledger.innerHTML = '';
+                var subtotal = 0;
+
+                tile.orders.forEach(function(order, index) {
+                    var div = document.createElement('div');
+                    div.className = 'pos-strip-item';
+                    div.innerHTML = '<span class="pos-strip-item-name">' + order.name + '</span>' +
+                        '<div style="display:flex;align-items:center;">' +
+                            '<span class="pos-strip-item-price">' + order.price + '</span>' +
+                            '<button class="pos-strip-item-delete" onclick="InlinePOS.removeItem(' + tileId + ',' + index + ')">✕</button>' +
+                        '</div>';
+                    ledger.appendChild(div);
+                    subtotal += parseFloat(order.price.replace(/[$,]/g, '')) || 0;
+                });
+
+                var discountVal = subtotal * (tile.discount / 100);
+                var total = subtotal - discountVal;
+
+                tile.subtotal = subtotal;
+                tile.grandTotal = total;
+
+                var count = document.getElementById('tile-' + tileId + '-pos-count');
+                if (count) count.textContent = tile.orders.length + ' item' + (tile.orders.length !== 1 ? 's' : '');
+
+                var totalEl = document.getElementById('tile-' + tileId + '-pos-total');
+                if (totalEl) totalEl.textContent = '$' + total.toLocaleString();
+
+                // Update orb face with running total
+                TileManager.updateOrb(tileId);
+            },
+
+            setDiscount(tileId, value) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (!tile) return;
+                tile.discount = parseFloat(value) || 0;
+                this.updateLedger(tileId);
+            },
+
+            lockOrder(tileId) {
+                var tile = state.tiles.find(function(t) { return t.id === tileId; });
+                if (!tile) return;
+
+                if (tile.orders.length === 0) {
+                    showWingToast('Add at least one service to the order');
+                    return;
+                }
+
+                var date = new Date().toLocaleDateString();
+                var clientName = tile.client || 'Client';
+
+                var html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
+                    '<meta name="viewport" content="width=device-width,initial-scale=1.0">' +
+                    '<title>Order Protocol | ' + clientName + '</title>' +
+                    '<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">' +
+                    '<style>body{background:#020617;color:#fff;font-family:\'Outfit\',sans-serif;padding:4rem;display:flex;justify-content:center}' +
+                    '.card{width:100%;max-width:700px;background:rgba(15,23,42,0.9);border:2px solid #38bdf8;border-radius:32px;padding:3rem;box-shadow:0 50px 100px rgba(0,0,0,0.5)}' +
+                    '.meta{color:#38bdf8;font-family:\'JetBrains Mono\';font-size:0.8rem;letter-spacing:3px;margin-top:5px}' +
+                    '.label{font-size:0.65rem;text-transform:uppercase;letter-spacing:4px;color:rgba(255,255,255,0.4);margin-bottom:0.5rem;display:block}' +
+                    '.item{display:flex;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid rgba(255,255,255,0.05)}' +
+                    '.price{color:#38bdf8;font-family:\'JetBrains Mono\';font-weight:700}' +
+                    '.footer{border-top:2px solid #38bdf8;padding-top:1.5rem;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:center}' +
+                    '.total{font-size:2.5rem;font-weight:900;color:#38bdf8}</style></head><body>' +
+                    '<div class="card"><h1 style="font-size:2rem;letter-spacing:-1px;margin:0;">Order Protocol</h1>' +
+                    '<div class="meta">EST. ' + date + ' // FOR ' + clientName.toUpperCase() + '</div>' +
+                    (tile.package ? '<div style="margin:2rem 0;"><span class="label">Package</span><div style="font-weight:800;font-size:1.1rem;">' + tile.package + '</div></div>' : '') +
+                    '<div style="margin:2rem 0;"><span class="label">Service Stack</span>' +
+                    tile.orders.map(function(o) { return '<div class="item"><span>' + o.name + '</span><span class="price">' + o.price + '</span></div>'; }).join('') +
+                    '</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin:2rem 0;">' +
+                    '<div><span class="label">Timeline</span><div style="font-weight:800;">' + (tile.timeline || 'TBD') + '</div></div>' +
+                    '<div><span class="label">Discount</span><div style="font-weight:800;color:#f43f5e;">' + tile.discount + '% OFF</div></div>' +
+                    '</div><div class="footer"><span style="font-weight:800;text-transform:uppercase;letter-spacing:4px;">Total</span>' +
+                    '<div class="total">$' + tile.grandTotal.toLocaleString() + '</div></div></div></body></html>';
+
+                var blob = new Blob([html], { type: 'text/html' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'ORDER_' + clientName.replace(/\s+/g, '_').toUpperCase() + '_' + Date.now() + '.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                var lockBtn = document.querySelector('#tile-' + tileId + ' .pos-strip-lock');
+                if (lockBtn) {
+                    lockBtn.textContent = 'ORDER LOCKED ✓';
+                    lockBtn.style.background = '#10b981';
+                    setTimeout(function() {
+                        lockBtn.textContent = 'Lock Order';
+                        lockBtn.style.background = '';
+                    }, 2000);
+                }
+            }
+        };
+
+        /* ══════════════════════════════════════════════
+           Wing Pill Activation — Click-to-Tile
+           ══════════════════════════════════════════════ */
+
+        function initWingPills() {
+            var leftTypeMap = {
+                'Clients': 'client',
+                'Pricing': 'price',
+                'Projects': 'service',
+                'Pipeline': 'service'
+            };
+
+            var rightTypeMap = {
+                'AI Tools': 'ai-tool',
+                'Comms': 'comms'
+            };
+
+            function bindPills(trackId, typeMap) {
+                var sections = document.querySelectorAll('#' + trackId + ' .wing-section');
+                sections.forEach(function(section) {
+                    var labelEl = section.querySelector('.section-label');
+                    if (!labelEl) return;
+                    var sectionName = labelEl.textContent.trim();
+                    var sourceType = typeMap[sectionName] || 'manual';
+
+                    section.querySelectorAll('.pill').forEach(function(pill) {
+                        pill.addEventListener('click', function(e) {
+                            // Don't fire if dragging
+                            if (pill.classList.contains('dragging')) return;
+
+                            var label = pill.querySelector('.pill-label');
+                            var sub = pill.querySelector('.pill-sub');
+                            var icon = pill.querySelector('.pill-icon');
+
+                            pill.classList.add('sending');
+                            setTimeout(function() { pill.classList.remove('sending'); }, 500);
+
+                            var sourceData = {
+                                sourceType: sourceType,
+                                sourceLabel: label ? label.textContent : 'Item',
+                                sourceIcon: icon ? icon.textContent : '➤',
+                                client: sourceType === 'client' ? (label ? label.textContent : '') : '',
+                                service: sourceType === 'service' ? (label ? label.textContent : '') : '',
+                                price: sourceType === 'price' ? (sub ? sub.textContent : '') : ''
+                            };
+
+                            TileManager.getOrCreate(sourceData);
+                        });
+                    });
+                });
+            }
+
+            bindPills('leftTrack', leftTypeMap);
+            bindPills('rightTrack', rightTypeMap);
+        }
+
+        /* ══════════════════════════════════════════════
+           Test Button — Simulates Full POS Flow
+           ══════════════════════════════════════════════ */
+
+        document.getElementById('testPosBtn').addEventListener('click', function() {
+            var tile = TileManager.create({
+                sourceType: 'client',
+                sourceLabel: 'Demo Client - Test Flow',
+                sourceIcon: '⚡',
+                client: 'John Smith',
+                package: 'Gold',
+                price: '$5,000',
+                timeline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            });
+
+            if (!tile) return;
+
+            setTimeout(function() {
+                var ci = document.getElementById('tile-' + tile.id + '-client');
+                if (ci) { ci.value = 'John Smith'; ci.classList.add('filled'); }
+            }, 300);
+
+            setTimeout(function() {
+                TileManager.selectPackage(tile.id, 'Gold', '$5,000');
+            }, 600);
+
+            setTimeout(function() {
+                var pi = document.getElementById('tile-' + tile.id + '-price');
+                if (pi) { pi.value = '$5,000'; pi.classList.add('filled'); }
+            }, 900);
+
+            setTimeout(function() {
+                var ti = document.getElementById('tile-' + tile.id + '-timeline');
+                var futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                if (ti) { ti.value = futureDate; ti.classList.add('filled'); }
+            }, 1200);
+
+            setTimeout(function() {
+                InlinePOS.addItem(tile.id, { name: 'Press Campaign - Elite', price: '$3,500' });
+            }, 1600);
+
+            setTimeout(function() {
+                InlinePOS.addItem(tile.id, { name: 'Playlist Push - Premium', price: '$800' });
+            }, 2000);
+
+            setTimeout(function() {
+                InlinePOS.addItem(tile.id, { name: 'Social Media Campaign', price: '$1,200' });
+            }, 2400);
+
+            setTimeout(function() {
+                var di = document.getElementById('tile-' + tile.id + '-pos-discount');
+                if (di) di.value = '10';
+                InlinePOS.setDiscount(tile.id, 10);
+            }, 2800);
+        });
+
+        /* ══════════════════════════════════════════════
+           Dynamic Island — Expand/Collapse
+           Click bar = expand/collapse island
+           ══════════════════════════════════════════════ */
+
+        const notch = document.getElementById('notch');
+        const notchBar = document.getElementById('notchBar');
+        const notchLabel = notch.querySelector('.notch-label');
+        let notchExpanded = false;
+        let assistantActive = false;
+
+        function toggleNotchExpand(e) {
+            // Prevent expand toggle when clicking call-grid buttons
+            if (e && e.target.closest('.call-btn')) return;
+
+            notchExpanded = !notchExpanded;
+
+            if (notchExpanded) {
+                notch.classList.remove('collapsing');
+                notch.classList.add('expanded');
+                notchLabel.textContent = 'Active';
+                // Also activate assistant mode on expand
+                notch.classList.add('active', 'ringing');
+                document.body.classList.add('assistant-active');
+                assistantActive = true;
+                setTimeout(() => notch.classList.remove('ringing'), 600);
+            } else {
+                notch.classList.remove('expanded');
+                notch.classList.add('collapsing');
+                setTimeout(() => notch.classList.remove('collapsing'), 350);
+                // Deactivate assistant on collapse
+                notch.classList.remove('active');
+                notchLabel.textContent = 'Standby';
+                document.body.classList.remove('assistant-active');
+                assistantActive = false;
+            }
+        }
+
+        notchBar.addEventListener('click', toggleNotchExpand);
+
+        /* ══════════════════════════════════════════════
+           Call Grid — Button Vibrate + Actions
+           ══════════════════════════════════════════════ */
+
+        document.querySelectorAll('.call-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Vibrate jiggle
+                btn.classList.add('vibrating');
+                setTimeout(() => btn.classList.remove('vibrating'), 300);
+
+                const action = btn.dataset.action;
+                const label = btn.textContent;
+                showWingToast('Action: ' + label, action);
+            });
+        });
+
+        /* ══════════════════════════════════════════════
+           Launcher Button — /mode-2 Copy
+           Green glow circle left of notch
+           ══════════════════════════════════════════════ */
+
+        const launcher = document.getElementById('notchLauncher');
+        const launcherLabel = document.getElementById('notchLauncherLabel');
+        let launcherActive = false;
+
+        launcher.addEventListener('click', () => {
+            // Copy /mode-2 command to clipboard
+            navigator.clipboard.writeText('claude "/mode-2"').then(() => {
+                launcherActive = !launcherActive;
+
+                if (launcherActive) {
+                    launcher.classList.add('launcher-active');
+                    launcherLabel.textContent = 'mode active';
+                    showWingToast('Copied to clipboard', '/mode-2');
+                } else {
+                    launcher.classList.remove('launcher-active');
+                    launcherLabel.textContent = 'assistant ready';
+                    showWingToast('Mode deactivated', '');
+                }
+            });
+        });
+
+        /* ══════════════════════════════════════════════
+           Initialize
+           ══════════════════════════════════════════════ */
+
+        goToSection('left', 0);
+        goToSection('right', 0);
+
+        // Star mode active by default
+        document.body.classList.add('star-active');
+        starBtn.classList.add('active');
+        enableDrag();
+
+        // Initialize wing pill click-to-tile handlers
+        initWingPills();
+
+        /* ══════════════════════════════════════════════
+           AI Tool Overlay — Open / Close
+           ══════════════════════════════════════════════ */
+
+        const aiToolMap = {
+            'Manis // Claude': 'ato-manis',
+            'Social Sweep // Claude': 'ato-social-sweep',
+            'Revio // Claude': 'ato-revio',
+            'Alley // Claude': 'ato-alley'
+        };
+
+        const atoBackdrop = document.getElementById('atoBackdrop');
+
+        function openAiOverlay(toolLabel) {
+            const overlayId = aiToolMap[toolLabel];
+            if (!overlayId) return;
+            const overlay = document.getElementById(overlayId);
+            if (!overlay) return;
+
+            // Close any open overlays first
+            closeAllAiOverlays();
+
+            overlay.classList.add('active');
+            atoBackdrop.classList.add('active');
+        }
+
+        function closeAllAiOverlays() {
+            document.querySelectorAll('.ai-tool-overlay.active').forEach(el => {
+                el.classList.remove('active');
+            });
+            atoBackdrop.classList.remove('active');
+        }
+
+        // Close buttons
+        document.querySelectorAll('.ato-close').forEach(btn => {
+            btn.addEventListener('click', closeAllAiOverlays);
+        });
+
+        // Backdrop click closes
+        atoBackdrop.addEventListener('click', closeAllAiOverlays);
+
+        // Override AI Tool pill clicks — intercept before TileManager
+        function bindAiToolPills() {
+            const rightSections = document.querySelectorAll('#rightTrack .wing-section');
+            if (!rightSections[0]) return;
+
+            const aiSection = rightSections[0]; // AI Tools is section 0
+            aiSection.querySelectorAll('.pill').forEach(function(pill) {
+                pill.addEventListener('click', function(e) {
+                    e.stopImmediatePropagation();
+                    if (pill.classList.contains('dragging')) return;
+
+                    var label = pill.querySelector('.pill-label');
+                    if (label && aiToolMap[label.textContent]) {
+                        pill.classList.add('sending');
+                        setTimeout(function() { pill.classList.remove('sending'); }, 500);
+                        openAiOverlay(label.textContent);
+                    }
+                }, true); // capture phase to beat existing handler
+            });
+        }
+
+        // Re-bind after pills render
+        const origRenderPills = renderPills;
+        renderPills = function(wing, sectionIndex) {
+            origRenderPills(wing, sectionIndex);
+            if (wing === 'right' && sectionIndex === 0) {
+                bindAiToolPills();
+            }
+        };
+
+        // Bind now if already rendered
+        if (rendered.right[0]) {
+            bindAiToolPills();
+        }
+
+        // Force render right section 0 so pills exist, then bind
+        renderPills('right', 0);
+
+        console.log('Wing Menu POS System: READY');
+    </script>
+</body>
+
+</html>

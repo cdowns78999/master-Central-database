@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elijah V1 Self-MGMT Tool</title>
+<link rel="stylesheet" href="overlay.css">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --pane: #ffffff;
+    --rail: #ebedf1;
+    --rail-hover: #dfe2e8;
+    --rail-active: #4a6da7;
+    --rail-active-ink: #ffffff;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --line: #e1e4ea;
+    --line-soft: #eef0f4;
+    --tile: #ffffff;
+    --accent: #4a6da7;
+    --accent-soft: #eaf0fa;
+    --row-alt: #f9fafc;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13.5px;
+    overflow: hidden;
+  }
+
+  /* ── App shell ───────────────────────────────────────── */
+  .app {
+    display: grid;
+    grid-template-rows: 44px 1fr 28px;
+    height: 100vh;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    background: linear-gradient(180deg, #f8f9fb 0%, #eceff4 100%);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar .traffic {
+    display: flex; gap: 6px;
+  }
+  .traffic span {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #d8dbe1; border: 1px solid #b9bdc6;
+  }
+  .traffic span:nth-child(1) { background: #ff5f57; border-color: #e04a45; }
+  .traffic span:nth-child(2) { background: #ffbd2e; border-color: #dfa122; }
+  .traffic span:nth-child(3) { background: #28c940; border-color: #1ea832; }
+
+  .topbar .nav {
+    display: flex; gap: 4px;
+  }
+  .topbar .nav button {
+    width: 26px; height: 22px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 4px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .topbar .nav button:hover { color: var(--ink); border-color: #c7ccd5; }
+
+  .topbar .title {
+    flex: 1;
+    text-align: center;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: #4a5060;
+  }
+
+  .topbar .search {
+    display: flex; align-items: center;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 3px 8px;
+    width: 220px;
+  }
+  .topbar .search input {
+    border: none; outline: none;
+    font-size: 12px;
+    width: 100%;
+    background: transparent;
+  }
+  .topbar .search::before {
+    content: "⌕";
+    color: var(--muted);
+    margin-right: 6px;
+    font-size: 13px;
+  }
+
+  /* Body */
+  .body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--rail);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+  .rail-group {
+    padding: 12px 14px 4px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .rail-group:last-child {
+    border-bottom: none;
+  }
+  .rail-group h4 {
+    margin: 0 0 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .rail-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 12.5px;
+    user-select: none;
+  }
+  .rail-item .ico {
+    width: 16px; text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .rail-item:hover { background: var(--rail-hover); }
+  .rail-item.active {
+    background: linear-gradient(180deg, #3b8aef 0%, #2868d8 100%);
+    color: var(--rail-active-ink);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 0 rgba(0,0,0,0.04);
+  }
+  /* iTunes-style category rail (denser, ellipsis-truncated) */
+  .rail-item.cat {
+    padding: 4px 14px;
+    font-size: 12.5px;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+  }
+  .rail-item.cat .ico { font-size: 13px; width: 18px; }
+  .rail-item.cat .label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rail-item.cat .num {
+    font-size: 10px;
+    color: var(--muted);
+    margin-right: 4px;
+    min-width: 18px;
+    text-align: right;
+  }
+  .rail-item.cat.active .num { color: rgba(255,255,255,0.78); }
+  .rail-item.active .ico { color: var(--rail-active-ink); }
+  .rail-item .count {
+    margin-left: auto;
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+  .rail-item.active .count { color: rgba(255,255,255,0.85); }
+
+  /* Main pane */
+  .main {
+    background: var(--pane);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 38px 1fr;
+  }
+
+  .tabstrip {
+    display: flex; align-items: center;
+    border-bottom: 1px solid var(--line);
+    padding: 0 14px;
+    background: #fbfcfd;
+    gap: 2px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .tabstrip::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 8px 14px;
+    font-size: 11.5px;
+    letter-spacing: 0.01em;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    flex-shrink: 0;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .tab:hover { color: var(--ink); background: rgba(0,0,0,0.02); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+    background: rgba(74,109,167,0.04);
+  }
+  .tabstrip .spacer { flex: 1; }
+  .view-toggle {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .view-toggle button {
+    padding: 4px 10px;
+    border: none;
+    background: #fff;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .view-toggle button + button { border-left: 1px solid var(--line); }
+  .view-toggle button.active { background: var(--accent-soft); color: var(--accent); }
+
+  .content {
+    overflow: auto;
+    padding: 16px 18px 24px;
+  }
+
+  /* Card grid view */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--tile);
+    border: 1px solid var(--line);
+    border-width: 1px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.16s ease;
+    display: flex; flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 1px 2px rgba(20,30,50,0.04), 0 8px 24px rgba(20,30,50,0.08);
+    border-color: var(--accent);
+    border-width: 1px;
+  }
+  .card .cover {
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(135deg, #e9ecf2 0%, #d6dbe5 100%);
+    border-bottom: 1px solid var(--line);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04);
+    display: flex; align-items: center; justify-content: center;
+    color: #9aa3b2;
+    font-size: 22px;
+    font-weight: 200;
+    letter-spacing: 0.04em;
+  }
+  .card .meta {
+    padding: 8px 10px 10px;
+  }
+  .card .meta .name {
+    font-size: 12.5px;
+    font-weight: 600;
+    margin: 0 0 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card .meta .sub {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Dense list view */
+  .list {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .list thead th {
+    text-align: left;
+    padding: 6px 10px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    background: #fbfcfd;
+    position: sticky; top: 0;
+  }
+  .list tbody td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--ink);
+  }
+  .list tbody tr:nth-child(even) td { background: var(--row-alt); }
+  .list tbody tr:hover td { background: var(--accent-soft); cursor: pointer; }
+  .list .num { color: var(--muted); width: 36px; }
+  .list .dur { color: var(--muted); width: 60px; text-align: right; }
+
+  /* Status bar */
+  .statusbar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 18px;
+    background: linear-gradient(180deg, #f5f6f9 0%, #e9ecf1 100%);
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .statusbar .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* Hidden views */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── DARK MODE — OZZY TRIBUTE (gothic) — gated ─────── */
+  body[data-theme="dark"] {
+    --bg: #0a0a0a;
+    --pane: #141414;
+    --rail: #0d0d0d;
+    --rail-hover: #1a1a1a;
+    --rail-active: #8b0000;
+    --rail-active-ink: #f5f0e8;
+    --ink: #d4cfc4;
+    --muted: #6b6560;
+    --line: #2a2825;
+    --line-soft: #1f1d1a;
+    --tile: #161412;
+    --accent: #a01818;
+    --accent-soft: #2a0f0f;
+    --row-alt: #181614;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  body[data-theme="dark"] .topbar {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+    border-bottom-color: var(--line);
+  }
+  body[data-theme="dark"] .topbar .title {
+    font-family: "UnifrakturMaguntia", "Cinzel", serif;
+    font-size: 19px;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    text-shadow: 0 0 14px rgba(160,24,24,0.4);
+  }
+  body[data-theme="dark"] .topbar .nav button { background: #1a1a1a; color: var(--muted); border-color: var(--line); }
+  body[data-theme="dark"] .topbar .nav button:hover { color: var(--ink); border-color: #3a3835; }
+  body[data-theme="dark"] .topbar .search { background: #1a1a1a; border-color: var(--line); }
+  body[data-theme="dark"] .topbar .search input { color: var(--ink); }
+  body[data-theme="dark"] .topbar .search::before { color: var(--muted); }
+  body[data-theme="dark"] .traffic span { background: #2a2825; border-color: #1a1a1a; }
+  body[data-theme="dark"] .traffic span:nth-child(1) { background: #6b1a17; border-color: #4a1210; }
+  body[data-theme="dark"] .traffic span:nth-child(2) { background: #6b5a17; border-color: #4a3e10; }
+  body[data-theme="dark"] .traffic span:nth-child(3) { background: #1a6b2a; border-color: #104a1d; }
+  body[data-theme="dark"] .sidebar { background: var(--rail); border-right-color: var(--line); }
+  body[data-theme="dark"] .rail-group { border-bottom-color: var(--line-soft); }
+  body[data-theme="dark"] .rail-group h4 {
+    font-family: "Cinzel", "UnifrakturMaguntia", serif;
+    color: var(--accent);
+    letter-spacing: 0.16em;
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+  body[data-theme="dark"] .rail-item { color: var(--ink); }
+  body[data-theme="dark"] .rail-item:hover { background: var(--rail-hover); }
+  body[data-theme="dark"] .rail-item .ico { color: var(--muted); }
+  body[data-theme="dark"] .rail-item.active {
+    background: linear-gradient(180deg, #a01818 0%, #6b0000 100%);
+    color: var(--rail-active-ink);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 1px 0 rgba(0,0,0,0.4);
+  }
+  body[data-theme="dark"] .rail-item.active .ico { color: var(--rail-active-ink); }
+  body[data-theme="dark"] .rail-item .count { color: var(--muted); }
+  body[data-theme="dark"] .main { background: var(--pane); }
+  body[data-theme="dark"] .tabstrip { background: #0f0f0f; border-bottom-color: var(--line); }
+  body[data-theme="dark"] .tab { color: var(--muted); }
+  body[data-theme="dark"] .tab:hover { color: var(--ink); background: rgba(255,255,255,0.02); }
+  body[data-theme="dark"] .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(160,24,24,0.1);
+  }
+  body[data-theme="dark"] .view-toggle { border-color: var(--line); }
+  body[data-theme="dark"] .view-toggle button { background: #161412; color: var(--muted); }
+  body[data-theme="dark"] .view-toggle button + button { border-left-color: var(--line); }
+  body[data-theme="dark"] .view-toggle button.active { background: var(--accent-soft); color: var(--accent); }
+  body[data-theme="dark"] .card { background: var(--tile); border-color: var(--line); }
+  body[data-theme="dark"] .card:hover {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 8px 24px rgba(160,24,24,0.22);
+    border-color: var(--accent);
+  }
+  body[data-theme="dark"] .card .cover {
+    background: linear-gradient(135deg, #1f1d1a 0%, #0a0808 100%);
+    border-bottom-color: var(--line);
+    color: #4a4540;
+  }
+  body[data-theme="dark"] .card .meta .sub { color: var(--muted); }
+  body[data-theme="dark"] .list thead th {
+    background: #0f0f0f;
+    border-bottom-color: var(--line);
+    color: var(--muted);
+  }
+  body[data-theme="dark"] .list tbody td { border-bottom-color: var(--line-soft); color: var(--ink); }
+  body[data-theme="dark"] .list tbody tr:nth-child(even) td { background: var(--row-alt); }
+  body[data-theme="dark"] .list tbody tr:hover td { background: var(--accent-soft); }
+  body[data-theme="dark"] .statusbar {
+    background: linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+    border-top-color: var(--line);
+    color: var(--muted);
+  }
+  body[data-theme="dark"] .statusbar .dot { background: var(--accent); }
+
+  /* ── Traffic-light THEME TOGGLE — gentle glow pulse ─── */
+  @keyframes pulse-tl-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 95, 87, 0); }
+    50%      { box-shadow: 0 0 10px 3px rgba(255, 95, 87, 0.65); }
+  }
+  @keyframes pulse-tl-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(40, 201, 64, 0); }
+    50%      { box-shadow: 0 0 10px 3px rgba(40, 201, 64, 0.65); }
+  }
+  .traffic span { transition: transform 0.15s ease; }
+  .traffic span#tl-red   { cursor: pointer; animation: pulse-tl-red 4s ease-in-out infinite; }
+  .traffic span#tl-green { cursor: pointer; animation: pulse-tl-green 4s ease-in-out infinite; }
+  .traffic span#tl-red:hover,
+  .traffic span#tl-green:hover { transform: scale(1.12); }
+
+  /* ── Form-factor sample dots (next to Assets / Sessions) ── */
+  .ff-dot-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    margin-left: 4px;
+    border-left: 1px solid var(--line);
+  }
+  .ff-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: inline-block;
+  }
+  .ff-dot.ff-green  { background: #28c940; animation: pulse-ff-green  3.6s ease-in-out infinite; }
+  .ff-dot.ff-yellow { background: #ffd166; animation: pulse-ff-yellow 3.6s ease-in-out infinite; }
+  .ff-dot.ff-blue   { background: #3b6fb3; animation: pulse-ff-blue   3.6s ease-in-out infinite; }
+  .ff-dot:hover { transform: scale(1.35); }
+  @keyframes pulse-ff-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(40, 201, 64, 0); }
+    50%      { box-shadow: 0 0 8px 2px rgba(40, 201, 64, 0.65); }
+  }
+  @keyframes pulse-ff-yellow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 209, 102, 0); }
+    50%      { box-shadow: 0 0 8px 2px rgba(255, 209, 102, 0.65); }
+  }
+  @keyframes pulse-ff-blue {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 111, 179, 0); }
+    50%      { box-shadow: 0 0 8px 2px rgba(59, 111, 179, 0.65); }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Cinzel:wght@600&display=swap" rel="stylesheet">
+<script src="js/md-table.js"></script>
+</head>
+<body data-theme="dark">
+  <div class="app">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="traffic"><span id="tl-red" title="dark mode"></span><span id="tl-yellow"></span><span id="tl-green" title="default look"></span></div>
+      <div class="nav">
+        <button title="Back">‹</button>
+        <button title="Forward">›</button>
+      </div>
+      <div class="title">Elijah V1 Self-MGMT Tool</div>
+      <div class="search"><input type="text" placeholder="Search catalog…"></div>
+    </header>
+
+    <!-- Body -->
+    <div class="body">
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="rail-group">
+          <h4>Library</h4>
+          <div class="rail-item active" data-view="catalog">
+            <span class="ico">♪</span><span>Elijah self management tool</span><span class="count">0</span>
+          </div>
+          <div class="rail-item" data-view="samples">
+            <span class="ico">▦</span><span>Samples</span><span class="count">—</span>
+          </div>
+          <div class="rail-item" data-view="recent">
+            <span class="ico">⏱</span><span>Recently Added</span><span class="count">0</span>
+          </div>
+          <div class="rail-item" data-view="starred">
+            <span class="ico">★</span><span>Starred</span><span class="count">0</span>
+          </div>
+        </div>
+
+        <div class="rail-group">
+          <h4>Collections</h4>
+          <div class="rail-item" data-step="1"><span class="ico">✦</span><span>1 · Branding 101</span></div>
+          <div class="rail-item" data-step="2"><span class="ico">✦</span><span>2 · Recording 101</span></div>
+          <div class="rail-item" data-step="3"><span class="ico">✦</span><span>3 · Distribution 101</span></div>
+          <div class="rail-item" data-step="4"><span class="ico">✦</span><span>4 · Streaming 101</span></div>
+          <div class="rail-item" data-step="5"><span class="ico">✦</span><span>5 · Royalties 101</span></div>
+          <div class="rail-item" data-step="6"><span class="ico">✦</span><span>6 · Publishing 101</span></div>
+          <div class="rail-item" data-step="7"><span class="ico">✦</span><span>7 · Social Media 101</span></div>
+          <div class="rail-item" data-step="8"><span class="ico">✦</span><span>8 · Live Performance 101</span></div>
+          <div class="rail-item" data-step="9"><span class="ico">✦</span><span>9 · Building Your Team</span></div>
+          <div class="rail-item" data-step="10"><span class="ico">✦</span><span>10 · Where do we go from here?</span></div>
+        </div>
+
+        <div class="rail-group">
+          <h4>Sources</h4>
+          <div class="rail-item" data-view="placeholder"><span class="ico">⌂</span><span>Local</span></div>
+          <div class="rail-item" data-view="placeholder"><span class="ico">☁</span><span>Cloud (future)</span></div>
+          <div class="rail-item" data-view="research"><span class="ico">🔬</span><span>Research</span></div>
+          <div class="rail-item" data-view="chartmetric"><span class="ico">▥</span><span>Chartmetric</span></div>
+          <div class="rail-item" data-view="soundcharts"><span class="ico">▩</span><span>Soundcharts</span></div>
+          <div class="rail-item" data-view="spotontrack"><span class="ico">▤</span><span>Spot On Track</span></div>
+        </div>
+
+        <!-- MUSIC INDUSTRY — 26 categories (iTunes-style) -->
+        <div class="rail-group" id="music-industry-group">
+          <h4>Music Industry</h4>
+          <div class="rail-item cat" data-cat="1"  title="Cat 1 — Streaming"><span class="ico">🎧</span><span class="label">Streaming</span><span class="num">1</span></div>
+          <div class="rail-item cat" data-cat="2"  title="Cat 2 — Social Media"><span class="ico">📱</span><span class="label">Social Media</span><span class="num">2</span></div>
+          <div class="rail-item cat" data-cat="3"  title="Cat 3 — How Royalties Work"><span class="ico">💰</span><span class="label">How Royalties Work</span><span class="num">3</span></div>
+          <div class="rail-item cat" data-cat="4"  title="Cat 4 — Sync / Music Licensing"><span class="ico">🎬</span><span class="label">Sync / Music Licensing</span><span class="num">4</span></div>
+          <div class="rail-item cat" data-cat="5"  title="Cat 5 — Music Distribution"><span class="ico">📦</span><span class="label">Music Distribution</span><span class="num">5</span></div>
+          <div class="rail-item cat" data-cat="6"  title="Cat 6 — Music Publishing"><span class="ico">📚</span><span class="label">Music Publishing</span><span class="num">6</span></div>
+          <div class="rail-item cat" data-cat="7"  title="Cat 7 — Record Labels (Major vs Indie)"><span class="ico">🏷️</span><span class="label">Record Labels (Major vs Indie)</span><span class="num">7</span></div>
+          <div class="rail-item cat" data-cat="8"  title="Cat 8 — Artist Management"><span class="ico">🧭</span><span class="label">Artist Management</span><span class="num">8</span></div>
+          <div class="rail-item cat" data-cat="9"  title="Cat 9 — Artist Branding"><span class="ico">🎨</span><span class="label">Artist Branding</span><span class="num">9</span></div>
+          <div class="rail-item cat" data-cat="10" title="Cat 10 — Music Marketing & Campaigns"><span class="ico">📣</span><span class="label">Music Marketing &amp; Campaigns</span><span class="num">10</span></div>
+          <div class="rail-item cat" data-cat="11" title="Cat 11 — Playlist Pitching"><span class="ico">📋</span><span class="label">Playlist Pitching</span><span class="num">11</span></div>
+          <div class="rail-item cat" data-cat="12" title="Cat 12 — Music PR & Press"><span class="ico">📰</span><span class="label">Music PR &amp; Press</span><span class="num">12</span></div>
+          <div class="rail-item cat" data-cat="13" title="Cat 13 — Live Performance & Touring"><span class="ico">🎤</span><span class="label">Live Performance &amp; Touring</span><span class="num">13</span></div>
+          <div class="rail-item cat" data-cat="14" title="Cat 14 — Booking Agents & Venues"><span class="ico">📅</span><span class="label">Booking Agents &amp; Venues</span><span class="num">14</span></div>
+          <div class="rail-item cat" data-cat="15" title="Cat 15 — Music Contracts & Deal Terms"><span class="ico">📜</span><span class="label">Music Contracts &amp; Deal Terms</span><span class="num">15</span></div>
+          <div class="rail-item cat" data-cat="16" title="Cat 16 — Copyright & Ownership"><span class="ico">©️</span><span class="label">Copyright &amp; Ownership</span><span class="num">16</span></div>
+          <div class="rail-item cat" data-cat="17" title="Cat 17 — PROs — Performance Rights Organizations"><span class="ico">⚖️</span><span class="label">PROs — Performance Rights</span><span class="num">17</span></div>
+          <div class="rail-item cat" data-cat="18" title="Cat 18 — Music Production Costs"><span class="ico">🎚️</span><span class="label">Music Production Costs</span><span class="num">18</span></div>
+          <div class="rail-item cat" data-cat="19" title="Cat 19 — Mixing & Mastering Standards"><span class="ico">🎛️</span><span class="label">Mixing &amp; Mastering Standards</span><span class="num">19</span></div>
+          <div class="rail-item cat" data-cat="20" title="Cat 20 — Music Videos"><span class="ico">🎥</span><span class="label">Music Videos</span><span class="num">20</span></div>
+          <div class="rail-item cat" data-cat="21" title="Cat 21 — Merch & Fan Monetization"><span class="ico">👕</span><span class="label">Merch &amp; Fan Monetization</span><span class="num">21</span></div>
+          <div class="rail-item cat" data-cat="22" title="Cat 22 — Radio — Traditional & Satellite"><span class="ico">📻</span><span class="label">Radio — Traditional &amp; Satellite</span><span class="num">22</span></div>
+          <div class="rail-item cat" data-cat="23" title="Cat 23 — Music Blogs & Media Outlets"><span class="ico">✍️</span><span class="label">Music Blogs &amp; Media Outlets</span><span class="num">23</span></div>
+          <div class="rail-item cat" data-cat="24" title="Cat 24 — Building Your Team"><span class="ico">🤝</span><span class="label">Building Your Team</span><span class="num">24</span></div>
+          <div class="rail-item cat" data-cat="25" title="Cat 25 — AI in Music"><span class="ico">🤖</span><span class="label">AI in Music</span><span class="num">25</span></div>
+          <div class="rail-item cat" data-cat="26" title="Cat 26 — Global Music Landscape Charts"><span class="ico">🌍</span><span class="label">Global Music Landscape Charts</span><span class="num">26</span></div>
+        </div>
+      </aside>
+
+      <!-- Main pane -->
+      <main class="main">
+        <div class="tabstrip">
+          <div class="tab active" data-tab="catalog">Catalog</div>
+          <div class="tab" data-tab="songs">Songs</div>
+          <div class="tab" data-tab="points">Points</div>
+          <div class="tab" data-tab="writers">Writers</div>
+          <div class="tab" data-tab="contacts">Contacts</div>
+          <div class="tab" data-tab="schedule">Schedule</div>
+          <div class="tab" data-tab="tour">Tour</div>
+          <div class="tab" data-tab="artists">Artists</div>
+          <div class="tab" data-tab="releases">Releases</div>
+          <div class="tab" data-tab="royalties">Royalties</div>
+          <div class="tab" data-tab="contracts">Contracts</div>
+          <div class="tab" data-tab="sessions">Sessions</div>
+          <div class="tab" data-tab="assets">Assets</div>
+          <div class="ff-dot-group" title="Form-factor samples">
+            <span class="ff-dot ff-green"  data-sample="green"  title="🟢 Image Hero"></span>
+            <span class="ff-dot ff-yellow" data-sample="yellow" title="🟡 Avatar + Interactive"></span>
+            <span class="ff-dot ff-blue"   data-sample="blue"   title="🔵 Video Lecture"></span>
+          </div>
+          <div class="spacer"></div>
+          <div class="view-toggle">
+            <button class="active" data-mode="grid">Grid</button>
+            <button data-mode="list">List</button>
+          </div>
+        </div>
+
+        <div class="content">
+
+          <!-- Grid view -->
+          <div class="view active" data-view-mode="grid">
+            <div class="grid" id="catalog-grid">
+              <!-- album cards rendered by JS from data/songs.md -->
+            </div>
+          </div>
+
+          <!-- List view -->
+          <div class="view" data-view-mode="list">
+            <table class="list">
+              <thead>
+                <tr>
+                  <th class="num">#</th>
+                  <th>Title</th>
+                  <th>Album</th>
+                  <th>Year</th>
+                  <th>BPM</th>
+                  <th class="dur">Duration</th>
+                </tr>
+              </thead>
+              <tbody id="catalog-list">
+                <!-- song rows rendered by JS from data/songs.md -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- Status bar -->
+    <footer class="statusbar">
+      <span><span class="dot"></span>Sharon · v0.1 baseline</span>
+      <span>·</span>
+      <span>8 items</span>
+      <span>·</span>
+      <span>0 selected</span>
+    </footer>
+
+  </div>
+
+  <script>
+    // Sidebar item activation
+    document.querySelectorAll('.rail-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.rail-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+
+    // Tab activation + routing
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const slug = tab.dataset.tab;
+        if (slug && slug !== 'catalog') {
+          window.open('pages/' + slug + '.html', '_blank');
+        }
+      });
+    });
+
+    // Research rail-item opens research curriculum in a new tab
+    document.querySelectorAll('.rail-item[data-view="research"]').forEach(el => {
+      el.addEventListener('click', () => window.open('pages/research-curriculum.html', '_blank'));
+    });
+
+    // Music Industry category click — sets active state + updates main heading
+    document.querySelectorAll('.rail-item.cat').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.rail-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        const num = item.dataset.cat;
+        const name = item.querySelector('.label').textContent.trim();
+        let h = document.getElementById('cat-heading');
+        if (!h) {
+          h = document.createElement('div');
+          h.id = 'cat-heading';
+          h.style.cssText = 'padding:10px 18px 4px;font-size:15px;font-weight:600;color:#1f2430;border-bottom:1px solid #eef0f4;background:#fbfcfd;';
+          const content = document.querySelector('.content');
+          if (content) content.parentNode.insertBefore(h, content);
+        }
+        h.textContent = `Cat ${num} — ${name}`;
+      });
+    });
+
+    // Grid / List toggle
+    document.querySelectorAll('.view-toggle button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelector(`.view[data-view-mode="${mode}"]`).classList.add('active');
+      });
+    });
+  </script>
+  <script src="overlay.js"></script>
+<script>
+(async function () {
+  if (!window.loadMdTable) return;
+  let songs = [];
+  try {
+    songs = await loadMdTable('data/songs.md');
+  } catch (e) {
+    console.warn('songs.md not loaded yet', e);
+    return;
+  }
+
+  // Group by album
+  const byAlbum = {};
+  songs.forEach(s => {
+    const a = s.album || 'Unknown';
+    (byAlbum[a] = byAlbum[a] || []).push(s);
+  });
+
+  // Catalog grid (album-grouped cards)
+  const grid = document.getElementById('catalog-grid');
+  if (grid) {
+    grid.innerHTML = Object.keys(byAlbum).map(album => {
+      const tracks = byAlbum[album];
+      const initial = (album[0] || '?').toUpperCase();
+      return `
+        <div class="card" data-album="${album.replace(/"/g,'&quot;')}">
+          <div class="cover">${initial}</div>
+          <div class="meta">
+            <div class="name">${album}</div>
+            <div class="sub">${tracks.length} track${tracks.length===1?'':'s'} · ${tracks[0].year || ''}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Catalog list (flat rows — same data, different lens)
+  const list = document.getElementById('catalog-list');
+  if (list) {
+    list.innerHTML = songs.map((s, i) => `
+      <tr>
+        <td class="num">${i+1}</td>
+        <td>${s.title || '—'}</td>
+        <td>${s.album || '—'}</td>
+        <td>${s.year || '—'}</td>
+        <td>${s.bpm || '—'}</td>
+        <td class="dur">${s.duration || '—'}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Update sidebar count
+  const catalogItem = document.querySelector('.rail-item[data-view="catalog"] .count');
+  if (catalogItem) catalogItem.textContent = songs.length;
+
+  // Update status bar item count
+  const statusItems = document.querySelectorAll('.statusbar span');
+  if (statusItems[2]) statusItems[2].textContent = `${songs.length} items`;
+})();
+</script>
+<script>
+  // Traffic-light theme toggle
+  (function () {
+    var red = document.getElementById('tl-red');
+    var green = document.getElementById('tl-green');
+    if (red)   red.addEventListener('click',   function () { document.body.dataset.theme = 'dark'; });
+    if (green) green.addEventListener('click', function () { document.body.dataset.theme = 'light'; });
+  })();
+
+  // Form-factor sample dots → open the sample file in a new tab
+  (function () {
+    document.querySelectorAll('.ff-dot[data-sample]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var color = el.getAttribute('data-sample');
+        if (color) window.open('samples/form-factor-' + color + '.html', '_blank');
+      });
+    });
+  })();
+</script>
+<script>
+  // Music Industry rail → category page navigation
+  (function () {
+    document.querySelectorAll('.rail-item.cat[data-cat]').forEach(function (el) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function () {
+        var cat = el.getAttribute('data-cat');
+        if (cat) window.location.href = 'pages/cat-' + cat + '.html';
+      });
+    });
+  })();
+
+  // Collections rail → step page navigation
+  (function () {
+    document.querySelectorAll('.rail-item[data-step]').forEach(function (el) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function () {
+        var step = el.getAttribute('data-step');
+        if (step) window.location.href = 'pages/step-' + step + '.html';
+      });
+    });
+  })();
+</script>
+</body>
+</html>

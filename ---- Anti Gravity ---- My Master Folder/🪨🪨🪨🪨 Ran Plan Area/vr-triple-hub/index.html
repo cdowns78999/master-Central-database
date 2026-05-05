@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VR Triple Hub</title>
+<style>
+  :root{
+    --bg:#000;
+    --ink:#f5f5f5;
+    --muted:#8a8a8a;
+    --accent-a:#7c5cff;   /* speed dating — violet */
+    --accent-b:#30d3ff;   /* translator — cyan */
+    --accent-c:#ffb347;   /* music label — amber */
+    --line:#1a1a1a;
+    --card:#0a0a0a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;scroll-behavior:smooth}
+  body{min-height:100vh;overflow-x:hidden}
+
+  /* HERO */
+  .hero{min-height:70vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:8rem 2rem 4rem;}
+  .hero h1{font-size:clamp(2.8rem,8vw,6rem);font-weight:800;letter-spacing:-0.04em;line-height:1;opacity:0;animation:fadeDown 1.4s ease-out forwards;}
+  .hero .sub{margin-top:1.5rem;color:var(--muted);font-size:1.1rem;max-width:560px;opacity:0;animation:fadeDown 1.4s 0.3s ease-out forwards;}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+  /* TAB NAV */
+  .nav{position:sticky;top:0;z-index:50;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;justify-content:center;gap:0;padding:1rem}
+  .tab{background:transparent;color:var(--muted);border:1px solid var(--line);padding:0.75rem 1.5rem;font-size:0.95rem;cursor:pointer;transition:all 0.25s;font-weight:500;letter-spacing:0.02em}
+  .tab:first-child{border-radius:8px 0 0 8px}
+  .tab:last-child{border-radius:0 8px 8px 0}
+  .tab+.tab{border-left:none}
+  .tab.active[data-tab="a"]{background:var(--accent-a);color:#fff;border-color:var(--accent-a)}
+  .tab.active[data-tab="b"]{background:var(--accent-b);color:#000;border-color:var(--accent-b)}
+  .tab.active[data-tab="c"]{background:var(--accent-c);color:#000;border-color:var(--accent-c)}
+
+  /* PANELS */
+  .panels{padding:3rem 1.5rem 6rem;max-width:1100px;margin:0 auto}
+  .panel{display:none;animation:fadeIn 0.5s ease-out}
+  .panel.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  .panel h2{font-size:2.2rem;font-weight:700;margin-bottom:0.5rem;letter-spacing:-0.02em}
+  .panel .desc{color:var(--muted);margin-bottom:2.5rem;max-width:700px;line-height:1.5}
+
+  /* CONTENT SLOTS */
+  .slot{display:grid;gap:1rem;margin-bottom:2rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.75rem;transition:all 0.3s}
+  .card:hover{transform:translateY(-2px);border-color:#333}
+  .card-title{font-size:1.25rem;font-weight:600;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.75rem}
+  .card-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .a .card-dot{background:var(--accent-a)}
+  .b .card-dot{background:var(--accent-b)}
+  .c .card-dot{background:var(--accent-c)}
+  .card-body{color:var(--muted);line-height:1.6;font-size:0.95rem}
+  .steps{margin-top:1rem;display:grid;gap:0.5rem}
+  .step{padding-left:1.5rem;position:relative;color:#bbb;font-size:0.9rem}
+  .step::before{content:counter(step);counter-increment:step;position:absolute;left:0;top:0;width:1.1rem;height:1.1rem;background:var(--line);border-radius:50%;font-size:0.7rem;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+  .steps{counter-reset:step}
+  .sources{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:0.35rem}
+  .sources a{color:var(--muted);font-size:0.8rem;text-decoration:none;transition:color 0.2s}
+  .sources a:hover{color:var(--ink)}
+
+  /* SLOT-B feed-in: left-col HIW list */
+  .b-layout{display:grid;grid-template-columns:1fr 1.5fr;gap:2rem}
+  @media(max-width:800px){.b-layout{grid-template-columns:1fr}}
+  .hiw-list{display:grid;gap:0.75rem}
+  .hiw-item{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1.25rem;display:flex;gap:1rem;align-items:flex-start}
+  .hiw-icon{font-size:1.5rem;flex-shrink:0}
+  .hiw-title{font-weight:600;margin-bottom:0.3rem}
+  .hiw-body{color:var(--muted);font-size:0.85rem;line-height:1.5}
+
+  /* PLACEHOLDER */
+  .placeholder{border:2px dashed var(--line);border-radius:12px;padding:3rem 2rem;text-align:center;color:var(--muted);font-size:0.9rem;letter-spacing:0.02em}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <h1>VR Triple Hub</h1>
+  <p class="sub">Three concepts · one lockstep build · batches roll in 3-at-a-time</p>
+</section>
+
+<nav class="nav">
+  <button class="tab active" data-tab="a" onclick="showTab('a')">A · Speed Dating</button>
+  <button class="tab" data-tab="b" onclick="showTab('b')">B · Translator</button>
+  <button class="tab" data-tab="c" onclick="showTab('c')">C · Music Label</button>
+</nav>
+
+<main class="panels">
+
+  <section class="panel active a" id="panel-a">
+    <h2>VR Speed Dating</h2>
+    <p class="desc">Matchmaking layer for VRChat — rotation rooms, timer, spark/pass signal. Random encounters turn into intentional dates.</p>
+    <div class="slot" id="a-slot">
+      <div class="placeholder">awaiting Batch 1 · feature cards (stacked-scroll)</div>
+    </div>
+  </section>
+
+  <section class="panel b" id="panel-b">
+    <h2>VR Language Barrier</h2>
+    <p class="desc">Real-time voice translator inside VRChat. Speech → text → translate → text → speech, piped back through a virtual mic.</p>
+    <div class="b-layout">
+      <div class="hiw-list" id="b-slot">
+        <div class="placeholder">awaiting Batch 1 · HIW steps</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-dot"></span> Working Tool</div>
+        <div class="card-body">Tool pane + install dropdown will mount here once the HIW list is populated.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel c" id="panel-c">
+    <h2>VRchat Music Label</h2>
+    <p class="desc">Boutique scout label — find a singer in a VRChat karaoke room, hand them a scout link, WAV lands in DistroKid via Chrome extension.</p>
+    <div class="slot" id="c-slot">
+      <div class="placeholder">awaiting Batch 1 · scout-flow sections</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  function showTab(id){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelector(`.tab[data-tab="${id}"]`).classList.add('active');
+    document.getElementById(`panel-${id}`).classList.add('active');
+  }
+</script>
+
+</body>
+</html>

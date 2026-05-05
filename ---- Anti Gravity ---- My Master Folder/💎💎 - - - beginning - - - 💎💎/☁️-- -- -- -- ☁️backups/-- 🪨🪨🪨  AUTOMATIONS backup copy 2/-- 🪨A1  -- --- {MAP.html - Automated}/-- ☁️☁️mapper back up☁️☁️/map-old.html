@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{MAPPER_NAME}} | Personal Ecosystem Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #f5f1eb;
+            /* Warm cream background */
+            --primary: #0ea5e9;
+            /* Vibrant sky blue */
+            --accent: #6366f1;
+            /* Indigo */
+            --text: #0f172a;
+            /* Deep slate */
+            --text-dim: rgba(15, 23, 42, 0.6);
+            --radius: 100px;
+            --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+            padding: 3rem 1.5rem;
+            position: relative;
+        }
+
+        /* Soft cream gradient background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 50% -20%, rgba(14, 165, 233, 0.08) 0%, transparent 80%),
+                radial-gradient(ellipse at 0% 100%, rgba(168, 85, 247, 0.06) 0%, transparent 70%),
+                radial-gradient(ellipse at 100% 100%, rgba(244, 63, 94, 0.06) 0%, transparent 70%),
+                linear-gradient(180deg, #ffffff 0%, #f0ebe5 50%, #ede5da 100%);
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        /* Animated blobs */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            will-change: opacity;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
+            top: -10%;
+            left: -10%;
+            animation: pulse 12s infinite ease-in-out;
+        }
+
+        .blob-2 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+            bottom: -5%;
+            right: -10%;
+            animation: pulse 15s infinite ease-in-out 2s;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.1;
+            }
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 50%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleShimmer 8s ease-in-out infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes titleShimmer {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .header .subtitle {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--text-dim);
+            margin-top: 0.4rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        /* Container */
+        .mapper-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Grid */
+        .mapper-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        /* Section Labels */
+        .section-label {
+            font-size: 0.7rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin: 2rem 0 0.75rem 0.5rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .section-label:first-child {
+            margin-top: 0;
+        }
+
+        /* ==========================================
+           SHIMMER BUTTON - The Core
+           ========================================== */
+        .p-btn {
+            --shimmer-speed: 4s;
+            --delay: 0s;
+
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: var(--radius);
+            color: var(--text);
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            transition:
+                transform var(--transition),
+                border-color var(--transition),
+                background var(--transition),
+                box-shadow var(--transition);
+            box-shadow:
+                0 4px 6px -1px rgba(0, 0, 0, 0.05),
+                0 2px 4px -1px rgba(0, 0, 0, 0.03),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Base glow */
+        .p-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(ellipse 150% 80% at var(--x, 50%) var(--y, 50%),
+                    rgba(76, 201, 240, 0.08) 0%,
+                    transparent 50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Shimmer effect */
+        .p-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    rgba(14, 165, 233, 0) 0%,
+                    rgba(14, 165, 233, 0.12) 10%,
+                    rgba(99, 102, 241, 0.15) 20%,
+                    rgba(168, 85, 247, 0.12) 30%,
+                    rgba(244, 63, 94, 0.1) 40%,
+                    rgba(245, 158, 11, 0.08) 50%,
+                    rgba(244, 63, 94, 0.1) 60%,
+                    rgba(168, 85, 247, 0.12) 70%,
+                    rgba(99, 102, 241, 0.15) 80%,
+                    rgba(14, 165, 233, 0.12) 90%,
+                    rgba(14, 165, 233, 0) 100%);
+            transform: translateX(-100%) translateZ(0);
+            animation: shimmerFlow var(--shimmer-speed) ease-in-out infinite;
+            animation-delay: var(--delay);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes shimmerFlow {
+            0% {
+                transform: translateX(-100%) translateZ(0);
+            }
+            100% {
+                transform: translateX(100%) translateZ(0);
+            }
+        }
+
+        /* Stagger animations */
+        .p-btn:nth-child(2n) {
+            --delay: 0.5s;
+        }
+
+        .p-btn:nth-child(3n) {
+            --delay: 1s;
+        }
+
+        .p-btn:nth-child(4n) {
+            --delay: 1.5s;
+        }
+
+        /* Hover state */
+        .p-btn:hover {
+            transform: translateY(-4px) scale(1.01);
+            background: rgba(255, 255, 255, 0.7);
+            border-color: rgba(255, 255, 255, 1);
+            box-shadow:
+                0 20px 25px -5px rgba(0, 0, 0, 0.08),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 20px rgba(14, 165, 233, 0.1);
+        }
+
+        .p-btn:hover::before {
+            opacity: 1;
+        }
+
+        .p-btn:hover::after {
+            animation-duration: 2.5s;
+        }
+
+        .p-btn:active {
+            transform: translateY(-2px) translateZ(0);
+        }
+
+        /* Dot indicator */
+        .dot {
+            width: 6px;
+            height: 6px;
+            min-width: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--primary), 0 0 16px rgba(76, 201, 240, 0.3);
+            transition: transform var(--transition), box-shadow var(--transition);
+            position: relative;
+            z-index: 5;
+            animation: dotPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% {
+                box-shadow: 0 0 8px var(--primary), 0 0 16px rgba(76, 201, 240, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 12px var(--primary), 0 0 24px rgba(76, 201, 240, 0.5);
+            }
+        }
+
+        .p-btn:hover .dot {
+            transform: scale(1.4);
+            box-shadow: 0 0 15px var(--primary), 0 0 30px rgba(76, 201, 240, 0.6);
+        }
+
+        /* Text */
+        .btn-text-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+            min-width: 0;
+            position: relative;
+            z-index: 5;
+        }
+
+        .btn-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .url-text {
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color var(--transition), opacity var(--transition);
+        }
+
+        .p-btn:hover .url-text {
+            color: var(--primary);
+            opacity: 0.9;
+        }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            body {
+                padding: 4rem 2rem;
+            }
+
+            .mapper-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .section-label {
+                grid-column: span 2;
+                margin: 2.5rem 0 1rem 1rem;
+            }
+
+            .p-btn {
+                padding: 16px 24px;
+            }
+
+            .btn-label {
+                font-size: 0.85rem;
+            }
+
+            .url-text {
+                font-size: 0.7rem;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                min-width: 8px;
+            }
+
+            .p-btn:hover {
+                transform: translateY(-6px) translateZ(0);
+                box-shadow:
+                    0 15px 50px rgba(0, 0, 0, 0.1),
+                    0 0 40px rgba(76, 201, 240, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .mapper-container {
+                max-width: 1000px;
+            }
+
+            .mapper-grid {
+                gap: 20px;
+            }
+
+            .p-btn {
+                padding: 18px 28px;
+            }
+
+            .btn-label {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.2s !important;
+            }
+
+            .p-btn::after {
+                display: none;
+            }
+        }
+
+        /* Touch */
+        @media (hover: none) {
+            .p-btn:hover {
+                transform: none;
+            }
+
+            .p-btn:active {
+                transform: scale(0.98) translateZ(0);
+                background: rgba(255, 255, 255, 0.08);
+            }
+        }
+
+        /* ==========================================
+           7-STEP TASK LIST SECTION
+           ========================================== */
+        .task-section {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            border-top: 1px solid rgba(14, 165, 233, 0.2);
+        }
+
+        .task-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .task-header h2 {
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .task-header p {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .step-card {
+            display: flex;
+            gap: 16px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(99, 102, 241, 0.03) 100%);
+            opacity: 0;
+            transition: opacity var(--transition);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .step-card:hover {
+            background: rgba(255, 255, 255, 0.6);
+            border-color: rgba(14, 165, 233, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .step-card:hover::before {
+            opacity: 1;
+        }
+
+        .step-number {
+            min-width: 50px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
+            color: white;
+            font-weight: 800;
+            font-size: 1.4rem;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        }
+
+        .step-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            min-width: 0;
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+            line-height: 1.2;
+        }
+
+        .step-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .step-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: rgba(14, 165, 233, 0.08);
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .step-item::before {
+            content: '✓';
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .step-card:hover .step-item {
+            background: rgba(14, 165, 233, 0.15);
+        }
+
+        /* Desktop layout - 2 columns */
+        @media (min-width: 768px) {
+            .steps-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .task-section {
+                padding: 3rem 0;
+            }
+
+            .step-card {
+                padding: 20px 24px;
+                gap: 20px;
+                border-radius: 20px;
+            }
+
+            .step-number {
+                width: 56px;
+                height: 56px;
+                font-size: 1.6rem;
+            }
+
+            .step-title {
+                font-size: 1.05rem;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .steps-grid {
+                gap: 20px;
+            }
+
+            .step-card {
+                padding: 24px 28px;
+                border-radius: 24px;
+            }
+        }
+
+        /* Stagger animation on load */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-card {
+            animation: slideUp 0.6s ease-out backwards;
+        }
+
+        .step-card:nth-child(1) { animation-delay: 0.1s; }
+        .step-card:nth-child(2) { animation-delay: 0.15s; }
+        .step-card:nth-child(3) { animation-delay: 0.2s; }
+        .step-card:nth-child(4) { animation-delay: 0.25s; }
+        .step-card:nth-child(5) { animation-delay: 0.3s; }
+        .step-card:nth-child(6) { animation-delay: 0.35s; }
+        .step-card:nth-child(7) { animation-delay: 0.4s; }
+    </style>
+</head>
+
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <header class="header">
+        <h1>{{APP_NAME}}</h1>
+        <div class="subtitle">{{SUBTITLE}}</div>
+    </header>
+
+    <div class="mapper-container">
+        <div class="mapper-grid">
+            {{ITEMS}}
+        </div>
+
+        <!-- 7-Step Task List Section -->
+        <div class="task-section">
+            <div class="task-header">
+                <h2>🎯 7-Step Workflow</h2>
+                <p>Client Project Roadmap</p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <div class="step-title">Initial Consultation</div>
+                        <div class="step-items">
+                            <span class="step-item">Schedule kickoff meeting</span>
+                            <span class="step-item">Define goals & scope</span>
+                            <span class="step-item">Discuss timeline</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <div class="step-title">Strategic Planning</div>
+                        <div class="step-items">
+                            <span class="step-item">Create roadmap</span>
+                            <span class="step-item">Outline deliverables</span>
+                            <span class="step-item">Set milestones</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <div class="step-title">Content Development</div>
+                        <div class="step-items">
+                            <span class="step-item">Gather brand assets</span>
+                            <span class="step-item">Create content outline</span>
+                            <span class="step-item">Collect media</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <div class="step-title">Design & Build</div>
+                        <div class="step-items">
+                            <span class="step-item">Design mockups</span>
+                            <span class="step-item">Get approval</span>
+                            <span class="step-item">Develop functionality</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <div class="step-title">Testing & Refinement</div>
+                        <div class="step-items">
+                            <span class="step-item">QA testing</span>
+                            <span class="step-item">Cross-browser checks</span>
+                            <span class="step-item">Mobile testing</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <div class="step-title">Final Revisions</div>
+                        <div class="step-items">
+                            <span class="step-item">Implement feedback</span>
+                            <span class="step-item">Optimize performance</span>
+                            <span class="step-item">Security review</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">7</div>
+                    <div class="step-content">
+                        <div class="step-title">Launch & Handoff</div>
+                        <div class="step-items">
+                            <span class="step-item">Deploy to production</span>
+                            <span class="step-item">Verify functionality</span>
+                            <span class="step-item">Provide training</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple click handler for links
+        document.querySelectorAll('.p-btn').forEach(btn => {
+            if (btn.href) {
+                btn.addEventListener('click', (e) => {
+                    window.open(btn.href, '_blank');
+                });
+            }
+        });
+
+        // Glow effect on hover
+        if (window.matchMedia('(hover: hover)').matches) {
+            document.querySelectorAll('.p-btn').forEach(btn => {
+                btn.addEventListener('mousemove', (e) => {
+                    const rect = btn.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    btn.style.setProperty('--x', x + '%');
+                    btn.style.setProperty('--y', y + '%');
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

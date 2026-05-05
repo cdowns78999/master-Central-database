@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job — Template</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/dashboard.css">
+</head>
+<body class="job-page">
+
+<!-- Top bar -->
+<div class="top-bar">
+  <a class="back-link" href="../the big dashboard.html">← back to dashboard</a>
+  <div class="job-title" id="jobTitle">Job Title</div>
+</div>
+
+<!-- 6-tile row -->
+<div class="tile-row">
+  <a class="tile" href="#" data-tile="plan">
+    <span class="tile-label">Plan</span>
+    <span class="tile-name">Plan</span>
+  </a>
+  <a class="tile" href="#" data-tile="big">
+    <span class="tile-label">Big Part</span>
+    <span class="tile-name">Big Part path</span>
+  </a>
+  <a class="tile" href="#" data-tile="project">
+    <span class="tile-label">Project</span>
+    <span class="tile-name">Project Plan path</span>
+  </a>
+  <a class="tile" href="#" data-tile="notes">
+    <span class="tile-label">Notes</span>
+    <span class="tile-name">Notes</span>
+  </a>
+  <a class="tile" href="#" data-tile="results">
+    <span class="tile-label">Results</span>
+    <span class="tile-name">Results</span>
+  </a>
+  <a class="tile" href="#" data-tile="claude">
+    <span class="tile-label">Claude</span>
+    <span class="tile-name">Claude</span>
+  </a>
+</div>
+
+<!-- Flip-card carousel cluster -->
+<div class="flip-cluster">
+  <div class="flip-cluster-head">
+    <span class="flip-cluster-label">Status cluster — click to flip, auto-focus every 6s</span>
+    <div class="flip-controls">
+      <button class="flip-arrow" id="flipPrev" aria-label="Previous card">‹</button>
+      <button class="flip-arrow" id="flipNext" aria-label="Next card">›</button>
+    </div>
+  </div>
+  <div class="flip-grid" id="flipGrid"></div>
+  <div class="flip-dots" id="flipDots"></div>
+</div>
+
+<!-- Claude resume row -->
+<div class="stack-row">
+  <span class="label">Claude</span>
+  <span class="value" id="resumeCmd">💬 claude --resume {uuid}</span>
+  <button class="btn-mini" data-copy="resumeCmd">Copy</button>
+  <button class="btn-mini" data-open="resume">Open</button>
+</div>
+
+<!-- Claude path row -->
+<div class="stack-row">
+  <span class="label">Path</span>
+  <span class="value" id="projectPath">{path}</span>
+  <button class="btn-mini" data-copy="projectPath">Copy</button>
+  <button class="btn-mini" data-open="explorer">Explorer</button>
+  <button class="btn-mini" data-open="vscode">VS Code</button>
+</div>
+
+<script>
+  /* ============================================================
+     JOB PAGE TEMPLATE — override jobData before build
+     TODO: replace jobData with server-read of stage-3 MD files
+     ============================================================ */
+  const jobData = {
+    title: 'character ai homemade',
+    slug: 'character-ai-homemade',
+    path: 'C:\\Users\\chad\\OneDrive\\Documents\\GitHub\\master-Central-database\\---- Anti Gravity ---- My Master Folder\\🪨 2026 Ultimate File Manager\\-- Results folder master forever\\character ai homemade',
+    resumeUuid: 'charai00-0000-0000-0000-000000000003',
+    chance: {
+      pct: 41,
+      goal: 95,
+      factors: [
+        '+ persona library shape defined',
+        '+ chat UI wireframe drafted',
+        '- local LLM routing not wired',
+        '- memory/context layer missing',
+        '- voice pipeline still TBD',
+        '- avatar animations not prototyped'
+      ]
+    },
+    toolsPerPhase: {
+      current: 'Phase 1 — Big Part',
+      currentTools: ['persona scout', 'chat UI wireframe', 'prompt-template writer'],
+      allPhases: [
+        ['Phase 1 — Big Part', ['persona scout', 'chat UI wireframe', 'prompt-template writer']],
+        ['Phase 2 — Project Plan', ['local LLM router', 'memory layer design']],
+        ['Phase 3 — Final Holder', ['wrapper folder', 'stage-3 MD']],
+        ['Phase 4 — Gap Fill', ['voice pipeline', 'avatar animator']],
+        ['Phase 5 — Last Touches', ['moderation pass', 'package for self-host']]
+      ]
+    },
+    leaveApp: {
+      upcoming: ['hop to LM Studio — test local model', 'hop to ElevenLabs — voice sample'],
+      all: ['LM Studio — test local model', 'ElevenLabs — voice sample', 'Ollama — fallback models', 'Figma — avatar mocks', 'Docker — self-host packaging']
+    },
+    notes: {
+      recent: ['Homemade = fully local, no external API keys', 'Start with 3 seed personas'],
+      all: ['Homemade = fully local, no external API keys', 'Start with 3 seed personas', 'Persona memory stored per-character in JSON', 'Voice optional for v1', 'Moderation must be on by default']
+    }
+  };
+
+  // ---- Populate title + path + resume ----
+  document.getElementById('jobTitle').textContent = jobData.title;
+  document.getElementById('projectPath').textContent = jobData.path;
+  document.getElementById('resumeCmd').textContent = `💬 claude --resume ${jobData.resumeUuid}`;
+  document.title = `Job — ${jobData.title}`;
+
+  // ---- Build flip cards ----
+  const flipGrid = document.getElementById('flipGrid');
+  const flipDots = document.getElementById('flipDots');
+
+  const cards = [
+    {
+      key: 'chance',
+      label: '% chance',
+      front: `
+        <div class="flip-face-label">% CHANCE</div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+          <div class="big-num">${jobData.chance.pct}%</div>
+          <div class="big-sub">of ${jobData.chance.goal}% goal</div>
+        </div>
+      `,
+      back: `
+        <div class="flip-face-label">Factors (+/-)</div>
+        <div class="scroll-body">
+          <ul>
+            ${jobData.chance.factors.map(f => `<li>${f}</li>`).join('')}
+          </ul>
+        </div>
+      `
+    },
+    {
+      key: 'tools',
+      label: 'tools per phase',
+      front: `
+        <div class="flip-face-label">TOOLS PER PHASE</div>
+        <h3>${jobData.toolsPerPhase.current}</h3>
+        <div class="scroll-body">
+          <ul>
+            ${jobData.toolsPerPhase.currentTools.map(t => `<li>${t}</li>`).join('')}
+          </ul>
+        </div>
+      `,
+      back: `
+        <div class="flip-face-label">All 5 phases</div>
+        <div class="scroll-body">
+          ${jobData.toolsPerPhase.allPhases.map(([p, tools]) => `
+            <div style="margin-bottom:10px;">
+              <div style="font-size:11px;font-weight:600;margin-bottom:4px;font-family:'JetBrains Mono',monospace;">${p}</div>
+              <ul>${tools.map(t => `<li style="padding-left:8px;">· ${t}</li>`).join('')}</ul>
+            </div>
+          `).join('')}
+        </div>
+      `
+    },
+    {
+      key: 'leave',
+      label: 'leave-app',
+      front: `
+        <div class="flip-face-label">LEAVE-APP MOMENTS</div>
+        <h3>Next up</h3>
+        <div class="scroll-body">
+          <ul>
+            ${jobData.leaveApp.upcoming.map(x => `<li>${x}</li>`).join('')}
+          </ul>
+        </div>
+      `,
+      back: `
+        <div class="flip-face-label">Full list</div>
+        <div class="scroll-body">
+          <ul>
+            ${jobData.leaveApp.all.map(x => `<li>${x}</li>`).join('')}
+          </ul>
+        </div>
+      `
+    },
+    {
+      key: 'notes',
+      label: 'extra notes',
+      front: `
+        <div class="flip-face-label">EXTRA NOTES</div>
+        <h3>Recent</h3>
+        <div class="scroll-body">
+          <ul>
+            ${jobData.notes.recent.map(n => `<li>${n}</li>`).join('')}
+          </ul>
+        </div>
+      `,
+      back: `
+        <div class="flip-face-label">All notes</div>
+        <div class="scroll-body">
+          <ul>
+            ${jobData.notes.all.map(n => `<li>${n}</li>`).join('')}
+          </ul>
+        </div>
+      `
+    }
+  ];
+
+  cards.forEach((c, idx) => {
+    const card = document.createElement('div');
+    card.className = 'flip-card';
+    card.dataset.idx = idx;
+    card.innerHTML = `
+      <div class="flip-inner">
+        <div class="flip-face">${c.front}</div>
+        <div class="flip-face flip-face-back">${c.back}</div>
+      </div>
+    `;
+    card.addEventListener('click', (e) => {
+      card.classList.toggle('is-flipped');
+    });
+    flipGrid.appendChild(card);
+
+    const dot = document.createElement('div');
+    dot.className = 'flip-dot' + (idx === 0 ? ' active' : '');
+    dot.dataset.idx = idx;
+    dot.addEventListener('click', () => setFocus(idx, true));
+    flipDots.appendChild(dot);
+  });
+
+  // ---- Auto-advance focus ----
+  let focusIdx = 0;
+  let autoTimer = null;
+  const cardNodes = () => flipGrid.querySelectorAll('.flip-card');
+  const dotNodes = () => flipDots.querySelectorAll('.flip-dot');
+
+  function setFocus(idx, userTriggered) {
+    focusIdx = (idx + cards.length) % cards.length;
+    cardNodes().forEach((n, i) => n.classList.toggle('is-focused', i === focusIdx));
+    dotNodes().forEach((n, i) => n.classList.toggle('active', i === focusIdx));
+    if (userTriggered) restartAuto();
+  }
+
+  function tick() { setFocus(focusIdx + 1, false); }
+  function startAuto() { autoTimer = setInterval(tick, 6000); }
+  function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+  function restartAuto() { stopAuto(); startAuto(); }
+
+  document.getElementById('flipPrev').addEventListener('click', () => setFocus(focusIdx - 1, true));
+  document.getElementById('flipNext').addEventListener('click', () => setFocus(focusIdx + 1, true));
+
+  // Pause on hover/focus inside the cluster
+  const cluster = document.querySelector('.flip-cluster');
+  cluster.addEventListener('mouseenter', stopAuto);
+  cluster.addEventListener('mouseleave', startAuto);
+  cluster.addEventListener('focusin', stopAuto);
+  cluster.addEventListener('focusout', startAuto);
+
+  setFocus(0, false);
+  startAuto();
+
+  // ---- Copy / open buttons ----
+  document.querySelectorAll('.btn-mini[data-copy]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = document.getElementById(btn.dataset.copy);
+      if (!target) return;
+      try {
+        await navigator.clipboard.writeText(target.textContent.replace(/^💬\s*/, ''));
+        btn.classList.add('flash');
+        const orig = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = orig; btn.classList.remove('flash'); }, 1000);
+      } catch (e) {
+        console.error('copy failed', e);
+      }
+    });
+  });
+
+  document.querySelectorAll('.btn-mini[data-open]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const kind = btn.dataset.open;
+      // TODO: wire to real launchers (Explorer / VS Code / terminal) via server hook
+      console.log(`open ${kind}: ${jobData.path || jobData.resumeUuid}`);
+      btn.classList.add('flash');
+      setTimeout(() => btn.classList.remove('flash'), 400);
+    });
+  });
+</script>
+
+</body>
+</html>

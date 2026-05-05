@@ -1,0 +1,1061 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build Companion | Digital Coms Setup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --lamp-deep: #c2560a;
+            --lamp-mid: #e07b2e;
+            --lamp-warm: #f2a54a;
+            --lamp-soft: #f8c97d;
+            --lamp-glow: #fde8c8;
+            --white: #ffffff;
+            --text: #3b1a04;
+            --text-dim: rgba(59, 26, 4, 0.55);
+            --border-thick: 4px;
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+            padding: 2.5rem 2rem;
+            background:
+                radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%),
+                linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%);
+        }
+
+        .container { width: 100%; max-width: 760px; margin: 0 auto; }
+
+        /* -- Header -- */
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 {
+            font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 800; letter-spacing: -0.04em;
+            color: var(--white);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .header .subtitle {
+            font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.8);
+            margin-top: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+
+        /* -- Panel Toggle -- */
+        .panel-toggle {
+            position: fixed; top: 1.25rem; right: 1.25rem; z-index: 90;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--white); border: var(--border-thick) solid var(--white);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 -2px 0 rgba(0,0,0,0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .panel-toggle:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+        .panel-toggle svg { width: 18px; height: 18px; fill: none; stroke: var(--lamp-deep); stroke-width: 2.5; stroke-linecap: round; }
+
+        /* -- Quick Plan Button -- */
+        .quick-plan-btn {
+            position: fixed; top: 1.25rem; right: 4.5rem; z-index: 90;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--white); border: var(--border-thick) solid var(--white);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 -2px 0 rgba(0,0,0,0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700;
+            color: var(--lamp-deep); letter-spacing: -0.02em;
+        }
+        .quick-plan-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+
+        /* -- Traveling Glow Ring -- */
+        @keyframes glowTravel {
+            0%   { box-shadow: 0 -4px 12px 2px rgba(242,165,74,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+            25%  { box-shadow: 4px 0 12px 2px rgba(224,123,46,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+            50%  { box-shadow: 0 4px 12px 2px rgba(194,86,10,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+            75%  { box-shadow: -4px 0 12px 2px rgba(224,123,46,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+            100% { box-shadow: 0 -4px 12px 2px rgba(242,165,74,0.6), 0 2px 8px rgba(0,0,0,0.15); }
+        }
+        .quick-plan-btn.glow-ring { animation: glowTravel 2s ease-in-out infinite; }
+
+        /* -- Quick Plan Overlay -- */
+        .quick-plan-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(59, 26, 4, 0.6); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center;
+        }
+        .quick-plan-overlay.show { display: flex; }
+        .quick-plan-card {
+            background: #fff; border-radius: 16px; padding: 2rem 2.2rem;
+            max-width: 520px; width: 90%; position: relative;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        }
+        .quick-plan-close {
+            position: absolute; top: 12px; right: 14px;
+            width: 28px; height: 28px; border-radius: 8px;
+            background: none; border: 2px solid rgba(0,0,0,0.08);
+            cursor: pointer; font-size: 1rem; color: #999;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s ease;
+        }
+        .quick-plan-close:hover { color: #333; border-color: rgba(0,0,0,0.2); }
+        .quick-plan-card pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem; line-height: 1.85; color: #1a1a1a;
+            white-space: pre; margin: 0; letter-spacing: 0.01em;
+        }
+        .quick-plan-card .qp-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.25em; color: #999; margin-bottom: 1rem;
+        }
+        .quick-plan-card .qp-divider { height: 1px; background: #eee; margin: 1rem 0; }
+
+        /* -- Shared Card Base -- */
+        .card {
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0,0,0,0.1),
+                0 1px 0 rgba(255,255,255,0.6),
+                inset 0 1px 0 rgba(255,255,255,1),
+                inset 0 -1px 0 rgba(0,0,0,0.04);
+        }
+
+        /* -- Obsidian Reminder Banner -- */
+        .obsidian-reminder {
+            padding: 1rem 1.4rem; margin-bottom: 1rem; border-radius: var(--radius);
+            background: linear-gradient(135deg, #b91c1c 0%, #dc2626 40%, #ef4444 100%);
+            border: 2px solid rgba(255,255,255,0.25); color: #fff;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+            box-shadow: 0 4px 16px rgba(185, 28, 28, 0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .obsidian-reminder .or-title {
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.3em;
+            margin-bottom: 0.5rem; opacity: 0.85;
+        }
+        .obsidian-reminder .or-items { display: flex; gap: 10px; flex-wrap: wrap; }
+        .obsidian-reminder .or-pill {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 10px;
+            background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3);
+            font-size: 0.68rem; font-weight: 700;
+        }
+        .obsidian-reminder .or-dot {
+            width: 6px; height: 6px; border-radius: 50%; background: #fde8c8;
+        }
+
+        /* -- Platform Buttons Tile -- */
+        .platform-tile {
+            padding: 1.4rem 1.6rem; margin-bottom: 1rem;
+        }
+        .platform-tile-label {
+            font-size: 0.6rem; color: var(--lamp-deep); text-transform: uppercase;
+            letter-spacing: 0.3em; font-weight: 700; margin-bottom: 0.7rem;
+        }
+        .platform-grid {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;
+        }
+        .platform-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: 10px;
+            background: var(--lamp-glow); border: 2px solid var(--white);
+            font-size: 0.7rem; font-weight: 700; color: var(--text);
+            cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        .platform-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .platform-btn.active { background: var(--lamp-warm); border-color: var(--white); }
+        .platform-btn.focus-app { border-color: var(--lamp-mid); border-width: 2.5px; }
+        .platform-btn .pb-dot {
+            width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+        }
+        .platform-separator {
+            width: 100%; height: 1.5px; background: rgba(194,86,10,0.15);
+            margin: 4px 0;
+        }
+
+        /* Checklist panel */
+        .platform-checklist {
+            display: none; padding: 1rem 0 0;
+        }
+        .platform-checklist.show { display: block; }
+        .platform-checklist-header {
+            font-size: 0.8rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem;
+        }
+        .platform-check-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 0; font-size: 0.76rem; color: var(--text-dim);
+        }
+        .platform-check-item input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: var(--lamp-deep);
+        }
+        .platform-check-item.checked { text-decoration: line-through; opacity: 0.6; }
+        .platform-claude-did {
+            font-size: 0.65rem; font-family: 'JetBrains Mono', monospace;
+            color: var(--lamp-deep); margin-top: 0.5rem; font-weight: 700;
+        }
+        .platform-goal {
+            font-size: 0.65rem; color: var(--text-dim); margin-top: 0.25rem;
+        }
+
+        /* Results section — always visible */
+        .platform-results {
+            margin-top: 1rem; padding: 1rem 1.2rem; border-radius: 12px;
+            background: linear-gradient(135deg, var(--lamp-warm) 0%, var(--lamp-soft) 100%);
+            border: 2px solid var(--white);
+            box-shadow: 0 4px 12px rgba(242,165,74,0.3);
+        }
+        .platform-results-title {
+            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.25em;
+            font-weight: 700; color: var(--text); margin-bottom: 0.5rem;
+        }
+        .platform-results-grid {
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .platform-result-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border-radius: 8px;
+            background: rgba(255,255,255,0.7); border: 1.5px solid var(--white);
+            font-size: 0.65rem; font-weight: 700; color: var(--text);
+        }
+        .platform-result-chip .prc-count {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+            color: var(--lamp-deep); font-weight: 700;
+        }
+
+        /* -- Season Pass -- */
+        .season-hero { padding: 1.4rem 1.6rem; margin-bottom: 1.5rem; }
+        .season-label-top {
+            font-size: 0.6rem; color: var(--lamp-deep); text-transform: uppercase;
+            letter-spacing: 0.3em; font-weight: 700; margin-bottom: 0.7rem;
+        }
+        .season-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .season-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: 10px;
+            background: var(--lamp-glow); border: 2px solid var(--white);
+            font-size: 0.7rem; font-weight: 700; color: var(--text);
+            cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        .season-chip:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .season-chip.chip-active { background: var(--lamp-warm); border-color: var(--white); }
+        .season-chip .sc-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--lamp-deep); }
+        .season-chip.chip-active .sc-dot { background: var(--white); }
+        .season-chip .sc-num { font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; color: var(--text-dim); }
+
+        /* -- Live Tools -- */
+        .live-tools { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .live-tool-pill {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 18px; flex: 1; min-width: 200px;
+            cursor: pointer; transition: all 0.2s ease;
+            text-decoration: none; color: var(--text);
+        }
+        .live-tool-pill:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .live-dot { width: 8px; height: 8px; min-width: 8px; border-radius: 50%; }
+        .live-label { font-size: 0.75rem; font-weight: 700; flex: 1; }
+        .live-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; padding: 3px 10px; border-radius: 8px;
+            background: var(--lamp-glow); color: var(--lamp-deep);
+        }
+
+        /* -- Section Header -- */
+        .section-header {
+            font-size: 1rem; font-weight: 700; color: var(--white);
+            margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .section-header::before {
+            content: ''; width: var(--border-thick); height: 20px;
+            background: var(--white); border-radius: 2px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        /* -- Block Stack -- */
+        .block-stack { display: flex; flex-direction: column; gap: 10px; }
+        .block-btn {
+            display: flex; align-items: center; gap: 12px;
+            padding: 15px 20px; cursor: pointer; transition: all 0.2s ease;
+        }
+        .block-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .block-btn.active-block { border-color: var(--lamp-deep); box-shadow: 0 0 0 2px var(--lamp-deep), 0 4px 12px rgba(0,0,0,0.1); }
+        .dot { width: 8px; height: 8px; min-width: 8px; border-radius: 50%; }
+        .btn-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .btn-label { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px; }
+        .btn-sub { font-size: 0.62rem; font-family: 'JetBrains Mono', monospace; color: var(--text-dim); }
+        .btn-tag {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 10px; border-radius: 8px;
+        }
+        .tag-now { background: var(--lamp-warm); color: var(--text); }
+        .tag-locked { background: rgba(59,26,4,0.06); color: var(--text-dim); }
+        .block-btn.locked { opacity: 0.5; border-style: dashed; border-color: rgba(255,255,255,0.6); }
+        .block-btn.locked:hover { opacity: 0.75; }
+
+        /* -- Right Slide Panel -- */
+        .slide-panel {
+            position: fixed; top: 0; right: 0; width: 400px; height: 100vh;
+            background: var(--lamp-glow);
+            border-left: var(--border-thick) solid var(--white);
+            transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: -6px 0 24px rgba(0,0,0,0.1);
+        }
+        .slide-panel.open { transform: translateX(0); }
+        .panel-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.4rem 1.5rem; border-bottom: 2px solid rgba(255,255,255,0.6); flex-shrink: 0;
+        }
+        .panel-header-row { display: flex; align-items: center; gap: 10px; }
+        .panel-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--white); }
+        .panel-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+        .panel-close {
+            width: 30px; height: 30px; border-radius: 10px;
+            background: var(--white); border: 2px solid var(--white);
+            color: var(--text-dim); font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        .panel-close:hover { color: var(--text); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+        .panel-body { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
+        .panel-section-label {
+            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.3em; color: var(--lamp-deep);
+        }
+        .panel-desc {
+            font-size: 0.85rem; color: var(--text-dim); line-height: 1.7;
+            white-space: pre-wrap; word-break: break-word;
+        }
+
+        /* Step Rows */
+        .steps-list { display: flex; flex-direction: column; gap: 0; }
+        .step-block {
+            display: flex; flex-direction: column; gap: 2px;
+            padding: 14px 0; border-top: 1.5px solid rgba(194, 86, 10, 0.1);
+        }
+        .step-block:first-child { border-top: none; }
+        .step-title {
+            font-size: 0.8rem; font-weight: 700; color: var(--text);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .step-title .step-num {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+            font-weight: 700; color: var(--lamp-deep); background: var(--lamp-glow);
+            padding: 2px 8px; border-radius: 6px;
+        }
+        .step-item {
+            font-size: 0.76rem; color: var(--text-dim); line-height: 1.6;
+            padding-left: 1.1rem; position: relative;
+        }
+        .step-item::before {
+            content: ''; position: absolute; left: 0.4rem; top: 0.45em;
+            width: 4px; height: 4px; border-radius: 50%;
+            background: var(--lamp-mid); opacity: 0.7;
+        }
+        .step-item strong { color: var(--text); font-weight: 800; font-size: 0.84rem; letter-spacing: 0.01em; }
+        .step-item .arrow { color: var(--lamp-deep); font-weight: 700; font-size: 0.9rem; margin: 0 2px; }
+
+        .panel-notes {
+            width: 100%; min-height: 180px; padding: 1rem;
+            background: var(--white);
+            border: 3px solid var(--white); border-radius: 12px;
+            color: var(--text); font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem; line-height: 1.6; resize: vertical;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .panel-notes::placeholder { color: var(--text-dim); }
+        .panel-notes:focus { outline: none; border-color: var(--lamp-mid); }
+
+        /* -- Skill Review Toggle -- */
+        .srt-toggle-wrap { display: flex; justify-content: center; margin-bottom: 1rem; }
+        .srt-toggle-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; padding: 8px 22px; border-radius: 10px;
+            background: #fef3c7; color: #92400e;
+            border: 2px solid var(--white); cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+            transition: all 0.2s ease;
+        }
+        .srt-toggle-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
+        .srt-toggle-btn.active { background: var(--lamp-warm); color: var(--text); }
+
+        /* -- Skill Review Tile -- */
+        .skill-review-tile {
+            padding: 1.4rem 1.6rem; margin-bottom: 1rem; border-radius: var(--radius);
+            background: rgba(255,255,255,0.95); border: 3px solid var(--white);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            display: none;
+        }
+        .skill-review-tile.show { display: block; }
+        .skill-review-tile .srt-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;
+        }
+        .skill-review-tile .srt-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.25em; color: var(--lamp-deep);
+        }
+        .skill-review-tile .srt-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; padding: 3px 10px; border-radius: 8px;
+            background: #fef3c7; color: #92400e;
+        }
+        .skill-review-tile pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem; line-height: 1.9; color: var(--text);
+            white-space: pre; margin: 0;
+        }
+        .skill-review-tile .srt-divider { height: 1px; background: rgba(194,86,10,0.1); margin: 0.8rem 0; }
+    </style>
+</head>
+<body>
+
+    <!-- Quick Plan Button -->
+    <button class="quick-plan-btn glow-ring" id="quickPlanBtn" title="Quick Plan">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 5h11M9 12h11M9 19h7M4 5l1.5 1.5L8 4M4 12l1.5 1.5L8 11M4 19l1.5 1.5L8 18"/></svg>
+    </button>
+
+    <!-- Panel Toggle Button -->
+    <button class="panel-toggle" id="panelToggle" title="Toggle side panel">
+        <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+
+    <!-- Quick Plan Overlay -->
+    <div class="quick-plan-overlay" id="quickPlanOverlay">
+        <div class="quick-plan-card">
+            <button class="quick-plan-close" id="quickPlanClose">&times;</button>
+            <div class="qp-label">Digital Coms Build Plan</div>
+<pre>ONE - &#10148; Set up Manis                    &#10003;
+      &#10148; Create account       | &#10148; Define lead criteria
+      &#10148; Configure first batch           &#10003;
+      &#10148; 100 leads            | &#10148; Review quality</pre>
+            <div class="qp-divider"></div>
+<pre>TWO - &#10148; Set up Social Sweep
+      &#10148; Connect socials      | &#10148; Import contacts
+      &#10148; Run enrichment scan             &#10003;
+      &#10148; Search queries       | &#10148; Relationship reports</pre>
+            <div class="qp-divider"></div>
+<pre>THREE &#10148; Set up Revio
+      &#10148; Connect all inboxes  | &#10148; Routing rules
+      &#10148; Auto-responses                  &#10003;
+      &#10148; Labels + tags        | &#10148; Test across platforms</pre>
+            <div class="qp-divider"></div>
+<pre>FOUR  &#10148; Set up Alley
+      &#10148; Get pixel code       | &#10148; Install on website
+      &#10148; Verify + alerts                 &#10003;
+      &#10148; Lead export          | &#10148; First visitor review</pre>
+            <div class="qp-divider"></div>
+<pre>FIVE  &#10148; Dashboard Integration
+      &#10148; Update pillData      | &#10148; Test star card
+      &#10148; Verify pre-fill                 &#10003;
+      &#10148; All wings populated  | &#10148; Drag-to-star works</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Build Companion</h1>
+            <p class="subtitle">Digital Coms Setup &mdash; Ahead Artist Solutions</p>
+        </div>
+
+        <!-- Skill Spec Toggle -->
+        <div class="srt-toggle-wrap">
+            <button class="srt-toggle-btn" id="srtToggleBtn">Pending Approval</button>
+        </div>
+
+        <!-- Skill Review Tile (hidden by default) -->
+        <div class="skill-review-tile" id="skillReviewTile">
+            <div class="srt-header">
+                <div class="srt-label">Skill Spec &mdash; Review</div>
+                <div class="srt-tag">Pending Approval</div>
+            </div>
+<pre>ONE - &#10148; Wire 4 focus tools into wing dashboard
+      &#10148; Manis, Social Sweep, Revio, Alley
+      &#10148; Each tool gets setup wizard card
+      &#10148; Progress bar tracks completion</pre>
+            <div class="srt-divider"></div>
+<pre>TWO - &#10148; Pre-fill wing data on completion
+      &#10148; Pills inject into all 7 wing columns
+      &#10148; LEFT: Clients, Pricing, Projects, Pipeline
+      &#10148; RIGHT: Suppliers, Services, Inventory</pre>
+            <div class="srt-divider"></div>
+<pre>THREE &#10148; Platform buttons for all 11 channels
+      &#10148; Gmail, WhatsApp, iMessage, Messenger
+      &#10148; Discord, VRChat, Local
+      &#10148; Plus 4 focus apps with accent borders</pre>
+        </div>
+
+        <!-- Obsidian Reminder -->
+        <div class="obsidian-reminder">
+            <div class="or-title">Reminder &mdash; Digital Coms Build Context</div>
+            <div class="or-items">
+                <div class="or-pill"><span class="or-dot"></span>4 Focus Tools &mdash; Manis, Social Sweep, Revio, Alley</div>
+                <div class="or-pill"><span class="or-dot"></span>Client &rarr; Supplier &rarr; Price &rarr; Package funnel</div>
+            </div>
+        </div>
+
+        <!-- Platform Buttons -->
+        <div class="platform-tile card" id="platformTile">
+            <div class="platform-tile-label">Communication Platforms</div>
+            <div class="platform-grid" id="platformGrid">
+                <button class="platform-btn" data-platform="gmail"><span class="pb-dot" style="background:#ef4444;"></span>Gmail</button>
+                <button class="platform-btn" data-platform="whatsapp"><span class="pb-dot" style="background:#10b981;"></span>WhatsApp</button>
+                <button class="platform-btn" data-platform="imessage"><span class="pb-dot" style="background:#0ea5e9;"></span>iMessage</button>
+                <button class="platform-btn" data-platform="messenger"><span class="pb-dot" style="background:#0ea5e9;"></span>Messenger</button>
+                <button class="platform-btn" data-platform="discord"><span class="pb-dot" style="background:#6366f1;"></span>Discord</button>
+                <button class="platform-btn" data-platform="vrchat"><span class="pb-dot" style="background:#06b6d4;"></span>VRChat</button>
+                <button class="platform-btn" data-platform="local"><span class="pb-dot" style="background:#f59e0b;"></span>Local</button>
+            </div>
+            <div class="platform-separator"></div>
+            <div class="platform-grid" style="margin-top:8px;">
+                <button class="platform-btn focus-app" data-platform="manis"><span class="pb-dot" style="background:var(--lamp-deep);"></span>Manis</button>
+                <button class="platform-btn focus-app" data-platform="socialsweep"><span class="pb-dot" style="background:var(--lamp-mid);"></span>Social Sweep</button>
+                <button class="platform-btn focus-app" data-platform="revio"><span class="pb-dot" style="background:var(--lamp-warm);"></span>Revio</button>
+                <button class="platform-btn focus-app" data-platform="alley"><span class="pb-dot" style="background:var(--lamp-soft);"></span>Alley</button>
+            </div>
+
+            <!-- Checklist Panel (shows when platform clicked) -->
+            <div class="platform-checklist" id="platformChecklist">
+                <div class="platform-checklist-header" id="platformCheckHeader">Gmail Setup Checklist</div>
+                <div id="platformCheckItems"></div>
+                <div class="platform-claude-did" id="platformClaudeDid"></div>
+                <div class="platform-goal" id="platformGoal"></div>
+            </div>
+
+            <!-- Results Section — always visible -->
+            <div class="platform-results">
+                <div class="platform-results-title">Setup Progress</div>
+                <div class="platform-results-grid" id="platformResultsGrid">
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:#ef4444;width:5px;height:5px;"></span>Gmail <span class="prc-count" data-platform="gmail">8 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:#10b981;width:5px;height:5px;"></span>WhatsApp <span class="prc-count" data-platform="whatsapp">8 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:#0ea5e9;width:5px;height:5px;"></span>iMessage <span class="prc-count" data-platform="imessage">8 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:#0ea5e9;width:5px;height:5px;"></span>Messenger <span class="prc-count" data-platform="messenger">8 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:#6366f1;width:5px;height:5px;"></span>Discord <span class="prc-count" data-platform="discord">8 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:#06b6d4;width:5px;height:5px;"></span>VRChat <span class="prc-count" data-platform="vrchat">8 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:#f59e0b;width:5px;height:5px;"></span>Local <span class="prc-count" data-platform="local">8 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:var(--lamp-deep);width:5px;height:5px;"></span>Manis <span class="prc-count" data-platform="manis">10 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:var(--lamp-mid);width:5px;height:5px;"></span>Social Sweep <span class="prc-count" data-platform="socialsweep">10 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:var(--lamp-warm);width:5px;height:5px;"></span>Revio <span class="prc-count" data-platform="revio">10 left</span></div>
+                    <div class="platform-result-chip"><span class="pb-dot" style="background:var(--lamp-soft);width:5px;height:5px;"></span>Alley <span class="prc-count" data-platform="alley">10 left</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Season Pass Quick Nav -->
+        <div class="season-hero card">
+            <div class="season-label-top">Season Pass</div>
+            <div class="season-chips">
+                <div class="season-chip chip-active" data-target="s1"><span class="sc-dot"></span><span class="sc-num">01</span> Manis</div>
+                <div class="season-chip" data-target="s2"><span class="sc-dot"></span><span class="sc-num">02</span> Social Sweep</div>
+                <div class="season-chip" data-target="s3"><span class="sc-dot"></span><span class="sc-num">03</span> Revio</div>
+                <div class="season-chip" data-target="s4"><span class="sc-dot"></span><span class="sc-num">04</span> Alley</div>
+                <div class="season-chip" data-target="s5"><span class="sc-dot"></span><span class="sc-num">05</span> Integration</div>
+            </div>
+        </div>
+
+        <!-- Live Tools -->
+        <div class="live-tools">
+            <div class="live-tool-pill card" id="hotkeyBtn">
+                <div class="live-dot" style="background:var(--lamp-deep);"></div>
+                <span class="live-label">Hotkey Step Tiles</span>
+                <span class="live-tag">View</span>
+            </div>
+            <div class="live-tool-pill card" id="pickupPromptBtn">
+                <div class="live-dot" style="background:var(--lamp-mid);"></div>
+                <span class="live-label">Pick Up Prompt</span>
+                <span class="live-tag">View</span>
+            </div>
+        </div>
+
+        <!-- Block Stack -->
+        <div class="section-header">Build Blocks</div>
+        <div class="block-stack">
+            <div class="block-btn card" data-id="s1" data-title="Manis Setup" data-desc="Set up Manis for automated lead generation. Create account, define ideal client profile, configure lead criteria, and generate your first batch of leads." data-color="#c2560a">
+                <div class="dot" style="background:var(--lamp-deep);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">01 &mdash; Manis Setup</div>
+                    <div class="btn-sub">Account + lead criteria + first batch</div>
+                </div>
+                <div class="btn-tag tag-now">Now</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s2" data-title="Social Sweep Setup" data-desc="Connect your social accounts to Social Sweep for relationship management. Import contacts, run enrichment scan, configure search queries and reports." data-color="#e07b2e">
+                <div class="dot" style="background:var(--lamp-mid);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">02 &mdash; Social Sweep Setup</div>
+                    <div class="btn-sub">Connect socials + import contacts + first scan</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s3" data-title="Revio Setup" data-desc="Consolidate all social media inboxes into Revio. Connect Instagram, Messenger, Twitter/X DMs, set up routing rules, and test auto-responses." data-color="#f2a54a">
+                <div class="dot" style="background:var(--lamp-warm);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">03 &mdash; Revio Setup</div>
+                    <div class="btn-sub">Connect inboxes + routing rules + test</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s4" data-title="Alley Setup" data-desc="Install Alley tracking pixel on your website to identify anonymous visitors. Configure alerts for repeat visitors and high-intent pages, set up lead export." data-color="#c2560a">
+                <div class="dot" style="background:var(--lamp-deep);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">04 &mdash; Alley Setup</div>
+                    <div class="btn-sub">Install pixel + alerts + first visitors</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+
+            <div class="block-btn card locked" data-id="s5" data-title="Dashboard Integration" data-desc="Wire all four tools into the wing-menu-dashboard. Update pillData, test star card drop zone, verify pre-fill injects pills into all 7 wing columns." data-color="#e07b2e">
+                <div class="dot" style="background:var(--lamp-mid);"></div>
+                <div class="btn-text">
+                    <div class="btn-label">05 &mdash; Dashboard Integration</div>
+                    <div class="btn-sub">Update pillData + test star card + verify pre-fill</div>
+                </div>
+                <div class="btn-tag tag-locked">Locked</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Slide Panel -->
+    <div class="slide-panel" id="slidePanel">
+        <div class="panel-header">
+            <div class="panel-header-row">
+                <div class="panel-dot" id="panelDot"></div>
+                <div class="panel-title" id="panelTitle">&mdash;</div>
+            </div>
+            <button class="panel-close" onclick="closePanel()">&times;</button>
+        </div>
+        <div class="panel-body">
+            <div class="panel-section-label">Overview</div>
+            <div class="panel-desc" id="panelDesc">&mdash;</div>
+            <div class="panel-section-label">Steps</div>
+            <div class="steps-list" id="panelSteps"></div>
+            <div class="panel-section-label">Your Notes</div>
+            <textarea class="panel-notes" id="panelNotes" placeholder="Add notes here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        const slidePanel = document.getElementById('slidePanel');
+        const panelTitle = document.getElementById('panelTitle');
+        const panelDesc = document.getElementById('panelDesc');
+        const panelDot = document.getElementById('panelDot');
+        const panelNotes = document.getElementById('panelNotes');
+        const panelSteps = document.getElementById('panelSteps');
+        const panelToggle = document.getElementById('panelToggle');
+
+        const savedNotes = {};
+        let currentId = null;
+
+        const stepData = {
+            s1: [
+                { title: '\u2192 Create Manis Account', subs: [
+                    'Go to <strong>Manis</strong> <span class="arrow">\u2192</span> <strong>Sign up + complete onboarding</strong>',
+                    'Verify email <span class="arrow">\u2192</span> Access the <strong>lead generation dashboard</strong>'
+                ]},
+                { title: '\u2192 Define Lead Criteria', subs: [
+                    'Set <strong>ideal client profile</strong>: industry, size, location, revenue',
+                    'Add <strong>job title filters</strong> + <strong>company type</strong> + tech stack <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Generate First Batch', subs: [
+                    'Configure <strong>first batch: 100 leads</strong> to start',
+                    'Review quality <span class="arrow">\u2192</span> set <strong>monthly delivery schedule</strong> <span class="arrow">\u21BB</span>'
+                ]},
+            ],
+            s2: [
+                { title: '\u2192 Connect Social Accounts', subs: [
+                    'Link <strong>LinkedIn</strong>, <strong>Instagram</strong>, <strong>Twitter/X</strong>, <strong>email</strong>',
+                    'Import <strong>calendar contacts</strong> for meeting history <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Run Contact Enrichment', subs: [
+                    'Trigger initial <strong>contact database scan</strong>',
+                    'Review <strong>enriched profiles</strong> for accuracy <span class="arrow">\u2192</span> approve'
+                ]},
+                { title: '\u2192 Configure Search + Reports', subs: [
+                    'Set up <strong>"Who do I know"</strong> query templates',
+                    'Configure <strong>monthly relationship reports</strong> <span class="arrow">\u21BB</span>'
+                ]},
+            ],
+            s3: [
+                { title: '\u2192 Connect All Inboxes', subs: [
+                    'Link <strong>Instagram DMs</strong>, <strong>Messenger</strong>, <strong>Twitter/X DMs</strong>',
+                    'Add <strong>Gmail</strong> + <strong>WhatsApp Business</strong> if available <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Set Up Routing Rules', subs: [
+                    'Create rules: <strong>leads</strong> vs <strong>support</strong> vs <strong>general</strong>',
+                    'Configure <strong>conversation labels</strong> and tags'
+                ]},
+                { title: '\u2192 Test Auto-Responses', subs: [
+                    'Create <strong>after-hours templates</strong> + <strong>common query responses</strong>',
+                    'Send test messages across <strong>all platforms</strong> <span class="arrow">\u2713</span>'
+                ]},
+            ],
+            s4: [
+                { title: '\u2192 Install Alley Pixel', subs: [
+                    'Get <strong>tracking pixel code</strong> from Alley dashboard',
+                    'Add to <strong>all website pages</strong> in header <span class="arrow">\u2192</span> verify firing <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Configure Alerts', subs: [
+                    'Set rules: <strong>repeat visitors</strong>, <strong>high-intent pages</strong>',
+                    'Configure <strong>lead export format</strong> + webhook'
+                ]},
+                { title: '\u2192 Review First Visitors', subs: [
+                    'Monitor <strong>first identified visitors</strong> in Alley dashboard',
+                    'Check <strong>identification accuracy</strong> <span class="arrow">\u2192</span> refine thresholds <span class="arrow">\u2713</span>'
+                ]},
+            ],
+            s5: [
+                { title: '\u2192 Update Wing pillData', subs: [
+                    'Add <strong>coms pills</strong> to all 7 wing sections in dashboard code',
+                    'Map: <strong>Clients / Pricing / Projects / Pipeline / Suppliers / Services / Inventory</strong>'
+                ]},
+                { title: '\u2192 Test Star Card Drop Zone', subs: [
+                    'Drag coms pills to <strong>star card</strong> <span class="arrow">\u2192</span> verify detail view loads',
+                    'Check <strong>platform stats</strong>, <strong>cost breakdown</strong>, <strong>quick actions</strong> <span class="arrow">\u2713</span>'
+                ]},
+                { title: '\u2192 Verify Pre-fill', subs: [
+                    'Open coms overlay <span class="arrow">\u2192</span> complete all 4 steps <span class="arrow">\u2192</span> close',
+                    'Confirm <strong>all wings populated</strong> with new pills <span class="arrow">\u2713</span>'
+                ]},
+            ],
+        };
+
+        function renderSteps(id) {
+            const steps = stepData[id];
+            if (!steps || !steps.length) { panelSteps.innerHTML = '<div style="font-size:0.76rem;color:var(--text-dim);">No steps yet.</div>'; return; }
+            panelSteps.innerHTML = steps.map((s, i) =>
+                `<div class="step-block">
+                    <div class="step-title"><span class="step-num">${String(i+1).padStart(2,'0')}</span>${s.title}</div>
+                    <div class="step-item">${s.subs[0]}</div>
+                    <div class="step-item">${s.subs[1]}</div>
+                </div>`
+            ).join('');
+        }
+
+        function openPanel(id, title, desc, color) {
+            if (currentId) savedNotes[currentId] = panelNotes.value;
+            currentId = id;
+            panelTitle.textContent = title;
+            panelDesc.textContent = desc;
+            panelDot.style.background = color || '#c2560a';
+            panelNotes.value = savedNotes[id] || '';
+            renderSteps(id);
+            slidePanel.classList.add('open');
+            document.querySelectorAll('.block-btn').forEach(el => el.classList.remove('active-block'));
+            const el = document.querySelector(`[data-id="${id}"]`);
+            if (el) el.classList.add('active-block');
+        }
+
+        function closePanel() {
+            if (currentId) savedNotes[currentId] = panelNotes.value;
+            slidePanel.classList.remove('open');
+            document.querySelectorAll('.block-btn').forEach(el => el.classList.remove('active-block'));
+            currentId = null;
+        }
+
+        panelToggle.addEventListener('click', () => {
+            if (slidePanel.classList.contains('open')) { closePanel(); }
+            else { openPanel('general', 'Side Panel', 'Click any block to see details here, or just use this space for notes.', '#c2560a'); }
+        });
+
+        document.querySelectorAll('.block-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openPanel(btn.dataset.id, btn.dataset.title, btn.dataset.desc, btn.dataset.color);
+            });
+        });
+
+        // Hotkey Step Tiles
+        const hotkeyDesc = `Digital Coms workflow tiles — setup steps for all 11 communication platforms.\n\nFOCUS APPS:\n[1] M Manis — Lead Generation\n[2] S Social Sweep — Relationship Mgmt\n[3] R Revio — Social Inbox\n[4] A Alley — Visitor ID\n\nGENERAL PLATFORMS:\n    Gmail — Email outreach\n    WhatsApp — Direct messaging\n    iMessage — High-touch comms\n    Messenger — Social inquiries\n    Discord — Community building\n    VRChat — Immersive meetings\n    Local — In-person networking`;
+
+        document.getElementById('hotkeyBtn').addEventListener('click', () => {
+            openPanel('hotkeys', 'Hotkey Step Tiles', hotkeyDesc, '#c2560a');
+        });
+
+        // Pick Up Prompt
+        const pickupPrompt = `I'm building a digital communications layer for the Ahead Artist Solutions wing-menu-dashboard. The goal: wire 4 focus tools (Manis, Social Sweep, Revio, Alley) into the dashboard so pills become live data, the star card drop zone shows platform details, and the Client → Supplier → Price → Package funnel lights up.\n\nCore setup = 4 focus apps + 7 general platforms = 11 total channels.\n\nPipeline flow: Identified (Alley/Manis) → Contacted (Revio/Social Sweep) → Qualified (Manis scoring) → Closed\n\nKey files:\n  - wing-menu-dashboard copy 3.html (main dashboard — modified with coms button + overlay)\n  - build-digital-coms.html (this Build Companion file)\n  - coms-platforms-research.md (research source for all 11 platforms)\n\nDesign language = salt rock lamp: warm orange gradient, thick white borders, Outfit + JetBrains Mono.\n\nWe need to:\n  1. Complete Manis setup (account + lead criteria + first batch)\n  2. Complete Social Sweep setup (connect socials + enrichment)\n  3. Complete Revio setup (unified inbox + routing)\n  4. Complete Alley setup (pixel + alerts + first visitors)\n  5. Wire everything into dashboard (pillData + star card + pre-fill)`;
+
+        document.getElementById('pickupPromptBtn').addEventListener('click', () => {
+            openPanel('pickup', 'Pick Up Prompt', pickupPrompt, '#e07b2e');
+        });
+
+        // Skill Review toggle
+        const srtToggleBtn = document.getElementById('srtToggleBtn');
+        const skillReviewTile = document.getElementById('skillReviewTile');
+        srtToggleBtn.addEventListener('click', () => {
+            skillReviewTile.classList.toggle('show');
+            srtToggleBtn.classList.toggle('active');
+        });
+
+        // Quick Plan overlay
+        const quickPlanBtn = document.getElementById('quickPlanBtn');
+        const quickPlanOverlay = document.getElementById('quickPlanOverlay');
+        const quickPlanClose = document.getElementById('quickPlanClose');
+        quickPlanBtn.addEventListener('click', () => quickPlanOverlay.classList.add('show'));
+        quickPlanClose.addEventListener('click', () => quickPlanOverlay.classList.remove('show'));
+        quickPlanOverlay.addEventListener('click', (e) => { if (e.target === quickPlanOverlay) quickPlanOverlay.classList.remove('show'); });
+
+        // Season chip clicks
+        document.querySelectorAll('.season-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const target = chip.dataset.target;
+                const block = document.querySelector(`[data-id="${target}"]`);
+                if (block) {
+                    block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => block.click(), 400);
+                }
+            });
+        });
+
+        /* ══════════════════════════════════════════════
+           Platform Buttons — Checklist System
+           ══════════════════════════════════════════════ */
+
+        const platformData = {
+            gmail: {
+                name: 'Gmail', steps: [
+                    'Create or designate business Gmail account',
+                    'Enable Gmail API in Google Cloud Console',
+                    'Create OAuth2 credentials for app access',
+                    'Set up professional email signature',
+                    'Create label structure: Leads / Clients / Suppliers',
+                    'Configure filters for auto-sorting',
+                    'Connect to Revio for unified inbox',
+                    'Load email templates for outreach'
+                ],
+                claudeDid: 'Documented setup steps, mapped to wing dashboard pills, identified API integration',
+                goal: 'Start: Business Gmail active → Finish: Integrated with Revio, templates loaded'
+            },
+            whatsapp: {
+                name: 'WhatsApp', steps: [
+                    'Download WhatsApp Business app',
+                    'Set up business profile (name, hours, description)',
+                    'Create quick reply templates',
+                    'Set up auto-greeting and away messages',
+                    'Create broadcast lists: Clients / Suppliers / Prospects',
+                    'Configure conversation labels',
+                    'Connect to Revio for unified inbox',
+                    'Set up catalog for service listings'
+                ],
+                claudeDid: 'Documented setup steps, identified WhatsApp Business API requirements',
+                goal: 'Start: Business profile active → Finish: Integrated with Revio, broadcast lists configured'
+            },
+            imessage: {
+                name: 'iMessage', steps: [
+                    'Organize threads by pinning key clients',
+                    'Create contact groups in macOS Contacts',
+                    'Set up Focus modes for business hours',
+                    'Establish naming convention for group chats',
+                    'Document key conversations in Obsidian vault',
+                    'Set reminder system for follow-ups',
+                    'Use Shortcuts app for message templates',
+                    'Log important conversations in dashboard'
+                ],
+                claudeDid: 'Documented limitations (no public API), outlined manual workflow',
+                goal: 'Start: Threads organized → Finish: Key conversations tracked manually'
+            },
+            messenger: {
+                name: 'Messenger', steps: [
+                    'Ensure Facebook Business Page is active',
+                    'Enable Messenger for business page',
+                    'Set up instant replies and greeting',
+                    'Create FAQ auto-responses',
+                    'Configure lead gen through Messenger ads',
+                    'Connect to Revio for unified inbox',
+                    'Set up conversation labels/tags',
+                    'Create response templates'
+                ],
+                claudeDid: 'Documented Meta Business Suite integration, mapped to Revio connection',
+                goal: 'Start: Messenger active on page → Finish: Integrated with Revio, leads captured'
+            },
+            discord: {
+                name: 'Discord', steps: [
+                    'Create Ahead Artist Solutions server',
+                    'Set up roles: Admin / Team / Clients / Artists',
+                    'Create channel categories: General / Projects / Support',
+                    'Configure permissions per role',
+                    'Set up welcome channel with onboarding',
+                    'Add utility bots (MEE6 or Carl-bot)',
+                    'Create webhook for dashboard notifications',
+                    'Set up thread system for projects'
+                ],
+                claudeDid: 'Documented server structure, bot integration options',
+                goal: 'Start: Server live with roles → Finish: Bot active, engagement tracked'
+            },
+            vrchat: {
+                name: 'VRChat', steps: [
+                    'Create or verify VRChat account',
+                    'Identify or create branded meeting world',
+                    'Set up friends list with clients',
+                    'Create event calendar for VR meetups',
+                    'Document world IDs in Obsidian vault',
+                    'Set up recording workflow for meetings',
+                    'Create follow-up templates for post-VR',
+                    'Log VRChat sessions in dashboard'
+                ],
+                claudeDid: 'Documented VRChat world setup, event hosting workflow',
+                goal: 'Start: Account active → Finish: Regular events, sessions tracked'
+            },
+            local: {
+                name: 'Local', steps: [
+                    'Compile local business directory',
+                    'Identify recurring networking events',
+                    'Create contact cards / QR code',
+                    'Set up event calendar with local meetups',
+                    'Create follow-up workflow: event → connect → pipeline',
+                    'Track local referrals in Obsidian vault',
+                    'Document in-person meeting notes',
+                    'Log local leads into dashboard pipeline'
+                ],
+                claudeDid: 'Documented local outreach strategy, event tracking workflow',
+                goal: 'Start: Directory compiled → Finish: Local pipeline active, referrals tracked'
+            },
+            manis: {
+                name: 'Manis', steps: [
+                    'Create Manis account and complete onboarding',
+                    'Define ideal client profile (ICP)',
+                    'Set lead criteria filters',
+                    'Configure first batch: 100 leads',
+                    'Review and approve first batch quality',
+                    'Set up monthly delivery schedule',
+                    'Export format: CSV with full contact data',
+                    'Import leads into dashboard pipeline',
+                    'Create follow-up sequence templates',
+                    'Set up lead scoring rules'
+                ],
+                claudeDid: 'Documented account setup, lead criteria, first batch delivery, mapped to all wings',
+                goal: 'Start: Account active, criteria defined → Finish: Monthly leads automated, scoring active'
+            },
+            socialsweep: {
+                name: 'Social Sweep', steps: [
+                    'Create Social Sweep account',
+                    'Connect social accounts: LinkedIn, Instagram, email',
+                    'Import calendar contacts',
+                    'Run initial contact scan and enrichment',
+                    'Review enriched profiles for accuracy',
+                    'Set up "Who do I know" search queries',
+                    'Create introduction request workflows',
+                    'Configure monthly relationship reports',
+                    'Set up opportunity alerts',
+                    'Export key contacts to dashboard'
+                ],
+                claudeDid: 'Documented full setup including social imports, contact enrichment, search config',
+                goal: 'Start: Accounts connected → Finish: Network mapped, relationship scoring active'
+            },
+            revio: {
+                name: 'Revio', steps: [
+                    'Create Revio account and complete setup',
+                    'Connect Instagram DMs, Messenger, Twitter/X',
+                    'Connect email inboxes (Gmail, Outlook)',
+                    'Connect WhatsApp Business',
+                    'Set up routing rules: leads vs support',
+                    'Create auto-response templates',
+                    'Configure conversation labels and tags',
+                    'Set up team assignment rules',
+                    'Enable conversation analytics',
+                    'Test inbound across all platforms'
+                ],
+                claudeDid: 'Documented inbox connections, routing rules, auto-response setup',
+                goal: 'Start: Inboxes connected → Finish: Unified inbox, routing active, analytics running'
+            },
+            alley: {
+                name: 'Alley', steps: [
+                    'Create Alley account and get pixel code',
+                    'Install pixel on all website pages',
+                    'Verify pixel is firing correctly',
+                    'Configure visitor ID thresholds',
+                    'Set up alert rules for repeat visitors',
+                    'Configure lead export format and webhook',
+                    'Set up follow-up sequences',
+                    'Set up weekly visitor report',
+                    'Monitor and refine identification',
+                    'Review first 500 visitor IDs'
+                ],
+                claudeDid: 'Documented pixel installation, alert config, lead capture workflow',
+                goal: 'Start: Pixel installed → Finish: 500+ weekly IDs, alerts active, leads auto-routed'
+            }
+        };
+
+        // Track checked state per platform
+        const checkedState = {};
+        Object.keys(platformData).forEach(k => {
+            checkedState[k] = new Array(platformData[k].steps.length).fill(false);
+        });
+
+        let activePlatform = null;
+
+        function renderChecklist(platform) {
+            const data = platformData[platform];
+            if (!data) return;
+
+            document.getElementById('platformCheckHeader').textContent = data.name + ' Setup Checklist';
+            document.getElementById('platformClaudeDid').textContent = 'Claude did: ' + data.claudeDid;
+            document.getElementById('platformGoal').textContent = data.goal;
+
+            const container = document.getElementById('platformCheckItems');
+            container.innerHTML = data.steps.map((step, i) => {
+                const checked = checkedState[platform][i];
+                return `<div class="platform-check-item ${checked ? 'checked' : ''}">
+                    <input type="checkbox" data-platform="${platform}" data-index="${i}" ${checked ? 'checked' : ''}>
+                    <span>${step}</span>
+                </div>`;
+            }).join('');
+
+            document.getElementById('platformChecklist').classList.add('show');
+            updateResults();
+        }
+
+        function updateResults() {
+            Object.keys(platformData).forEach(platform => {
+                const total = platformData[platform].steps.length;
+                const done = checkedState[platform].filter(Boolean).length;
+                const remaining = total - done;
+                const chip = document.querySelector(`.prc-count[data-platform="${platform}"]`);
+                if (chip) {
+                    chip.textContent = remaining === 0 ? 'Done!' : remaining + ' left';
+                    chip.style.color = remaining === 0 ? '#10b981' : '';
+                }
+            });
+        }
+
+        // Platform button clicks
+        document.querySelectorAll('.platform-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const platform = btn.dataset.platform;
+                document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activePlatform = platform;
+                renderChecklist(platform);
+            });
+        });
+
+        // Checkbox toggle delegation
+        document.getElementById('platformTile').addEventListener('change', (e) => {
+            if (e.target.type === 'checkbox') {
+                const platform = e.target.dataset.platform;
+                const index = parseInt(e.target.dataset.index);
+                checkedState[platform][index] = e.target.checked;
+                const item = e.target.closest('.platform-check-item');
+                item.classList.toggle('checked', e.target.checked);
+                updateResults();
+            }
+        });
+    </script>
+</body>
+</html>

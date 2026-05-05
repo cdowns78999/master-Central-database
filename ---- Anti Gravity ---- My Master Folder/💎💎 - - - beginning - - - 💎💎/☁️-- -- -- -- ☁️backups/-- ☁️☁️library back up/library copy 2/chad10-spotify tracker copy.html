@@ -1,0 +1,2291 @@
+﻿<html lang="en">
+
+<head>
+    <title></title>
+
+    <script defer="" data-domain="spotify-tracker.tiiny.site"
+        src="https://analytics.tiiny.site/js/plausible.js"></script>
+    <meta property="og:url" content="https://spotify-tracker.tiiny.site/" data-id="th-modified">
+    <meta property="og:type" content="website" data-id="th-modified">
+    <style id="grabbit-visited-styles">
+        .grabbit-visited,
+        .grabbit-visited:link,
+        .grabbit-visited:visited {
+            color: #551A8B !important;
+            /* Standard visited link purple */
+        }
+    </style>
+</head>
+
+<body>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(180deg, #001a33 0%, #003d5c 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+        }
+
+        #wrapper {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* History Panel */
+        #historyPanel {
+            width: 250px;
+            flex-shrink: 0;
+            height: 100vh;
+            overflow-y: auto;
+            background: linear-gradient(180deg, rgba(0, 61, 92, 0.5) 0%, rgba(0, 26, 51, 0.7) 100%);
+            border-radius: 16px;
+            border: 2px solid rgba(100, 200, 255, 0.3);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+            transition: width 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+                margin-right 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+                transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+            position: relative;
+            transform-origin: left center;
+        }
+
+        #historyPanel.collapsed {
+            width: 0px;
+            margin-right: 0px;
+            transform: translateX(-100%);
+            border-width: 0;
+            padding: 0;
+        }
+
+        #historyPanel.collapsed .history-panel-title,
+        #historyPanel.collapsed #historyCards {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .history-panel-title {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(100, 200, 255, 0.3);
+            font-size: 14px;
+            font-weight: 700;
+            color: #64d8ff;
+            transition: opacity 0.3s ease;
+        }
+
+        #historyCards {
+            padding: 12px;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Hamburger Menu */
+        .hamburger-menu {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 40, 70, 0.8);
+            border: 1.5px solid rgba(100, 200, 255, 0.5);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 6px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .hamburger-menu::before,
+        .hamburger-menu::after,
+        .hamburger-menu span {
+            content: '';
+            display: block;
+            width: 18px;
+            height: 2px;
+            background: #64d8ff;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-menu:hover {
+            background: rgba(0, 50, 90, 0.9);
+            border-color: rgba(100, 200, 255, 0.8);
+        }
+
+        body.history-collapsed .hamburger-menu::before {
+            transform: translateY(6px) rotate(45deg);
+        }
+
+        body.history-collapsed .hamburger-menu::after {
+            transform: translateY(-6px) rotate(-45deg);
+        }
+
+        body.history-collapsed .hamburger-menu span {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+
+        /* Main Panel */
+        #mainPanel {
+            flex: 1;
+            max-width: 480px;
+            background: linear-gradient(180deg, rgba(0, 61, 92, 0.5) 0%, rgba(0, 26, 51, 0.7) 100%);
+            border-radius: 16px;
+            border: 2px solid rgba(100, 200, 255, 0.3);
+            padding: 20px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        /* Control Dots */
+        .glow-dots {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        #cloudUrlDisplay {
+            background: rgba(0, 40, 70, 0.6);
+            border: 2px solid rgba(100, 200, 255, 0.4);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 16px;
+            font-size: 11px;
+            color: #64d8ff;
+            text-align: center;
+            word-break: break-all;
+            display: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #cloudUrlDisplay:hover {
+            background: rgba(0, 50, 90, 0.8);
+            border-color: rgba(100, 200, 255, 0.6);
+        }
+
+        #cloudUrlDisplay.visible {
+            display: block;
+        }
+
+        .glow-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .glow-dot:hover {
+            transform: scale(1.15);
+        }
+
+        /* Red dot - Delete */
+        .glow-dot:nth-child(1) {
+            background: #ff3b30;
+        }
+
+        .glow-dot:nth-child(1)::before {
+            content: '🗑️';
+        }
+
+        .glow-dot:nth-child(1).active {
+            animation: pulseRed 0.5s ease-in-out infinite;
+            transform: scale(1.5);
+        }
+
+        /* Green dot - Local Save */
+        .glow-dot:nth-child(2) {
+            background: #34c759;
+        }
+
+        .glow-dot:nth-child(2)::before {
+            content: '💾';
+        }
+
+        /* Yellow dot - Local Load */
+        .glow-dot:nth-child(3) {
+            background: #ff9500;
+        }
+
+        .glow-dot:nth-child(3)::before {
+            content: '📂';
+        }
+
+        /* Cyan dot - Cloud Save */
+        .glow-dot:nth-child(4) {
+            background: #00d4ff;
+        }
+
+        .glow-dot:nth-child(4)::before {
+            content: '☁️';
+        }
+
+        /* Light Blue dot - Cloud Load */
+        .glow-dot:nth-child(5) {
+            background: #5ac8fa;
+        }
+
+        .glow-dot:nth-child(5)::before {
+            content: '📥';
+        }
+
+        /* Purple dot - Combo Save */
+        .glow-dot:nth-child(6) {
+            background: #af52de;
+        }
+
+        .glow-dot:nth-child(6)::before {
+            content: '💫';
+        }
+
+        @keyframes dotGlow {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulseRed {
+
+            0%,
+            100% {
+                transform: scale(1.5);
+                box-shadow: 0 0 25px rgba(255, 0, 0, 0.9);
+            }
+
+            50% {
+                transform: scale(1.7);
+                box-shadow: 0 0 35px rgba(255, 0, 0, 1);
+            }
+        }
+
+        @keyframes greenGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(52, 199, 89, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 25px rgba(52, 199, 89, 0.7);
+            }
+        }
+
+        @keyframes redGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 59, 48, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 25px rgba(255, 59, 48, 0.9);
+            }
+        }
+
+        /* Input and Preview */
+        #baseUrl {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 2px solid rgba(100, 200, 255, 0.4);
+            background: rgba(0, 40, 70, 0.6);
+            color: #64d8ff;
+            border-radius: 12px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .input-separator {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, rgba(100, 200, 255, 0.3) 50%, transparent 100%);
+            margin: 16px 0;
+        }
+
+        #previewCard {
+            display: none;
+            margin-top: 12px;
+            padding: 14px;
+            background: rgba(0, 50, 80, 0.5);
+            border-radius: 14px;
+            border: 1.5px solid rgba(100, 200, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #previewEmbed {
+            width: 100%;
+            height: 152px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        #trackInfo {
+            text-align: center;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: rgba(0, 40, 70, 0.6);
+            border-radius: 8px;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+        }
+
+        #trackTitle {
+            font-size: 14px;
+            font-weight: 700;
+            color: #64d8ff;
+            margin-bottom: 4px;
+        }
+
+        #trackArtist {
+            font-size: 12px;
+            color: rgba(100, 200, 255, 0.8);
+        }
+
+        /* Buttons */
+        .btn-container {
+            display: flex;
+            background: rgba(0, 50, 80, 0.4);
+            border: 2px solid rgba(100, 200, 255, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .btn-container button {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #64d8ff;
+            padding: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-container button:not(:last-child) {
+            border-right: 1px solid rgba(100, 200, 255, 0.3);
+        }
+
+        .btn-container button:hover {
+            background: rgba(100, 200, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        /* Sort Pills */
+        .sort-pill {
+            padding: 8px 16px;
+            background: rgba(0, 50, 80, 0.6);
+            border: 1.5px solid rgba(100, 200, 255, 0.4);
+            border-radius: 20px;
+            color: #64d8ff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .sort-pill:hover {
+            background: rgba(100, 200, 255, 0.2);
+            border-color: rgba(100, 200, 255, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(100, 200, 255, 0.3);
+        }
+
+        .sort-pill:active {
+            transform: translateY(0);
+        }
+
+        /* History Cards */
+        .history-card {
+            margin-bottom: 8px;
+            padding: 8px 40px 8px 60px;
+            background: linear-gradient(180deg, rgba(0, 61, 92, 0.4) 0%, rgba(0, 26, 51, 0.6) 100%);
+            border-radius: 10px;
+            border: 1.5px solid rgba(100, 200, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+            position: relative;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .history-card:hover {
+            border-color: rgba(100, 200, 255, 0.6);
+            transform: scale(1.02);
+        }
+
+        .history-card-album-art {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 45px;
+            height: 45px;
+            border-radius: 6px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            border: 1.5px solid rgba(100, 200, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-card-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64d8ff;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-card-artist {
+            font-size: 13px;
+            font-weight: 900;
+            color: #64d8ff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Book Icon */
+        .book-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: rgba(100, 200, 255, 0.8);
+            border: 1px solid white;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 15;
+        }
+
+        .book-icon:hover {
+            background: rgba(52, 199, 89, 0.9);
+            transform: scale(1.1);
+        }
+
+        .history-card .book-icon {
+            top: calc(50% - 22px);
+            right: auto;
+            left: 172px;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+        }
+
+        /* Delete Button */
+        .delete-btn {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+            width: 18px;
+            height: 18px;
+            background: rgba(255, 59, 48, 0.8);
+            border: 1px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 16;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 0, 0, 1);
+            transform: scale(1.1);
+        }
+
+        /* Move Arrows */
+        .move-arrows {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            display: flex;
+            gap: 4px;
+            z-index: 16;
+        }
+
+        .move-btn {
+            width: 20px;
+            height: 20px;
+            background: rgba(100, 200, 255, 0.8);
+            border: 1px solid white;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .move-btn:hover {
+            background: rgba(100, 200, 255, 1);
+            transform: scale(1.1);
+        }
+
+        /* Confirmation Overlay */
+        .confirm-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 40, 80, 0.95);
+            border-radius: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            animation: confirmAppear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes confirmAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .confirm-question-mark {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, rgba(100, 200, 255, 0.9) 0%, rgba(50, 150, 255, 0.9) 100%);
+            border: 3px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 30px rgba(100, 200, 255, 0.6);
+            animation: questionPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes questionPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .confirm-question-mark:hover {
+            transform: scale(1.2);
+        }
+
+        /* Album Art Overlay */
+        .album-art-overlay {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 45px;
+            height: 45px;
+            border-radius: 6px;
+            background: rgba(0, 40, 70, 0.95);
+            border: 1.5px solid rgba(100, 200, 255, 0.6);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 3px;
+            z-index: 18;
+            animation: overlayAppear 0.2s ease;
+        }
+
+        @keyframes overlayAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(-50%) scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(-50%) scale(1);
+            }
+        }
+
+        .album-art-btn {
+            flex: 1;
+            background: rgba(100, 200, 255, 0.3);
+            border: 1px solid rgba(100, 200, 255, 0.6);
+            border-radius: 3px;
+            color: #64d8ff;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .album-art-btn:hover {
+            background: rgba(100, 200, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        /* Delete Mode Overlay */
+        .card-delete-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 59, 48, 0.5);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .card-delete-x {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 59, 48, 0.8);
+            border: 3px solid white;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .card-delete-x:hover {
+            background: rgba(255, 0, 0, 1);
+            transform: scale(1.1);
+        }
+
+        /* Locked Cards */
+        .locked-card {
+            margin-bottom: 12px;
+            padding: 14px;
+            background: linear-gradient(180deg, rgba(0, 61, 92, 0.6) 0%, rgba(0, 26, 51, 0.8) 100%);
+            border-radius: 14px;
+            border: 1.5px solid rgba(52, 199, 89, 0.5);
+            animation: greenGlow 2s ease-in-out infinite;
+            position: relative;
+            padding-bottom: 32px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+        }
+
+        /* Notebook Overlay */
+        #notebook {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(to bottom, #fff 0%, #f8f8f8 100%);
+            border-left: 3px solid #ff6b6b;
+            border-radius: 4px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            padding: 0;
+            overflow: hidden;
+            z-index: 1000;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        #notebook:hover {
+            width: 280px;
+            height: 220px;
+            padding: 12px 12px 12px 20px;
+        }
+
+        #notebook.expanded {
+            width: 280px;
+            height: 500px;
+            padding: 12px 12px 12px 20px;
+            overflow-y: auto;
+            cursor: default;
+        }
+
+        #notebook::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e0e0e0;
+        }
+
+        .notebook-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 4px;
+        }
+
+        .notebook-entry {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .notebook-separator {
+            text-align: center;
+            color: #999;
+            font-size: 10px;
+            margin: 8px 0;
+        }
+
+        .notebook-row {
+            margin-bottom: 2px;
+            word-wrap: break-word;
+        }
+
+        .notebook-label {
+            font-weight: bold;
+            color: #666;
+        }
+    </style>
+
+
+
+    <div id="notebook">
+        <div class="notebook-title">Track Log</div>
+        <div id="notebookEntries"></div>
+    </div>
+
+    <div id="wrapper">
+
+        <div id="historyPanel">
+            <div class="history-panel-title">History</div>
+            <div id="historyCards"></div>
+        </div>
+
+
+        <div id="mainPanel">
+
+            <div class="hamburger-menu" id="historyToggle">
+                <span></span>
+            </div>
+
+            <!-- Unified Navigation Bar -->
+            <div
+                style="background: rgba(0, 40, 70, 0.5); border: 1.5px solid rgba(100, 200, 255, 0.3); border-radius: 16px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+
+                <!-- Title at top -->
+                <h1 style="font-size: 20px; font-weight: 700; color: #64d8ff; text-align: center; margin-bottom: 16px;">
+                    Spotify Tracker</h1>
+
+                <!-- Main row with dots and sorting pills -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+
+                    <!-- Left side: Control Dots -->
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <div class="glow-dot" id="deleteDot" title="Delete Mode"></div>
+                        <div class="glow-dot" id="localSave" title="Local Save"></div>
+                        <div class="glow-dot" id="localLoad" title="Local Load"></div>
+                        <div class="glow-dot" id="cloudSave" title="Cloud Save"></div>
+                        <div class="glow-dot" id="cloudLoad" title="Cloud Load"></div>
+                        <div class="glow-dot" id="comboSave" title="Combo Save (Cloud + Local)"></div>
+                    </div>
+
+                    <!-- Right side: Sorting Pills -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end;">
+                        <button class="sort-pill" data-sort="a-z" data-section="main">A-Z (Main)</button>
+                        <button class="sort-pill" data-sort="z-a" data-section="main">Z-A (Main)</button>
+                        <button class="sort-pill" data-sort="date-asc" data-section="main">Date ↑ (Main)</button>
+                        <button class="sort-pill" data-sort="a-z" data-section="history">A-Z (History)</button>
+                        <button class="sort-pill" data-sort="z-a" data-section="history">Z-A (History)</button>
+                        <button class="sort-pill" data-sort="date-asc" data-section="history">Date ↑ (History)</button>
+                    </div>
+
+                </div>
+
+                <!-- Cloud URL Display -->
+                <div id="cloudUrlDisplay" title="Click to copy" style="margin-top: 12px;">No cloud save yet</div>
+            </div>
+
+
+            <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+
+            <textarea id="baseUrl" rows="3" placeholder="Paste Spotify URL here..."></textarea>
+
+            <div class="input-separator"></div>
+
+
+            <div id="detailsSection" style="display: none;">
+                <div id="previewCard">
+                    <div id="previewEmbed"></div>
+                    <div id="trackInfo">
+                        <div id="trackTitle">Track Title</div>
+                        <div id="trackArtist">by Artist Name</div>
+                    </div>
+                    <div class="btn-container">
+                        <button id="lockToHistoryBtn">History</button>
+                        <button id="lockToRegularBtn">Regular</button>
+                    </div>
+                    <div class="btn-container">
+                        <button id="btn24h">24h</button>
+                        <button id="btn12mo">12mo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="lockedCards"></div>
+        </div>
+    </div>
+
+    <script>
+        /*
+         * DPASTE.COM CLOUD STORAGE INSTRUCTIONS (100% FREE, NO API KEY!)
+         *
+         * Step 1: SAVE TO CLOUD
+         * - Click the cyan dot (4th dot, with red border) to save your data
+         * - Your data is automatically posted to dpaste.com
+         * - You'll receive a permanent URL (never expires)
+         * - The URL is automatically copied to your clipboard - save it!
+         *
+         * Step 2: LOAD FROM CLOUD
+         * - Click the light blue dot (5th dot, with red border) to load
+         * - Paste your dpaste URL when prompted
+         * - Your data will be retrieved and all cards restored
+         *
+         * Step 3: SHARE YOUR DATA
+         * - Share your dpaste URL with others
+         * - Anyone can load from it using the light blue dot
+         * - No accounts, no logins, completely free forever!
+         */
+
+        const baseUrlInput = document.getElementById('baseUrl');
+        const detailsSection = document.getElementById('detailsSection');
+        const previewCard = document.getElementById('previewCard');
+
+        let currentMetadata = null;
+        let deleteMode = false;
+
+        // Notebook Toggle
+        document.getElementById('notebook').addEventListener('click', (e) => {
+            if (e.target.closest('.notebook-entry')) return;
+            document.getElementById('notebook').classList.toggle('expanded');
+        });
+
+        // Hamburger Menu Toggle
+        document.getElementById('historyToggle').addEventListener('click', () => {
+            const panel = document.getElementById('historyPanel');
+            panel.classList.toggle('collapsed');
+            document.body.classList.toggle('history-collapsed');
+        });
+
+        // Red Dot - Delete Mode
+        document.getElementById('deleteDot').addEventListener('click', () => {
+            deleteMode = !deleteMode;
+            const deleteDot = document.getElementById('deleteDot');
+            const lockedCards = document.querySelectorAll('.locked-card');
+
+            if (deleteMode) {
+                deleteDot.classList.add('active');
+                lockedCards.forEach(card => {
+                    card.style.border = '1.5px solid rgba(255, 59, 48, 0.8)';
+                    card.style.animation = 'redGlow 2s ease-in-out infinite';
+
+                    const overlay = document.createElement('div');
+                    overlay.className = 'card-delete-overlay';
+                    overlay.innerHTML = '<div class="card-delete-x">×</div>';
+
+                    let clicks = 0;
+                    let clickTimeout;
+                    overlay.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        clicks++;
+                        if (clicks === 1) {
+                            clickTimeout = setTimeout(() => clicks = 0, 300);
+                        } else if (clicks === 2) {
+                            clearTimeout(clickTimeout);
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.9)';
+                            setTimeout(() => card.remove(), 300);
+                            deleteMode = false;
+                            deleteDot.classList.remove('active');
+                        }
+                    });
+
+                    card.appendChild(overlay);
+                });
+            } else {
+                deleteDot.classList.remove('active');
+                lockedCards.forEach(card => {
+                    const overlay = card.querySelector('.card-delete-overlay');
+                    if (overlay) overlay.remove();
+                    card.style.border = '1.5px solid rgba(52, 199, 89, 0.5)';
+                    card.style.animation = 'greenGlow 2s ease-in-out infinite';
+                });
+            }
+        });
+
+        // Green Dot - Local Save
+        document.getElementById('localSave').addEventListener('click', () => {
+            const saveData = collectAllData();
+            const dataStr = JSON.stringify(saveData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `spotify-tracker-${Date.now()}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+
+            // Flash animation
+            const dot = document.getElementById('localSave');
+            dot.style.transform = 'scale(1.5)';
+            setTimeout(() => dot.style.transform = '', 300);
+        });
+
+        // Yellow Dot - Local Load
+        document.getElementById('localLoad').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const saveData = JSON.parse(event.target.result);
+                    await restoreAllData(saveData);
+
+                    const dot = document.getElementById('localLoad');
+                    dot.style.transform = 'scale(1.5)';
+                    setTimeout(() => dot.style.transform = '', 300);
+                } catch (err) {
+                    alert('❌ Error reading file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        // Cyan Dot - Cloud Save (dpaste.com)
+        document.getElementById('cloudSave').addEventListener('click', async () => {
+            const saveData = collectAllData();
+
+            try {
+                const formData = new FormData();
+                formData.append('content', JSON.stringify(saveData, null, 2));
+                formData.append('syntax', 'json');
+                formData.append('expiry_days', '365');
+
+                const response = await fetch('https://dpaste.com/api/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Failed to save to cloud');
+
+                const cloudUrl = (await response.text()).trim();
+
+                const dot = document.getElementById('cloudSave');
+                dot.style.transform = 'scale(1.5)';
+                setTimeout(() => dot.style.transform = '', 300);
+
+                alert(`✅ Saved to cloud!\n\nURL: ${cloudUrl}\n\n(Copied to clipboard!)`);
+                navigator.clipboard.writeText(cloudUrl);
+            } catch (error) {
+                console.error('Cloud save error:', error);
+                alert('❌ Cloud save failed.\n\nFalling back to local download...');
+                document.getElementById('localSave').click();
+            }
+        });
+
+        // Light Blue Dot - Cloud Load (dpaste.com)
+        document.getElementById('cloudLoad').addEventListener('click', async () => {
+            const cloudUrl = prompt('Enter your dpaste URL:');
+            if (!cloudUrl) return;
+
+            try {
+                // Convert dpaste URL to raw format
+                const rawUrl = cloudUrl.replace('dpaste.com/', 'dpaste.com/') + '.txt';
+
+                const response = await fetch(rawUrl);
+                if (!response.ok) throw new Error('Failed to load from cloud');
+
+                const jsonText = await response.text();
+                const saveData = JSON.parse(jsonText);
+                await restoreAllData(saveData);
+
+                const dot = document.getElementById('cloudLoad');
+                dot.style.transform = 'scale(1.5)';
+                setTimeout(() => dot.style.transform = '', 300);
+
+                alert('✅ Loaded from cloud successfully!');
+            } catch (error) {
+                console.error('Cloud load error:', error);
+                alert('❌ Failed to load from cloud.\n\nMake sure you use the full dpaste URL.\n\nError: ' + error.message);
+            }
+        });
+
+        // Purple Dot - Combo Save (Cloud + Local)
+        document.getElementById('comboSave').addEventListener('click', async () => {
+            const saveData = collectAllData();
+
+            // First, save to cloud
+            try {
+                const formData = new FormData();
+                formData.append('content', JSON.stringify(saveData, null, 2));
+                formData.append('syntax', 'json');
+                formData.append('expiry_days', '365');
+
+                const response = await fetch('https://dpaste.com/api/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Failed to save to cloud');
+
+                const cloudUrl = (await response.text()).trim();
+
+                // Update the cloud URL display
+                const urlDisplay = document.getElementById('cloudUrlDisplay');
+                urlDisplay.textContent = cloudUrl;
+                urlDisplay.classList.add('visible');
+
+                // Copy to clipboard
+                navigator.clipboard.writeText(cloudUrl);
+
+                // Flash animation
+                const dot = document.getElementById('comboSave');
+                dot.style.transform = 'scale(1.5)';
+                setTimeout(() => dot.style.transform = '', 300);
+
+                // Then, download locally
+                const dataStr = JSON.stringify(saveData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `spotify-tracker-${Date.now()}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+
+                alert(`✅ Combo Save Complete!\n\nCloud URL: ${cloudUrl}\n(Copied to clipboard!)\n\nLocal file downloaded!`);
+            } catch (error) {
+                console.error('Combo save error:', error);
+                alert('❌ Cloud save failed.\n\nFalling back to local download only...');
+                document.getElementById('localSave').click();
+            }
+        });
+
+        // Cloud URL Display click to copy
+        document.getElementById('cloudUrlDisplay').addEventListener('click', () => {
+            const urlText = document.getElementById('cloudUrlDisplay').textContent;
+            if (urlText && urlText !== 'No cloud save yet') {
+                navigator.clipboard.writeText(urlText);
+                alert('✅ URL copied to clipboard!');
+            }
+        });
+
+        // Collect all data for saving
+        function collectAllData() {
+            const lockedCards = document.querySelectorAll('.locked-card');
+            const historyCards = document.querySelectorAll('.history-card');
+            const notebookEntries = document.querySelectorAll('.notebook-entry');
+            const saveData = {
+                version: 3,
+                timestamp: Date.now(),
+                lockedCards: [],
+                historyCards: [],
+                notebookEntries: []
+            };
+
+            lockedCards.forEach(card => {
+                const { artistId, songId, artistName, songName, imageUrl } = card.dataset;
+                if (songId) {
+                    saveData.lockedCards.push({ artistId, songId, artistName, songName, imageUrl });
+                }
+            });
+
+            historyCards.forEach(card => {
+                const { artistId, songId, artistName, songName, imageUrl } = card.dataset;
+                if (songId) {
+                    saveData.historyCards.push({ artistId, songId, artistName, songName, imageUrl });
+                }
+            });
+
+            notebookEntries.forEach(entry => {
+                const rows = entry.querySelectorAll('.notebook-row');
+                if (rows.length >= 3) {
+                    const link = rows[0].textContent.replace('Link:', '').trim();
+                    const artist = rows[1].textContent.replace('Artist:', '').trim();
+                    const song = rows[2].textContent.replace('Song:', '').trim();
+                    saveData.notebookEntries.push({ link, artist, song });
+                }
+            });
+
+            return saveData;
+        }
+
+        // Migrate old data to current format
+        function migrateData(saveData) {
+            // Auto-upgrade version 1 and 2 to version 3
+            if (!saveData.version) saveData.version = 1;
+
+            // Initialize missing arrays
+            if (!saveData.lockedCards) saveData.lockedCards = [];
+            if (!saveData.historyCards) saveData.historyCards = [];
+            if (!saveData.notebookEntries) saveData.notebookEntries = [];
+
+            // Fix URL format for old data (from /stats to /playlists?time-filter=)
+            const fixCard = (card) => {
+                if (!card) return card;
+
+                // Ensure all required fields exist
+                card.artistId = card.artistId || '';
+                card.songId = card.songId || card.trackId || '';
+                card.artistName = card.artistName || '';
+                card.songName = card.songName || '';
+                card.imageUrl = card.imageUrl || '';
+
+                return card;
+            };
+
+            // Migrate all cards
+            saveData.lockedCards = saveData.lockedCards.map(fixCard);
+            saveData.historyCards = saveData.historyCards.map(fixCard);
+
+            // Ensure notebook entries have required fields
+            saveData.notebookEntries = saveData.notebookEntries.map(entry => ({
+                link: entry.link || '',
+                artist: entry.artist || '',
+                song: entry.song || ''
+            }));
+
+            // Update version to current
+            saveData.version = 3;
+            saveData.migrated = true;
+
+            return saveData;
+        }
+
+        // Restore all data from save
+        async function restoreAllData(saveData) {
+            try {
+                // Validate basic structure
+                if (!saveData || typeof saveData !== 'object') {
+                    alert('❌ Invalid save file format');
+                    return;
+                }
+
+                // Auto-migrate old data
+                saveData = migrateData(saveData);
+
+                const totalCards = (saveData.lockedCards?.length || 0) + (saveData.historyCards?.length || 0) + (saveData.notebookEntries?.length || 0);
+
+                if (totalCards === 0) {
+                    alert('⚠️ Save file is empty. No data to restore.');
+                    return;
+                }
+
+                if (!confirm(`Load ${totalCards} item(s)? (${saveData.lockedCards?.length || 0} locked, ${saveData.historyCards?.length || 0} history, ${saveData.notebookEntries?.length || 0} notebook)\n\n${saveData.migrated ? '✓ Data will be auto-upgraded to latest format' : ''}`)) {
+                    return;
+                }
+
+                // DON'T clear existing data - append to it instead
+                // This allows loading JSON on top of existing state
+                // document.getElementById('lockedCards').innerHTML = '';
+                // document.getElementById('historyCards').innerHTML = '';
+                // document.getElementById('notebookEntries').innerHTML = '';
+
+                // Restore locked cards (prepend to existing)
+                for (const cardData of (saveData.lockedCards || [])) {
+                    await restoreLockedCard(cardData);
+                }
+
+                // Restore history cards (prepend to existing)
+                for (const cardData of (saveData.historyCards || [])) {
+                    await restoreHistoryCard(cardData);
+                }
+
+                // Restore notebook entries (prepend to existing)
+                const notebookData = (saveData.notebookEntries || []).reverse();
+                for (const entryData of notebookData) {
+                    const notebookEntries = document.getElementById('notebookEntries');
+                    const entry = document.createElement('div');
+                    entry.className = 'notebook-entry';
+                    entry.innerHTML = `
+                        <div class="notebook-row"><span class="notebook-label">Link:</span> ${entryData.link}</div>
+                        <div class="notebook-row"><span class="notebook-label">Artist:</span> ${entryData.artist}</div>
+                        <div class="notebook-row"><span class="notebook-label">Song:</span> ${entryData.song}</div>
+                    `;
+                    notebookEntries.insertBefore(entry, notebookEntries.firstChild);
+
+                    // Add separator after entry
+                    if (notebookEntries.children.length > 1) {
+                        const separator = document.createElement('div');
+                        separator.className = 'notebook-separator';
+                        separator.textContent = '---';
+                        entry.after(separator);
+                    }
+                }
+
+                alert(`✅ Successfully loaded ${totalCards} item(s)!${saveData.migrated ? '\n\n✓ Data auto-upgraded to latest format' : ''}`);
+            } catch (error) {
+                console.error('Restore error:', error);
+                alert('❌ Error restoring data: ' + error.message);
+            }
+        }
+
+        // Restore a locked card
+        async function restoreLockedCard(cardData) {
+            const { artistId, songId, artistName, songName, imageUrl } = cardData;
+
+            // Check for duplicates - skip if already exists
+            const existingCards = document.querySelectorAll('.locked-card');
+            for (const existing of existingCards) {
+                if (existing.dataset.songId === songId && existing.dataset.artistId === artistId) {
+                    console.log('Skipping duplicate locked card:', songId);
+                    return; // Skip duplicate
+                }
+            }
+
+            const url24h = artistId ? `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1day` : '#';
+            const url12mo = artistId ? `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1year` : '#';
+
+            const card = document.createElement('div');
+            card.className = 'locked-card';
+            Object.assign(card.dataset, { artistId, songId, artistName, songName, imageUrl });
+
+            const embedUrl = `https://open.spotify.com/embed/track/${songId}?utm_source=generator`;
+            card.innerHTML = `
+                <div class="book-icon">📖</div>
+                <div class="move-arrows">
+                    <div class="move-btn move-up">▲</div>
+                    <div class="move-btn move-down">▼</div>
+                </div>
+                <div style="width: 100%; height: 152px; border-radius: 10px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);">
+                    <iframe style="border-radius:12px; width: 100%; height: 100%;" src="${embedUrl}" frameBorder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                </div>
+                <div class="btn-container">
+                    <button class="locked-btn-24h">24h</button>
+                    <button class="locked-btn-12mo">12mo</button>
+                </div>
+            `;
+
+            document.getElementById('lockedCards').appendChild(card);
+
+            card.querySelector('.locked-btn-24h').onclick = () => window.open(url24h, '_blank');
+            card.querySelector('.locked-btn-12mo').onclick = () => window.open(url12mo, '_blank');
+
+            card.querySelector('.move-up').onclick = (e) => {
+                e.stopPropagation();
+                if (card.previousElementSibling) {
+                    card.parentNode.insertBefore(card, card.previousElementSibling);
+                }
+            };
+
+            card.querySelector('.move-down').onclick = (e) => {
+                e.stopPropagation();
+                if (card.nextElementSibling) {
+                    card.parentNode.insertBefore(card.nextElementSibling, card);
+                }
+            };
+
+            setupBookIconClick(card, url24h, url12mo);
+        }
+
+        // Restore a history card
+        async function restoreHistoryCard(cardData) {
+            const { artistId, songId, artistName, songName, imageUrl } = cardData;
+
+            // Check for duplicates - skip if already exists
+            const existingCards = document.querySelectorAll('.history-card');
+            for (const existing of existingCards) {
+                if (existing.dataset.songId === songId && existing.dataset.artistId === artistId) {
+                    console.log('Skipping duplicate history card:', songId);
+                    return; // Skip duplicate
+                }
+            }
+
+            const url24h = `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1day`;
+            const url12mo = `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1year`;
+
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            card.innerHTML = `
+                <div class="delete-btn">×</div>
+                <div class="book-icon">📖</div>
+                <div class="move-arrows">
+                    <div class="move-btn move-up">▲</div>
+                    <div class="move-btn move-down">▼</div>
+                </div>
+                ${imageUrl ? `<img src="${imageUrl}" class="history-card-album-art" alt="Album art">` : ''}
+                <div class="history-card-artist">${artistName}</div>
+                <div class="history-card-title">${songName}</div>
+            `;
+            Object.assign(card.dataset, { artistId, songId, artistName, songName, imageUrl, url24h, url12mo });
+
+            card.querySelector('.delete-btn').onclick = (e) => {
+                e.stopPropagation();
+                card.remove();
+            };
+
+            card.querySelector('.move-up').onclick = (e) => {
+                e.stopPropagation();
+                if (card.previousElementSibling) {
+                    card.parentNode.insertBefore(card, card.previousElementSibling);
+                }
+            };
+
+            card.querySelector('.move-down').onclick = (e) => {
+                e.stopPropagation();
+                if (card.nextElementSibling) {
+                    card.parentNode.insertBefore(card.nextElementSibling, card);
+                }
+            };
+
+            setupAlbumArtOverlay(card);
+            setupBookIconClick(card, url24h, url12mo);
+
+            document.getElementById('historyCards').appendChild(card);
+        }
+
+        // Setup book icon with question mark confirmation
+        function setupBookIconClick(card, url24h, url12mo) {
+            const bookIcon = card.querySelector('.book-icon');
+            if (!bookIcon) return;
+
+            bookIcon.onclick = (e) => {
+                e.stopPropagation();
+
+                let overlay = card.querySelector('.confirm-overlay');
+                if (overlay) {
+                    overlay.remove();
+                    return;
+                }
+
+                overlay = document.createElement('div');
+                overlay.className = 'confirm-overlay';
+                overlay.innerHTML = '<div class="confirm-question-mark">?</div>';
+                card.appendChild(overlay);
+
+                const questionMark = overlay.querySelector('.confirm-question-mark');
+                questionMark.onclick = (e) => {
+                    e.stopPropagation();
+                    overlay.remove();
+                    swapCard(card);
+                };
+
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) {
+                        e.stopPropagation();
+                        overlay.remove();
+                    }
+                };
+            };
+        }
+
+        // Swap card between locked and history
+        function swapCard(card) {
+            const { artistId, songId, artistName, songName, imageUrl } = card.dataset;
+            const url24h = `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1day`;
+            const url12mo = `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1year`;
+
+            if (card.classList.contains('history-card')) {
+                // Move to locked
+                const lockedCard = document.createElement('div');
+                lockedCard.className = 'locked-card';
+                Object.assign(lockedCard.dataset, { artistId, songId, artistName, songName, imageUrl });
+
+                const embedUrl = `https://open.spotify.com/embed/track/${songId}?utm_source=generator`;
+                lockedCard.innerHTML = `
+                    <div class="book-icon">📖</div>
+                    <div class="move-arrows">
+                        <div class="move-btn move-up">▲</div>
+                        <div class="move-btn move-down">▼</div>
+                    </div>
+                    <div style="width: 100%; height: 152px; border-radius: 10px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);">
+                        <iframe style="border-radius:12px; width: 100%; height: 100%;" src="${embedUrl}" frameBorder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                    </div>
+                    <div class="btn-container">
+                        <button class="locked-btn-24h">24h</button>
+                        <button class="locked-btn-12mo">12mo</button>
+                    </div>
+                `;
+
+                document.getElementById('lockedCards').insertBefore(lockedCard, document.getElementById('lockedCards').firstChild);
+                lockedCard.querySelector('.locked-btn-24h').onclick = () => window.open(url24h, '_blank');
+                lockedCard.querySelector('.locked-btn-12mo').onclick = () => window.open(url12mo, '_blank');
+
+                lockedCard.querySelector('.move-up').onclick = (e) => {
+                    e.stopPropagation();
+                    if (lockedCard.previousElementSibling) {
+                        lockedCard.parentNode.insertBefore(lockedCard, lockedCard.previousElementSibling);
+                    }
+                };
+
+                lockedCard.querySelector('.move-down').onclick = (e) => {
+                    e.stopPropagation();
+                    if (lockedCard.nextElementSibling) {
+                        lockedCard.parentNode.insertBefore(lockedCard.nextElementSibling, lockedCard);
+                    }
+                };
+
+                setupBookIconClick(lockedCard, url24h, url12mo);
+
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            } else {
+                // Move to history
+                const historyCard = document.createElement('div');
+                historyCard.className = 'history-card';
+                historyCard.innerHTML = `
+                    <div class="delete-btn">×</div>
+                    <div class="book-icon">📖</div>
+                    <div class="move-arrows">
+                        <div class="move-btn move-up">▲</div>
+                        <div class="move-btn move-down">▼</div>
+                    </div>
+                    ${imageUrl ? `<img src="${imageUrl}" class="history-card-album-art" alt="Album art">` : ''}
+                    <div class="history-card-artist">${artistName}</div>
+                    <div class="history-card-title">${songName}</div>
+                `;
+                Object.assign(historyCard.dataset, { artistId, songId, artistName, songName, imageUrl, url24h, url12mo });
+
+                historyCard.querySelector('.delete-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    historyCard.remove();
+                };
+
+                historyCard.querySelector('.move-up').onclick = (e) => {
+                    e.stopPropagation();
+                    if (historyCard.previousElementSibling) {
+                        historyCard.parentNode.insertBefore(historyCard, historyCard.previousElementSibling);
+                    }
+                };
+
+                historyCard.querySelector('.move-down').onclick = (e) => {
+                    e.stopPropagation();
+                    if (historyCard.nextElementSibling) {
+                        historyCard.parentNode.insertBefore(historyCard.nextElementSibling, historyCard);
+                    }
+                };
+
+                setupAlbumArtOverlay(historyCard);
+                setupBookIconClick(historyCard, url24h, url12mo);
+
+                document.getElementById('historyCards').insertBefore(historyCard, document.getElementById('historyCards').firstChild);
+                card.style.opacity = '0';
+                setTimeout(() => card.remove(), 300);
+            }
+        }
+
+        // Setup album art overlay for 24h/12mo quick access
+        function setupAlbumArtOverlay(card) {
+            const albumArt = card.querySelector('.history-card-album-art');
+            if (!albumArt) return;
+
+            albumArt.onclick = (e) => {
+                e.stopPropagation();
+
+                let overlay = card.querySelector('.album-art-overlay');
+                if (overlay) {
+                    overlay.remove();
+                    return;
+                }
+
+                overlay = document.createElement('div');
+                overlay.className = 'album-art-overlay';
+                overlay.innerHTML = `
+                    <button class="album-art-btn album-art-24h">24h</button>
+                    <button class="album-art-btn album-art-12mo">12mo</button>
+                `;
+
+                card.appendChild(overlay);
+
+                overlay.querySelector('.album-art-24h').onclick = (e) => {
+                    e.stopPropagation();
+                    window.open(card.dataset.url24h, '_blank');
+                    overlay.remove();
+                };
+
+                overlay.querySelector('.album-art-12mo').onclick = (e) => {
+                    e.stopPropagation();
+                    window.open(card.dataset.url12mo, '_blank');
+                    overlay.remove();
+                };
+
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) {
+                        overlay.remove();
+                    }
+                };
+            };
+        }
+
+        // Fetch Spotify metadata from URL
+        async function fetchSpotifyMetadata(url) {
+            try {
+                let trackId = null;
+                let artistId = null;
+
+                // Extract track ID from various URL formats
+                const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
+                if (trackMatch) trackId = trackMatch[1];
+
+                // Extract artist ID from artist URL or analytics URL
+                const artistMatch = url.match(/\/artist\/([a-zA-Z0-9]+)/);
+                if (artistMatch) artistId = artistMatch[1];
+
+                // Extract from analytics URL format: artists.spotify.com/c/artist/{artistId}/song/{trackId}
+                const analyticsMatch = url.match(/artists\.spotify\.com\/c\/artist\/([^\/]+)\/song\/([^\/\?]+)/);
+                if (analyticsMatch) {
+                    artistId = analyticsMatch[1];
+                    trackId = analyticsMatch[2];
+                }
+
+                if (!trackId) return null;
+
+                // Fetch track metadata from oEmbed API
+                const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`;
+                const response = await fetch(oEmbedUrl);
+                const data = await response.json();
+
+                let song = data.title || '';
+                let artist = '';
+                let imageUrl = data.thumbnail_url || '';
+
+                // Parse artist and song from title
+                if (data.title && data.title.includes(' by ')) {
+                    const parts = data.title.split(' by ');
+                    song = parts[0].trim();
+                    artist = parts[1].trim();
+                } else if (data.author_name) {
+                    artist = data.author_name;
+                }
+
+                // If we don't have artistId yet, try to fetch it from the embed page
+                if (!artistId && trackId) {
+                    try {
+                        const embedResponse = await fetch(`https://open.spotify.com/embed/track/${trackId}`);
+                        const embedHtml = await embedResponse.text();
+
+                        // Try to extract artist ID from embed HTML
+                        const artistIdMatch = embedHtml.match(/spotify:artist:([a-zA-Z0-9]+)/);
+                        if (artistIdMatch) {
+                            artistId = artistIdMatch[1];
+                        }
+
+                        // Alternative: look for artist URL in embed
+                        const artistUrlMatch = embedHtml.match(/open\.spotify\.com\/artist\/([a-zA-Z0-9]+)/);
+                        if (!artistId && artistUrlMatch) {
+                            artistId = artistUrlMatch[1];
+                        }
+                    } catch (embedError) {
+                        console.warn('Could not fetch artist ID from embed:', embedError);
+                    }
+                }
+
+                return {
+                    artistName: artist,
+                    songName: song,
+                    imageUrl: imageUrl,
+                    trackId: trackId,
+                    artistId: artistId || ''
+                };
+            } catch (error) {
+                console.error('Error fetching metadata:', error);
+                return null;
+            }
+        }
+
+        // Add entry to notebook
+        function addNotebookEntry(url, artistName, songName) {
+            const notebookEntries = document.getElementById('notebookEntries');
+
+            // Enforce 99 item limit
+            const entries = notebookEntries.querySelectorAll('.notebook-entry');
+            if (entries.length >= 99) {
+                entries[entries.length - 1].remove();
+                const separators = notebookEntries.querySelectorAll('.notebook-separator');
+                if (separators.length > 0) {
+                    separators[separators.length - 1].remove();
+                }
+            }
+
+            const entry = document.createElement('div');
+            entry.className = 'notebook-entry';
+            entry.innerHTML = `
+                <div class="notebook-row"><span class="notebook-label">Link:</span> ${url}</div>
+                <div class="notebook-row"><span class="notebook-label">Artist:</span> ${artistName}</div>
+                <div class="notebook-row"><span class="notebook-label">Song:</span> ${songName}</div>
+            `;
+            notebookEntries.insertBefore(entry, notebookEntries.firstChild);
+
+            // Add separator after entry (unless it's the first one)
+            if (notebookEntries.children.length > 1) {
+                const separator = document.createElement('div');
+                separator.className = 'notebook-separator';
+                separator.textContent = '---';
+                entry.after(separator);
+            }
+        }
+
+        // Update preview card with metadata
+        async function updatePreview(metadata) {
+            if (!metadata || !metadata.trackId) {
+                previewCard.style.display = 'none';
+                detailsSection.style.display = 'none';
+                return;
+            }
+
+            detailsSection.style.display = 'block';
+            currentMetadata = metadata;
+
+            // Add to notebook
+            const url = baseUrlInput.value.trim();
+            addNotebookEntry(url, metadata.artistName || 'Unknown', metadata.songName || 'Unknown');
+
+            const embedUrl = `https://open.spotify.com/embed/track/${metadata.trackId}?utm_source=generator`;
+            const iframeHTML = `<iframe style="border-radius:12px; width: 100%; height: 100%;" src="${embedUrl}" frameBorder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+
+            document.getElementById('previewEmbed').innerHTML = iframeHTML;
+            previewCard.style.display = 'block';
+            previewCard.style.animation = 'greenGlow 2s ease-in-out infinite';
+            previewCard.style.border = '1.5px solid rgba(52, 199, 89, 0.5)';
+
+            document.getElementById('trackTitle').textContent = metadata.songName || 'Unknown Track';
+            document.getElementById('trackArtist').textContent = `by ${metadata.artistName || 'Unknown Artist'}`;
+
+            const artistId = metadata.artistId;
+            const songId = metadata.trackId;
+            const url24h = artistId ? `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1day` : '#';
+            const url12mo = artistId ? `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1year` : '#';
+
+            document.getElementById('btn24h').onclick = () => {
+                if (url24h === '#') {
+                    alert('Artist analytics not available. Please use an artist analytics URL.');
+                    return;
+                }
+                window.open(url24h, '_blank');
+            };
+
+            document.getElementById('btn12mo').onclick = () => {
+                if (url12mo === '#') {
+                    alert('Artist analytics not available. Please use an artist analytics URL.');
+                    return;
+                }
+                window.open(url12mo, '_blank');
+            };
+        }
+
+        // Function to create a history card
+        function createHistoryCard(artistId, songId, artistName, songName, imageUrl, url24h, url12mo) {
+            // Enforce 99 item limit
+            const historyCards = document.querySelectorAll('.history-card');
+            if (historyCards.length >= 99) {
+                historyCards[historyCards.length - 1].remove();
+            }
+
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            card.innerHTML = `
+                <div class="delete-btn">×</div>
+                <div class="book-icon">📖</div>
+                <div class="move-arrows">
+                    <div class="move-btn move-up">▲</div>
+                    <div class="move-btn move-down">▼</div>
+                </div>
+                ${imageUrl ? `<img src="${imageUrl}" class="history-card-album-art" alt="Album art">` : ''}
+                <div class="history-card-artist">${artistName}</div>
+                <div class="history-card-title">${songName}</div>
+            `;
+            Object.assign(card.dataset, { artistId, songId, artistName, songName, imageUrl, url24h, url12mo });
+
+            card.querySelector('.delete-btn').onclick = (e) => {
+                e.stopPropagation();
+                card.remove();
+            };
+
+            card.querySelector('.move-up').onclick = (e) => {
+                e.stopPropagation();
+                if (card.previousElementSibling) {
+                    card.parentNode.insertBefore(card, card.previousElementSibling);
+                }
+            };
+
+            card.querySelector('.move-down').onclick = (e) => {
+                e.stopPropagation();
+                if (card.nextElementSibling) {
+                    card.parentNode.insertBefore(card.nextElementSibling, card);
+                }
+            };
+
+            setupAlbumArtOverlay(card);
+            setupBookIconClick(card, url24h, url12mo);
+
+            document.getElementById('historyCards').insertBefore(card, document.getElementById('historyCards').firstChild);
+        }
+
+        // Lock to history
+        document.getElementById('lockToHistoryBtn').addEventListener('click', () => {
+            if (!currentMetadata) return;
+
+            const { artistName = '', songName = '', artistId, trackId: songId, imageUrl = '' } = currentMetadata;
+            const url24h = `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1day`;
+            const url12mo = `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1year`;
+
+            createHistoryCard(artistId, songId, artistName, songName, imageUrl, url24h, url12mo);
+
+            // Store preference
+            localStorage.setItem('lastCardType', 'history');
+
+            previewCard.style.display = 'none';
+            baseUrlInput.value = '';
+            detailsSection.style.display = 'none';
+            currentMetadata = null;
+        });
+
+        // Function to create a locked card
+        function createLockedCard(artistId, songId, artistName, songName, imageUrl, url24h, url12mo) {
+            // Enforce 99 item limit
+            const lockedCards = document.querySelectorAll('.locked-card');
+            if (lockedCards.length >= 99) {
+                lockedCards[lockedCards.length - 1].remove();
+            }
+
+            const card = document.createElement('div');
+            card.className = 'locked-card';
+            Object.assign(card.dataset, { artistId, songId, artistName, songName, imageUrl });
+
+            const embedUrl = `https://open.spotify.com/embed/track/${songId}?utm_source=generator`;
+            card.innerHTML = `
+                <div class="book-icon">📖</div>
+                <div class="move-arrows">
+                    <div class="move-btn move-up">▲</div>
+                    <div class="move-btn move-down">▼</div>
+                </div>
+                <div style="width: 100%; height: 152px; border-radius: 10px; overflow: hidden; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);">
+                    <iframe style="border-radius:12px; width: 100%; height: 100%;" src="${embedUrl}" frameBorder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                </div>
+                <div class="btn-container">
+                    <button class="locked-btn-24h">24h</button>
+                    <button class="locked-btn-12mo">12mo</button>
+                </div>
+            `;
+
+            document.getElementById('lockedCards').insertBefore(card, document.getElementById('lockedCards').firstChild);
+
+            card.querySelector('.locked-btn-24h').onclick = () => window.open(url24h, '_blank');
+            card.querySelector('.locked-btn-12mo').onclick = () => window.open(url12mo, '_blank');
+
+            card.querySelector('.move-up').onclick = (e) => {
+                e.stopPropagation();
+                if (card.previousElementSibling) {
+                    card.parentNode.insertBefore(card, card.previousElementSibling);
+                }
+            };
+
+            card.querySelector('.move-down').onclick = (e) => {
+                e.stopPropagation();
+                if (card.nextElementSibling) {
+                    card.parentNode.insertBefore(card.nextElementSibling, card);
+                }
+            };
+
+            setupBookIconClick(card, url24h, url12mo);
+        }
+
+        // Lock to regular
+        document.getElementById('lockToRegularBtn').addEventListener('click', () => {
+            if (!currentMetadata) return;
+
+            const { artistId, trackId: songId, artistName = '', songName = '', imageUrl = '' } = currentMetadata;
+            const url24h = `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1day`;
+            const url12mo = `https://artists.spotify.com/c/artist/${artistId}/song/${songId}/playlists?time-filter=1year`;
+
+            createLockedCard(artistId, songId, artistName, songName, imageUrl, url24h, url12mo);
+
+            // Store preference
+            localStorage.setItem('lastCardType', 'regular');
+
+            previewCard.style.display = 'none';
+            baseUrlInput.value = '';
+            detailsSection.style.display = 'none';
+            currentMetadata = null;
+        });
+
+        // Extract artist ID and create simple bulk card
+        async function extractArtistIdAndCreateCard(artistName, songName, trackId, spotifyUrl) {
+            let artistId = null;
+
+            // Try to extract from embed page (lightweight, no oEmbed API)
+            try {
+                const embedResponse = await fetch(`https://open.spotify.com/embed/track/${trackId}`);
+                const embedHtml = await embedResponse.text();
+
+                // Try multiple patterns to find artist ID
+                let artistIdMatch = embedHtml.match(/spotify:artist:([a-zA-Z0-9]+)/);
+                if (artistIdMatch) {
+                    artistId = artistIdMatch[1];
+                    console.log('✓ Found artist ID (pattern 1):', artistId);
+                } else {
+                    // Alternative pattern
+                    artistIdMatch = embedHtml.match(/"uri":"spotify:artist:([a-zA-Z0-9]+)"/);
+                    if (artistIdMatch) {
+                        artistId = artistIdMatch[1];
+                        console.log('✓ Found artist ID (pattern 2):', artistId);
+                    } else {
+                        // Try finding from artist URL
+                        artistIdMatch = embedHtml.match(/\/artist\/([a-zA-Z0-9]+)/);
+                        if (artistIdMatch) {
+                            artistId = artistIdMatch[1];
+                            console.log('✓ Found artist ID (pattern 3):', artistId);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not extract artist ID:', error);
+            }
+
+            console.log('📊 Extracted Data:', {
+                artistName,
+                songName,
+                trackId,
+                artistId: artistId || 'NOT FOUND'
+            });
+
+            console.log('🔗 Generated URLs:', {
+                '24h': artistId ? `https://artists.spotify.com/c/artist/${artistId}/song/${trackId}/playlists?time-filter=1day` : 'Missing artist ID',
+                '12mo': artistId ? `https://artists.spotify.com/c/artist/${artistId}/song/${trackId}/playlists?time-filter=1year` : 'Missing artist ID'
+            });
+
+            // Create the simple card
+            createSimpleBulkCard(artistName, songName, trackId, artistId, spotifyUrl);
+        }
+
+        // Create simple bulk card without Spotify embed
+        function createSimpleBulkCard(artistName, songName, trackId, artistId, spotifyUrl) {
+            console.log('🎨 createSimpleBulkCard called with:', {
+                artistName,
+                songName,
+                trackId,
+                artistId,
+                spotifyUrl
+            });
+
+            // IMPORTANT: Don't invalidate the artist ID - trust what was passed in
+            // The calling function already validated it
+            if (!artistId) {
+                console.error('❌ No artist ID provided for card:', { artistName, songName, trackId });
+                alert('⚠️ Cannot create card - no artist ID available');
+                return;
+            }
+
+            // Generate analytics URLs - always build them with the provided artist ID
+            const url24h = `https://artists.spotify.com/c/artist/${artistId}/song/${trackId}/playlists?time-filter=1day`;
+            const url12mo = `https://artists.spotify.com/c/artist/${artistId}/song/${trackId}/playlists?time-filter=1year`;
+
+            console.log('🔗 Generated URLs for card:', {
+                artistName,
+                songName,
+                trackId,
+                artistId,
+                url24h,
+                url12mo,
+                'url24h_length': url24h.length,
+                'url12mo_length': url12mo.length
+            });
+
+            // Create card element
+            const card = document.createElement('div');
+            card.className = 'locked-card simple-bulk-card';
+            Object.assign(card.dataset, { artistId: artistId || '', songId: trackId, artistName, songName });
+
+            card.innerHTML = `
+                <div class="book-icon">📖</div>
+                <div class="move-arrows">
+                    <div class="move-btn move-up">▲</div>
+                    <div class="move-btn move-down">▼</div>
+                </div>
+
+                <!-- Simple card content (no iframe embed) -->
+                <div style="width: 100%; padding: 20px; background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);">
+                    <div style="color: white; font-size: 16px; font-weight: 600; margin-bottom: 8px;">
+                        ${songName}
+                    </div>
+                    <div style="color: rgba(255, 255, 255, 0.8); font-size: 14px;">
+                        ${artistName}
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <button class="locked-btn-24h" data-url="${url24h}">24h</button>
+                    <button class="locked-btn-12mo" data-url="${url12mo}">12mo</button>
+                </div>
+            `;
+
+            // Insert at top of locked cards section
+            document.getElementById('lockedCards').insertBefore(card, document.getElementById('lockedCards').firstChild);
+
+            // Attach button handlers with explicit logging
+            const btn24h = card.querySelector('.locked-btn-24h');
+            const btn12mo = card.querySelector('.locked-btn-12mo');
+
+            btn24h.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const targetUrl = btn24h.dataset.url;
+                console.log('🖱️ 24h button clicked!');
+                console.log('   dataset.url:', targetUrl);
+                console.log('   typeof:', typeof targetUrl);
+                console.log('   length:', targetUrl ? targetUrl.length : 'null/undefined');
+                console.log('   Full button element:', btn24h);
+                console.log('   All datasets:', btn24h.dataset);
+
+                if (targetUrl && targetUrl !== '#') {
+                    console.log('✅ Opening URL:', targetUrl);
+                    window.open(targetUrl, '_blank');
+                } else {
+                    console.error('❌ Invalid URL:', targetUrl);
+                    alert('⚠️ Artist ID not found. Cannot open analytics page.');
+                }
+            };
+
+            btn12mo.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const targetUrl = btn12mo.dataset.url;
+                console.log('🖱️ 12mo button clicked!');
+                console.log('   dataset.url:', targetUrl);
+                console.log('   typeof:', typeof targetUrl);
+                console.log('   length:', targetUrl ? targetUrl.length : 'null/undefined');
+                console.log('   Full button element:', btn12mo);
+                console.log('   All datasets:', btn12mo.dataset);
+
+                if (targetUrl && targetUrl !== '#') {
+                    console.log('✅ Opening URL:', targetUrl);
+                    window.open(targetUrl, '_blank');
+                } else {
+                    console.error('❌ Invalid URL:', targetUrl);
+                    alert('⚠️ Artist ID not found. Cannot open analytics page.');
+                }
+            };
+
+            // Attach move arrows
+            card.querySelector('.move-up').onclick = (e) => {
+                e.stopPropagation();
+                if (card.previousElementSibling) {
+                    card.parentNode.insertBefore(card, card.previousElementSibling);
+                }
+            };
+
+            card.querySelector('.move-down').onclick = (e) => {
+                e.stopPropagation();
+                if (card.nextElementSibling) {
+                    card.parentNode.insertBefore(card.nextElementSibling, card);
+                }
+            };
+
+            // Setup book icon for swapping
+            setupBookIconClick(card, url24h, url12mo);
+        }
+
+        // Process bulk input (tab-separated data)
+        async function processBulkInput(text) {
+            console.log('🎯 Starting bulk processing...');
+            console.log('📋 Using hardcoded artist ID: 4f0qSOkL7x8l6rVLAjhHIv');
+
+            // Hardcoded default artist ID
+            const DEFAULT_ARTIST_ID = '4f0qSOkL7x8l6rVLAjhHIv';
+
+            // Split into rows
+            const rows = text.split(/\r?\n/).filter(row => row.trim());
+            console.log(`📝 Found ${rows.length} total rows`);
+
+            // Skip header row
+            const dataRows = rows.filter(row => !row.toLowerCase().includes('artist & song'));
+            console.log(`✅ Processing ${dataRows.length} data rows`);
+
+            let processed = 0;
+
+            for (const row of dataRows) {
+                const columns = row.split('\t');
+                console.log(`\n🔍 Processing row ${processed + 1}:`, columns);
+
+                // Extract data from columns
+                if (columns.length >= 3) {
+                    const artistAndSong = columns[0].trim();  // "Racket Club & Hot Pot"
+                    const songName = columns[1].trim();       // "Been There"
+                    const spotifyUrl = columns[2].trim();     // Full Spotify URL
+                    const analyticsTemplate = columns.length >= 4 ? columns[3].trim() : null; // Optional: Pre-filled analytics URL
+
+                    console.log(`   Artist: ${artistAndSong}`);
+                    console.log(`   Song: ${songName}`);
+                    console.log(`   Spotify URL: ${spotifyUrl}`);
+
+                    // Extract track ID from Spotify URL
+                    const trackMatch = spotifyUrl.match(/track\/([a-zA-Z0-9]+)/);
+                    const trackId = trackMatch ? trackMatch[1] : null;
+
+                    if (!trackId) {
+                        console.error(`   ✗ Could not extract track ID from URL: ${spotifyUrl}`);
+                        continue;
+                    }
+
+                    console.log(`   ✅ Extracted track ID: ${trackId}`);
+
+                    // Determine artist ID
+                    let artistId = DEFAULT_ARTIST_ID;
+
+                    // If analytics template provided in column 4, extract artist ID from it
+                    if (analyticsTemplate && analyticsTemplate.includes('artist/')) {
+                        const artistIdMatch = analyticsTemplate.match(/artist\/([a-zA-Z0-9]+)/);
+                        if (artistIdMatch) {
+                            artistId = artistIdMatch[1];
+                            console.log(`   ✅ Using artist ID from template: ${artistId}`);
+                        } else {
+                            console.log(`   ⚠️ Could not extract from template, using default: ${artistId}`);
+                        }
+                    } else {
+                        console.log(`   ✅ Using default artist ID: ${artistId}`);
+                    }
+
+                    // Build final URLs
+                    const url24h = `https://artists.spotify.com/c/artist/${artistId}/song/${trackId}/playlists?time-filter=1day`;
+                    const url12mo = `https://artists.spotify.com/c/artist/${artistId}/song/${trackId}/playlists?time-filter=1year`;
+
+                    console.log(`   ✅ Generated URLs:`);
+                    console.log(`      24h:  ${url24h}`);
+                    console.log(`      12mo: ${url12mo}`);
+
+                    // Create the card with working links
+                    createSimpleBulkCard(artistAndSong, songName, trackId, artistId, spotifyUrl);
+                    processed++;
+
+                } else {
+                    console.warn(`   ⚠️ Skipping row - insufficient columns (${columns.length})`);
+                }
+            }
+
+            console.log(`\n✅ Bulk processing complete! Created ${processed} cards`);
+
+            // Show completion message
+            const msg = document.createElement('div');
+            msg.textContent = `✓ Created ${processed} cards with working links!`;
+            msg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #1db954; color: white; padding: 12px 20px; border-radius: 8px; z-index: 10000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;';
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
+
+            // DON'T clear input - keep the data for reference!
+            // baseUrlInput.value = '';
+            previewCard.style.display = 'none';
+            detailsSection.style.display = 'none';
+        }
+
+        // URL input listener
+        baseUrlInput.addEventListener('input', async function () {
+            const input = this.value.trim();
+
+            // Check if input contains tabs (bulk data) or just a URL
+            if (input.includes('\t')) {
+                // BULK MODE: Parse multiple rows
+                await processBulkInput(input);
+            } else if (input.includes('spotify.com')) {
+                // SINGLE MODE: Process single URL (existing logic)
+                const metadata = await fetchSpotifyMetadata(input);
+                updatePreview(metadata);
+            } else {
+                previewCard.style.display = 'none';
+                detailsSection.style.display = 'none';
+            }
+        });
+
+        // Auto-download on page close
+        window.addEventListener('beforeunload', (e) => {
+            const lockedCards = document.querySelectorAll('.locked-card');
+            const historyCards = document.querySelectorAll('.history-card');
+            const notebookEntries = document.querySelectorAll('.notebook-entry');
+
+            if (lockedCards.length > 0 || historyCards.length > 0 || notebookEntries.length > 0) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved data. Download backup?';
+
+                const saveData = collectAllData();
+                const dataStr = JSON.stringify(saveData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `spotify-tracker-auto-backup-${Date.now()}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Sorting functionality
+        document.querySelectorAll('.sort-pill').forEach(pill => {
+            pill.addEventListener('click', async function () {
+                const sortType = this.dataset.sort;
+                const section = this.dataset.section;
+
+                if (section === 'main') {
+                    await sortCards('lockedCards', sortType);
+                } else if (section === 'history') {
+                    await sortCards('historyCards', sortType);
+                }
+            });
+        });
+
+        async function sortCards(containerId, sortType) {
+            const container = document.getElementById(containerId);
+            const cards = Array.from(container.children);
+
+            // For date sorting, we need to fetch release dates
+            if (sortType === 'date-asc') {
+                // Show loading indicator
+                const loadingMsg = document.createElement('div');
+                loadingMsg.textContent = 'Fetching release dates...';
+                loadingMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #1db954; color: white; padding: 12px 20px; border-radius: 8px; z-index: 10000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;';
+                document.body.appendChild(loadingMsg);
+
+                // Fetch release dates for each card
+                for (const card of cards) {
+                    const trackId = card.dataset.songId;
+                    if (trackId && !card.dataset.releaseDate) {
+                        try {
+                            const response = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/track/${trackId}`);
+                            const data = await response.json();
+
+                            // Try to extract release date from the embed HTML
+                            const embedResponse = await fetch(`https://open.spotify.com/embed/track/${trackId}`);
+                            const embedHtml = await embedResponse.text();
+
+                            // Look for release date in the HTML (format varies)
+                            const dateMatch = embedHtml.match(/"releaseDate":"(\d{4}-\d{2}-\d{2})"/);
+                            if (dateMatch) {
+                                card.dataset.releaseDate = dateMatch[1];
+                            } else {
+                                // Fallback: use current date if not found
+                                card.dataset.releaseDate = '9999-12-31';
+                            }
+                        } catch (error) {
+                            console.warn('Could not fetch release date:', error);
+                            card.dataset.releaseDate = '9999-12-31'; // Fallback
+                        }
+                    }
+                }
+
+                loadingMsg.remove();
+            }
+
+            // Sort cards based on type
+            cards.sort((a, b) => {
+                if (sortType === 'a-z') {
+                    const nameA = (a.dataset.songName || '').toLowerCase();
+                    const nameB = (b.dataset.songName || '').toLowerCase();
+                    return nameA.localeCompare(nameB);
+                } else if (sortType === 'z-a') {
+                    const nameA = (a.dataset.songName || '').toLowerCase();
+                    const nameB = (b.dataset.songName || '').toLowerCase();
+                    return nameB.localeCompare(nameA);
+                } else if (sortType === 'date-asc') {
+                    const dateA = a.dataset.releaseDate || '9999-12-31';
+                    const dateB = b.dataset.releaseDate || '9999-12-31';
+                    return dateA.localeCompare(dateB);
+                }
+                return 0;
+            });
+
+            // Add smooth transition by fading out
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(10px)';
+
+            // Wait for fade out
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            // Clear and re-append in sorted order
+            container.innerHTML = '';
+            cards.forEach(card => container.appendChild(card));
+
+            // Fade back in
+            container.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            container.style.opacity = '1';
+            container.style.transform = 'translateY(0)';
+        }
+
+    </script>
+
+
+    setupBookIcon
+
+</body>
+
+</html>

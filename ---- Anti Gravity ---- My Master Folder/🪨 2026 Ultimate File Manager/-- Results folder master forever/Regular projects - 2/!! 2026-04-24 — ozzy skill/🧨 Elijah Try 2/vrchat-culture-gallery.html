@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VRChat Culture Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-card: #12121a;
+    --bg-card-hover: #1a1a28;
+    --bg-overlay: rgba(6, 6, 12, 0.88);
+    --border: #2a2a3a;
+    --border-hover: #6c5ce7;
+    --accent: #6c5ce7;
+    --accent-glow: rgba(108, 92, 231, 0.4);
+    --accent-soft: rgba(108, 92, 231, 0.08);
+    --accent-bright: #a29bfe;
+    --text: #e2e2f0;
+    --text-soft: #8888a8;
+    --text-muted: #55556a;
+    --text-bullet: #b8b8d0;
+    --shortcut-bg: #0e0e16;
+    --shortcut-border: #1e1e30;
+    --shortcut-accent: #00cec9;
+    --shortcut-glow: rgba(0, 206, 201, 0.35);
+    --radius: 10px;
+    --tile-size: 140px;
+    --gap: 12px;
+    --section-gap: 40px;
+    --transition-hover: 300ms ease;
+    --transition-exit: 200ms ease-in;
+    --stagger: 50ms;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Shortcut Bar (fixed) ───────────────────────────── */
+  .shortcut-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--shortcut-bg);
+    border-bottom: 1px solid var(--shortcut-border);
+    padding: 10px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .shortcut-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--shortcut-accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .shortcut-label::before {
+    content: "⚡";
+    font-size: 10px;
+  }
+
+  .shortcut-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .shortcut-tile {
+    width: 112px;
+    height: 52px;
+    border-radius: 6px;
+    border: 1px solid var(--shortcut-border);
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 200ms ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shortcut-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 200ms ease;
+    background: linear-gradient(135deg, var(--shortcut-accent), var(--accent));
+  }
+
+  .shortcut-tile:hover::before {
+    opacity: 0.08;
+  }
+
+  .shortcut-tile:hover {
+    border-color: var(--shortcut-accent);
+    box-shadow: 0 0 12px var(--shortcut-glow);
+    transform: translateY(-1px);
+  }
+
+  .shortcut-tile .s-icon {
+    font-size: 18px;
+    position: relative;
+    z-index: 1;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .shortcut-tile .s-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Main Content ───────────────────────────────────── */
+  .main-content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+    color: var(--text-soft);
+    margin-bottom: var(--section-gap);
+  }
+
+  /* ── Section ────────────────────────────────────────── */
+  .section {
+    margin-bottom: var(--section-gap);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-emoji {
+    font-size: 16px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent-bright);
+  }
+
+  /* ── Tile Grid ──────────────────────────────────────── */
+  .tile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--tile-size));
+    gap: var(--gap);
+  }
+
+  /* ── Individual Tile ────────────────────────────────── */
+  .tile {
+    width: var(--tile-size);
+    height: var(--tile-size);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    transition: border-color var(--transition-hover),
+                box-shadow var(--transition-hover),
+                transform var(--transition-hover);
+  }
+
+  .tile:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 20px var(--accent-glow), 0 8px 32px rgba(0,0,0,0.3);
+    transform: translateY(-3px);
+  }
+
+  /* Idle: image / icon area */
+  .tile .tile-visual {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #1a1a2e 0%, #0f0f18 100%);
+    position: relative;
+    transition: opacity var(--transition-hover);
+  }
+
+  .tile .tile-visual .tile-icon {
+    font-size: 36px;
+    opacity: 0.7;
+    transition: opacity var(--transition-hover);
+  }
+
+  .tile .tile-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-soft);
+    padding: 8px 6px 6px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: var(--bg-card);
+    transition: color var(--transition-hover);
+    flex-shrink: 0;
+  }
+
+  .tile:hover .tile-label {
+    color: var(--accent-bright);
+  }
+
+  /* Hover overlay with 3 bullets */
+  .tile .tile-hover-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-overlay);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 12px 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-hover);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .tile:hover .tile-hover-overlay {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .tile .bullet {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-bullet);
+    line-height: 1.45;
+    margin-bottom: 6px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity var(--transition-hover), transform var(--transition-hover);
+  }
+
+  .tile:hover .bullet {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .tile:hover .bullet:nth-child(1) { transition-delay: 0ms; }
+  .tile:hover .bullet:nth-child(2) { transition-delay: var(--stagger); }
+  .tile:hover .bullet:nth-child(3) { transition-delay: calc(var(--stagger) * 2); }
+
+  .tile .bullet .bullet-key {
+    color: var(--accent-bright);
+    font-weight: 500;
+  }
+
+  .tile .bullet::before {
+    content: "▸ ";
+    color: var(--accent);
+    font-size: 8px;
+  }
+
+  /* ── Footer ─────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  /* ── Responsive ─────────────────────────────────────── */
+  @media (max-width: 600px) {
+    :root {
+      --tile-size: 120px;
+      --gap: 8px;
+    }
+    .shortcut-tile {
+      width: 96px;
+      height: 44px;
+    }
+    .main-content { padding: 24px 16px 60px; }
+    .tile .tile-visual .tile-icon { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  SHORTCUT BAR (fixed)                               -->
+<!-- ═══════════════════════════════════════════════════ -->
+<nav class="shortcut-bar" id="essentials">
+  <span class="shortcut-label">Essentials — Quick Pipeline</span>
+  <div class="shortcut-row">
+    <a class="shortcut-tile" href="https://vcc.docs.vrchat.com/guides/getting-started" target="_blank" rel="noopener" data-anchor="official">
+      <span class="s-icon">🏗️</span>
+      <span class="s-label">VCC</span>
+    </a>
+    <a class="shortcut-tile" href="https://booth.pm/en" target="_blank" rel="noopener" data-anchor="community">
+      <span class="s-icon">🛒</span>
+      <span class="s-label">BOOTH</span>
+    </a>
+    <a class="shortcut-tile" href="https://github.com/absolute-quantum/cats-blender-plugin" target="_blank" rel="noopener" data-anchor="avatar-tools">
+      <span class="s-icon">🐱</span>
+      <span class="s-label">CATS</span>
+    </a>
+    <a class="shortcut-tile" href="https://www.mixamo.com/" target="_blank" rel="noopener" data-anchor="avatar-tools">
+      <span class="s-icon">🦴</span>
+      <span class="s-label">Mixamo</span>
+    </a>
+    <a class="shortcut-tile" href="https://modular-avatar.nadena.dev/" target="_blank" rel="noopener" data-anchor="avatar-tools">
+      <span class="s-icon">🧩</span>
+      <span class="s-label">ModAv</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!--  MAIN CONTENT                                       -->
+<!-- ═══════════════════════════════════════════════════ -->
+<main class="main-content">
+
+  <h1 class="page-title">VRChat Culture Gallery</h1>
+  <p class="page-subtitle">Every tile is a link — click to open in a new tab, hover to learn more.</p>
+
+  <!-- ── OFFICIAL VRCHAT ──────────────────────────────── -->
+  <section class="section" id="official">
+    <div class="section-header">
+      <span class="section-emoji">🏠</span>
+      <span class="section-title">Official VRChat</span>
+    </div>
+    <div class="tile-grid">
+
+      <a class="tile" href="https://hello.vrchat.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🌐</span></div>
+        <div class="tile-label">VRChat</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> The official VRChat homepage &amp; launcher entry point</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Download the client for PC/Quest/mobile and jump into any world</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Your starting point — everything flows from here</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://docs.vrchat.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">📖</span></div>
+        <div class="tile-label">Docs</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Official VRChat creator &amp; developer documentation</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Covers Avatars 3.0, Udon, SDK setup, optimization tips</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The canonical reference — always up to date with each release</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://ask.vrchat.com/latest" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">💬</span></div>
+        <div class="tile-label">Ask Forum</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Official Q&amp;A forum run by VRChat staff</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Browse Help, General, Creator Hub, and Tutorials boards</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Get answers directly from devs and experienced creators</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://vrchat.canny.io/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🗳️</span></div>
+        <div class="tile-label">Canny Feedback</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Feature-request board where the community votes</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Post ideas, upvote others — VRChat team reads &amp; triages</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Your voice in shaping the platform's roadmap</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://hello.vrchat.com/blog" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">📰</span></div>
+        <div class="tile-label">Blog</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Official news, dev updates, and announcements</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Published on hello.vrchat.com — major updates land here first</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Stay current on what's new, what's changing, and what's next</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://discord.gg/vrchat" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🎮</span></div>
+        <div class="tile-label">Discord (Official)</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Official Discord — ~375K members, dev updates live</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Channels for avatar help, world dev, general chat, and more</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The fastest pulse on VRChat news and community support</div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── COMMUNITY HUBS ───────────────────────────────── -->
+  <section class="section" id="community">
+    <div class="section-header">
+      <span class="section-emoji">🌐</span>
+      <span class="section-title">Community Hubs</span>
+    </div>
+    <div class="tile-grid">
+
+      <a class="tile" href="https://wiki.vrchat.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">📚</span></div>
+        <div class="tile-label">VRC Wiki</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Community-driven wiki covering everything VRChat</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Collaborative editing — trust ranks, SDK, avatars, worlds, safety</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The most comprehensive community knowledge base</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://vrchatlegends.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🏆</span></div>
+        <div class="tile-label">VRC Legends</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Fan-made lore archive — notable players, groups, events</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Community-submitted stories and documented history</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> VRChat's cultural memory — the stories that shaped the community</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://www.vrcmods.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🔧</span></div>
+        <div class="tile-label">VRCMods</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Free avatar/asset downloads + commission marketplace</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Upload, browse, download .unitypackage files; 27K+ Discord</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The go-to spot for free assets and finding avatar commissioners</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://vrcreators.net/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🎨</span></div>
+        <div class="tile-label">VRCreators</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Creator news hub — VR dev news, VRChat groups, tutorials</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Articles, showcase posts, and VRChat group directory</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Stay on top of creator trends and find collaborator groups</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://www.reddit.com/r/VRchat/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🤖</span></div>
+        <div class="tile-label">r/VRChat</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> The VRChat subreddit — memes, clips, discussions</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Post, comment, vote — VRChat staff occasionally post updates here</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Largest casual community feed — viral moments start here</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://transacademy.org/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🏳️‍⚧️</span></div>
+        <div class="tile-label">Trans Academy</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> LGBTQ+ social space &amp; nonprofit born in VRChat</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Events, voice classes, comfy hours — in-world &amp; on Discord</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> A real-world impact story — VRChat community → 501(c)(3)</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://booth.pm/en" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🛒</span></div>
+        <div class="tile-label">BOOTH</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> #1 marketplace for VRChat avatars &amp; assets (JP + EN)</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Browse .unitypackage downloads, buy from indie creators</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Where most avatar creators sell their work — massive selection</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://boothplorer.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🔍</span></div>
+        <div class="tile-label">Boothplorer</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Search engine for BOOTH marketplace items</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Filter by tag, price, category — find exactly what you need</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> BOOTH's native search is rough — Boothplorer fixes that</div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── COMPANION APPS ───────────────────────────────── -->
+  <section class="section" id="companion">
+    <div class="section-header">
+      <span class="section-emoji">📱</span>
+      <span class="section-title">Companion Apps</span>
+    </div>
+    <div class="tile-grid">
+
+      <a class="tile" href="https://vrcx.org/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">📊</span></div>
+        <div class="tile-label">VRCX</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Desktop companion — friend tracking, world monitoring, activity logs</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Runs alongside VRChat, uses official API — no game modification</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> 1,748 GitHub stars — essential for managing your social VR life</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://vrckit.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🧭</span></div>
+        <div class="tile-label">VRCKit</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Avatar discovery platform — 750K+ searchable avatars</div>
+          <div class="bullet"><span class="bullet-key">How:</span> AI search, collections, chatbox editor, in-game real-time sync</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The largest avatar catalog with smart recommendations</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://vcc.docs.vrchat.com/guides/getting-started" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🏗️</span></div>
+        <div class="tile-label">VCC</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> VRChat Creator Companion — Unity + SDK package manager</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Install Unity, manage projects, add curated community packages</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The official gateway to all avatar &amp; world creation</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://github.com/anatawa12/ALCOM" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">⚙️</span></div>
+        <div class="tile-label">ALCOM</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Alternative Creator Companion — open-source, faster</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Better dependency resolution, supports pre-release NDMF packages</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Community-maintained VCC alternative with superior package handling</div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── AVATAR TOOLS ─────────────────────────────────── -->
+  <section class="section" id="avatar-tools">
+    <div class="section-header">
+      <span class="section-emoji">🛠️</span>
+      <span class="section-title">Avatar Tools</span>
+    </div>
+    <div class="tile-grid">
+
+      <a class="tile" href="https://github.com/anatawa12/AvatarOptimizer" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">⚡</span></div>
+        <div class="tile-label">AAO</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Avatar Optimizer — non-destructive optimization utilities</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Runs on build — auto-optimizes meshes, materials, bones</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Part of the NDMF ecosystem — zero-destructive, one-click optimization</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://github.com/d4rkc0d3r/d4rkAvatarOptimizer" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🌑</span></div>
+        <div class="tile-label">d4rk Optimizer</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Reduces skinned mesh &amp; material count before upload</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Add component → "Apply on Upload" — non-destructive, creates optimized copy</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Simple, reliable optimizer — safe because original is never modified</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://github.com/euan142/LazyOptimiser" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">😴</span></div>
+        <div class="tile-label">LazyOptimiser</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Auto-optimizes on avatar build — strips unused geometry</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Removes unused GOs, blendshapes, merges meshes, combines materials</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> "Be lazy but optimized" — set it and forget it pipeline</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://github.com/Boo-booVR/PumkinsAvatarTools" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🎃</span></div>
+        <div class="tile-label">Pumkin Tools</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Unity editor tool — avatar stats, viseme filling, eye tracking setup</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Import into Unity, access from toolbar — works alongside SDK</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> VRChat docs officially recommends it for common avatar setup tasks</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://github.com/absolute-quantum/cats-blender-plugin" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🐱</span></div>
+        <div class="tile-label">CATS Plugin</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Blender "Swiss Army knife" — rig, fix, optimize, decimate in clicks</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Install as Blender addon — supports MMD, Mixamo, DAZ, and more formats</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The most widely used Blender tool for VRChat — 7-hour pipeline → minutes</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://github.com/Shadsterwolf/ShadsterAvatarTools" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🦈</span></div>
+        <div class="tile-label">Shadster Tools</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Unity editor tools — physbone setup, Gogo Loco integration, shapekey gen</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Import package, toolbar menu → bulk operations on avatar hierarchy</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Speeds up repetitive Unity avatar setup tasks significantly</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://franadavrc.gumroad.com/l/gogoloco" target="_blank" rel="noopener">
+        <div class="title-visual"><span class="tile-icon">🕺</span></div>
+        <div class="tile-label">Gogo Loco</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Advanced locomotion system — sit, lay, crawl, dance in VRChat</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Unity animator layer + gesture menu — works with any humanoid avatar</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The most popular locomotion add-on — transforms how you move in-world</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://github.com/I5UCC/I5UnityTools" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🔩</span></div>
+        <div class="tile-label">I5UnityTools</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Opinionated Unity tools — texture optimization, multi-uploader</div>
+          <div class="bullet"><span class="bullet-key">How:</span> VCC package — auto texture format, force scene view, bone settings</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Batch-upload all avatars at once + automated texture compression</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://modular-avatar.nadena.dev/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🧩</span></div>
+        <div class="tile-label">Modular Avatar</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Drag-and-drop avatar assembly on the NDMF framework</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Add components to your avatar — menus, armature merges, toggles</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The #1 NDMF tool — non-destructive, modular, composable avatar building</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://poi-yomi.github.io/PoiyomiToonShader/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🎨</span></div>
+        <div class="tile-label">Poiyomi Shader</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Most popular toon shader in VRChat — massive feature set</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Install via VCC → assign to avatar materials, tweak in inspector</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The go-to shader for stylized avatars — SSS, decals, custom lighting</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://lilxyzw.github.io/lilToon/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">💜</span></div>
+        <div class="tile-label">lilToon</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Second-most popular toon shader — lightweight, Quest-friendly</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Similar to Poiyomi but simpler — great for performance-conscious avatars</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> VRDraw maps VRM→lilToon automatically — the Quest shader of choice</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://github.com/bdunderscore/ndmf" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🔗</span></div>
+        <div class="tile-label">NDMF</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Non-Destructive Mod Framework — the backbone of modern avatar tools</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Provides hooks so tools compose without overwriting each other</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The reason AAO, Modular Avatar, and 15+ tools can work together</div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ── CONTENT & SOCIAL ─────────────────────────────── -->
+  <section class="section" id="social">
+    <div class="section-header">
+      <span class="section-emoji">🎥</span>
+      <span class="section-title">Content &amp; Social</span>
+    </div>
+    <div class="tile-grid">
+
+      <a class="tile" href="https://www.twitch.tv/directory/game/VRChat" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">📺</span></div>
+        <div class="tile-label">Twitch</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Livestreaming hub — VRChat has been a top category since 2018</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Watch creators like Pokelawls, Sodapoppin, and hundreds more live</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Where VRChat culture goes viral — clips spread from here to everywhere</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://www.youtube.com/results?search_query=vrchat" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">▶️</span></div>
+        <div class="tile-label">YouTube</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Hundreds of VRChat content creators posting edited videos</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Syrmor, iLi sten, i amLucid, Naddition, Life Progress, and more</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> The archival layer — livestream moments become permanent content here</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://x.com/VRChat" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">𝕏</span></div>
+        <div class="tile-label">X / Twitter</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> Official VRChat account — announcements, events, showcases</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Follow @VRChat for real-time updates and community highlights</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Fastest official announcement channel — event dates land here first</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://bsky.app/profile/vrchat.com" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🦋</span></div>
+        <div class="tile-label">Bluesky</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> VRChat's presence on Bluesky — newer, growing community</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Same content as X but on a decentralized, community-friendly platform</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Many VRChat creators migrated here — it's the alternative social hub</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://www.vrchatplugin.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">🔌</span></div>
+        <div class="tile-label">Plugin Hub</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> VRChat Plugin Manager — 150+ plugins with one-click install</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Browse Avatar Optimizer Pro, FPS Booster, World Scanner, etc.</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Curated plugin ecosystem — performance tools and QoL enhancements</div>
+        </div>
+      </a>
+
+      <a class="tile" href="https://vrclibrary.com/" target="_blank" rel="noopener">
+        <div class="tile-visual"><span class="tile-icon">📖</span></div>
+        <div class="tile-label">VRCLibrary</div>
+        <div class="tile-hover-overlay">
+          <div class="bullet"><span class="bullet-key">What:</span> VRChat Creation Compendium — wiki-style tutorials</div>
+          <div class="bullet"><span class="bullet-key">How:</span> Step-by-step guides for avatar creation, Blender, rigging, shaders</div>
+          <div class="bullet"><span class="bullet-key">Why:</span> Structured learning path — from zero to uploaded avatar</div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  VRChat Culture Gallery — every tile opens in a new tab · hover to preview
+</footer>
+
+<script>
+// Smooth scroll shortcut tiles to their anchor sections
+document.querySelectorAll('.shortcut-tile[data-anchor]').forEach(tile => {
+  tile.addEventListener('click', (e) => {
+    const anchorId = tile.getAttribute('data-anchor');
+    const target = document.getElementById(anchorId);
+    if (target) {
+      e.preventDefault();
+      // Open link in new tab AND scroll to section
+      window.open(tile.href, '_blank', 'noopener');
+      const barHeight = document.querySelector('.shortcut-bar').offsetHeight;
+      const targetPos = target.getBoundingClientRect().top + window.pageYOffset - barHeight - 16;
+      window.scrollTo({ top: targetPos, behavior: 'smooth' });
+    }
+  });
+});
+</script>
+</body>
+</html>

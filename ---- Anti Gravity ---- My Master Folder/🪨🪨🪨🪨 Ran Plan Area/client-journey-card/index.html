@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Journey — Ahead Artist Solutions</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+    --bg:#0b0f1a;
+    --card:#131825;
+    --card-inner:#0f1320;
+    --divider:#1e2740;
+    --text:#e2e8f0;
+    --text-dim:#94a3b8;
+    --text-muted:#64748b;
+    --blue:#0ea5e9;
+    --green:#10b981;
+    --purple:#6366f1;
+    --red:#ef4444;
+    --orange:#f59e0b;
+    --radius:16px;
+    --radius-sm:10px;
+    --transition:0.3s cubic-bezier(.4,0,.2,1);
+  }
+
+  body{
+    font-family:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:2rem 1rem;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* ── Header ── */
+  .header{
+    text-align:center;
+    margin-bottom:1.5rem;
+    animation:fadeDown .5s ease-out both;
+  }
+  .header .brand{
+    font-size:.75rem;
+    font-weight:600;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    background:linear-gradient(135deg,var(--blue),var(--purple),var(--orange));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    margin-bottom:.35rem;
+  }
+  .header h1{
+    font-size:1.5rem;
+    font-weight:700;
+    letter-spacing:-.5px;
+    color:var(--text);
+  }
+
+  /* ── Tile Card ── */
+  .tile{
+    width:100%;
+    max-width:820px;
+    background:var(--card);
+    border-radius:var(--radius);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:
+      0 8px 32px rgba(0,0,0,.5),
+      0 2px 8px rgba(0,0,0,.4),
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 0 0 1px rgba(255,255,255,.04);
+    overflow:hidden;
+    animation:tileIn .6s ease-out both .15s;
+    opacity:0;
+  }
+
+  .tile-inner{
+    display:flex;
+    min-height:460px;
+  }
+
+  /* ── Left Panel ── */
+  .panel-left{
+    flex:1;
+    padding:1.75rem 1.5rem;
+    display:flex;
+    flex-direction:column;
+    gap:.65rem;
+    background:linear-gradient(170deg, rgba(14,165,233,.03) 0%, transparent 50%);
+  }
+
+  .panel-label{
+    font-size:.65rem;
+    font-weight:700;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:.35rem;
+    text-shadow:0 0 8px rgba(255,255,255,.05);
+  }
+
+  /* Setup Buttons */
+  .setup-btn{
+    display:flex;
+    align-items:center;
+    gap:.75rem;
+    padding:.75rem 1rem;
+    background:var(--card-inner);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    transition:all var(--transition);
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+  }
+  .setup-btn::before{
+    content:'';
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:3px;
+    border-radius:0 3px 3px 0;
+    transition:opacity var(--transition);
+    opacity:.6;
+  }
+  .setup-btn:hover{
+    background:#1a2035;
+    border-color:rgba(255,255,255,.15);
+    transform:translateX(3px);
+    box-shadow:0 2px 12px rgba(0,0,0,.35), 0 0 8px rgba(255,255,255,.03);
+  }
+  .setup-btn:hover::before{
+    opacity:1;
+  }
+
+  .setup-btn .btn-icon{
+    width:36px;
+    height:36px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.1rem;
+    flex-shrink:0;
+  }
+  .setup-btn .btn-text{
+    display:flex;
+    flex-direction:column;
+  }
+  .setup-btn .btn-label{
+    font-size:.9rem;
+    font-weight:600;
+    color:var(--text);
+  }
+  .setup-btn .btn-sub{
+    font-size:.7rem;
+    color:var(--text-muted);
+    margin-top:1px;
+  }
+
+  /* Color variants */
+  .setup-btn[data-color="blue"]::before{background:var(--blue)}
+  .setup-btn[data-color="blue"] .btn-icon{background:rgba(14,165,233,.12);color:var(--blue)}
+  .setup-btn[data-color="blue"]:hover{border-color:rgba(14,165,233,.25);box-shadow:0 2px 12px rgba(14,165,233,.08),0 0 6px rgba(14,165,233,.05)}
+
+  .setup-btn[data-color="green"]::before{background:var(--green)}
+  .setup-btn[data-color="green"] .btn-icon{background:rgba(16,185,129,.12);color:var(--green)}
+  .setup-btn[data-color="green"]:hover{border-color:rgba(16,185,129,.25);box-shadow:0 2px 12px rgba(16,185,129,.08),0 0 6px rgba(16,185,129,.05)}
+
+  .setup-btn[data-color="purple"]::before{background:var(--purple)}
+  .setup-btn[data-color="purple"] .btn-icon{background:rgba(99,102,241,.12);color:var(--purple)}
+  .setup-btn[data-color="purple"]:hover{border-color:rgba(99,102,241,.25);box-shadow:0 2px 12px rgba(99,102,241,.08),0 0 6px rgba(99,102,241,.05)}
+
+  .setup-btn[data-color="red"]::before{background:var(--red)}
+  .setup-btn[data-color="red"] .btn-icon{background:rgba(239,68,68,.12);color:var(--red)}
+  .setup-btn[data-color="red"]:hover{border-color:rgba(239,68,68,.25);box-shadow:0 2px 12px rgba(239,68,68,.08),0 0 6px rgba(239,68,68,.05)}
+
+  .setup-btn[data-color="orange"]::before{background:var(--orange)}
+  .setup-btn[data-color="orange"] .btn-icon{background:rgba(245,158,11,.12);color:var(--orange)}
+  .setup-btn[data-color="orange"]:hover{border-color:rgba(245,158,11,.25);box-shadow:0 2px 12px rgba(245,158,11,.08),0 0 6px rgba(245,158,11,.05)}
+
+  /* ── Divider ── */
+  .divider{
+    width:1px;
+    background:linear-gradient(to bottom, transparent 5%, rgba(255,255,255,.08) 30%, rgba(255,255,255,.08) 70%, transparent 95%);
+    flex-shrink:0;
+  }
+
+  /* ── Right Panel ── */
+  .panel-right{
+    flex:1;
+    padding:1.75rem 1.5rem;
+    display:flex;
+    flex-direction:column;
+    gap:.5rem;
+    background:linear-gradient(190deg, rgba(99,102,241,.03) 0%, transparent 50%);
+  }
+
+  .panel-right .panel-label{
+    margin-bottom:.35rem;
+  }
+
+  /* Action Buttons Grid — 2 cols, 4 rows = 8 slots */
+  .action-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:.55rem;
+    flex:1;
+  }
+
+  .action-btn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:.4rem;
+    padding:.9rem .65rem;
+    background:var(--card-inner);
+    border:1.5px dashed rgba(255,255,255,.10);
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    transition:all var(--transition);
+    position:relative;
+    min-height:82px;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+  }
+  .action-btn:hover{
+    background:#1a2035;
+    border-color:rgba(255,255,255,.22);
+    border-style:solid;
+    transform:translateY(-2px);
+    box-shadow:0 6px 20px rgba(0,0,0,.4),0 0 10px rgba(255,255,255,.03);
+  }
+
+  /* Find-menu trigger indicator on action buttons */
+  .action-btn.has-find::after{
+    content:'find';
+    position:absolute;
+    top:5px;
+    left:7px;
+    font-size:.5rem;
+    font-weight:700;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--blue);
+    opacity:.45;
+    transition:opacity var(--transition);
+  }
+  .action-btn.has-find:hover::after{opacity:.85}
+
+  .action-btn .action-icon{
+    font-size:1.25rem;
+    opacity:.7;
+    transition:opacity var(--transition);
+  }
+  .action-btn:hover .action-icon{opacity:1}
+
+  .action-btn .action-label{
+    font-size:.75rem;
+    font-weight:500;
+    color:var(--text-dim);
+    transition:color var(--transition);
+    text-align:center;
+    line-height:1.25;
+  }
+  .action-btn:hover .action-label{color:var(--text)}
+
+  /* ── Footer Strip ── */
+  .tile-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:.65rem 1.5rem;
+    background:rgba(0,0,0,.2);
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  .tile-footer .footer-left{
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+  }
+  .status-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:var(--green);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  .footer-text{
+    font-size:.7rem;
+    color:var(--text-muted);
+    letter-spacing:.5px;
+  }
+  .footer-dots{
+    display:flex;
+    gap:4px;
+  }
+  .footer-dots span{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    opacity:.6;
+  }
+
+  /* ─────────────────────────────────────────────
+     FIND MENU MODAL
+  ───────────────────────────────────────────── */
+  .find-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.65);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    z-index:900;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:1rem;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .find-overlay.open{
+    opacity:1;
+    pointer-events:all;
+  }
+
+  .find-card{
+    background:#131825;
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:18px;
+    box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04);
+    width:100%;
+    max-width:480px;
+    padding:1.75rem 1.75rem 1.5rem;
+    transform:translateY(10px) scale(.97);
+    transition:transform .22s cubic-bezier(.4,0,.2,1);
+    position:relative;
+  }
+  .find-overlay.open .find-card{
+    transform:translateY(0) scale(1);
+  }
+
+  .find-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:1.25rem;
+  }
+  .find-title{
+    font-size:.7rem;
+    font-weight:700;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .find-close{
+    width:26px;
+    height:26px;
+    border-radius:6px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.08);
+    color:var(--text-dim);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.85rem;
+    transition:all var(--transition);
+  }
+  .find-close:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:var(--red)}
+
+  /* Context label (e.g. "Opening: Report") */
+  .find-context{
+    font-size:.75rem;
+    color:var(--blue);
+    font-weight:600;
+    margin-bottom:1rem;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+  }
+  .find-context-icon{font-size:.9rem}
+
+  /* ── Client search row ── */
+  .find-section-label{
+    font-size:.6rem;
+    font-weight:700;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:.6rem;
+  }
+  .find-section-label .req-badge{
+    color:var(--blue);
+    margin-left:.3rem;
+    font-size:.55rem;
+    letter-spacing:1px;
+  }
+
+  .find-search-wrap{
+    position:relative;
+    margin-bottom:.75rem;
+  }
+  .find-search{
+    width:100%;
+    background:#0f1320;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:9px;
+    padding:.65rem .9rem .65rem 2.2rem;
+    color:var(--text);
+    font-family:inherit;
+    font-size:.85rem;
+    outline:none;
+    transition:border-color var(--transition),box-shadow var(--transition);
+  }
+  .find-search::placeholder{color:var(--text-muted)}
+  .find-search:focus{
+    border-color:rgba(14,165,233,.4);
+    box-shadow:0 0 0 3px rgba(14,165,233,.08);
+  }
+  .find-search-icon{
+    position:absolute;
+    left:.75rem;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--text-muted);
+    font-size:.85rem;
+    pointer-events:none;
+  }
+
+  /* Client suggestion chips */
+  .client-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.4rem;
+    margin-bottom:1.1rem;
+    min-height:28px;
+  }
+  .client-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.3rem;
+    padding:.3rem .7rem;
+    background:#0f1320;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:20px;
+    font-size:.72rem;
+    color:var(--text-dim);
+    cursor:pointer;
+    transition:all var(--transition);
+    user-select:none;
+  }
+  .client-chip:hover{
+    border-color:rgba(14,165,233,.35);
+    color:var(--text);
+    background:rgba(14,165,233,.07);
+  }
+  .client-chip.selected{
+    background:rgba(14,165,233,.15);
+    border-color:var(--blue);
+    color:var(--blue);
+  }
+  .client-chip .chip-dot{
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:var(--green);
+    flex-shrink:0;
+  }
+
+  /* ── Divider inside modal ── */
+  .find-divider{
+    height:1px;
+    background:rgba(255,255,255,.06);
+    margin:1rem 0;
+  }
+
+  /* ── Optional filter rows ── */
+  .find-filters{
+    display:flex;
+    flex-direction:column;
+    gap:.55rem;
+    margin-bottom:1.25rem;
+  }
+  .filter-row{
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+  }
+  .filter-label{
+    font-size:.65rem;
+    font-weight:600;
+    color:var(--text-muted);
+    width:64px;
+    flex-shrink:0;
+    letter-spacing:.5px;
+  }
+  .filter-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.35rem;
+  }
+  .filter-chip{
+    display:inline-flex;
+    align-items:center;
+    padding:.22rem .6rem;
+    background:#0f1320;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;
+    font-size:.68rem;
+    color:var(--text-muted);
+    cursor:pointer;
+    transition:all var(--transition);
+    user-select:none;
+  }
+  .filter-chip:hover{
+    border-color:rgba(255,255,255,.18);
+    color:var(--text-dim);
+  }
+  .filter-chip.selected{
+    border-color:rgba(99,102,241,.5);
+    background:rgba(99,102,241,.12);
+    color:var(--purple);
+  }
+
+  /* ── Go Button ── */
+  .find-go{
+    width:100%;
+    padding:.8rem 1rem;
+    background:linear-gradient(135deg,rgba(14,165,233,.2),rgba(99,102,241,.2));
+    border:1px solid rgba(14,165,233,.35);
+    border-radius:10px;
+    color:var(--blue);
+    font-family:inherit;
+    font-size:.85rem;
+    font-weight:700;
+    letter-spacing:.5px;
+    cursor:pointer;
+    transition:all var(--transition);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.45rem;
+  }
+  .find-go:hover{
+    background:linear-gradient(135deg,rgba(14,165,233,.3),rgba(99,102,241,.3));
+    border-color:rgba(14,165,233,.6);
+    box-shadow:0 0 20px rgba(14,165,233,.15);
+    transform:translateY(-1px);
+  }
+  .find-go:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+  }
+  .find-go .go-arrow{font-size:1rem}
+
+  /* ─────────────────────────────────────────────
+     ACTION FORM MODAL  (generic pre-filled form)
+  ───────────────────────────────────────────── */
+  .form-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.65);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    z-index:950;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:1rem;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .form-overlay.open{
+    opacity:1;
+    pointer-events:all;
+  }
+
+  .form-card{
+    background:#131825;
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:18px;
+    box-shadow:0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04);
+    width:100%;
+    max-width:460px;
+    padding:1.75rem;
+    transform:translateY(10px) scale(.97);
+    transition:transform .22s cubic-bezier(.4,0,.2,1);
+    position:relative;
+  }
+  .form-overlay.open .form-card{transform:translateY(0) scale(1)}
+
+  .form-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:1.4rem;
+  }
+  .form-title-wrap{display:flex;align-items:center;gap:.55rem}
+  .form-icon{font-size:1.3rem}
+  .form-title{
+    font-size:.95rem;
+    font-weight:700;
+    color:var(--text);
+  }
+  .form-close{
+    width:26px;
+    height:26px;
+    border-radius:6px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.08);
+    color:var(--text-dim);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.85rem;
+    transition:all var(--transition);
+  }
+  .form-close:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:var(--red)}
+
+  .form-client-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    padding:.3rem .75rem;
+    background:rgba(14,165,233,.1);
+    border:1px solid rgba(14,165,233,.25);
+    border-radius:20px;
+    font-size:.72rem;
+    color:var(--blue);
+    margin-bottom:1.25rem;
+  }
+  .form-client-badge .badge-dot{
+    width:6px;height:6px;border-radius:50%;background:var(--blue);
+  }
+
+  .form-fields{display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.5rem}
+
+  .form-field label{
+    display:block;
+    font-size:.62rem;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:.3rem;
+  }
+  .form-field input,
+  .form-field textarea,
+  .form-field select{
+    width:100%;
+    background:#0f1320;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:8px;
+    padding:.6rem .85rem;
+    color:var(--text);
+    font-family:inherit;
+    font-size:.82rem;
+    outline:none;
+    transition:border-color var(--transition),box-shadow var(--transition);
+    resize:none;
+  }
+  .form-field input:focus,
+  .form-field textarea:focus,
+  .form-field select:focus{
+    border-color:rgba(14,165,233,.4);
+    box-shadow:0 0 0 3px rgba(14,165,233,.08);
+  }
+  .form-field textarea{height:70px}
+  .form-field select{
+    -webkit-appearance:none;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right .75rem center;
+    padding-right:2rem;
+  }
+  .form-field select option{background:#131825;color:var(--text)}
+
+  .form-submit{
+    width:100%;
+    padding:.8rem 1rem;
+    background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(14,165,233,.15));
+    border:1px solid rgba(16,185,129,.4);
+    border-radius:10px;
+    color:var(--green);
+    font-family:inherit;
+    font-size:.85rem;
+    font-weight:700;
+    letter-spacing:.5px;
+    cursor:pointer;
+    transition:all var(--transition);
+  }
+  .form-submit:hover{
+    background:linear-gradient(135deg,rgba(16,185,129,.3),rgba(14,165,233,.25));
+    border-color:rgba(16,185,129,.65);
+    box-shadow:0 0 20px rgba(16,185,129,.12);
+    transform:translateY(-1px);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeDown{
+    from{opacity:0;transform:translateY(-12px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  @keyframes tileIn{
+    from{opacity:0;transform:translateY(16px) scale(.98)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1}
+    50%{opacity:.4}
+  }
+
+  .setup-btn{opacity:0;animation:btnIn .4s ease-out forwards}
+  .setup-btn:nth-child(2){animation-delay:.2s}
+  .setup-btn:nth-child(3){animation-delay:.3s}
+  .setup-btn:nth-child(4){animation-delay:.4s}
+  .setup-btn:nth-child(5){animation-delay:.5s}
+  .setup-btn:nth-child(6){animation-delay:.6s}
+  .setup-btn:nth-child(7){animation-delay:.7s}
+  .setup-btn:nth-child(8){animation-delay:.8s}
+  .setup-btn.not-set-up{animation-name:btnInDim}
+  @keyframes btnIn{
+    from{opacity:0;transform:translateX(-10px)}
+    to{opacity:1;transform:translateX(0)}
+  }
+  @keyframes btnInDim{
+    from{opacity:0;transform:translateX(-10px)}
+    to{opacity:.5;transform:translateX(0)}
+  }
+
+  .action-btn{opacity:0;animation:actionIn .4s ease-out forwards}
+  .action-btn:nth-child(1){animation-delay:.25s}
+  .action-btn:nth-child(2){animation-delay:.32s}
+  .action-btn:nth-child(3){animation-delay:.39s}
+  .action-btn:nth-child(4){animation-delay:.46s}
+  .action-btn:nth-child(5){animation-delay:.53s}
+  .action-btn:nth-child(6){animation-delay:.60s}
+  .action-btn:nth-child(7){animation-delay:.67s}
+  .action-btn:nth-child(8){animation-delay:.74s}
+  @keyframes actionIn{
+    from{opacity:0;transform:translateY(10px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  /* ── Not Set Up badge ── */
+  .setup-btn.not-set-up{
+    opacity:.5;
+    pointer-events:auto;
+    cursor:default;
+  }
+  .setup-btn.not-set-up:hover{
+    transform:none;
+    background:var(--card-inner);
+    border-color:rgba(255,255,255,.08);
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+  }
+  .setup-btn.not-set-up::before{
+    opacity:.3;
+  }
+  .setup-btn.not-set-up:hover::before{
+    opacity:.3;
+  }
+  .not-set-up-tag{
+    font-size:.55rem;
+    color:var(--text-muted);
+    opacity:.8;
+    letter-spacing:.3px;
+    margin-top:1px;
+  }
+  .badge-construction{
+    font-size:.65rem;
+    margin-left:.25rem;
+  }
+
+  /* ── Channel sub-group ── */
+  .channel-group{
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+    padding-left:.25rem;
+  }
+  .channel-group-label{
+    font-size:.58rem;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-top:.25rem;
+    margin-bottom:-.1rem;
+    opacity:.6;
+  }
+  .channel-group .setup-btn{
+    padding:.6rem .85rem;
+  }
+  .channel-group .setup-btn .btn-icon{
+    width:30px;
+    height:30px;
+    border-radius:6px;
+    font-size:.95rem;
+  }
+  .channel-group .setup-btn .btn-label{
+    font-size:.82rem;
+  }
+  .channel-group .setup-btn .btn-sub{
+    font-size:.65rem;
+  }
+
+  /* ── SPLIT INTERACTION ── */
+  .split-wrap { position: relative; }
+
+  .split-half {
+    position: absolute;
+    left: 0; right: 0;
+    overflow: hidden;
+    background: var(--card-inner);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    transition: transform .4s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+    pointer-events: none;
+    z-index: 3;
+    box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  }
+  .split-half::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--blue);
+    opacity: .6;
+  }
+  .split-half-top {
+    top: 0; height: 50%;
+    border-bottom: none;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    align-items: flex-start;
+    padding-bottom: 0;
+  }
+  .split-half-bottom {
+    bottom: 0; height: 50%;
+    border-top: 1px dashed rgba(255,255,255,.06);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    align-items: flex-end;
+    padding-top: 0;
+  }
+  .split-wrap .setup-btn { transition: opacity .2s ease; }
+  .split-wrap.split-open .setup-btn { opacity: 0; pointer-events: none; }
+  .split-wrap.split-open .split-half-top  { transform: translateY(-100%); }
+  .split-wrap.split-open .split-half-bottom { transform: translateY(100%); }
+
+  .sub-options-panel {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height .45s cubic-bezier(.4,0,.2,1), opacity .3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    padding: 0 .1rem;
+  }
+  .split-wrap.split-open .sub-options-panel { max-height: 300px; opacity: 1; }
+
+  .sub-opt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    padding: .6rem .9rem;
+    background: var(--card-inner);
+    border: 1px solid rgba(14,165,233,.15);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all .25s ease;
+    font-size: .82rem;
+    color: var(--text-dim);
+  }
+  .sub-opt:hover {
+    background: rgba(14,165,233,.08);
+    border-color: rgba(14,165,233,.35);
+    color: var(--text);
+    transform: translateX(3px);
+  }
+  .sub-opt-left { display: flex; align-items: center; gap: .5rem; }
+  .sub-opt-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--blue);
+    opacity: .45;
+    flex-shrink: 0;
+    transition: opacity .2s ease, box-shadow .2s ease;
+  }
+  .sub-opt:hover .sub-opt-dot { opacity: 1; box-shadow: 0 0 8px rgba(14,165,233,.6); }
+
+  /* ── L2 Card ── */
+  .l2-card {
+    display: none;
+    flex-direction: column;
+    gap: .75rem;
+    padding: 1rem;
+    background: rgba(14,165,233,.05);
+    border: 1px solid rgba(14,165,233,.2);
+    border-radius: var(--radius-sm);
+    animation: l2SlideIn .4s cubic-bezier(.4,0,.2,1) both;
+  }
+  .l2-card.visible { display: flex; }
+  @keyframes l2SlideIn {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .l2-action-name {
+    font-size: .65rem; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--blue);
+  }
+  .l2-client-name { font-size: .95rem; font-weight: 700; color: var(--text); }
+  .l2-detail { font-size: .75rem; color: var(--text-muted); line-height: 1.5; }
+  .l2-dot-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem .85rem;
+    background: rgba(14,165,233,.1);
+    border: 1px solid rgba(14,165,233,.3);
+    border-radius: 20px;
+    font-size: .75rem;
+    color: var(--blue);
+    cursor: pointer;
+    transition: all .25s ease;
+    width: fit-content;
+  }
+  .l2-dot-btn:hover {
+    background: rgba(14,165,233,.2);
+    border-color: var(--blue);
+    box-shadow: 0 0 12px rgba(14,165,233,.25);
+  }
+  .l2-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--blue);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ── L3 Panel ── */
+  .l3-panel {
+    display: none;
+    flex-direction: column;
+    gap: .5rem;
+    padding: .85rem 1rem;
+    background: rgba(99,102,241,.07);
+    border: 1px solid rgba(99,102,241,.2);
+    border-radius: var(--radius-sm);
+    animation: l2SlideIn .35s cubic-bezier(.4,0,.2,1) both;
+  }
+  .l3-panel.visible { display: flex; }
+  .l3-title {
+    font-size: .65rem; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--purple); margin-bottom: .2rem;
+  }
+  .l3-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .78rem;
+    color: var(--text-muted);
+    padding: .3rem 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .l3-row:last-child { border-bottom: none; }
+  .l3-row span:last-child { color: var(--text); }
+
+  /* ── Responsive ── */
+  @media(max-width:640px){
+    body{padding:1.25rem .75rem}
+    .header h1{font-size:1.25rem}
+    .tile-inner{flex-direction:column;min-height:auto}
+    .divider{width:auto;height:1px;background:linear-gradient(to right, transparent 5%, var(--divider) 30%, var(--divider) 70%, transparent 95%)}
+    .panel-left,.panel-right{padding:1.25rem 1.1rem}
+    .action-grid{grid-template-columns:1fr 1fr}
+    .action-btn{min-height:72px;padding:.75rem .5rem}
+    .find-card,.form-card{padding:1.35rem}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">Ahead Artist Solutions</div>
+  <h1>Client Journey Card</h1>
+</div>
+
+<div class="tile">
+  <div class="tile-inner">
+
+    <!-- LEFT: Set Up Client -->
+    <div class="panel-left">
+      <div class="panel-label">Set Up Client</div>
+
+      <!-- CLIENT INFO — split-wrap drill-down -->
+      <div class="split-wrap" id="clientInfoWrap">
+        <div class="setup-btn" data-color="blue" id="clientInfoBtn">
+          <div class="btn-icon">👤</div>
+          <div class="btn-text">
+            <span class="btn-label">Client Info</span>
+            <span class="btn-sub">Name, contact, socials</span>
+          </div>
+        </div>
+        <div class="split-half split-half-top">
+          <div class="btn-icon" style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:rgba(14,165,233,.12);color:var(--blue);flex-shrink:0">👤</div>
+          <div class="btn-text"><span style="font-size:.9rem;font-weight:600;color:var(--text)">Client Info</span></div>
+        </div>
+        <div class="split-half split-half-bottom">
+          <div class="btn-text"><span style="font-size:.7rem;color:var(--text-muted)">Name, contact, socials</span></div>
+        </div>
+        <div class="sub-options-panel" id="subOptionsPanel">
+          <div class="sub-opt" data-sub="view-profile">
+            <div class="sub-opt-left"><span>👁</span><span>View Profile</span></div>
+            <span class="sub-opt-dot"></span>
+          </div>
+          <div class="sub-opt" data-sub="edit-info">
+            <div class="sub-opt-left"><span>✏️</span><span>Edit Details</span></div>
+            <span class="sub-opt-dot"></span>
+          </div>
+          <div class="sub-opt" data-sub="send-message">
+            <div class="sub-opt-left"><span>💬</span><span>Send Message</span></div>
+            <span class="sub-opt-dot"></span>
+          </div>
+          <div class="sub-opt" data-sub="run-report">
+            <div class="sub-opt-left"><span>📊</span><span>Run Report</span></div>
+            <span class="sub-opt-dot"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-btn" data-color="green">
+        <div class="btn-icon">📝</div>
+        <div class="btn-text">
+          <span class="btn-label">Contract</span>
+          <span class="btn-sub">Agreement & terms</span>
+        </div>
+      </div>
+
+      <div class="setup-btn" data-color="purple">
+        <div class="btn-icon">🎨</div>
+        <div class="btn-text">
+          <span class="btn-label">Brand Kit</span>
+          <span class="btn-sub">Logo, colors, voice</span>
+        </div>
+      </div>
+
+      <div class="setup-btn" data-color="orange">
+        <div class="btn-icon">🎯</div>
+        <div class="btn-text">
+          <span class="btn-label">Goals</span>
+          <span class="btn-sub">KPIs & milestones</span>
+        </div>
+      </div>
+
+      <div class="channel-group-label">Comms Channels</div>
+      <div class="channel-group">
+
+        <div class="setup-btn" data-color="red">
+          <div class="btn-icon">📧</div>
+          <div class="btn-text">
+            <span class="btn-label">Gmail</span>
+            <span class="btn-sub">Email threads & starred</span>
+          </div>
+        </div>
+
+        <div class="setup-btn" data-color="green">
+          <div class="btn-icon">💬</div>
+          <div class="btn-text">
+            <span class="btn-label">WhatsApp</span>
+            <span class="btn-sub">Chat exports & media</span>
+          </div>
+        </div>
+
+        <div class="setup-btn not-set-up" data-color="purple">
+          <div class="btn-icon">🚧</div>
+          <div class="btn-text">
+            <span class="btn-label">Messenger <span class="badge-construction">🚧</span></span>
+            <span class="btn-sub">Facebook / Instagram DMs</span>
+            <span class="not-set-up-tag">not set up yet</span>
+          </div>
+        </div>
+
+        <div class="setup-btn not-set-up" data-color="blue">
+          <div class="btn-icon">🚧</div>
+          <div class="btn-text">
+            <span class="btn-label">iMessage <span class="badge-construction">🚧</span></span>
+            <span class="btn-sub">Apple Messages</span>
+            <span class="not-set-up-tag">not set up yet</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="divider"></div>
+
+    <!-- RIGHT: Quick Actions -->
+    <div class="panel-right">
+      <div class="panel-label">Quick Actions</div>
+
+      <!-- L2 detail card — shown when a sub-opt is clicked -->
+      <div class="l2-card" id="l2Card">
+        <div class="l2-action-name" id="l2ActionName">VIEW PROFILE</div>
+        <div class="l2-client-name">Client Info</div>
+        <div class="l2-detail" id="l2Detail">Select a client to load details.</div>
+        <div class="l2-dot-btn" id="l2DotBtn">
+          <span class="l2-dot"></span>
+          <span>Open Full Record</span>
+        </div>
+        <div class="l3-panel" id="l3Panel">
+          <div class="l3-title">Full Record</div>
+          <div class="l3-row"><span>Client</span><span>Torok</span></div>
+          <div class="l3-row"><span>Email</span><span>torok@email.com</span></div>
+          <div class="l3-row"><span>Status</span><span style="color:var(--green)">Active ●</span></div>
+          <div class="l3-row"><span>Signed</span><span>Jan 2026</span></div>
+        </div>
+      </div>
+
+      <div class="action-grid">
+
+        <!-- Btn 1 — Report (has find menu) -->
+        <div class="action-btn has-find" data-action="1" data-form="report"
+             data-icon="📊" data-label="Report">
+          <span class="action-icon">📊</span>
+          <span class="action-label">Report</span>
+        </div>
+
+        <!-- Btn 2 — Pitch (has find menu) -->
+        <div class="action-btn has-find" data-action="2" data-form="pitch"
+             data-icon="🎤" data-label="Pitch">
+          <span class="action-icon">🎤</span>
+          <span class="action-label">Pitch</span>
+        </div>
+
+        <!-- Btn 3 — Recap (has find menu) -->
+        <div class="action-btn has-find" data-action="3" data-form="recap"
+             data-icon="📋" data-label="Recap">
+          <span class="action-icon">📋</span>
+          <span class="action-label">Recap</span>
+        </div>
+
+        <!-- Btn 4 — Schedule (no find menu) -->
+        <div class="action-btn" data-action="4">
+          <span class="action-icon">📅</span>
+          <span class="action-label">Schedule</span>
+        </div>
+
+        <!-- Btn 5 — Assets (no find menu) -->
+        <div class="action-btn" data-action="5">
+          <span class="action-icon">📦</span>
+          <span class="action-label">Assets</span>
+        </div>
+
+        <!-- Btn 6 — Message (no find menu) -->
+        <div class="action-btn" data-action="6">
+          <span class="action-icon">💬</span>
+          <span class="action-label">Message</span>
+        </div>
+
+        <!-- Btn 7 — Payment Card (has find menu) -->
+        <div class="action-btn has-find" data-action="7" data-form="payment"
+             data-icon="💳" data-label="Payment Card">
+          <span class="action-icon">💳</span>
+          <span class="action-label">Payment Card</span>
+        </div>
+
+        <!-- Btn 8 — Links (no find menu) -->
+        <div class="action-btn" data-action="8">
+          <span class="action-icon">🔗</span>
+          <span class="action-label">Links</span>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="tile-footer">
+    <div class="footer-left">
+      <div class="status-dot"></div>
+      <span class="footer-text">READY</span>
+    </div>
+    <div class="footer-dots">
+      <span style="background:var(--blue)"></span>
+      <span style="background:var(--green)"></span>
+      <span style="background:var(--purple)"></span>
+      <span style="background:var(--red)"></span>
+      <span style="background:var(--orange)"></span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     SHARED FIND MENU OVERLAY
+═════════════════════════════════════════ -->
+<div class="find-overlay" id="findOverlay" role="dialog" aria-modal="true" aria-label="Find client">
+
+  <div class="find-card" id="findCard">
+
+    <div class="find-header">
+      <span class="find-title">Find Client</span>
+      <button class="find-close" id="findClose" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Context label — updated per trigger -->
+    <div class="find-context">
+      <span class="find-context-icon" id="findContextIcon">📊</span>
+      <span id="findContextLabel">Opening: Report</span>
+    </div>
+
+    <!-- Client search (required) -->
+    <div class="find-section-label">
+      Client <span class="req-badge">REQUIRED</span>
+    </div>
+    <div class="find-search-wrap">
+      <span class="find-search-icon">🔍</span>
+      <input
+        class="find-search"
+        id="findSearch"
+        type="text"
+        placeholder="Type a name..."
+        autocomplete="off"
+        spellcheck="false"
+      >
+    </div>
+    <div class="client-chips" id="clientChips">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="find-divider"></div>
+
+    <!-- Optional filters -->
+    <div class="find-filters">
+      <div class="filter-row">
+        <span class="filter-label">Timeline</span>
+        <div class="filter-chips" id="filterTimeline">
+          <span class="filter-chip" data-group="timeline" data-val="this-week">This Week</span>
+          <span class="filter-chip" data-group="timeline" data-val="this-month">This Month</span>
+          <span class="filter-chip" data-group="timeline" data-val="q1">Q1</span>
+          <span class="filter-chip" data-group="timeline" data-val="q2">Q2</span>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Contacts</span>
+        <div class="filter-chips" id="filterContacts">
+          <span class="filter-chip" data-group="contacts" data-val="manager">Manager</span>
+          <span class="filter-chip" data-group="contacts" data-val="label">Label</span>
+          <span class="filter-chip" data-group="contacts" data-val="artist">Artist</span>
+        </div>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Volume</span>
+        <div class="filter-chips" id="filterVolume">
+          <span class="filter-chip" data-group="volume" data-val="high">High</span>
+          <span class="filter-chip" data-group="volume" data-val="mid">Mid</span>
+          <span class="filter-chip" data-group="volume" data-val="low">Low</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Go button -->
+    <button class="find-go" id="findGo" disabled>
+      Go
+      <span class="go-arrow">→</span>
+    </button>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     REPORT FORM
+═════════════════════════════════════════ -->
+<div class="form-overlay" id="formReport" role="dialog" aria-modal="true">
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-title-wrap">
+        <span class="form-icon">📊</span>
+        <span class="form-title">Report</span>
+      </div>
+      <button class="form-close" data-close-form="formReport" aria-label="Close">✕</button>
+    </div>
+    <div class="form-client-badge">
+      <span class="badge-dot"></span>
+      <span id="reportClientName">—</span>
+    </div>
+    <div class="form-fields">
+      <div class="form-field">
+        <label>Report Type</label>
+        <select id="reportType">
+          <option value="">Select type...</option>
+          <option>Monthly Performance</option>
+          <option>Campaign Wrap</option>
+          <option>Streaming Summary</option>
+          <option>Ad Performance</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Period</label>
+        <input type="text" id="reportPeriod" placeholder="e.g. March 2026">
+      </div>
+      <div class="form-field">
+        <label>Notes</label>
+        <textarea id="reportNotes" placeholder="Key highlights, context..."></textarea>
+      </div>
+    </div>
+    <button class="form-submit">Generate Report →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PITCH FORM
+═════════════════════════════════════════ -->
+<div class="form-overlay" id="formPitch" role="dialog" aria-modal="true">
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-title-wrap">
+        <span class="form-icon">🎤</span>
+        <span class="form-title">Pitch</span>
+      </div>
+      <button class="form-close" data-close-form="formPitch" aria-label="Close">✕</button>
+    </div>
+    <div class="form-client-badge">
+      <span class="badge-dot"></span>
+      <span id="pitchClientName">—</span>
+    </div>
+    <div class="form-fields">
+      <div class="form-field">
+        <label>Pitch Target</label>
+        <input type="text" id="pitchTarget" placeholder="Label, playlist, brand...">
+      </div>
+      <div class="form-field">
+        <label>Angle</label>
+        <input type="text" id="pitchAngle" placeholder="Key selling point">
+      </div>
+      <div class="form-field">
+        <label>Notes</label>
+        <textarea id="pitchNotes" placeholder="Supporting context..."></textarea>
+      </div>
+    </div>
+    <button class="form-submit">Build Pitch →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     RECAP FORM
+═════════════════════════════════════════ -->
+<div class="form-overlay" id="formRecap" role="dialog" aria-modal="true">
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-title-wrap">
+        <span class="form-icon">📋</span>
+        <span class="form-title">Recap</span>
+      </div>
+      <button class="form-close" data-close-form="formRecap" aria-label="Close">✕</button>
+    </div>
+    <div class="form-client-badge">
+      <span class="badge-dot"></span>
+      <span id="recapClientName">—</span>
+    </div>
+    <div class="form-fields">
+      <div class="form-field">
+        <label>Session / Event</label>
+        <input type="text" id="recapEvent" placeholder="What are we recapping?">
+      </div>
+      <div class="form-field">
+        <label>Date</label>
+        <input type="text" id="recapDate" placeholder="e.g. March 15, 2026">
+      </div>
+      <div class="form-field">
+        <label>Summary</label>
+        <textarea id="recapSummary" placeholder="What happened, wins, next steps..."></textarea>
+      </div>
+    </div>
+    <button class="form-submit">Save Recap →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PAYMENT CARD FORM
+═════════════════════════════════════════ -->
+<div class="form-overlay" id="formPayment" role="dialog" aria-modal="true">
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-title-wrap">
+        <span class="form-icon">💳</span>
+        <span class="form-title">Payment Card</span>
+      </div>
+      <button class="form-close" data-close-form="formPayment" aria-label="Close">✕</button>
+    </div>
+    <div class="form-client-badge">
+      <span class="badge-dot"></span>
+      <span id="paymentClientName">—</span>
+    </div>
+    <div class="form-fields">
+      <div class="form-field">
+        <label>Service</label>
+        <select id="paymentService">
+          <option value="">Select service...</option>
+          <option>Monthly Retainer</option>
+          <option>Campaign</option>
+          <option>Consulting</option>
+          <option>One-Time Project</option>
+          <option>Ad Spend</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Amount</label>
+        <input type="text" id="paymentAmount" placeholder="$0.00">
+      </div>
+      <div class="form-field">
+        <label>Due Date</label>
+        <input type="text" id="paymentDue" placeholder="e.g. March 31, 2026">
+      </div>
+      <div class="form-field">
+        <label>Notes</label>
+        <textarea id="paymentNotes" placeholder="Invoice #, terms, details..."></textarea>
+      </div>
+    </div>
+    <button class="form-submit">Send Payment Card →</button>
+  </div>
+</div>
+
+
+<script>
+(() => {
+  'use strict';
+
+  /* ── Client list (replace with live data as needed) ── */
+  const CLIENTS = [
+    { name:'Torok',       active:true  },
+    { name:'Nova Wave',   active:true  },
+    { name:'Remi Sol',    active:true  },
+    { name:'Prism Audio', active:false },
+    { name:'Kairo',       active:true  },
+    { name:'Lux Music',   active:false },
+    { name:'Dex Clarke',  active:true  },
+  ];
+
+  /* ── Action button config ── */
+  // Maps data-form value to the form overlay + client-name span IDs
+  const FORM_MAP = {
+    report:  { overlay:'formReport',  clientSpan:'reportClientName'  },
+    pitch:   { overlay:'formPitch',   clientSpan:'pitchClientName'   },
+    recap:   { overlay:'formRecap',   clientSpan:'recapClientName'   },
+    payment: { overlay:'formPayment', clientSpan:'paymentClientName' },
+  };
+
+  /* ── State ── */
+  let currentFormKey  = null;   // which form will open after find
+  let selectedClient  = null;   // name string
+  let filterState     = {};     // { timeline: 'q1', contacts: 'manager', ... }
+
+  /* ── Elements ── */
+  const findOverlay   = document.getElementById('findOverlay');
+  const findClose     = document.getElementById('findClose');
+  const findSearch    = document.getElementById('findSearch');
+  const clientChips   = document.getElementById('clientChips');
+  const findContextIcon  = document.getElementById('findContextIcon');
+  const findContextLabel = document.getElementById('findContextLabel');
+  const findGo        = document.getElementById('findGo');
+
+  /* ──────────────────────────────────────────
+     RENDER CLIENT CHIPS
+  ────────────────────────────────────────── */
+  function renderClientChips(query = '') {
+    const q = query.trim().toLowerCase();
+    const filtered = q
+      ? CLIENTS.filter(c => c.name.toLowerCase().includes(q))
+      : CLIENTS;
+
+    clientChips.innerHTML = '';
+    filtered.forEach(c => {
+      const chip = document.createElement('span');
+      chip.className = 'client-chip' + (c.name === selectedClient ? ' selected' : '');
+      chip.innerHTML = `<span class="chip-dot" style="background:${c.active ? 'var(--green)' : 'var(--text-muted)'}"></span>${c.name}`;
+      chip.addEventListener('click', () => selectClient(c.name));
+      clientChips.appendChild(chip);
+    });
+
+    if (filtered.length === 0) {
+      clientChips.innerHTML = '<span style="font-size:.72rem;color:var(--text-muted)">No clients found</span>';
+    }
+  }
+
+  function selectClient(name) {
+    selectedClient = name;
+    findSearch.value = name;
+    renderClientChips();
+    findGo.disabled = false;
+  }
+
+  /* ──────────────────────────────────────────
+     OPEN FIND MENU
+  ────────────────────────────────────────── */
+  function openFind(formKey, icon, label) {
+    currentFormKey    = formKey;
+    selectedClient    = null;
+    filterState       = {};
+    findSearch.value  = '';
+    findGo.disabled   = true;
+    findContextIcon.textContent  = icon;
+    findContextLabel.textContent = `Opening: ${label}`;
+
+    // Reset filter chips
+    document.querySelectorAll('.filter-chip.selected').forEach(el => el.classList.remove('selected'));
+
+    renderClientChips();
+    findOverlay.classList.add('open');
+    setTimeout(() => findSearch.focus(), 120);
+  }
+
+  function closeFind() {
+    findOverlay.classList.remove('open');
+  }
+
+  /* ──────────────────────────────────────────
+     OPEN ACTION FORM (after find)
+  ────────────────────────────────────────── */
+  function openForm(formKey, clientName) {
+    const config = FORM_MAP[formKey];
+    if (!config) return;
+
+    // Pre-fill client name badge
+    const span = document.getElementById(config.clientSpan);
+    if (span) span.textContent = clientName || '—';
+
+    // Show overlay
+    const overlay = document.getElementById(config.overlay);
+    if (overlay) overlay.classList.add('open');
+  }
+
+  function closeForm(overlayId) {
+    const overlay = document.getElementById(overlayId);
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  /* ──────────────────────────────────────────
+     EVENT: Action buttons
+  ────────────────────────────────────────── */
+  document.querySelectorAll('.action-btn.has-find').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const formKey = btn.dataset.form;
+      const icon    = btn.dataset.icon  || '⚡';
+      const label   = btn.dataset.label || 'Action';
+      openFind(formKey, icon, label);
+    });
+  });
+
+  /* ──────────────────────────────────────────
+     EVENT: Find menu interactions
+  ────────────────────────────────────────── */
+  findClose.addEventListener('click', closeFind);
+
+  // Close on backdrop click
+  findOverlay.addEventListener('click', e => {
+    if (e.target === findOverlay) closeFind();
+  });
+
+  // Live search filter
+  findSearch.addEventListener('input', () => {
+    renderClientChips(findSearch.value);
+    // If typed name matches exactly, auto-select
+    const typed = findSearch.value.trim();
+    const exact = CLIENTS.find(c => c.name.toLowerCase() === typed.toLowerCase());
+    if (exact) {
+      selectedClient = exact.name;
+      findGo.disabled = false;
+    } else if (!CLIENTS.find(c => c.name === selectedClient)) {
+      // Keep selectedClient if still valid, otherwise clear
+      if (selectedClient && !typed.toLowerCase().includes(selectedClient.toLowerCase())) {
+        selectedClient = null;
+        findGo.disabled = true;
+      }
+    }
+    // Allow free-text client name too
+    if (typed.length >= 2 && !exact) {
+      selectedClient = typed;
+      findGo.disabled = false;
+    }
+  });
+
+  // Filter chips (optional — single select per group)
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const group = chip.dataset.group;
+      const val   = chip.dataset.val;
+      const isOn  = chip.classList.contains('selected');
+
+      // Toggle off others in same group
+      document.querySelectorAll(`.filter-chip[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+
+      if (!isOn) {
+        chip.classList.add('selected');
+        filterState[group] = val;
+      } else {
+        delete filterState[group];
+      }
+    });
+  });
+
+  // Go button
+  findGo.addEventListener('click', () => {
+    if (!selectedClient) return;
+    const client = selectedClient;
+    closeFind();
+    // Tiny delay so find overlay fully closes before form opens
+    setTimeout(() => openForm(currentFormKey, client), 180);
+  });
+
+  // Keyboard: Escape closes
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeFind();
+      document.querySelectorAll('.form-overlay.open').forEach(o => o.classList.remove('open'));
+    }
+  });
+
+  /* ──────────────────────────────────────────
+     EVENT: Form close buttons
+  ────────────────────────────────────────── */
+  document.querySelectorAll('[data-close-form]').forEach(btn => {
+    btn.addEventListener('click', () => closeForm(btn.dataset.closeForm));
+  });
+
+  document.querySelectorAll('.form-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) closeForm(overlay.id);
+    });
+  });
+
+  /* ──────────────────────────────────────────
+     INITIAL RENDER
+  ────────────────────────────────────────── */
+  renderClientChips();
+
+  /* ──────────────────────────────────────────
+     SPLIT INTERACTION — Client Info drill-down
+  ────────────────────────────────────────── */
+  const clientInfoWrap  = document.getElementById('clientInfoWrap');
+  const clientInfoBtn   = document.getElementById('clientInfoBtn');
+  const l2Card          = document.getElementById('l2Card');
+  const l2ActionName    = document.getElementById('l2ActionName');
+  const l2Detail        = document.getElementById('l2Detail');
+  const l2DotBtn        = document.getElementById('l2DotBtn');
+  const l3Panel         = document.getElementById('l3Panel');
+
+  const SUB_LABELS = {
+    'view-profile': { label: 'VIEW PROFILE',  detail: 'Full contact record — name, socials, handles.' },
+    'edit-info':    { label: 'EDIT DETAILS',  detail: 'Update client info, preferred contacts, timezone.' },
+    'send-message': { label: 'SEND MESSAGE',  detail: 'Draft a direct message to this client.' },
+    'run-report':   { label: 'RUN REPORT',    detail: 'Generate a performance or campaign summary.' },
+  };
+
+  // Click Client Info button → toggle split
+  clientInfoBtn.addEventListener('click', () => {
+    const isOpen = clientInfoWrap.classList.contains('split-open');
+    if (isOpen) {
+      clientInfoWrap.classList.remove('split-open');
+      l2Card.classList.remove('visible');
+      l3Panel.classList.remove('visible');
+    } else {
+      clientInfoWrap.classList.add('split-open');
+    }
+  });
+
+  // Click a sub-option → reveal L2 card
+  document.querySelectorAll('.sub-opt').forEach(opt => {
+    opt.addEventListener('click', e => {
+      e.stopPropagation();
+      const sub  = opt.dataset.sub;
+      const info = SUB_LABELS[sub] || { label: sub.toUpperCase(), detail: '' };
+      l2ActionName.textContent = info.label;
+      l2Detail.textContent     = info.detail;
+      l3Panel.classList.remove('visible');
+      l2Card.classList.remove('visible');
+      void l2Card.offsetWidth; // force reflow for re-animation
+      l2Card.classList.add('visible');
+    });
+  });
+
+  // Click L2 blue dot → reveal L3 panel
+  l2DotBtn.addEventListener('click', () => {
+    l3Panel.classList.remove('visible');
+    void l3Panel.offsetWidth;
+    l3Panel.classList.add('visible');
+  });
+
+})();
+</script>
+</body>
+</html>

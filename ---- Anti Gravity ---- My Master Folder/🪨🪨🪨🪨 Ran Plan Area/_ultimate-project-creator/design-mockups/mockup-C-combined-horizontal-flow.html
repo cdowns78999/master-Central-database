@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mockup C — Combined Horizontal Flow</title>
+<!--
+  Purpose: experimental R&D — the entire job page as ONE 5-step horizontal carousel.
+  Key decisions:
+   - Active stage centered + full size; neighbors scale 0.85, opacity 0.35.
+   - Scroll-snap x mandatory; arrow + swipe advance; progress dots above.
+   - Active panel embeds compact job UI: 6 tiles, 4 flip cards, resume + path.
+   - All motion is 250ms ease-in-out. No bounce, no flash.
+-->
+<style>
+  :root {
+    --bg: #000;
+    --fg: #fff;
+    --mute: #8b8b8b;
+    --line: #2a2a2a;
+    --ink: #111;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body { padding: 24px 0 60px; }
+  h1 {
+    font-size: 15px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; margin: 0 0 6px; padding: 0 24px;
+  }
+  .sub {
+    color: var(--mute); font-size: 12px; margin: 0 0 22px;
+    letter-spacing: 0.08em; padding: 0 24px;
+  }
+
+  /* progress dots */
+  .progress {
+    display: flex; justify-content: center; gap: 14px;
+    margin: 0 0 16px;
+  }
+  .pdot {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--mute);
+    transition: color 250ms ease-in-out;
+  }
+  .pdot .ball {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #222; border: 1px solid #333;
+    transition: all 250ms ease-in-out;
+  }
+  .pdot.done .ball { background: var(--fg); border-color: var(--fg); }
+  .pdot.on { color: var(--fg); }
+  .pdot.on .ball {
+    background: var(--fg); border-color: var(--fg);
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+  }
+
+  /* arrows */
+  .nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 40px; height: 60px;
+    border: 1px solid var(--line); background: rgba(0,0,0,0.7);
+    color: var(--fg); font-size: 20px; cursor: pointer;
+    z-index: 10;
+    transition: all 250ms ease-in-out;
+  }
+  .nav:hover:not(:disabled) { background: var(--fg); color: var(--ink); }
+  .nav:disabled { opacity: 0.25; cursor: not-allowed; }
+  .nav.left  { left: 12px; }
+  .nav.right { right: 12px; }
+
+  .stage-wrap {
+    position: relative;
+  }
+  .rail {
+    display: flex; gap: 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 20px 12vw;
+    scrollbar-width: none;
+  }
+  .rail::-webkit-scrollbar { display: none; }
+
+  .stage {
+    flex: 0 0 76vw;
+    max-width: 960px;
+    scroll-snap-align: center;
+    border: 1px solid var(--line);
+    background: #070707;
+    padding: 24px;
+    transform: scale(0.85);
+    opacity: 0.35;
+    transition: transform 300ms ease-in-out, opacity 300ms ease-in-out;
+    min-height: 560px;
+  }
+  .stage.active {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .stage-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 18px;
+  }
+  .stage-head h2 {
+    margin: 0; font-size: 22px; letter-spacing: -0.01em;
+  }
+  .stage-head .num {
+    font-size: 10px; color: var(--mute); letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .tiles {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; margin-bottom: 18px;
+  }
+  .tile {
+    border: 1px solid var(--line); padding: 12px;
+    font-size: 11px; color: #cfcfcf;
+  }
+  .tile .t-lbl {
+    font-size: 9px; color: var(--mute); letter-spacing: 0.16em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .tile b { color: var(--fg); }
+
+  .flipzone {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; margin-bottom: 18px; perspective: 1000px;
+  }
+  .fc {
+    position: relative; aspect-ratio: 1 / 1.1;
+    transform-style: preserve-3d; cursor: pointer;
+    transition: transform 250ms ease-in-out;
+  }
+  .fc .fci {
+    position: absolute; inset: 0; transform-style: preserve-3d;
+    transition: transform 420ms cubic-bezier(.4,.1,.2,1);
+  }
+  .fc.flipped .fci { transform: rotateY(180deg); }
+  .fc .ff {
+    position: absolute; inset: 0;
+    border: 1px solid var(--line); padding: 10px;
+    backface-visibility: hidden;
+    background: var(--ink);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .fc .ff.b {
+    transform: rotateY(180deg);
+    background: var(--fg); color: var(--ink); border-color: var(--fg);
+  }
+  .fc .ff .l {
+    font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--mute); margin-bottom: 6px;
+  }
+  .fc .ff.b .l { color: #444; }
+  .fc .ff .v {
+    font-size: 18px; font-weight: 700; margin-bottom: 4px;
+  }
+  .fc .ff p, .fc .ff li {
+    font-size: 10px; color: #cfcfcf; line-height: 1.4; margin: 0;
+  }
+  .fc .ff.b p, .fc .ff.b li { color: #222; }
+  .fc .ff ul { padding-left: 14px; margin: 0; }
+
+  .resume, .path {
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px solid var(--line); padding: 10px 12px;
+    font-size: 11px; color: #cfcfcf; margin-bottom: 8px;
+  }
+  .resume code, .path code {
+    font-size: 10px; color: var(--fg);
+    background: transparent; overflow-x: auto; white-space: nowrap;
+    max-width: 60%; text-overflow: ellipsis; overflow: hidden;
+  }
+  .tag {
+    font-size: 9px; color: var(--mute); letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 820px) {
+    .stage { flex-basis: 88vw; padding: 16px; }
+    .rail  { padding: 20px 6vw; }
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .flipzone { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+  <h1>Mockup C — Combined Horizontal Flow</h1>
+  <div class="sub">Project: scout troop app · whole job page as one 5-step carousel</div>
+
+  <div class="progress" id="progress">
+    <div class="pdot done"><span class="ball"></span>01 scope</div>
+    <div class="pdot done"><span class="ball"></span>02 design</div>
+    <div class="pdot on"><span class="ball"></span>03 build</div>
+    <div class="pdot"><span class="ball"></span>04 test</div>
+    <div class="pdot"><span class="ball"></span>05 ship</div>
+  </div>
+
+  <div class="stage-wrap">
+    <button class="nav left"  id="prev" aria-label="prev">&lsaquo;</button>
+    <button class="nav right" id="next" aria-label="next">&rsaquo;</button>
+
+    <div class="rail" id="rail">
+      <!-- STAGE 1 -->
+      <section class="stage" data-i="0">
+        <div class="stage-head"><h2>Scope</h2><span class="num">Stage 1 of 5</span></div>
+        <div class="tiles">
+          <div class="tile"><div class="t-lbl">Goal</div>App for scout troop leaders</div>
+          <div class="tile"><div class="t-lbl">Audience</div>Troop leaders + parents</div>
+          <div class="tile"><div class="t-lbl">Platforms</div><b>iOS</b> first, iPad later</div>
+        </div>
+        <div class="resume"><span class="tag">resume</span><code>claude --resume scout-troop-app-scope</code></div>
+        <div class="path"><span class="tag">path</span><code>/Ran Plan Area/scout-troop-app/01-scope/</code></div>
+      </section>
+
+      <!-- STAGE 2 -->
+      <section class="stage" data-i="1">
+        <div class="stage-head"><h2>Design</h2><span class="num">Stage 2 of 5</span></div>
+        <div class="tiles">
+          <div class="tile"><div class="t-lbl">Tool</div><b>Figma</b></div>
+          <div class="tile"><div class="t-lbl">Screens</div>12 of 12</div>
+          <div class="tile"><div class="t-lbl">Review</div>Troop lead approved</div>
+        </div>
+        <div class="resume"><span class="tag">resume</span><code>claude --resume scout-troop-app-design</code></div>
+        <div class="path"><span class="tag">path</span><code>/Ran Plan Area/scout-troop-app/02-design/</code></div>
+      </section>
+
+      <!-- STAGE 3 (ACTIVE) -->
+      <section class="stage active" data-i="2">
+        <div class="stage-head"><h2>Build</h2><span class="num">Stage 3 of 5 · current</span></div>
+        <div class="tiles">
+          <div class="tile"><div class="t-lbl">Project</div><b>scout troop app</b></div>
+          <div class="tile"><div class="t-lbl">Phase</div>3/5</div>
+          <div class="tile"><div class="t-lbl">Tools</div>Unity · Figma · Claude</div>
+          <div class="tile"><div class="t-lbl">% chance</div><b>68%</b></div>
+          <div class="tile"><div class="t-lbl">Open leave-app</div>3</div>
+          <div class="tile"><div class="t-lbl">Notes</div>7</div>
+        </div>
+
+        <div class="flipzone" id="flipzone">
+          <div class="fc"><div class="fci">
+            <div class="ff"><div class="l">% chance</div><div class="v">68%</div><p>factors phase complete + scope lock</p></div>
+            <div class="ff b"><div class="l">factors</div><ul><li>Scope locked</li><li>Unity unproven</li><li>1 leave-app left</li></ul></div>
+          </div></div>
+          <div class="fc"><div class="fci">
+            <div class="ff"><div class="l">tools p3</div><p style="font-size:11px;"><b style="color:#fff;">Unity</b> · Figma · Claude</p></div>
+            <div class="ff b"><div class="l">all phases</div><ul><li>1 Notion/Figma</li><li>2 Figma/Claude</li><li>3 Unity/Figma/Claude</li><li>4 Unity/Xcode</li><li>5 TestFlight</li></ul></div>
+          </div></div>
+          <div class="fc"><div class="fci">
+            <div class="ff"><div class="l">leave-app</div><div class="v" style="font-size:13px;">Hop to Unity</div><p>Import troop patch SVGs</p></div>
+            <div class="ff b"><div class="l">all hops</div><ul><li>Unity (SVGs)</li><li>Xcode (sign)</li><li>TestFlight</li></ul></div>
+          </div></div>
+          <div class="fc"><div class="fci">
+            <div class="ff"><div class="l">notes</div><p>Patch SVGs 2x · Troop color rules</p></div>
+            <div class="ff b"><div class="l">all notes</div><ul><li>SVG 2x export</li><li>Color rules</li><li>Local-first badge names</li><li>Offline MVP cut</li></ul></div>
+          </div></div>
+        </div>
+
+        <div class="resume"><span class="tag">resume</span><code>claude --resume scout-troop-app-build</code></div>
+        <div class="path"><span class="tag">path</span><code>/Ran Plan Area/scout-troop-app/03-build/</code></div>
+      </section>
+
+      <!-- STAGE 4 -->
+      <section class="stage" data-i="3">
+        <div class="stage-head"><h2>Test</h2><span class="num">Stage 4 of 5</span></div>
+        <div class="tiles">
+          <div class="tile"><div class="t-lbl">Testers</div>3 troop leaders</div>
+          <div class="tile"><div class="t-lbl">Channel</div>TestFlight</div>
+          <div class="tile"><div class="t-lbl">Bugs</div>not started</div>
+        </div>
+        <div class="resume"><span class="tag">resume</span><code>claude --resume scout-troop-app-test</code></div>
+        <div class="path"><span class="tag">path</span><code>/Ran Plan Area/scout-troop-app/04-test/</code></div>
+      </section>
+
+      <!-- STAGE 5 -->
+      <section class="stage" data-i="4">
+        <div class="stage-head"><h2>Ship</h2><span class="num">Stage 5 of 5</span></div>
+        <div class="tiles">
+          <div class="tile"><div class="t-lbl">Store</div>App Store</div>
+          <div class="tile"><div class="t-lbl">Launch</div>TBD</div>
+          <div class="tile"><div class="t-lbl">Rollout</div>soft to troop 142</div>
+        </div>
+        <div class="resume"><span class="tag">resume</span><code>claude --resume scout-troop-app-ship</code></div>
+        <div class="path"><span class="tag">path</span><code>/Ran Plan Area/scout-troop-app/05-ship/</code></div>
+      </section>
+    </div>
+  </div>
+
+<script>
+  const rail   = document.getElementById('rail');
+  const stages = [...rail.querySelectorAll('.stage')];
+  const dots   = [...document.querySelectorAll('#progress .pdot')];
+  const prev   = document.getElementById('prev');
+  const next   = document.getElementById('next');
+  let active = 2; // start on Build
+
+  function setActive(i) {
+    active = Math.max(0, Math.min(stages.length - 1, i));
+    stages.forEach((s, idx) => s.classList.toggle('active', idx === active));
+    dots.forEach((d, idx) => {
+      d.classList.toggle('on', idx === active);
+      d.classList.toggle('done', idx < active);
+    });
+    stages[active].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    prev.disabled = active === 0;
+    next.disabled = active === stages.length - 1;
+  }
+
+  prev.addEventListener('click', () => setActive(active - 1));
+  next.addEventListener('click', () => setActive(active + 1));
+
+  stages.forEach((s, i) => {
+    s.addEventListener('click', (e) => {
+      // If clicking a flip card, flip it — don't switch stage
+      const fc = e.target.closest('.fc');
+      if (fc) { fc.classList.toggle('flipped'); return; }
+      if (i !== active) setActive(i);
+    });
+  });
+
+  // infer active on manual scroll
+  let scrollT;
+  rail.addEventListener('scroll', () => {
+    clearTimeout(scrollT);
+    scrollT = setTimeout(() => {
+      const mid = rail.scrollLeft + rail.clientWidth / 2;
+      let closest = 0, dist = Infinity;
+      stages.forEach((s, i) => {
+        const c = s.offsetLeft + s.offsetWidth / 2;
+        const d = Math.abs(c - mid);
+        if (d < dist) { dist = d; closest = i; }
+      });
+      if (closest !== active) setActive(closest);
+    }, 120);
+  });
+
+  setActive(active);
+</script>
+</body>
+</html>

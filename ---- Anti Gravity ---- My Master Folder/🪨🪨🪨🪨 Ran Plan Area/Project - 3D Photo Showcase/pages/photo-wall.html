@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo Wall · 3D Showcase</title>
+  <link rel="stylesheet" href="../assets/tokens.css" />
+  <link rel="stylesheet" href="../assets/base.css" />
+  <link rel="stylesheet" href="../nav/nav.css" />
+  <style>
+    /* ============================================================
+       Photo Wall — scoped to .wall / .lightbox
+       ============================================================ */
+    .wall {
+      min-height: 100vh;
+      padding: 72px clamp(28px, 5vw, 72px) 64px;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(36px, 5vh, 56px);
+    }
+
+    /* ---- Header ---- */
+    .wall__head {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 1200px;
+    }
+    .wall__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+    }
+    .wall__eyebrow::before {
+      content: "";
+      width: 28px;
+      height: var(--line-w);
+      min-height: 1px;
+      background: var(--line-yellow);
+      box-shadow: 0 0 8px rgba(255, 212, 0, 0.55);
+    }
+    .wall__title {
+      font-size: clamp(2.25rem, 6vw, 4.75rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .wall__subtitle {
+      font-size: clamp(0.9rem, 1.1vw, 1rem);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+    }
+
+    /* ---- Grid ---- */
+    .wall__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: clamp(16px, 2vw, 26px);
+    }
+    @media (max-width: 520px) {
+      .wall__grid { grid-template-columns: 1fr; }
+    }
+
+    .photo {
+      position: relative;
+      aspect-ratio: var(--card-aspect);
+      background: var(--card-surface);
+      border: var(--line-w) solid var(--line-yellow);
+      overflow: hidden;
+      cursor: zoom-in;
+      isolation: isolate;
+      box-shadow:
+        0 1px 0 rgba(255, 212, 0, 0.05) inset,
+        0 10px 26px rgba(0, 0, 0, 0.55);
+      transition:
+        transform var(--dur-med) var(--ease-out),
+        filter var(--dur-med) var(--ease-out),
+        box-shadow var(--dur-med) var(--ease-out),
+        border-color var(--dur-med) var(--ease-out);
+    }
+    @supports (border-width: 0.5px) {
+      .photo { border-width: 0.5px; }
+    }
+
+    .photo__img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform var(--dur-slow) var(--ease-out), opacity var(--dur-med) var(--ease-out);
+      opacity: 0;
+    }
+    .photo__img.is-loaded { opacity: 1; }
+    /* fallback ambient glow (visible when image missing/hidden) */
+    .photo::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 22% 8%, rgba(255, 212, 0, 0.08), transparent 45%),
+        radial-gradient(circle at 100% 100%, rgba(255, 212, 0, 0.05), transparent 55%),
+        var(--card-surface);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .photo__tag {
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 212, 0, 0.2);
+      font-size: 9px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+      font-feature-settings: "tnum" 1;
+      transition: opacity var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+    }
+    .photo__tag .idx-num {
+      color: var(--line-yellow);
+    }
+
+    /* ---- Hover ---- */
+    .photo:hover {
+      transform: scale(1.02);
+      filter: brightness(1.05);
+      border-color: var(--line-yellow);
+      box-shadow:
+        0 0 0 1px rgba(255, 212, 0, 0.22),
+        0 0 28px rgba(255, 212, 0, 0.18),
+        0 22px 50px rgba(0, 0, 0, 0.72);
+    }
+    .photo:hover .photo__img { transform: scale(1.04); }
+    .photo:hover .photo__tag { color: #fff; }
+
+    .photo:focus-visible {
+      outline: none;
+      border-color: var(--line-yellow);
+      box-shadow:
+        0 0 0 2px rgba(255, 212, 0, 0.4),
+        0 18px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    /* ============================================================
+       Lightbox
+       ============================================================ */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-overlay);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(24px, 5vw, 72px);
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      cursor: zoom-out;
+      opacity: 0;
+      transition: opacity var(--dur-med) var(--ease-out);
+    }
+    .lightbox.is-open {
+      display: flex;
+      opacity: 1;
+    }
+    .lightbox__frame {
+      position: relative;
+      max-width: min(1400px, 92vw);
+      max-height: 86vh;
+      aspect-ratio: var(--card-aspect);
+      width: 100%;
+      border: var(--line-w) solid var(--line-yellow);
+      background: var(--card-surface);
+      overflow: hidden;
+      cursor: default;
+      box-shadow:
+        0 0 0 1px rgba(255, 212, 0, 0.18),
+        0 30px 80px rgba(0, 0, 0, 0.75),
+        0 0 60px rgba(255, 212, 0, 0.1);
+      transform: scale(0.96);
+      transition: transform var(--dur-med) var(--ease-out);
+    }
+    .lightbox.is-open .lightbox__frame { transform: scale(1); }
+    @supports (border-width: 0.5px) {
+      .lightbox__frame { border-width: 0.5px; }
+    }
+    .lightbox__img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    .lightbox__close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 212, 0, 0.4);
+      background: rgba(0, 0, 0, 0.6);
+      color: var(--ink-100);
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 2;
+      transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+    }
+    .lightbox__close:hover {
+      background: rgba(255, 212, 0, 0.12);
+      border-color: var(--line-yellow);
+      color: var(--line-yellow);
+    }
+    .lightbox__tag {
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      z-index: 2;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 212, 0, 0.2);
+      font-size: 9px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+    }
+    .lightbox__tag .idx-num { color: var(--line-yellow); }
+  </style>
+</head>
+<body class="has-left-nav">
+
+  <div id="nav-mount"></div>
+
+  <main class="wall">
+
+    <header class="wall__head">
+      <span class="wall__eyebrow">Index · 05</span>
+      <h1 class="wall__title">Photo Wall</h1>
+      <p class="wall__subtitle">the centerpiece</p>
+    </header>
+
+    <section class="wall__grid" id="wallGrid" aria-label="Photo wall"></section>
+
+  </main>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" aria-hidden="true">
+    <button class="lightbox__close" type="button" id="lightboxClose" aria-label="Close">✕</button>
+    <div class="lightbox__frame" id="lightboxFrame">
+      <img class="lightbox__img" id="lightboxImg" alt="" />
+      <span class="lightbox__tag" id="lightboxTag"><span class="idx-num">00</span> Photo</span>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Inject shared nav ----------
+    (function () {
+      fetch('../nav/nav.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          var mount = document.getElementById('nav-mount');
+          if (mount) mount.innerHTML = html;
+          var s = document.createElement('script');
+          s.src = '../nav/nav.js';
+          document.body.appendChild(s);
+        })
+        .catch(function () { /* fail silent */ });
+    })();
+
+    // ---------- Build the grid ----------
+    (function () {
+      var grid = document.getElementById('wallGrid');
+      if (!grid) return;
+
+      // 12 photos, 01.jpg through 12.jpg
+      var count = 12;
+      var frag = document.createDocumentFragment();
+
+      for (var i = 1; i <= count; i++) {
+        var idx = (i < 10 ? '0' : '') + i;
+        var src = '../photos/' + idx + '.jpg';
+
+        var card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'photo';
+        card.setAttribute('data-index', idx);
+        card.setAttribute('data-src', src);
+        card.setAttribute('aria-label', 'Open photo ' + idx);
+
+        var img = document.createElement('img');
+        img.className = 'photo__img';
+        img.alt = 'Photo ' + idx;
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        // when loaded, fade it in (otherwise dark gradient shows through)
+        img.addEventListener('load', function () { this.classList.add('is-loaded'); });
+        img.addEventListener('error', function () { this.remove(); });
+        img.src = src;
+
+        var tag = document.createElement('span');
+        tag.className = 'photo__tag';
+        tag.innerHTML = '<span class="idx-num">' + idx + '</span> Photo';
+
+        card.appendChild(img);
+        card.appendChild(tag);
+        frag.appendChild(card);
+      }
+      grid.appendChild(frag);
+    })();
+
+    // ---------- Lightbox ----------
+    (function () {
+      var lb     = document.getElementById('lightbox');
+      var lbImg  = document.getElementById('lightboxImg');
+      var lbTag  = document.getElementById('lightboxTag');
+      var lbClose= document.getElementById('lightboxClose');
+      var frame  = document.getElementById('lightboxFrame');
+      var grid   = document.getElementById('wallGrid');
+      if (!lb || !lbImg || !grid) return;
+
+      var lastFocused = null;
+
+      function open(src, idx) {
+        lastFocused = document.activeElement;
+        lbImg.src = src;
+        lbImg.alt = 'Photo ' + idx;
+        lbTag.innerHTML = '<span class="idx-num">' + idx + '</span> Photo';
+        lb.classList.add('is-open');
+        lb.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        // focus close button for keyboard users
+        setTimeout(function () { lbClose.focus(); }, 40);
+      }
+
+      function close() {
+        lb.classList.remove('is-open');
+        lb.setAttribute('aria-hidden', 'true');
+        lbImg.removeAttribute('src');
+        document.body.style.overflow = '';
+        if (lastFocused && typeof lastFocused.focus === 'function') {
+          lastFocused.focus();
+        }
+      }
+
+      // delegate clicks on grid
+      grid.addEventListener('click', function (e) {
+        var card = e.target.closest('.photo');
+        if (!card) return;
+        var src = card.getAttribute('data-src');
+        var idx = card.getAttribute('data-index');
+        if (src) open(src, idx);
+      });
+
+      // click outside frame = close (backdrop has cursor: zoom-out)
+      lb.addEventListener('click', function (e) {
+        if (!frame.contains(e.target)) close();
+      });
+
+      // close button
+      lbClose.addEventListener('click', function (e) {
+        e.stopPropagation();
+        close();
+      });
+
+      // Esc to close
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && lb.classList.contains('is-open')) {
+          close();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

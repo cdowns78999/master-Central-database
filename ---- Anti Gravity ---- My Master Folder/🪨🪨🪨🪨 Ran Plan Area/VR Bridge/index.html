@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VR Bridge — Voice Translator + Auto-Invite</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="scanlines"></div>
+
+  <main class="shell">
+
+    <!-- HEADER -->
+    <header class="hero">
+      <div class="hero-glow"></div>
+      <h1>
+        <span class="confetti">🎉</span>
+        Hey Chad! <span class="neon-cyan">VR Bridge</span> is <span class="neon-magenta">Live</span>.
+      </h1>
+      <p class="sub">Real-time voice translation + auto-invite bot for VRChat.</p>
+      <div class="status-bar">
+        <span class="dot" id="serverDot"></span>
+        <span id="serverStatusText">Checking local server…</span>
+      </div>
+    </header>
+
+    <!-- TWO-COLUMN GRID -->
+    <section class="grid-2">
+
+      <!-- LEFT — HOW IT WORKS -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-tag">01</span>
+          <h2>How It Works</h2>
+        </div>
+
+        <pre class="ascii-diagram">
+ ╔══════════════════════════════════════════╗
+ ║   PIPELINE A · VOICE TRANSLATION         ║
+ ╚══════════════════════════════════════════╝
+
+   ┌──────────────┐
+   │  🎤  You     │
+   │  speak EN    │
+   └──────┬───────┘
+          │ MediaRecorder
+          ▼
+   ┌──────────────┐
+   │  Browser     │
+   │  chunks audio│
+   └──────┬───────┘
+          │ POST /realtime-token
+          ▼
+   ┌──────────────┐
+   │  Local       │
+   │  Node server │
+   └──────┬───────┘
+          │ WebSocket
+          ▼
+   ┌──────────────┐
+   │  OpenAI      │
+   │  Realtime    │
+   └──────┬───────┘
+          │ translated text
+          ▼
+   ┌──────────────┐
+   │  🔊  Output  │
+   │  ES/FR/JA... │
+   └──────────────┘
+
+
+ ╔══════════════════════════════════════════╗
+ ║   PIPELINE B · AUTO-INVITE BOT           ║
+ ╚══════════════════════════════════════════╝
+
+   ┌──────────────┐
+   │  Watch list  │
+   │  of friends  │
+   └──────┬───────┘
+          │ every 5s
+          ▼
+   ┌──────────────┐
+   │  VRChat API  │
+   │  (check      │
+   │   online)    │
+   └──────┬───────┘
+          │ if online
+          ▼
+   ┌──────────────┐
+   │  Local       │
+   │  server      │
+   │  queues      │
+   └──────┬───────┘
+          │ POST invite
+          ▼
+   ┌──────────────┐
+   │  👥 Group    │
+   │  instance    │
+   └──────────────┘
+        </pre>
+      </div>
+
+      <!-- RIGHT — LIVE CONTROL PANEL -->
+      <div class="panel panel-live">
+        <div class="panel-header">
+          <span class="panel-tag">02</span>
+          <h2>Live Control Panel</h2>
+        </div>
+
+        <!-- TAB SWITCHER -->
+        <nav class="tabs" role="tablist">
+          <button class="tab active" data-tab="voice" role="tab" aria-selected="true">
+            <span class="tab-icon">🎤</span> VOICE
+          </button>
+          <button class="tab" data-tab="invites" role="tab" aria-selected="false">
+            <span class="tab-icon">👥</span> INVITES
+          </button>
+        </nav>
+
+        <!-- VOICE TAB -->
+        <section class="tab-panel active" id="tab-voice">
+
+          <div class="mic-zone">
+            <button id="micBtn" class="mic-btn" aria-label="Toggle recording">
+              <span class="mic-glyph">🎤</span>
+              <span class="mic-ring"></span>
+              <span class="mic-ring mic-ring-2"></span>
+            </button>
+            <div class="mic-label" id="micLabel">TAP TO SPEAK</div>
+          </div>
+
+          <div class="lang-row">
+            <label for="langPicker" class="field-label">Target Language</label>
+            <select id="langPicker" class="lang-picker">
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="ja">🇯🇵 Japanese</option>
+              <option value="ko">🇰🇷 Korean</option>
+              <option value="zh">🇨🇳 Chinese</option>
+              <option value="pt">🇵🇹 Portuguese</option>
+              <option value="ru">🇷🇺 Russian</option>
+            </select>
+          </div>
+
+          <div class="latency-row">
+            <span class="field-label">Round-trip</span>
+            <span id="latencyDisplay" class="latency-pill">—</span>
+          </div>
+
+          <div class="transcript">
+            <div class="transcript-block">
+              <div class="transcript-label">YOU SAID</div>
+              <div id="youSaid" class="transcript-text">—</div>
+            </div>
+            <div class="transcript-block transcript-block-trans">
+              <div class="transcript-label">TRANSLATED</div>
+              <div id="translated" class="transcript-text">—</div>
+            </div>
+          </div>
+
+          <div class="log">
+            <div class="log-header">LIVE LOG</div>
+            <ul id="voiceLog" class="log-list"></ul>
+          </div>
+
+        </section>
+
+        <!-- INVITES TAB -->
+        <section class="tab-panel" id="tab-invites">
+
+          <div class="group-display">
+            <span class="field-label">Group Instance ID</span>
+            <code id="groupId" class="group-id">—</code>
+          </div>
+
+          <div class="watchlist">
+            <div class="watchlist-header">
+              <span class="field-label">Watch List</span>
+              <button id="pauseBtn" class="btn-ghost">⏸ PAUSE</button>
+            </div>
+
+            <form id="addFriendForm" class="add-row">
+              <input id="friendInput" type="text" placeholder="usr_xxxxx friend ID" class="text-input" />
+              <button type="submit" class="btn-neon">+ ADD</button>
+            </form>
+
+            <ul id="watchList" class="watch-list"></ul>
+          </div>
+
+          <div class="log">
+            <div class="log-header">LAST INVITES</div>
+            <ul id="inviteLog" class="log-list"></ul>
+          </div>
+
+        </section>
+
+      </div>
+
+    </section>
+
+    <!-- INSTALL FLOW ACCORDION -->
+    <section class="accordion">
+      <details>
+        <summary>
+          <span class="caret">▾</span>
+          Full Install Flow
+          <span class="arrow">→</span>
+        </summary>
+        <div class="accordion-body">
+          <p>Step-by-step setup covers Node install, VRChat API auth, OpenAI keys, and .env wiring.</p>
+          <a href="tutorial.html" class="tutorial-link">Open Tutorial →</a>
+        </div>
+      </details>
+    </section>
+
+    <!-- FOOTER WARNING -->
+    <footer class="warn-footer">
+      <span class="warn-icon">⚠️</span>
+      <span>Automation uses the VRChat API — <strong>use at your own risk</strong>. Accounts can be rate-limited or banned.</span>
+    </footer>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

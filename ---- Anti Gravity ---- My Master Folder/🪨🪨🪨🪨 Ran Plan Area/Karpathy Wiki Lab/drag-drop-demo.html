@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drag-Drop Demo · Karpathy Wiki Lab</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --panel: #121826;
+    --panel-2: #0f1422;
+    --chrome: #1a2238;
+    --sky: #0ea5e9;
+    --violet: #8b5cf6;
+    --text: #e5e7eb;
+    --muted: #6b7488;
+    --border: #1e2740;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+  header { text-align: center; margin-bottom: 48px; }
+  header h1 {
+    font-size: clamp(20px, 3.6vw, 32px);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    display: inline-block;
+    padding-bottom: 12px;
+    border-bottom: 3px solid var(--sky);
+  }
+  .stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    position: relative;
+    width: 100%;
+    max-width: 880px;
+    margin-bottom: 48px;
+  }
+  .window {
+    width: 280px;
+    background: var(--panel);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(14,165,233,0.08);
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+  }
+  .window-chrome {
+    background: var(--chrome);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #ef4444; }
+  .dot.y { background: #f59e0b; }
+  .dot.g { background: #10b981; }
+  .window-title {
+    margin-left: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .window-body {
+    padding: 18px;
+    min-height: 180px;
+    position: relative;
+  }
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text);
+    transition: background 0.2s;
+  }
+  .file-row:hover { background: rgba(14,165,233,0.08); }
+  .file-row .icon { font-size: 16px; }
+  .dropzone {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 130px;
+    height: 130px;
+    border: 2px dashed var(--violet);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+    animation: dropPulse 4s ease-in-out infinite;
+  }
+  @keyframes dropPulse {
+    0%, 60% { box-shadow: 0 0 0 0 rgba(139,92,246,0); border-color: var(--violet); }
+    72% { box-shadow: 0 0 0 18px rgba(139,92,246,0.0), 0 0 40px rgba(139,92,246,0.6); border-color: var(--sky); transform: translate(-50%, -50%) scale(1.08); }
+    85% { box-shadow: 0 0 0 30px rgba(139,92,246,0); border-color: var(--violet); transform: translate(-50%, -50%) scale(1); }
+    100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
+  }
+  .trail {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 14px;
+    font-size: 22px;
+    color: var(--sky);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .trail span { opacity: 0; animation: chevron 4s ease-in-out infinite; }
+  .trail span:nth-child(1) { animation-delay: 0.3s; }
+  .trail span:nth-child(2) { animation-delay: 0.6s; }
+  .trail span:nth-child(3) { animation-delay: 0.9s; }
+  @keyframes chevron {
+    0%, 10% { opacity: 0; transform: translateX(-6px); }
+    25% { opacity: 1; transform: translateX(0); }
+    60% { opacity: 1; }
+    70%, 100% { opacity: 0; transform: translateX(6px); }
+  }
+  .flying-file {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    font-size: 28px;
+    z-index: 3;
+    filter: drop-shadow(0 4px 12px rgba(14,165,233,0.6));
+    animation: fly 4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+  @keyframes fly {
+    0%, 10% { left: 15%; top: 50%; opacity: 0; transform: translateY(-50%) scale(0.8) rotate(-5deg); }
+    20% { opacity: 1; transform: translateY(-50%) scale(1) rotate(-5deg); }
+    60% { left: 80%; top: 50%; opacity: 1; transform: translateY(-50%) scale(1.1) rotate(8deg); }
+    70% { left: 82%; top: 50%; opacity: 1; transform: translateY(-50%) scale(0.6) rotate(0deg); }
+    75%, 100% { left: 82%; top: 50%; opacity: 0; transform: translateY(-50%) scale(0.3) rotate(0deg); }
+  }
+  .steps {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    max-width: 880px;
+    width: 100%;
+  }
+  .step { text-align: center; flex: 1; min-width: 180px; }
+  .step-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sky);
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+  }
+  .step:nth-child(2) .step-title { color: var(--violet); }
+  .step-sub { font-size: 12px; color: var(--muted); }
+  footer {
+    margin-top: 56px;
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.7;
+    letter-spacing: 0.05em;
+  }
+  @media (max-width: 700px) {
+    .stage { flex-direction: column; gap: 20px; }
+    .window { width: 100%; max-width: 320px; }
+    .trail, .flying-file { display: none; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1><span aria-hidden="true">🪨</span>  HOW TO DROP A FILE INTO sources/</h1>
+  </header>
+
+  <main class="stage">
+    <div class="window" aria-label="Downloads folder">
+      <div class="window-chrome">
+        <span class="dot r" aria-hidden="true"></span>
+        <span class="dot y" aria-hidden="true"></span>
+        <span class="dot g" aria-hidden="true"></span>
+        <span class="window-title"><span aria-hidden="true">📁</span> Downloads</span>
+      </div>
+      <div class="window-body">
+        <div class="file-row"><span class="icon" aria-hidden="true">📄</span> song.mp3</div>
+        <div class="file-row"><span class="icon" aria-hidden="true">📄</span> notes.md</div>
+        <div class="file-row"><span class="icon" aria-hidden="true">📄</span> art.pdf</div>
+      </div>
+    </div>
+
+    <div class="trail" aria-hidden="true">
+      <span>▶</span><span>▶</span><span>▶</span>
+    </div>
+    <div class="flying-file" aria-hidden="true">📄</div>
+
+    <div class="window" aria-label="sources folder">
+      <div class="window-chrome">
+        <span class="dot r" aria-hidden="true"></span>
+        <span class="dot y" aria-hidden="true"></span>
+        <span class="dot g" aria-hidden="true"></span>
+        <span class="window-title"><span aria-hidden="true">📁</span> sources/</span>
+      </div>
+      <div class="window-body">
+        <div class="dropzone"><span aria-hidden="true">✨</span>&nbsp;drop here&nbsp;<span aria-hidden="true">✨</span></div>
+      </div>
+    </div>
+  </main>
+
+  <section class="steps">
+    <div class="step">
+      <div class="step-title">① CLICK + HOLD</div>
+      <div class="step-sub">(any file)</div>
+    </div>
+    <div class="step">
+      <div class="step-title">② DRAG ACROSS</div>
+      <div class="step-sub">(over to right)</div>
+    </div>
+    <div class="step">
+      <div class="step-title">③ LET GO</div>
+      <div class="step-sub">(drops in)</div>
+    </div>
+  </section>
+
+  <footer>Karpathy Wiki Lab · drag-drop demo · loops every 4s</footer>
+</body>
+</html>

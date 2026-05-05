@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VR Bridge — Install Flow</title>
+<style>
+  :root {
+    --bg-1: #0a0a1f;
+    --bg-2: #1a0a2e;
+    --bg-3: #16213e;
+    --neon-cyan: #00f0ff;
+    --neon-magenta: #ff2bd6;
+    --neon-purple: #8b5cf6;
+    --text: #e4e4f7;
+    --text-dim: #9898b8;
+    --panel: rgba(20, 14, 45, 0.7);
+    --panel-border: rgba(139, 92, 246, 0.35);
+    --danger: #ff4d6d;
+    --danger-bg: rgba(255, 77, 109, 0.08);
+    --warn-border: rgba(255, 77, 109, 0.6);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background:
+      radial-gradient(ellipse at top left, rgba(139, 92, 246, 0.25), transparent 55%),
+      radial-gradient(ellipse at bottom right, rgba(0, 240, 255, 0.15), transparent 55%),
+      linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    line-height: 1.55;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  h1 {
+    font-size: 2.6rem;
+    margin: 0 0 8px;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 30px rgba(0, 240, 255, 0.25);
+  }
+  .subtitle {
+    color: var(--text-dim);
+    margin: 0 0 28px;
+    font-size: 1.05rem;
+  }
+  pre.diagram {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 20px;
+    color: var(--neon-cyan);
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.88rem;
+    overflow-x: auto;
+    box-shadow:
+      0 0 0 1px rgba(0, 240, 255, 0.08),
+      0 10px 40px rgba(0, 0, 0, 0.4),
+      inset 0 0 30px rgba(139, 92, 246, 0.08);
+    margin: 0 0 36px;
+    line-height: 1.35;
+  }
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  details {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  details[open] {
+    border-color: rgba(0, 240, 255, 0.5);
+    box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.15), 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+  summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 1.12rem;
+    font-weight: 600;
+    user-select: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: '+';
+    margin-left: auto;
+    color: var(--neon-cyan);
+    font-size: 1.5rem;
+    transition: transform 0.25s;
+  }
+  details[open] summary::after { transform: rotate(45deg); }
+  .step-num {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 15px rgba(255, 43, 214, 0.35);
+  }
+  .step-body {
+    padding: 4px 22px 22px 72px;
+    color: var(--text);
+  }
+  .step-body p { margin: 8px 0; }
+  .step-body ul {
+    margin: 10px 0 14px;
+    padding-left: 20px;
+  }
+  .step-body li { margin: 5px 0; }
+  .step-body a {
+    color: var(--neon-cyan);
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(0, 240, 255, 0.5);
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .step-body a:hover {
+    color: var(--neon-magenta);
+    border-bottom-color: var(--neon-magenta);
+  }
+  code {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.92em;
+    color: var(--neon-cyan);
+  }
+  pre.code-block {
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--neon-cyan);
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.88rem;
+    overflow-x: auto;
+    margin: 10px 0;
+  }
+  .link-pill {
+    display: inline-block;
+    margin: 4px 0 10px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(0, 240, 255, 0.08);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    color: var(--neon-cyan) !important;
+    font-size: 0.88rem;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.35) !important;
+  }
+  .link-pill:hover {
+    background: rgba(255, 43, 214, 0.12);
+    border-color: var(--neon-magenta);
+    color: var(--neon-magenta) !important;
+  }
+  .warning {
+    margin-top: 48px;
+    padding: 24px 28px;
+    border: 2px solid var(--warn-border);
+    background: var(--danger-bg);
+    border-radius: 14px;
+    box-shadow:
+      0 0 0 1px rgba(255, 77, 109, 0.2),
+      0 0 40px rgba(255, 77, 109, 0.15);
+  }
+  .warning h2 {
+    margin: 0 0 12px;
+    color: var(--danger);
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .warning p {
+    margin: 8px 0;
+    color: #ffd9e1;
+  }
+  .warning strong { color: #fff; }
+  hr.glow {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-purple), transparent);
+    margin: 40px 0 28px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>VR Bridge Install Flow</h1>
+  <p class="subtitle">Voice translator + auto-invite-on-online pipeline for VRChat. Follow the 6 steps top to bottom.</p>
+
+  <pre class="diagram">
+  +-------+    +-----+    +-----------+    +-----+    +----------+    +--------+
+  |  mic  | -> | STT | -> | translate | -> | TTS | -> | VB-Cable | -> | VRChat |
+  +-------+    +-----+    +-----------+    +-----+    +----------+    +--------+
+
+  +------------+    +---------------+    +---------------+
+  | VRChat API | -> | invite-bot.js | -> | group.invite  |
+  +------------+    +---------------+    +---------------+
+  </pre>
+
+  <div class="steps">
+
+    <details>
+      <summary><span class="step-num">1</span> Install VB-Cable (Virtual Audio Cable)</summary>
+      <div class="step-body">
+        <a class="link-pill" href="https://vb-audio.com/Cable/" target="_blank" rel="noopener">vb-audio.com/Cable</a>
+        <ul>
+          <li>Creates a fake microphone/speaker pair so apps can pipe audio to each other.</li>
+          <li>Install, reboot, confirm <code>CABLE Input</code> and <code>CABLE Output</code> appear in Windows Sound settings.</li>
+          <li>Route: VR Bridge TTS output sends to <code>CABLE Input</code>, then VRChat reads from <code>CABLE Output</code> as its mic.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="step-num">2</span> Install Voicemeeter Banana</summary>
+      <div class="step-body">
+        <a class="link-pill" href="https://vb-audio.com/Voicemeeter/" target="_blank" rel="noopener">vb-audio.com/Voicemeeter</a>
+        <ul>
+          <li>Acts as a software mixer so you can monitor and blend your real mic with the translated voice.</li>
+          <li>Hardware Input 1 = your real mic. Virtual Input (VAIO) = <code>CABLE Output</code>.</li>
+          <li>A1 output = your headphones (for monitoring). B1 output = VRChat mic bus.</li>
+          <li>In VRChat audio settings, set input device to <strong>Voicemeeter Out B1</strong>.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="step-num">3</span> Get OpenAI API key (free $5 trial)</summary>
+      <div class="step-body">
+        <a class="link-pill" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>
+        <ul>
+          <li>Powers Whisper STT (speech-to-text) and GPT translation.</li>
+          <li>Click <strong>Create new secret key</strong>, copy it once (you won't see it again).</li>
+          <li>Paste into <code>.env</code>:</li>
+        </ul>
+        <pre class="code-block">OPENAI_API_KEY=sk-...</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="step-num">4</span> Get ElevenLabs API key (10k free chars/mo)</summary>
+      <div class="step-body">
+        <a class="link-pill" href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io</a>
+        <ul>
+          <li>High-quality TTS voice for the translated output.</li>
+          <li>Sign up, open <strong>Profile &rarr; API Key</strong>, copy the key.</li>
+          <li>Paste into <code>.env</code>:</li>
+        </ul>
+        <pre class="code-block">ELEVENLABS_API_KEY=...</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="step-num">5</span> VRChat login + Group ID</summary>
+      <div class="step-body">
+        <ul>
+          <li>Open your VRChat group in the browser. The URL looks like <code>vrchat.com/home/group/grp_abc123...</code> — the <code>grp_...</code> portion is your Group ID.</li>
+          <li>Find each friend's User ID (starts with <code>usr_...</code>) from their profile URL, comma-separate them for the watch list.</li>
+          <li>Add to <code>.env</code>:</li>
+        </ul>
+        <pre class="code-block">VRCHAT_USERNAME=your_vrc_username
+VRCHAT_PASSWORD=your_vrc_password
+VRCHAT_GROUP_ID=grp_abc123-...
+WATCH_FRIEND_IDS=usr_111...,usr_222...,usr_333...</pre>
+        <p style="color: var(--text-dim); font-size: 0.9rem;">Note: 2FA-enabled accounts will prompt for a code the first time the bot logs in.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="step-num">6</span> Launch</summary>
+      <div class="step-body">
+        <p>In the project folder:</p>
+        <pre class="code-block">npm install
+npm start</pre>
+        <p>Then open <a href="http://localhost:3000" target="_blank" rel="noopener">http://localhost:3000</a> to use the voice translator UI.</p>
+        <p>For the auto-invite-on-online watcher, open a <strong>second terminal</strong> and run:</p>
+        <pre class="code-block">npm run invite-bot</pre>
+        <p style="color: var(--text-dim); font-size: 0.9rem;">Keep both running together. The invite bot polls friend presence and invites them to your group when they come online.</p>
+      </div>
+    </details>
+
+  </div>
+
+  <hr class="glow" />
+
+  <div class="warning">
+    <h2>&#9888;&#65039; Ban Risk Disclosure</h2>
+    <p><strong>Automation uses the unofficial VRChat API.</strong> VRChat does not publicly support third-party automation of invites, friend actions, or presence polling.</p>
+    <p>This tool is rate-limited to <strong>1 invite per friend per hour</strong> to stay conservative, but any automation carries risk.</p>
+    <p><strong>Use at your own risk.</strong> It can result in account warnings, suspension, or a full ban. By running VR Bridge, you accept this risk.</p>
+  </div>
+
+</div>
+</body>
+</html>

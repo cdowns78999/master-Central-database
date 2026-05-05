@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vet Tech Job Hunt — Choose Version</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cream:#faf8f5;--ink:#333;
+  --caveat:'Caveat',cursive;--inter:'Inter',sans-serif;
+}
+body{
+  background:var(--cream);font-family:var(--inter);color:var(--ink);
+  min-height:100vh;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  background-image:
+    repeating-linear-gradient(transparent,transparent 31px,rgba(0,0,0,.03) 31px,rgba(0,0,0,.03) 32px);
+  background-size:100% 32px;
+}
+
+/* ── Fade overlay ── */
+.fade-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:#fff;opacity:0;pointer-events:none;
+  transition:opacity 0.8s ease;
+}
+.fade-overlay.active{opacity:1;pointer-events:all;}
+
+/* ── Overlay Card ── */
+.version-card{
+  background:#fff;border-radius:20px;padding:48px 40px;
+  box-shadow:0 8px 40px rgba(0,0,0,.1);
+  text-align:center;max-width:440px;width:90%;
+  animation:cardIn 0.6s ease both;
+}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(30px) scale(.95);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.version-card h1{
+  font-family:var(--caveat);font-size:2.4rem;color:#5a4a3a;
+  margin-bottom:8px;font-weight:700;
+}
+.version-card .subtitle{
+  font-size:.9rem;color:#999;margin-bottom:32px;line-height:1.5;
+}
+.version-card .highlight{
+  color:#ff6b6b;font-weight:600;
+}
+
+/* ── Version Buttons ── */
+.version-buttons{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.version-btn{
+  padding:16px 28px;border-radius:14px;border:none;
+  font-family:var(--inter);font-size:.95rem;font-weight:600;
+  cursor:pointer;transition:all .3s ease;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  min-width:160px;
+}
+.version-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.12);}
+.version-btn:active{transform:translateY(0);}
+
+.btn-nyc{
+  background:linear-gradient(135deg,#ff6b6b,#6c5ce7);color:#fff;
+  box-shadow:0 4px 16px rgba(255,107,107,.3);
+}
+.btn-nyc:hover{box-shadow:0 6px 28px rgba(255,107,107,.4);}
+
+.btn-nj{
+  background:#fff;color:#5a4a3a;
+  border:2px solid #e8e0d8;
+}
+.btn-nj:hover{background:#faf8f5;border-color:#ccc;}
+
+.version-btn .btn-emoji{font-size:1.8rem;}
+.version-btn .btn-label{font-size:.78rem;opacity:.7;font-weight:400;}
+
+/* ── Badge ── */
+.new-badge{
+  display:inline-block;background:linear-gradient(135deg,#ff6b6b,#ffd93d);
+  color:#fff;font-size:.65rem;font-weight:700;letter-spacing:1px;
+  padding:3px 10px;border-radius:20px;margin-bottom:16px;
+  text-transform:uppercase;
+  animation:pulse 2s ease infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,107,107,.4);}
+  50%{box-shadow:0 0 0 8px rgba(255,107,107,0);}
+}
+
+/* ── Divider ── */
+.or-divider{
+  display:flex;align-items:center;gap:12px;
+  margin:20px 0;color:#ccc;font-size:.8rem;
+}
+.or-divider::before,.or-divider::after{
+  content:'';flex:1;height:1px;background:#e8e0d8;
+}
+
+/* ── Mobile ── */
+@media(max-width:480px){
+  .version-card{padding:32px 24px;}
+  .version-card h1{font-size:1.8rem;}
+  .version-buttons{flex-direction:column;align-items:center;}
+  .version-btn{min-width:200px;}
+}
+</style>
+</head>
+<body>
+
+<div class="fade-overlay" id="fadeOverlay"></div>
+
+<div class="version-card" id="versionCard">
+  <div class="new-badge">New Version Available</div>
+  <h1>Vet Tech Job Hunt</h1>
+  <p class="subtitle">
+    Your NJ checklist just got a big upgrade.<br>
+    <span class="highlight">NYC is here</span> — 5 boroughs, 3 tiers, celebrity vets.
+  </p>
+
+  <div class="version-buttons">
+    <button class="version-btn btn-nyc" onclick="goTo('nyc')">
+      <span class="btn-emoji">🏙️</span>
+      See NYC Version
+      <span class="btn-label">Celebrity · Premium · Standard</span>
+    </button>
+  </div>
+
+  <div class="or-divider">or</div>
+
+  <div class="version-buttons">
+    <button class="version-btn btn-nj" onclick="goTo('nj')">
+      <span class="btn-emoji">🌿</span>
+      Keep NJ Version
+      <span class="btn-label">42 clinics · 4 regions</span>
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const direct = params.get('direct');
+  if(direct === 'nj' || direct === 'nyc'){
+    goTo(direct);
+    return;
+  }
+  const pref = localStorage.getItem('vtjh_preferred_version');
+  const seenIntro = localStorage.getItem('vtjh_seen_nyc_intro');
+  if(seenIntro && pref){
+    goTo(pref);
+    return;
+  }
+})();
+
+function goTo(version){
+  const overlay = document.getElementById('fadeOverlay');
+  const target = version === 'nyc' ? 'nyc-version.html' : 'nj-version.html';
+  localStorage.setItem('vtjh_preferred_version', version);
+  localStorage.setItem('vtjh_seen_nyc_intro', 'true');
+  overlay.classList.add('active');
+  setTimeout(()=>{
+    window.location.href = target + '?transition=fadein';
+  }, 900);
+}
+</script>
+
+</body>
+</html>

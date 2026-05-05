@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Engine Running</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        :root {
+            --lamp-deep: #c2560a;
+            --lamp-mid: #e07b2e;
+            --lamp-warm: #f2a54a;
+            --lamp-soft: #f8c97d;
+            --lamp-glow: #fde8c8;
+            --white: #ffffff;
+            --text: #3b1a04;
+            --text-dim: rgba(59, 26, 4, 0.55);
+            --border-thick: 4px;
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow-y: auto;
+            background:
+                radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%),
+                linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%);
+        }
+
+        /* ═══════════════════════════════════
+           LAYOUT
+           ═══════════════════════════════════ */
+        .engine-wrap {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 100vh;
+        }
+
+        /* ═══════════════════════════════════
+           HEADER
+           ═══════════════════════════════════ */
+        .engine-header {
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            padding: 1.2rem 1.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .eh-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .eh-beacon {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .eh-beacon.loading {
+            background: var(--lamp-mid);
+            animation: pulseLoad 1.4s ease-in-out infinite;
+        }
+
+        .eh-beacon.waiting {
+            background: var(--lamp-warm);
+            animation: pulseWait 3s ease-in-out infinite;
+        }
+
+        @keyframes pulseLoad {
+            0%, 100% { opacity:0.4; transform:scale(0.85); box-shadow: 0 0 0 0 rgba(224,123,46,0.5); }
+            50% { opacity:1; transform:scale(1.15); box-shadow: 0 0 12px 4px rgba(224,123,46,0.3); }
+        }
+
+        @keyframes pulseWait {
+            0%, 100% { opacity:0.3; transform:scale(0.9); }
+            50% { opacity:0.7; transform:scale(1.05); }
+        }
+
+        .eh-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--lamp-deep);
+        }
+
+        .eh-mode {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .eh-mode.loading {
+            background: var(--lamp-mid);
+            color: var(--white);
+        }
+
+        .eh-mode.waiting {
+            background: var(--lamp-glow);
+            color: var(--lamp-deep);
+        }
+
+        .eh-clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            color: var(--text-dim);
+        }
+
+        /* ═══════════════════════════════════
+           STATUS BAR
+           ═══════════════════════════════════ */
+        .status-bar {
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            padding: 1rem 1.4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-bar .shimmer {
+            position: absolute;
+            top: 0; left: -100%; bottom: 0;
+            width: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            animation: shimmerSlide 2.5s ease-in-out infinite;
+        }
+
+        @keyframes shimmerSlide {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .sb-phase {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+            margin-bottom: 4px;
+        }
+
+        .sb-message {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+            line-height: 1.4;
+        }
+
+        .sb-notes {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        /* ═══════════════════════════════════
+           CARD CAROUSEL
+           ═══════════════════════════════════ */
+        .card-stage {
+            position: relative;
+            height: 160px;
+            perspective: 600px;
+        }
+
+        .info-card {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            padding: 1.2rem 1.4rem;
+            opacity: 0;
+            transform: translateY(12px) scale(0.96) rotateZ(0deg);
+            transition: none;
+        }
+
+        .info-card.active {
+            opacity: 1;
+            transform: translateY(0) scale(1) rotateZ(0deg);
+            z-index: 4;
+        }
+
+        .info-card.next {
+            opacity: 0.5;
+            transform: translateY(6px) scale(0.98) rotateZ(1.2deg);
+            z-index: 3;
+        }
+
+        .info-card.stacked-1 {
+            opacity: 0.25;
+            transform: translateY(10px) scale(0.96) rotateZ(-0.8deg);
+            z-index: 2;
+        }
+
+        .info-card.stacked-2 {
+            opacity: 0.1;
+            transform: translateY(14px) scale(0.94) rotateZ(0.5deg);
+            z-index: 1;
+        }
+
+        .info-card .ic-icon {
+            font-size: 1.4rem;
+            margin-bottom: 6px;
+        }
+
+        .info-card .ic-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--lamp-deep);
+            margin-bottom: 6px;
+        }
+
+        .info-card .ic-body {
+            font-size: 0.8rem;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        /* card transition animation */
+        .info-card.lifting {
+            animation: cardLift 0.6s ease-out forwards;
+        }
+
+        .info-card.entering {
+            animation: cardEnter 0.5s ease-out forwards;
+        }
+
+        @keyframes cardLift {
+            0% { opacity:1; transform: translateY(0) scale(1) rotateZ(0deg); }
+            60% { opacity:0.6; transform: translateY(-30px) scale(1.02) rotateZ(-3deg); }
+            100% { opacity:0; transform: translateY(-50px) scale(0.95) rotateZ(-5deg); }
+        }
+
+        @keyframes cardEnter {
+            0% { opacity:0; transform: translateY(20px) scale(0.94); }
+            100% { opacity:1; transform: translateY(0) scale(1); }
+        }
+
+        /* ═══════════════════════════════════
+           DEWEY LOG
+           ═══════════════════════════════════ */
+        .dewey-zone {
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+            min-height: 180px;
+        }
+
+        .dz-header {
+            padding: 0.7rem 1.4rem 0.5rem;
+            border-bottom: 2px solid rgba(194,86,10,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .dz-header .dz-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+        }
+
+        .dz-header .dz-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.45rem;
+            font-weight: 700;
+            color: var(--lamp-mid);
+            background: var(--lamp-glow);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .dz-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 1.2rem 0.8rem;
+        }
+
+        .dewey-entry {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            color: var(--text-dim);
+            line-height: 1.8;
+            border-bottom: 1px solid rgba(194,86,10,0.04);
+            padding: 2px 0;
+        }
+
+        .dewey-entry .de-index {
+            color: var(--lamp-deep);
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        .dewey-entry .de-time {
+            color: var(--lamp-mid);
+            margin-right: 8px;
+        }
+
+        .dewey-empty {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            color: var(--text-dim);
+            opacity: 0.5;
+            padding: 8px 0;
+        }
+
+        /* ═══════════════════════════════════
+           STEP GUIDE
+           ═══════════════════════════════════ */
+        .step-guide {
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            padding: 1rem 1.2rem 1.2rem;
+        }
+
+        .sg-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .sg-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+        }
+
+        .sg-source {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.4rem;
+            color: var(--text-dim);
+        }
+
+        .sg-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .sg-panel {
+            flex: 1;
+            text-align: center;
+            padding: 4px 8px;
+            position: relative;
+        }
+
+        .sg-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--lamp-glow);
+            border: 3px solid var(--lamp-warm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 6px;
+            transition: all 0.5s ease;
+        }
+
+        .sg-badge svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--lamp-deep);
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .sg-panel.lit .sg-badge {
+            background: var(--lamp-mid);
+            border-color: var(--lamp-deep);
+            box-shadow: 0 0 12px rgba(224,123,46,0.4);
+        }
+
+        .sg-panel.lit .sg-badge svg {
+            stroke: var(--white);
+        }
+
+        .sg-panel .sg-step-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.48rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--lamp-deep);
+            margin-bottom: 3px;
+        }
+
+        .sg-panel .sg-detail {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.52rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .sg-connector {
+            width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-top: 18px;
+            flex-shrink: 0;
+        }
+
+        .sg-connector svg {
+            width: 32px;
+            height: 2px;
+        }
+
+        .sg-connector line {
+            stroke: var(--lamp-warm);
+            stroke-width: 2;
+            stroke-dasharray: 4 3;
+        }
+
+        .sg-subs {
+            margin-top: 6px;
+            padding-top: 5px;
+            border-top: 1px solid rgba(194,86,10,0.08);
+        }
+
+        .sg-sub-item {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.42rem;
+            color: var(--text-dim);
+            line-height: 1.7;
+            opacity: 0.75;
+        }
+
+        /* Sequential highlight animation */
+        .sg-panel.lit-1 { animation: stepLit 0.5s 0.2s ease forwards; }
+        .sg-panel.lit-2 { animation: stepLit 0.5s 0.6s ease forwards; }
+        .sg-panel.lit-3 { animation: stepLit 0.5s 1.0s ease forwards; }
+
+        @keyframes stepLit {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* ═══════════════════════════════════
+           WORKSPACE (temp preview zone)
+           ═══════════════════════════════════ */
+        .workspace {
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            padding: 1rem 1.2rem 1.2rem;
+        }
+        .ws-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .ws-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--lamp-deep);
+        }
+        .ws-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.38rem;
+            color: var(--text-dim);
+            background: var(--lamp-glow);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .ws-wings {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .ws-wing {
+            flex: 1;
+            position: relative;
+        }
+        .ws-wing-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.42rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--lamp-mid);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .ws-pill {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.48rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 2px solid var(--lamp-warm);
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            color: var(--lamp-deep);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .ws-pill:hover {
+            background: var(--lamp-mid);
+            color: var(--white);
+            border-color: var(--lamp-deep);
+        }
+        .ws-pill.active {
+            background: var(--lamp-deep);
+            color: var(--white);
+            border-color: var(--lamp-deep);
+        }
+        .ws-pill .pill-arrow {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.5rem;
+            opacity: 0.5;
+        }
+        .ws-overlay {
+            background: var(--white);
+            border: 2px solid var(--lamp-warm);
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+            display: none;
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }
+        .ws-overlay.open {
+            display: block;
+            animation: overlayIn 0.25s ease forwards;
+        }
+        @keyframes overlayIn {
+            0% { opacity: 0; transform: translateY(-6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .ws-sub-item {
+            padding: 6px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.44rem;
+            color: var(--text);
+            border-radius: 6px;
+            cursor: default;
+            transition: background 0.15s;
+        }
+        .ws-sub-item:hover {
+            background: var(--lamp-glow);
+        }
+        .ws-sub-item .sub-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--lamp-warm);
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .ws-overflow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.38rem;
+            color: var(--text-dim);
+            text-align: center;
+            padding: 4px 0 2px;
+            border-top: 1px solid rgba(194,86,10,0.08);
+            margin-top: 4px;
+        }
+        .ws-note {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.4rem;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="engine-wrap">
+
+        <!-- ═══ HEADER ═══ -->
+        <div class="engine-header">
+            <div class="eh-left">
+                <!-- ENGINE-MODE-START -->
+                <div class="eh-beacon loading"></div>
+                <!-- ENGINE-MODE-END -->
+                <span class="eh-title">Engine Running</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <!-- ENGINE-BADGE-START -->
+                <span class="eh-mode loading">LOADING</span>
+                <span class="eh-mode loading" id="updateCount" style="margin-left:4px;font-size:0.45rem;">20</span>
+                <!-- ENGINE-BADGE-END -->
+                <span class="eh-clock" id="liveClock">--:--:--</span>
+            </div>
+        </div>
+
+        <!-- ═══ STATUS BAR ═══ -->
+        <div class="status-bar">
+            <div class="shimmer"></div>
+            <!-- STATUS-START -->
+            <div class="sb-phase">BUILDING</div>
+            <div class="sb-message">Gmail Scrape v2 — Starred Contacts → Wing Submenu Slots (4-step plan active)</div>
+            <div class="sb-notes">Step 1: gmail-scrape.py updated (is:starred, cap 20, header done) | Step 2: starred-contacts.json schema | Step 3: wire createSubmenu() | Step 4: verify</div>
+            <!-- STATUS-END -->
+        </div>
+
+        <!-- ═══ CARD CAROUSEL ═══ -->
+        <div class="card-stage" id="cardStage">
+            <!-- CARD-1-START -->
+            <div class="info-card active" data-card="0">
+                <div class="ic-icon">&#11088;</div>
+                <div class="ic-title">Step 1 — Update gmail-scrape.py</div>
+                <div class="ic-body">Query changed to is:starred (not all mail). Cap at 20. Parse sender "Name &lt;email&gt;" format. Build thread URL: mail.google.com/mail/u/0/#inbox/{thread_id}. Export to starred-contacts.json. Header + MAX_RESULTS already done.</div>
+            </div>
+            <!-- CARD-1-END -->
+            <!-- CARD-2-START -->
+            <div class="info-card next" data-card="1">
+                <div class="ic-icon">&#128196;</div>
+                <div class="ic-title">Step 2 — starred-contacts.json Schema</div>
+                <div class="ic-body">{ updated, count, contacts: [{ name, email, subject, thread_url, date }] }. Created by the scraper — 20 contacts max, one per starred email. This is the data contract between scraper and dashboard.</div>
+            </div>
+            <!-- CARD-2-END -->
+            <!-- CARD-3-START -->
+            <div class="info-card stacked-1" data-card="2">
+                <div class="ic-icon">&#128268;</div>
+                <div class="ic-title">Step 3 — Wire createSubmenu()</div>
+                <div class="ic-body">Detect Gmail pill by label text. If Gmail: load starred-contacts.json, populate sub-items with real contact names. Click → window.open(thread_url). Fallback to { slot N } if JSON missing or not Gmail pill.</div>
+            </div>
+            <!-- CARD-3-END -->
+            <!-- CARD-4-START -->
+            <div class="info-card stacked-2" data-card="3">
+                <div class="ic-icon">&#9989;</div>
+                <div class="ic-title">Step 4 — Verify + Log</div>
+                <div class="ic-body">Chad runs scraper (OAuth is his). Confirm JSON populates submenu. Log to railroad: results block, step memory folder, Engine Running dewey entry. Full loop closed.</div>
+            </div>
+            <!-- CARD-4-END -->
+        </div>
+
+        <!-- ═══ STEP GUIDE ═══ -->
+        <div class="step-guide" id="stepGuide">
+            <div class="sg-header">
+                <span class="sg-label">Step Guide</span>
+                <span class="sg-source" id="sgSource">--</span>
+            </div>
+            <div class="sg-row" id="sgRow">
+                <!-- Steps rendered by JS from assembled-steps.json -->
+            </div>
+        </div>
+
+        <!-- ═══ WORKSPACE (temp preview) ═══ -->
+        <div class="workspace" id="workspace">
+            <div class="ws-header">
+                <span class="ws-label">Workspace — Who Does What</span>
+                <span class="ws-tag">ACTIVE</span>
+            </div>
+            <div class="ws-wings">
+                <!-- LEFT: CLAUDE'S TASKS -->
+                <div class="ws-wing" id="leftWing">
+                    <div class="ws-wing-label">Claude Does</div>
+                    <button class="ws-pill active" data-wing="left" data-idx="0">Scraper Code<span class="pill-arrow">&#9656;</span></button>
+                    <div class="ws-overlay open" id="left-overlay-0">
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>Header + MAX_RESULTS done</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>main() → is:starred query</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>parse_sender() — "Name &lt;email&gt;"</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>build_thread_url() — Gmail deep link</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>Export starred-contacts.json</div>
+                    </div>
+                    <button class="ws-pill" data-wing="left" data-idx="1">Dashboard Wire<span class="pill-arrow">&#9656;</span></button>
+                    <div class="ws-overlay" id="left-overlay-1">
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>createSubmenu() rewritten</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>Gmail pill detects + loads JSON</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>Click slot → opens thread</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>ABC default, most-recent-4 ready</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>Fallback { slot N } if no data</div>
+                    </div>
+                </div>
+                <!-- RIGHT: CHAD'S TASKS -->
+                <div class="ws-wing" id="rightWing">
+                    <div class="ws-wing-label">Chad Does</div>
+                    <button class="ws-pill" data-wing="right" data-idx="0">Google Cloud Setup<span class="pill-arrow">&#9656;</span></button>
+                    <div class="ws-overlay" id="right-overlay-0">
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#ef4444;"></span>Go to console.cloud.google.com</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#ef4444;"></span>Create project or use existing</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#ef4444;"></span>Enable Gmail API</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#ef4444;"></span>Create OAuth2 credentials (Desktop)</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#ef4444;"></span>Download credentials.json → ADMIN/tools/</div>
+                    </div>
+                    <button class="ws-pill" data-wing="right" data-idx="1">Run + Verify<span class="pill-arrow">&#9656;</span></button>
+                    <div class="ws-overlay" id="right-overlay-1">
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#ef4444;"></span>python gmail-scrape.py (first run → browser auth)</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#10b981;"></span>Auto-deploys to data/feeds/ (no manual copy)</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#ef4444;"></span>Open wing dashboard → click Gmail pill</div>
+                        <div class="ws-sub-item"><span class="sub-dot" style="background:#ef4444;"></span>Confirm contacts show in submenu</div>
+                    </div>
+                </div>
+            </div>
+            <div class="ws-note">&#x1F7E2; Claude done &nbsp; &#x1F7E1; Claude pending &nbsp; &#x1F534; Chad's steps</div>
+        </div>
+
+        <!-- ═══ DEWEY LOG ═══ -->
+        <div class="dewey-zone">
+            <div class="dz-header">
+                <span class="dz-label">Dewey Log</span>
+                <span class="dz-count" id="deweyCount">0 entries</span>
+            </div>
+            <div class="dz-body" id="deweyBody">
+                <!-- DEWEY-START -->
+                <div class="dewey-entry"><span class="de-index">[002.01]</span><span class="de-time">17:38</span>Engine activated — S2 Step 1 Connect Social Accounts marked done by Chad</div>
+                <div class="dewey-entry"><span class="de-index">[002.02]</span><span class="de-time">17:44</span>Teeing up S2 Step 2 Run Contact Enrichment — waiting on Chad</div>
+                <div class="dewey-entry"><span class="de-index">[000.00]</span><span class="de-time">17:45</span>Added update counter next to LOADING badge</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">17:46</span>Staged Gmail Scrape prep briefing — 4 cards: what it does, what you need, what you get, why it matters</div>
+                <div class="dewey-entry"><span class="de-index">[000.00]</span><span class="de-time">17:48</span>Counter rule locked — bump #updateCount on every edit, no exceptions</div>
+                <div class="dewey-entry"><span class="de-index">[000.00]</span><span class="de-time">17:50</span>Q2 dropped to control panel — 3-panel presentation flow question</div>
+                <div class="dewey-entry"><span class="de-index">[000.00]</span><span class="de-time">17:51</span>Q1 updated — counter logic permanence question</div>
+                <div class="dewey-entry"><span class="de-index">[000.00]</span><span class="de-time">18:22</span>Q3 — Should Step Guide load from JSON via fetch, or stay inline-hardcoded? file:// blocks fetch (CORS), so inline is the only way it works locally. Serve via http to unlock live JSON loading?</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">01:48</span>Gmail Scrape replay — running S1 Step 1 through Engine Running + verify/log flow</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">01:50</span>Gmail Scrape verified — tool exists, results block logged, step-log confirmed, memory folder intact</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">02:15</span>Gmail Scrape v2 plan loaded — 4-step build: is:starred query, starred-contacts.json, createSubmenu() wire, verify. Header + MAX_RESULTS already edited. Resuming from Chad's plan.</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">02:20</span>Step Guide + Workspace updated — full 4-step plan laid out visually. Workspace shows file-level breakdown with color-coded status dots. Planning inside Engine Running.</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">02:25</span>Step Guide merged with c9-1-steps format — arrow step-maps under each icon badge. 4 panels: Scraper, JSON Schema, Wire Dashboard, Verify. JetBrains Mono, left-aligned arrows.</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">02:35</span>Dashboard createSubmenu() rewritten — global slot logic: most-recent-4 visible, ABC default, Gmail pill loads starred-contacts.json. Workspace split: Claude Does vs Chad Does.</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">02:42</span>gmail-scrape.py main() rewritten — is:starred query, parse_sender(), build_thread_url(), parse_date(), exports starred-contacts.json. All Claude code complete. Ball is Chad's now.</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">02:50</span>Folder hierarchy built — data/feeds/ + data/config/ created. Scraper auto-deploys to data/feeds/gmail.json. Dashboard fetches from data/feeds/. Pickup prompt updated in triple-brain. No manual copy step.</div>
+                <div class="dewey-entry"><span class="de-index">[001.01]</span><span class="de-time">03:08</span>Submenu slots simplified — name (bold) + email only. Scraper grabs ALL starred, trims to 20 for display. credentials.json in place. Ready to run.</div>
+                <!-- DEWEY-END -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ── Live Clock ── */
+        function tick() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2,'0');
+            const m = String(now.getMinutes()).padStart(2,'0');
+            const s = String(now.getSeconds()).padStart(2,'0');
+            document.getElementById('liveClock').textContent = h + ':' + m + ':' + s;
+        }
+        tick();
+        setInterval(tick, 1000);
+
+        /* ── Card Carousel — 7s cycle ── */
+        const cards = document.querySelectorAll('.info-card');
+        const positions = ['active','next','stacked-1','stacked-2'];
+        let offset = 0;
+
+        function cycleCards() {
+            const top = cards[offset % cards.length];
+            top.classList.add('lifting');
+
+            setTimeout(function() {
+                offset++;
+                cards.forEach(function(c) {
+                    c.classList.remove('active','next','stacked-1','stacked-2','lifting','entering');
+                });
+                cards.forEach(function(c, i) {
+                    const pos = (i - (offset % cards.length) + cards.length) % cards.length;
+                    c.classList.add(positions[pos]);
+                    if (pos === 0) c.classList.add('entering');
+                });
+            }, 600);
+        }
+
+        if (cards.length > 1) {
+            setInterval(cycleCards, 7000);
+        }
+
+        /* ── Step Guide ── */
+        (function() {
+            const SG_ICONS = {
+                key: "M12.65 10a6 6 0 1 0-7.3 7.34L7 19l1.5-1.5L10 19l1.5-1.5L13 19l1-1v-2h2l1.05-1.05A6 6 0 0 0 12.65 10zM7 13.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z",
+                download: "M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2",
+                upload: "M12 15V3m0 0L8 7m4-4l4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2",
+                folder: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z",
+                check: "M5 13l4 4L19 7",
+                link: "M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-.5.5M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l.5-.5",
+                search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.35-4.35",
+                edit: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
+                send: "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
+                shield: "M12 2l8 4v6c0 5.25-3.5 10.13-8 11.5C7.5 22.13 4 17.25 4 12V6l8-4z",
+                eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
+                refresh: "M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15",
+                plug: "M12 2v6m0 8v6m-5-15h10M7 17h10M9 8v8M15 8v8",
+                chart: "M18 20V10M12 20V4M6 20v-6",
+                user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
+                gear: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1.08z",
+                bolt: "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
+                inbox: "M22 12h-6l-2 3H10l-2-3H2M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z",
+                palette: "M12 2a10 10 0 0 0-1 19.95c.55.05 1.05-.35 1.05-.9v-1.16c0-.64-.47-1.37-1.12-1.47A6 6 0 1 1 18 12c0 1.1-.9 2-2 2h-1a1 1 0 0 0-1 1v3.05M7.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM12 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM16.5 12a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z",
+                globe: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"
+            };
+
+            function sgSVG(iconName) {
+                var d = SG_ICONS[iconName] || SG_ICONS.gear;
+                return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="' + d + '"/></svg>';
+            }
+
+            function renderStepGuide(steps, source) {
+                var row = document.getElementById('sgRow');
+                var srcEl = document.getElementById('sgSource');
+                row.innerHTML = '';
+                srcEl.textContent = source || '--';
+
+                steps.forEach(function(step, i) {
+                    if (i > 0) {
+                        var conn = document.createElement('div');
+                        conn.className = 'sg-connector';
+                        conn.innerHTML = '<svg><line x1="0" y1="1" x2="32" y2="1"/></svg>';
+                        row.appendChild(conn);
+                    }
+                    var panel = document.createElement('div');
+                    panel.className = 'sg-panel lit-' + (i + 1);
+                    var subsHtml = '';
+                    if (step.subs && step.subs.length) {
+                        subsHtml = '<div class="sg-subs">';
+                        step.subs.forEach(function(s) {
+                            subsHtml += '<div class="sg-sub-item">› ' + s + '</div>';
+                        });
+                        subsHtml += '</div>';
+                    }
+                    panel.innerHTML =
+                        '<div class="sg-badge">' + sgSVG(step.icon) + '</div>' +
+                        '<div class="sg-step-label">' + step.label + '</div>' +
+                        '<div class="sg-detail">' + step.detail.replace(/\n/g, '<br>') + '</div>' +
+                        subsHtml;
+                    row.appendChild(panel);
+
+                    // Sequential light-up
+                    setTimeout(function() {
+                        panel.classList.add('lit');
+                    }, 300 * (i + 1));
+                });
+            }
+
+            // Current steps (inline — works on file:// and http://)
+            var CURRENT_STEPS = {
+                source: 'Gmail Scrape v2 — Full Build Plan',
+                steps: [
+                    { icon: 'edit', label: 'Scraper', detail: 'Starred emails, top 20', subs: ['Query is:starred', 'Parse sender name', 'Build thread URL', 'Export JSON'] },
+                    { icon: 'folder', label: 'JSON', detail: 'Contact export file', subs: ['name + email', 'subject + date', 'thread_url link'] },
+                    { icon: 'plug', label: 'Dashboard', detail: 'Gmail pill, real names', subs: ['Detect Gmail label', 'Fetch JSON', 'Populate slots', 'Click opens thread'] },
+                    { icon: 'check', label: 'Verify', detail: 'Run it, confirm slots', subs: ['Run scraper', 'Check JSON output', 'Test submenu', 'Log to railroad'] }
+                ]
+            };
+
+            // Try fetch first, fall back to inline
+            fetch('engine-running-app/assembled-steps.json?t=' + Date.now())
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data && data.steps && data.steps.length) {
+                        renderStepGuide(data.steps, data.source);
+                    }
+                })
+                .catch(function() {
+                    renderStepGuide(CURRENT_STEPS.steps, CURRENT_STEPS.source);
+                });
+
+        })();
+
+        /* ── Workspace pill toggles ── */
+        (function() {
+            var pills = document.querySelectorAll('.ws-pill');
+            pills.forEach(function(pill) {
+                pill.addEventListener('click', function() {
+                    var wing = pill.getAttribute('data-wing');
+                    var idx = pill.getAttribute('data-idx');
+                    var overlay = document.getElementById(wing + '-overlay-' + idx);
+                    var wasOpen = overlay.classList.contains('open');
+
+                    // Close all overlays first
+                    document.querySelectorAll('.ws-overlay').forEach(function(o) { o.classList.remove('open'); });
+                    document.querySelectorAll('.ws-pill').forEach(function(p) { p.classList.remove('active'); });
+
+                    // Toggle this one
+                    if (!wasOpen) {
+                        overlay.classList.add('open');
+                        pill.classList.add('active');
+                    }
+                });
+            });
+        })();
+
+        /* ── Dewey Count ── */
+        (function() {
+            const body = document.getElementById('deweyBody');
+            const entries = body.querySelectorAll('.dewey-entry');
+            const countEl = document.getElementById('deweyCount');
+            countEl.textContent = entries.length + (entries.length === 1 ? ' entry' : ' entries');
+
+            if (entries.length > 0) {
+                body.scrollTop = body.scrollHeight;
+            }
+        })();
+    </script>
+</body>
+</html>

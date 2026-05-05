@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>stack-board → pretty bridge</title>
+<style>
+  :root{
+    --bg:#0b0d12;
+    --panel:#10141d;
+    --panel2:#0e1118;
+    --line:#232838;
+    --ink:#e7ecf2;
+    --dim:#8a93a6;
+    --amber:#ffd86b;
+    --sky:#7df9ff;
+    --green:#39ff14;
+    --magenta:#ff2bd6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+  body{padding:22px;max-width:1400px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 4px;letter-spacing:.5px}
+  h1 .amber{color:var(--amber)}
+  h1 .sky{color:var(--sky)}
+  .sub{font-size:12px;color:var(--dim);margin-bottom:18px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+  section h2{margin:0 0 10px;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber)}
+  section h2 .num{display:inline-block;background:var(--panel2);border:1px solid var(--line);color:var(--sky);padding:2px 8px;border-radius:999px;font-size:11px;margin-right:8px}
+  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:10px 0 4px}
+  input[type=text],textarea,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:10px 12px;border-radius:8px;font-family:inherit;font-size:13px}
+  textarea{min-height:90px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row > *{flex:1;min-width:240px}
+  button{cursor:pointer;background:var(--amber);color:#0b0d12;border:0;padding:10px 18px;border-radius:8px;font-weight:600;font-size:13px;letter-spacing:.5px}
+  button.secondary{background:transparent;color:var(--sky);border:1px solid var(--sky)}
+  button.big{padding:14px 28px;font-size:14px;background:linear-gradient(90deg,var(--amber),var(--sky));color:#0b0d12}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+
+  /* preview */
+  .preview-frame{background:#070912;border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:35% 65%;gap:18px;min-height:420px}
+  .preview-left{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-y:auto;max-height:520px}
+  .preview-left h3{margin:0 0 10px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber)}
+  .ach{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#0b0d12;margin-bottom:6px}
+  .ach .dot{width:10px;height:10px;border-radius:50%;background:var(--sky);flex-shrink:0;box-shadow:0 0 8px var(--sky)}
+  .ach .label{font-size:12px;flex:1;color:var(--ink)}
+  .ach .badge{font-size:10px;background:#1a1f2c;color:var(--amber);padding:2px 7px;border-radius:999px;border:1px solid var(--line)}
+  .ach.j2 .dot{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+
+  .preview-right{display:flex;flex-direction:column;gap:10px}
+  .controls-bar{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+  .controls-bar input[type=range]{flex:1;accent-color:var(--sky)}
+  .controls-bar .toggle{background:transparent;color:var(--amber);border:1px solid var(--amber);padding:6px 12px;border-radius:999px;font-size:11px;font-weight:600}
+  .stage{flex:1;background:radial-gradient(circle at 50% 40%,#1a2030 0%,#070912 70%);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;min-height:300px;position:relative;overflow:hidden}
+  .stage .placeholder{width:60%;aspect-ratio:1/1;background:linear-gradient(135deg,var(--amber),var(--sky));border-radius:14px;display:flex;align-items:center;justify-content:center;color:#0b0d12;font-weight:700;font-size:14px;box-shadow:0 20px 60px rgba(125,249,255,.25);transform:perspective(800px) rotateX(-6deg) rotateY(10deg)}
+
+  /* output box */
+  .output-box{background:#020308;border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:12px}
+  .output-box pre{margin:0;max-height:400px;overflow:auto;font-size:11px;line-height:1.5;color:#aebccd;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .pill{display:inline-block;font-size:10px;background:var(--panel2);border:1px solid var(--line);color:var(--sky);padding:3px 9px;border-radius:999px;margin-right:6px}
+  .hint{font-size:11px;color:var(--dim);margin-top:8px;font-style:italic}
+  .url-contract{background:var(--panel2);border-left:3px solid var(--sky);padding:10px 14px;font-size:11px;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--sky);border-radius:6px;margin-top:8px;word-break:break-all}
+</style>
+</head>
+<body>
+
+<h1><span class="amber">stack-board</span> <span style="opacity:.4">→</span> <span class="sky">pretty</span> bridge</h1>
+<div class="sub">Promote a stack-board project into a Fortnite-style pretty.html. Pre-fills from <code>?project=</code> URL param, or pick manually.</div>
+
+<!-- ===== SECTION 1 — INPUT ===== -->
+<section>
+  <h2><span class="num">1</span> Project source</h2>
+  <div class="row">
+    <div>
+      <label>Project folder name (auto-filled from <code>?project=</code>)</label>
+      <input type="text" id="projectName" placeholder="!! 2026-04-25 — example project">
+      <div class="hint">URL contract: <code>stack-to-pretty-bridge.html?project=&lt;URL-encoded folder name&gt;</code></div>
+    </div>
+    <div>
+      <label>Or paste recent projects (one per line)</label>
+      <select id="projectDropdown">
+        <option value="">— pick from dropdown —</option>
+      </select>
+    </div>
+  </div>
+
+  <label>JOB 1 step labels (one per line — become left-side achievements, sky dot)</label>
+  <textarea id="job1Steps" placeholder="research the topic&#10;sketch the layout&#10;build the prototype&#10;test the flow&#10;ship it"></textarea>
+
+  <label>JOB 2 step labels (optional — become amber dot achievements)</label>
+  <textarea id="job2Steps" placeholder="prep next iteration&#10;promote to pretty&#10;add to dashboard"></textarea>
+
+  <label>Centerpiece label / hero name</label>
+  <input type="text" id="heroName" placeholder="e.g. KOI · Velvet Hours">
+
+  <div class="toolbar">
+    <button class="secondary" onclick="loadFromURL()">re-pull URL param</button>
+    <button class="secondary" onclick="loadDemoData()">load demo data</button>
+    <button onclick="renderPreview()">refresh preview ↓</button>
+  </div>
+</section>
+
+<!-- ===== SECTION 2 — PREVIEW ===== -->
+<section>
+  <h2><span class="num">2</span> Preview · what pretty.html will look like</h2>
+  <div class="preview-frame">
+    <div class="preview-left">
+      <h3>Achievements</h3>
+      <div id="achList"></div>
+    </div>
+    <div class="preview-right">
+      <div class="controls-bar">
+        <span style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px">skin</span>
+        <input type="range" min="1" max="5" value="1" id="skinSlider">
+        <button class="toggle" id="avatarToggle">JPG ↔ Avatar</button>
+      </div>
+      <div class="stage">
+        <div class="placeholder" id="stagePlaceholder">centerpiece JPG<br>(draggable)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 3 — GENERATE ===== -->
+<section>
+  <h2><span class="num">3</span> Generate pretty.html</h2>
+  <div class="hint">file:// can't write files — click GENERATE, then copy the output and paste into a new <code>pretty.html</code> inside the project's wrapper folder.</div>
+  <div class="toolbar" style="margin-top:14px">
+    <button class="big" onclick="generatePretty()">GENERATE pretty.html ▶</button>
+    <button class="secondary" onclick="copyOutput()">copy to clipboard</button>
+    <button class="secondary" onclick="downloadOutput()">download .html</button>
+  </div>
+  <div class="output-box">
+    <pre id="output">// click GENERATE to produce the pretty.html file content here...</pre>
+  </div>
+
+  <div style="margin-top:14px">
+    <span class="pill">URL contract</span>
+    <div class="url-contract">stack-to-pretty-bridge.html?project=&lt;encodeURIComponent(folder name)&gt;</div>
+  </div>
+</section>
+
+<script>
+// ============ URL PARAM PRE-FILL ============
+function loadFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  const proj = params.get('project');
+  if(proj){
+    document.getElementById('projectName').value = decodeURIComponent(proj);
+  }
+}
+
+function loadDemoData(){
+  document.getElementById('projectName').value = '!! 2026-04-25 — demo project';
+  document.getElementById('job1Steps').value = 'research the topic\nsketch the layout\nbuild the prototype\ntest the flow\nship it';
+  document.getElementById('job2Steps').value = 'prep next iteration\npromote to pretty\nadd to dashboard';
+  document.getElementById('heroName').value = 'KOI · Velvet Hours';
+  renderPreview();
+}
+
+// ============ ACHIEVEMENT MAPPING ============
+// JOB 1 + JOB 2 step labels → "achievement" rows
+// JOB 1 = sky dot, JOB 2 = amber dot, count badge increments per row
+function renderPreview(){
+  const j1 = document.getElementById('job1Steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const j2 = document.getElementById('job2Steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const list = document.getElementById('achList');
+  list.innerHTML = '';
+  j1.forEach((label,i) => {
+    list.innerHTML += `<div class="ach"><div class="dot"></div><div class="label">${escapeHTML(label)}</div><div class="badge">J1·${i+1}</div></div>`;
+  });
+  j2.forEach((label,i) => {
+    list.innerHTML += `<div class="ach j2"><div class="dot"></div><div class="label">${escapeHTML(label)}</div><div class="badge">J2·${i+1}</div></div>`;
+  });
+  const hero = document.getElementById('heroName').value || 'centerpiece JPG';
+  document.getElementById('stagePlaceholder').innerHTML = escapeHTML(hero) + '<br><span style="opacity:.7;font-size:11px">(draggable)</span>';
+}
+
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.getElementById('avatarToggle').addEventListener('click', e => {
+  const ph = document.getElementById('stagePlaceholder');
+  if(ph.dataset.mode === 'avatar'){
+    ph.dataset.mode = 'jpg';
+    ph.style.background = 'linear-gradient(135deg,var(--amber),var(--sky))';
+  } else {
+    ph.dataset.mode = 'avatar';
+    ph.style.background = 'linear-gradient(135deg,var(--magenta),var(--green))';
+  }
+});
+
+// ============ PRETTY.HTML GENERATOR ============
+function generatePretty(){
+  const project = document.getElementById('projectName').value || 'untitled project';
+  const j1 = document.getElementById('job1Steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const j2 = document.getElementById('job2Steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const hero = document.getElementById('heroName').value || 'centerpiece';
+
+  const achHTML = [
+    ...j1.map((l,i) => `      <div class="ach"><div class="dot sky"></div><div class="lbl">${escapeHTML(l)}</div><div class="bdg">J1·${i+1}</div></div>`),
+    ...j2.map((l,i) => `      <div class="ach"><div class="dot amber"></div><div class="lbl">${escapeHTML(l)}</div><div class="bdg">J2·${i+1}</div></div>`)
+  ].join('\n');
+
+  const out = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${escapeHTML(project)} · pretty</title>
+<style>
+  :root{--bg:#0b0d12;--panel:#10141d;--panel2:#0e1118;--line:#232838;--ink:#e7ecf2;--dim:#8a93a6;--amber:#ffd86b;--sky:#7df9ff}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif;height:100vh;overflow:hidden}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  header .tabs{display:flex;gap:6px}
+  header .tab{background:transparent;border:1px solid var(--line);color:var(--dim);padding:6px 14px;border-radius:999px;cursor:pointer;font-size:12px}
+  header .tab.active{color:var(--bg);background:var(--amber);border-color:var(--amber)}
+  header .brand{font-size:13px;color:var(--sky);letter-spacing:2px;text-transform:uppercase}
+  main{display:grid;grid-template-columns:35% 65%;gap:18px;padding:18px;height:calc(100vh - 60px)}
+  .left{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-y:auto}
+  .left h2{margin:0 0 12px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber)}
+  .ach{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);margin-bottom:7px;transition:all .15s}
+  .ach:hover{border-color:var(--sky);transform:translateX(2px)}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .dot.sky{background:var(--sky);box-shadow:0 0 8px var(--sky)}
+  .dot.amber{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+  .lbl{flex:1;font-size:13px}
+  .bdg{font-size:10px;background:#1a1f2c;color:var(--amber);padding:2px 7px;border-radius:999px;border:1px solid var(--line)}
+  .right{display:flex;flex-direction:column;gap:12px}
+  .controls{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+  .controls input[type=range]{flex:1;accent-color:var(--sky)}
+  .controls label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+  .controls button{background:transparent;color:var(--amber);border:1px solid var(--amber);padding:6px 14px;border-radius:999px;font-size:11px;cursor:pointer;font-weight:600}
+  .stage{flex:1;background:radial-gradient(circle at 50% 40%,#1a2030 0%,#070912 70%);border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:grab;user-select:none;touch-action:none}
+  .stage:active{cursor:grabbing}
+  #centerpiece{width:55%;aspect-ratio:1/1;background:linear-gradient(135deg,var(--amber),var(--sky));border-radius:18px;display:flex;align-items:center;justify-content:center;color:#0b0d12;font-weight:700;font-size:18px;text-align:center;padding:20px;box-shadow:0 30px 80px rgba(125,249,255,.3);transition:transform .05s linear;will-change:transform}
+  #centerpiece[data-mode=avatar]{background:linear-gradient(135deg,#ff2bd6,#39ff14);box-shadow:0 30px 80px rgba(255,43,214,.4)}
+  footer{position:fixed;bottom:0;left:0;right:0;padding:10px 22px;background:var(--panel2);border-top:1px solid var(--line);font-size:11px;color:var(--dim);display:flex;justify-content:space-between}
+</style>
+</head>
+<body data-sample="A">
+<header>
+  <div class="tabs">
+    <button class="tab active" data-sample-tab="A">Sample A</button>
+    <button class="tab" data-sample-tab="B">Sample B</button>
+    <button class="tab" data-sample-tab="C">Sample C</button>
+  </div>
+  <div class="brand">${escapeHTML(project)}</div>
+</header>
+<main>
+  <aside class="left">
+    <h2>Achievements</h2>
+${achHTML}
+  </aside>
+  <section class="right">
+    <div class="controls">
+      <label>skin</label>
+      <input type="range" id="skin" min="1" max="5" value="1">
+      <button id="toggleAvatar">JPG ↔ Avatar</button>
+    </div>
+    <div class="stage" id="stage">
+      <div id="centerpiece" data-mode="jpg">${escapeHTML(hero)}</div>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  const stage=document.getElementById('stage'),img=document.getElementById('centerpiece');
+  let rx=-6,ry=10,scale=1,dragging=false,lastX=0,lastY=0;
+  const apply=()=>{img.style.transform=\`perspective(900px) rotateX(\${rx}deg) rotateY(\${ry}deg) scale(\${scale})\`};
+  stage.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;stage.setPointerCapture(e.pointerId)});
+  stage.addEventListener('pointerup',()=>{dragging=false});
+  stage.addEventListener('pointermove',e=>{
+    if(dragging){ry+=(e.clientX-lastX)*0.4;rx-=(e.clientY-lastY)*0.4;lastX=e.clientX;lastY=e.clientY;apply()}
+  });
+  stage.addEventListener('wheel',e=>{e.preventDefault();scale=Math.max(.5,Math.min(2.4,scale-e.deltaY*.0015));apply()},{passive:false});
+  document.querySelectorAll('[data-sample-tab]').forEach(t=>t.addEventListener('click',()=>{
+    document.body.dataset.sample=t.dataset.sampleTab;
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+  }));
+  document.getElementById('toggleAvatar').addEventListener('click',()=>{
+    img.dataset.mode=img.dataset.mode==='avatar'?'jpg':'avatar';
+  });
+  document.getElementById('skin').addEventListener('input',e=>{
+    const hue=(e.target.value-1)*60;
+    img.style.filter=\`hue-rotate(\${hue}deg)\`;
+  });
+  apply();
+})();
+<\/script>
+</body>
+</html>`;
+
+  document.getElementById('output').textContent = out;
+}
+
+function copyOutput(){
+  const txt = document.getElementById('output').textContent;
+  navigator.clipboard.writeText(txt).then(()=>alert('copied to clipboard'));
+}
+
+function downloadOutput(){
+  const txt = document.getElementById('output').textContent;
+  const blob = new Blob([txt], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pretty.html';
+  a.click();
+}
+
+// ============ INIT ============
+loadFromURL();
+loadDemoData();
+</script>
+</body>
+</html>

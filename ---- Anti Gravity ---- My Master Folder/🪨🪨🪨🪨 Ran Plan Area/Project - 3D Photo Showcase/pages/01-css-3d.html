@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSS 3D Tilt — 3D Photo Showcase</title>
+
+  <link rel="stylesheet" href="../assets/tokens.css" />
+  <link rel="stylesheet" href="../assets/base.css" />
+  <link rel="stylesheet" href="../nav/nav.css" />
+
+  <style>
+    /* ============================================================
+       Page: 01 — CSS 3D Tilt
+       ============================================================ */
+
+    .page {
+      min-height: 100vh;
+      padding: 56px 64px 96px;
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+
+    /* ---------- Title bar ---------- */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      gap: 24px;
+      padding-bottom: 20px;
+      border-bottom: var(--line-w-fallback) solid rgba(255, 212, 0, 0.22);
+      position: relative;
+    }
+    @supports (border-bottom-width: 0.5px) {
+      .page-header { border-bottom-width: 0.5px; }
+    }
+    .page-header::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -1px;
+      width: 88px;
+      height: 1px;
+      background: var(--line-yellow);
+      box-shadow: 0 0 10px rgba(255, 212, 0, 0.55);
+    }
+    .page-title {
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      line-height: 1;
+      color: var(--ink-100);
+    }
+    .page-title .spark {
+      color: var(--line-yellow);
+      font-weight: 500;
+      margin-right: 12px;
+      font-feature-settings: "tnum" 1;
+    }
+    .page-intro {
+      margin-left: auto;
+      max-width: 420px;
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+      line-height: 1.6;
+      text-align: right;
+    }
+    .page-intro .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--line-yellow);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(255, 212, 0, 0.65);
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    /* ---------- Showcase grid (camera lives here) ---------- */
+    .showcase-grid {
+      perspective: 1400px;
+      perspective-origin: 50% 40%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+      gap: 44px;
+      width: 100%;
+    }
+    @media (max-width: 1100px) {
+      .showcase-grid {
+        grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+        gap: 32px;
+      }
+      .page { padding: 40px 32px 80px; }
+    }
+    @media (max-width: 720px) {
+      .showcase-grid { grid-template-columns: 1fr; gap: 24px; }
+      .page { padding: 32px 20px 64px; }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .page-intro { margin-left: 0; text-align: left; }
+    }
+
+    /* ---------- Tile (stage) ---------- */
+    .tile {
+      aspect-ratio: 16 / 9;
+      position: relative;
+      transform-style: preserve-3d;
+      transform: perspective(1400px) rotateX(0) rotateY(0) translateZ(0);
+      transition:
+        transform 140ms ease-out,
+        box-shadow 240ms ease-out;
+      will-change: transform;
+      border-radius: 14px;
+
+      /* razor-thin yellow border */
+      border: var(--line-w-fallback) solid rgba(250, 204, 21, 0.85);
+      box-shadow:
+        0 1px 0 rgba(250, 204, 21, 0.22) inset,
+        0 30px 60px -20px rgba(0, 0, 0, 0.7),
+        0 12px 24px -12px rgba(0, 0, 0, 0.5);
+
+      /* stagger-fade on load */
+      opacity: 0;
+      transform-origin: center;
+      animation: tile-in 720ms var(--ease-out) both;
+    }
+    @supports (border-width: 0.5px) {
+      .tile { border-width: 0.5px; }
+    }
+
+    @keyframes tile-in {
+      0%   { opacity: 0; transform: perspective(1400px) translateZ(-40px) rotateX(4deg); }
+      100% { opacity: 1; transform: perspective(1400px) translateZ(0)     rotateX(0);    }
+    }
+
+    /* stagger delays — 12 tiles */
+    .tile:nth-child(1)  { animation-delay:   0ms; }
+    .tile:nth-child(2)  { animation-delay:  60ms; }
+    .tile:nth-child(3)  { animation-delay: 120ms; }
+    .tile:nth-child(4)  { animation-delay: 180ms; }
+    .tile:nth-child(5)  { animation-delay: 240ms; }
+    .tile:nth-child(6)  { animation-delay: 300ms; }
+    .tile:nth-child(7)  { animation-delay: 360ms; }
+    .tile:nth-child(8)  { animation-delay: 420ms; }
+    .tile:nth-child(9)  { animation-delay: 480ms; }
+    .tile:nth-child(10) { animation-delay: 540ms; }
+    .tile:nth-child(11) { animation-delay: 600ms; }
+    .tile:nth-child(12) { animation-delay: 660ms; }
+
+    /* ---------- Tile surface (dark gradient card) ---------- */
+    .tile-surface {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      overflow: hidden;
+      background: linear-gradient(160deg, #15151c 0%, #0a0a10 55%, #05050a 100%);
+      transform: translateZ(0);
+    }
+
+    /* faint inner yellow hairline for extra depth */
+    .tile-surface::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(255, 212, 0, 0.06);
+    }
+
+    /* ---------- Photo layer ---------- */
+    .tile-photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.9;
+      transform: translateZ(20px);
+      transition: transform 200ms ease-out, opacity 240ms ease-out;
+      background: linear-gradient(135deg, #1b1b24 0%, #0a0a12 60%, #05050a 100%);
+    }
+    .tile:hover .tile-photo { transform: translateZ(32px) scale(1.03); }
+
+    /* dark vignette so caption is always readable */
+    .tile-surface::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
+      transform: translateZ(40px);
+      border-radius: inherit;
+    }
+
+    /* ---------- Caption ---------- */
+    .tile-caption {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 18px;
+      color: #f5f5f7;
+      transform: translateZ(60px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .tile-caption h3 {
+      font-size: 14px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 600;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+    }
+    .tile-caption .tile-num {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: var(--line-yellow);
+      font-feature-settings: "tnum" 1;
+      text-shadow: 0 0 10px rgba(255, 212, 0, 0.5);
+    }
+
+    /* ---------- Placeholder state (no photo) ---------- */
+    .tile-photo.is-placeholder {
+      opacity: 1;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(255, 212, 0, 0.06) 0%, transparent 55%),
+        linear-gradient(160deg, #1b1b24 0%, #0c0c14 55%, #05050a 100%);
+    }
+
+    /* ---------- Neighbor feedback (Cover Flow focus) ---------- */
+    @supports selector(:has(*)) {
+      .showcase-grid:has(.tile:hover) .tile:not(:hover) {
+        transform: perspective(1400px) translateZ(-4px);
+        opacity: 0.82;
+        transition: transform 240ms ease-out, opacity 240ms ease-out;
+      }
+    }
+
+    /* ---------- Focus-visible (keyboard) ---------- */
+    .tile:focus-visible {
+      outline: none;
+      transform: perspective(1400px) rotateX(-4deg) rotateY(4deg) translateZ(18px);
+      box-shadow:
+        0 0 0 1px rgba(255, 212, 0, 0.9),
+        0 30px 60px -20px rgba(0, 0, 0, 0.8),
+        0 0 24px rgba(255, 212, 0, 0.25);
+    }
+
+    /* ---------- Reduced motion ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      .tile {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+      }
+      .tile:hover .tile-photo { transform: translateZ(20px); }
+    }
+  </style>
+</head>
+<body class="has-left-nav">
+
+  <!-- Left nav mount point — populated at runtime -->
+  <div id="nav-mount"></div>
+
+  <main class="page" role="main">
+
+    <header class="page-header">
+      <h1 class="page-title"><span class="spark">01 /</span>CSS 3D Tilt</h1>
+      <p class="page-intro">
+        <span class="dot"></span>Mouse-tracked perspective · preserve-3d · razor-thin yellow hairline
+      </p>
+    </header>
+
+    <section class="showcase-grid" aria-label="Photo showcase">
+      <!-- Tiles injected here -->
+    </section>
+
+  </main>
+
+  <!-- ============================================================
+       Nav injection + tile build + tilt logic
+       ============================================================ -->
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------- Inline nav fallback (keeps file viewable via file://) ----------
+      var NAV_HTML = '' +
+        '<nav class="left-nav" aria-label="Primary">' +
+          '<div class="left-nav__inner">' +
+            '<a class="left-nav__brand" href="../index.html" aria-label="Home">' +
+              '<span class="left-nav__brand-mark"></span>' +
+              '<span class="left-nav__brand-text">3D &middot; Showcase</span>' +
+            '</a>' +
+            '<ul class="left-nav__list" role="list">' +
+              '<li class="left-nav__item"><a class="left-nav__link" href="../index.html" data-page="index"><span class="left-nav__idx">00</span><span class="left-nav__label">Home</span></a></li>' +
+              '<li class="left-nav__item"><a class="left-nav__link" href="../pages/01-css-3d.html" data-page="01-css-3d"><span class="left-nav__idx">01</span><span class="left-nav__label">CSS 3D Tilt</span></a></li>' +
+              '<li class="left-nav__item"><a class="left-nav__link" href="../pages/02-parallax.html" data-page="02-parallax"><span class="left-nav__idx">02</span><span class="left-nav__label">Parallax Depth</span></a></li>' +
+              '<li class="left-nav__item"><a class="left-nav__link" href="../pages/03-webgl.html" data-page="03-webgl"><span class="left-nav__idx">03</span><span class="left-nav__label">WebGL Carousel</span></a></li>' +
+              '<li class="left-nav__item"><a class="left-nav__link" href="../pages/04-spring.html" data-page="04-spring"><span class="left-nav__idx">04</span><span class="left-nav__label">Spring Drag</span></a></li>' +
+              '<li class="left-nav__item"><a class="left-nav__link" href="../pages/photo-wall.html" data-page="photo-wall"><span class="left-nav__idx">05</span><span class="left-nav__label">Photo Wall</span></a></li>' +
+            '</ul>' +
+            '<div class="left-nav__foot">' +
+              '<span class="left-nav__foot-dot"></span>' +
+              '<span class="left-nav__foot-text">razor-thin &middot; 3D</span>' +
+            '</div>' +
+          '</div>' +
+        '</nav>';
+
+      var navMount = document.getElementById('nav-mount');
+
+      function loadNavJs() {
+        var s = document.createElement('script');
+        s.src = '../nav/nav.js';
+        s.defer = true;
+        document.body.appendChild(s);
+      }
+
+      function mountNav() {
+        // Try fetch first (works under http://); fall back to inline.
+        if (window.fetch && window.location.protocol !== 'file:') {
+          fetch('../nav/nav.html')
+            .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+            .then(function (html) { navMount.innerHTML = html; loadNavJs(); })
+            .catch(function () { navMount.innerHTML = NAV_HTML; loadNavJs(); });
+        } else {
+          navMount.innerHTML = NAV_HTML;
+          loadNavJs();
+        }
+      }
+
+      // ---------- Tile build ----------
+      var PHOTO_COUNT = 12;
+      var PHOTO_BASE = '../photos/';
+      var CAPTIONS = [
+        'Silver Fog',    'Ridgeline',      'Glass Sea',   'Late Light',
+        'Stone Bloom',   'Night Current',  'Pale Garden', 'Long Shore',
+        'Cold Pines',    'Linen Sky',      'Deep Field',  'Last Hour'
+      ];
+
+      function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+      function buildTiles() {
+        var grid = document.querySelector('.showcase-grid');
+        if (!grid) return;
+        var frag = document.createDocumentFragment();
+
+        for (var i = 1; i <= PHOTO_COUNT; i++) {
+          var tile = document.createElement('article');
+          tile.className = 'tile';
+          tile.setAttribute('data-tilt', '');
+          tile.setAttribute('tabindex', '0');
+          tile.setAttribute('aria-label', 'Photo ' + pad2(i) + ' — ' + CAPTIONS[i - 1]);
+
+          var surface = document.createElement('div');
+          surface.className = 'tile-surface';
+
+          var img = document.createElement('img');
+          img.className = 'tile-photo';
+          img.alt = '';
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          img.src = PHOTO_BASE + pad2(i) + '.jpg';
+          img.onerror = (function (el) {
+            return function () {
+              el.onerror = null;
+              el.removeAttribute('src');
+              el.classList.add('is-placeholder');
+            };
+          })(img);
+
+          var cap = document.createElement('div');
+          cap.className = 'tile-caption';
+          cap.innerHTML =
+            '<h3>' + CAPTIONS[i - 1] + '</h3>' +
+            '<span class="tile-num">' + pad2(i) + ' / ' + pad2(PHOTO_COUNT) + '</span>';
+
+          surface.appendChild(img);
+          surface.appendChild(cap);
+          tile.appendChild(surface);
+          frag.appendChild(tile);
+        }
+        grid.appendChild(frag);
+      }
+
+      // ---------- Tilt ----------
+      var TILT_MAX = 10;
+      var LIFT = 18;
+      var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function bindTilt() {
+        if (reduced) return;
+
+        var tiles = document.querySelectorAll('[data-tilt]');
+        tiles.forEach(function (tile) {
+          var rafId = 0;
+          var pending = null;
+
+          function apply() {
+            rafId = 0;
+            if (!pending) return;
+            tile.style.transform =
+              'perspective(1400px) ' +
+              'rotateX(' + pending.rx.toFixed(2) + 'deg) ' +
+              'rotateY(' + pending.ry.toFixed(2) + 'deg) ' +
+              'translateZ(' + LIFT + 'px)';
+            pending = null;
+          }
+
+          tile.addEventListener('mousemove', function (e) {
+            var r = tile.getBoundingClientRect();
+            var x = (e.clientX - r.left) / r.width;
+            var y = (e.clientY - r.top)  / r.height;
+            var ry = (x - 0.5) *  TILT_MAX * 2;
+            var rx = (y - 0.5) * -TILT_MAX * 2;
+            pending = { rx: rx, ry: ry };
+            if (!rafId) rafId = requestAnimationFrame(apply);
+          });
+
+          tile.addEventListener('mouseleave', function () {
+            if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+            pending = null;
+            tile.style.transform =
+              'perspective(1400px) rotateX(0) rotateY(0) translateZ(0)';
+          });
+        });
+      }
+
+      // ---------- Boot ----------
+      function boot() {
+        mountNav();
+        buildTiles();
+        bindTilt();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>VR Translator · live caption pipeline</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1d212b; --line:#262b36;
+    --ink:#e6e8ee; --dim:#8a93a6; --accent:#9b8cff; --good:#3ddc97;
+    --warn:#ffb454; --bad:#ff6b6b; --tag:#2a3142;
+    --fnt:'Inter','SF Pro Text',system-ui,-apple-system,sans-serif;
+    --mono:'JetBrains Mono','Consolas',monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--fnt);font-size:13px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--line);background:#11141a}
+  header h1{font-size:14px;margin:0;font-weight:600;letter-spacing:.2px}
+  header h1 span{color:var(--dim);font-weight:400;margin-left:8px}
+  header .actions{display:flex;gap:8px}
+  header button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer}
+  header button:hover{background:var(--tag)}
+  header button.primary{background:var(--accent);color:#16121f;border-color:transparent;font-weight:600}
+
+  .board{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:18px 22px;height:calc(100vh - 53px - 56px);overflow:hidden}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-height:0}
+  .col h2{margin:0;padding:12px 14px;font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .col h2 .count{background:var(--tag);color:var(--ink);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+  .col h2 .count.live{color:var(--good)}
+  .col .body{padding:10px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;transition:transform .1s,border-color .1s}
+  .card:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .card .title{font-weight:600;margin-bottom:4px;font-size:12.5px}
+  .card .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .tag{background:var(--tag);color:var(--dim);padding:2px 7px;border-radius:4px;font-size:10.5px;font-weight:500}
+  .tag.good{color:var(--good)} .tag.warn{color:var(--warn)} .tag.bad{color:var(--bad)} .tag.accent{color:var(--accent)}
+  .card .sub{color:var(--dim);font-size:11px;line-height:1.4}
+
+  .wave{display:flex;align-items:flex-end;gap:2px;height:48px;padding:8px 0;justify-content:center}
+  .wave span{display:block;width:3px;background:var(--accent);border-radius:2px;animation:bar 1.2s ease-in-out infinite}
+  .wave span:nth-child(2){animation-delay:.1s} .wave span:nth-child(3){animation-delay:.2s} .wave span:nth-child(4){animation-delay:.3s}
+  .wave span:nth-child(5){animation-delay:.4s} .wave span:nth-child(6){animation-delay:.5s} .wave span:nth-child(7){animation-delay:.6s}
+  .wave span:nth-child(8){animation-delay:.7s} .wave span:nth-child(9){animation-delay:.8s}
+  @keyframes bar{0%,100%{height:8px}50%{height:36px}}
+
+  .mono{font-family:var(--mono);font-size:12px;line-height:1.5;color:var(--ink);background:#0a0c10;padding:10px;border-radius:6px;border:1px solid var(--line);min-height:80px}
+  .mono .t{color:var(--dim);font-size:10.5px;margin-bottom:4px}
+
+  .preview-frame{background:#000;border-radius:8px;padding:24px 14px;text-align:center;color:#fff;font-family:var(--mono);font-size:13px;border:1px solid var(--line);min-height:90px;display:flex;align-items:flex-end;justify-content:center}
+
+  .setting-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .setting-row:last-child{border-bottom:none}
+  .setting-row .v{color:var(--accent);font-family:var(--mono);font-size:11.5px}
+
+  footer{position:fixed;bottom:0;left:0;right:0;border-top:1px solid var(--line);background:#11141a;padding:12px 22px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--dim)}
+  footer .conns{display:flex;gap:14px}
+  footer .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:middle}
+  footer .dot.warn{background:var(--warn)} footer .dot.bad{background:var(--bad)} footer .dot.dim{background:var(--dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>VR Translator <span>· mic → STT → translate → caption · scaffold v0.1</span></h1>
+  <div class="actions">
+    <button>pause</button>
+    <button>swap pair</button>
+    <button class="primary">record clip</button>
+  </div>
+</header>
+
+<section class="board">
+
+  <div class="col">
+    <h2>Mic In <span class="count live">live</span></h2>
+    <div class="body">
+      <div class="card"><div class="title">VB-Cable · loopback</div><div class="sub">device: CABLE Output · 48kHz</div>
+        <div class="wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      </div>
+      <div class="card"><div class="title">noise gate</div><div class="meta"><span class="tag good">-32 dB</span><span class="tag">on</span></div></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h2>STT <span class="count live">faster-whisper</span></h2>
+    <div class="body">
+      <div class="card"><div class="title">rolling 1.5s window</div><div class="sub">model: medium · GPU · ~180ms/chunk</div>
+        <div class="mono"><div class="t">JA · raw</div>もうちょっと話してくれない？</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h2>Translate <span class="count">DeepL</span></h2>
+    <div class="body">
+      <div class="card"><div class="title">JA → EN</div><div class="sub">~280ms latency · cached</div>
+        <div class="mono"><div class="t">EN · final</div>Could you talk a little more?</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h2>Caption Out <span class="count live">overlay</span></h2>
+    <div class="body">
+      <div class="card"><div class="title">corner subtitle box</div><div class="sub">electron · transparent · always-on-top</div>
+        <div class="preview-frame">Could you talk a little more?</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <h2>Settings <span class="count">5</span></h2>
+    <div class="body">
+      <div class="card">
+        <div class="setting-row"><span>Pair</span><span class="v">JA → EN</span></div>
+        <div class="setting-row"><span>Position</span><span class="v">bot-right</span></div>
+        <div class="setting-row"><span>Font size</span><span class="v">18px</span></div>
+        <div class="setting-row"><span>Hotkey</span><span class="v">F8</span></div>
+        <div class="setting-row"><span>Mode</span><span class="v">caption-only</span></div>
+      </div>
+      <div class="card"><div class="title">latency budget</div>
+        <div class="meta"><span class="tag good">1.9s</span><span class="tag">≤2s ✓</span></div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<footer>
+  <div>scaffold v0.1 · pick #3 (corner subtitle box)</div>
+  <div class="conns">
+    <span><span class="dot"></span>***2 audio pipeline (VB-Cable)</span>
+    <span><span class="dot"></span>***6 faster-whisper + DeepL</span>
+  </div>
+</footer>
+
+</body>
+</html>

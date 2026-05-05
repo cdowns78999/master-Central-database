@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micky No E Quick Questionare</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0077be;
+            --secondary-bg: #004d7a;
+            --accent-glow: #4fc3f7;
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --point-bg: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%);
+            --point-border: rgba(14, 165, 233, 0.3);
+            --item-radius: 16px;
+            --spotify-green: #1ed760;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 80px 20px 40px;
+        }
+
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Profile Spotlight */
+        .profile-spotlight {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 3px solid var(--spotify-green);
+            background: rgba(0, 0, 0, 0.8);
+            position: absolute;
+            top: -45px;
+            z-index: 20;
+            box-shadow: 0 0 30px rgba(30, 215, 96, 0.4);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .profile-spotlight img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 3D Asset Card */
+        .asset-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 2px solid rgba(79, 195, 247, 0.4);
+            border-radius: 32px;
+            padding: 60px 25px 40px;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
+            width: 100%;
+            animation: cardIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+
+        .card-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header */
+        .card-header {
+            text-align: center;
+        }
+
+        .main-title {
+            color: #ffffff;
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .special-note {
+            color: rgba(79, 195, 247, 1);
+            font-size: 0.95rem;
+            font-style: italic;
+            line-height: 1.6;
+            margin-top: 10px;
+            font-weight: 500;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+        }
+
+        /* Data Stack */
+        .data-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .data-item {
+            background: var(--point-bg);
+            border: 1px solid var(--point-border);
+            border-radius: var(--item-radius);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            position: relative;
+        }
+
+        .item-label {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15rem;
+            font-weight: 900;
+        }
+
+        /* Terminal styling for status */
+        .terminal-status {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            border-left: 3px solid var(--spotify-green);
+            color: rgba(79, 195, 247, 1);
+        }
+
+        /* Banner Buttons */
+        .banner-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding-bottom: 5px;
+        }
+
+        .date-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            padding: 12px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .date-btn:hover {
+            background: rgba(79, 195, 247, 0.2);
+            border-color: var(--accent-glow);
+        }
+
+        .date-btn.active {
+            background: var(--accent-glow);
+            color: #000;
+            border-color: #fff;
+        }
+
+        /* Auto-Suggest Input */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .suggest-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .suggest-input:focus {
+            border-color: var(--accent-glow);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--accent-glow);
+            border-radius: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .search-results.active {
+            display: block;
+        }
+
+        .result-item {
+            padding: 14px 18px;
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            transition: background 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .result-item:hover {
+            background: rgba(79, 195, 247, 0.2);
+        }
+
+        /* Status Glow */
+        .status-glow {
+            width: 10px;
+            height: 10px;
+            background: var(--spotify-green);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            box-shadow: 0 0 12px var(--spotify-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.7;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.3);
+            }
+
+            100% {
+                opacity: 0.7;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particles-canvas"></canvas>
+
+    <div class="container">
+        <!-- Spotify Spotlight -->
+        <div class="profile-spotlight" id="spotlight">
+            <img src="" alt="Profile" id="spotlight-img" style="opacity: 0">
+        </div>
+
+        <div class="asset-card" id="micky-card">
+            <div class="card-inner">
+                <div class="card-header">
+                    <div class="main-title">Micky No E</div>
+                    <div class="special-note">
+                        "What up brotha!<br><br>
+                        --&gt; make your choice<br>
+                        --&gt; screenshot!!<br>
+                        --&gt; send to me"
+                    </div>
+                </div>
+
+                <div class="data-stack">
+                    <!-- Area 1: Status -->
+                    <div class="data-item">
+                        <span class="item-label">Personal Status Update</span>
+                        <div class="terminal-status">
+                            <span class="status-glow"></span>
+                            Spotify Playlisting<br>
+                            - 5K campaign<br>
+                            - starting within 3 days
+                        </div>
+                    </div>
+
+                    <!-- Area 2: Film Question -->
+                    <div class="data-item">
+                        <span class="item-label">Film - What time this week?</span>
+                        <div class="banner-buttons">
+                            <button class="date-btn" onclick="selectFilmDate('Thu 2/12')">Thu 2/12</button>
+                            <button class="date-btn" onclick="selectFilmDate('Fri 2/13')">Fri 2/13</button>
+                            <button class="date-btn" onclick="selectFilmDate('Mon 2/16')">Mon 2/16</button>
+                            <button class="date-btn" onclick="selectFilmDate('Tue 2/17')">Tue 2/17</button>
+                            <button class="date-btn" onclick="selectFilmDate('Wed 2/18')">Wed 2/18</button>
+                        </div>
+                        <div id="film-selected"
+                            style="color: var(--accent-glow); font-size: 0.8rem; font-weight: 700; text-align: center; height: 1em;">
+                        </div>
+                    </div>
+
+                    <!-- Area 3: Weekly Call -->
+                    <div class="data-item">
+                        <span class="item-label">Weekly Call Date</span>
+                        <div class="search-wrapper">
+                            <input type="text" id="callSearch" class="suggest-input" placeholder="Type a day or time..."
+                                autocomplete="off">
+                            <div id="callResults" class="search-results"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchSpotifySpotlight() {
+            const artistLink = "https://open.spotify.com/artist/0BaYBKUENGd24mW2zTJYLi";
+            try {
+                const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(artistLink)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const img = document.getElementById('spotlight-img');
+                    img.src = data.thumbnail_url;
+                    img.style.opacity = "1";
+                    img.style.transition = "opacity 0.8s ease";
+                }
+            } catch (err) { console.error("Identity Fetch Failed", err); }
+        }
+
+        const callAvailability = [{ "day": "Monday", "time": "8:00 AM" }, { "day": "Monday", "time": "8:30 AM" }, { "day": "Monday", "time": "9:00 AM" }, { "day": "Monday", "time": "9:30 AM" }, { "day": "Monday", "time": "10:00 AM" }, { "day": "Monday", "time": "10:30 AM" }, { "day": "Monday", "time": "11:30 AM" }, { "day": "Monday", "time": "7:00 PM" }, { "day": "Monday", "time": "7:30 PM" }, { "day": "Monday", "time": "8:00 PM" }, { "day": "Monday", "time": "8:30 PM" }, { "day": "Monday", "time": "9:00 PM" }, { "day": "Monday", "time": "9:30 PM" }, { "day": "Monday", "time": "10:00 PM" }, { "day": "Monday", "time": "10:30 PM" }, { "day": "Monday", "time": "11:00 PM" }, { "day": "Tuesday", "time": "8:00 AM" }, { "day": "Tuesday", "time": "8:30 AM" }, { "day": "Tuesday", "time": "9:00 AM" }, { "day": "Tuesday", "time": "9:30 AM" }, { "day": "Tuesday", "time": "10:00 AM" }, { "day": "Tuesday", "time": "10:30 AM" }, { "day": "Tuesday", "time": "11:00 AM" }, { "day": "Tuesday", "time": "11:30 AM" }, { "day": "Tuesday", "time": "7:00 PM" }, { "day": "Tuesday", "time": "7:30 PM" }, { "day": "Tuesday", "time": "8:00 PM" }, { "day": "Tuesday", "time": "8:30 PM" }, { "day": "Tuesday", "time": "9:00 PM" }, { "day": "Tuesday", "time": "9:30 PM" }, { "day": "Tuesday", "time": "10:00 PM" }, { "day": "Tuesday", "time": "10:30 PM" }, { "day": "Tuesday", "time": "11:00 PM" }, { "day": "Wednesday", "time": "8:00 AM" }, { "day": "Wednesday", "time": "8:30 AM" }, { "day": "Wednesday", "time": "9:00 AM" }, { "day": "Wednesday", "time": "9:30 AM" }, { "day": "Wednesday", "time": "10:00 AM" }, { "day": "Wednesday", "time": "10:30 AM" }, { "day": "Wednesday", "time": "11:00 AM" }, { "day": "Wednesday", "time": "11:30 AM" }, { "day": "Wednesday", "time": "7:00 PM" }, { "day": "Wednesday", "time": "8:00 PM" }, { "day": "Wednesday", "time": "8:30 PM" }, { "day": "Wednesday", "time": "9:00 PM" }, { "day": "Wednesday", "time": "9:30 PM" }, { "day": "Wednesday", "time": "10:00 PM" }, { "day": "Wednesday", "time": "10:30 PM" }, { "day": "Wednesday", "time": "11:00 PM" }, { "day": "Thursday", "time": "8:00 AM" }, { "day": "Thursday", "time": "8:30 AM" }, { "day": "Thursday", "time": "9:00 AM" }, { "day": "Thursday", "time": "9:30 AM" }, { "day": "Thursday", "time": "10:00 AM" }, { "day": "Thursday", "time": "11:00 AM" }, { "day": "Thursday", "time": "11:30 AM" }, { "day": "Thursday", "time": "7:00 PM" }, { "day": "Thursday", "time": "7:30 PM" }, { "day": "Thursday", "time": "8:00 PM" }, { "day": "Thursday", "time": "8:30 PM" }, { "day": "Thursday", "time": "9:00 PM" }, { "day": "Thursday", "time": "9:30 PM" }, { "day": "Thursday", "time": "10:00 PM" }, { "day": "Thursday", "time": "10:30 PM" }, { "day": "Thursday", "time": "11:00 PM" }, { "day": "Friday", "time": "8:00 AM" }, { "day": "Friday", "time": "8:30 AM" }, { "day": "Friday", "time": "9:00 AM" }, { "day": "Friday", "time": "9:30 AM" }, { "day": "Friday", "time": "10:00 AM" }, { "day": "Friday", "time": "10:30 AM" }, { "day": "Friday", "time": "11:30 AM" }, { "day": "Friday", "time": "7:00 PM" }, { "day": "Friday", "time": "7:30 PM" }, { "day": "Friday", "time": "8:00 PM" }, { "day": "Friday", "time": "8:30 PM" }, { "day": "Friday", "time": "9:00 PM" }, { "day": "Friday", "time": "9:30 PM" }, { "day": "Friday", "time": "10:00 PM" }, { "day": "Friday", "time": "10:30 PM" }, { "day": "Friday", "time": "11:00 PM" }];
+
+        function selectFilmDate(date) {
+            const btns = document.querySelectorAll('.date-btn');
+            btns.forEach(b => b.classList.toggle('active', b.textContent === date));
+            document.getElementById('film-selected').textContent = `Requesting shoot for ${date}`;
+        }
+
+        function setupAutoSuggest(inputId, resultsId, data) {
+            const input = document.getElementById(inputId);
+            const results = document.getElementById(resultsId);
+            const render = () => {
+                const query = input.value.toLowerCase();
+                const filtered = data.filter(d => d.day.toLowerCase().includes(query) || d.time.toLowerCase().includes(query));
+                results.innerHTML = "";
+                if (filtered.length > 0) {
+                    results.classList.add('active');
+                    filtered.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = "result-item";
+                        div.innerHTML = `<span>${item.day}</span><span>${item.time}</span>`;
+                        div.onclick = () => { input.value = `${item.day} @ ${item.time}`; results.classList.remove('active'); };
+                        results.appendChild(div);
+                    });
+                } else { results.classList.remove('active'); }
+            };
+            input.addEventListener('input', render);
+            input.addEventListener('focus', render);
+            document.addEventListener('click', (e) => { if (!input.contains(e.target) && !results.contains(e.target)) results.classList.remove('active'); });
+        }
+
+        class ParticleSystem {
+            constructor() { this.canvas = document.getElementById('particles-canvas'); this.ctx = this.canvas.getContext('2d'); this.particles = []; this.init(); }
+            init() {
+                this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight;
+                for (let i = 0; i < 50; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width, y: Math.random() * this.canvas.height,
+                        s: Math.random() * 2 + 0.5, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, o: Math.random() * 0.4 + 0.1
+                    });
+                }
+                this.animate();
+            }
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0) p.x = this.canvas.width; if (p.x > this.canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = this.canvas.height; if (p.y > this.canvas.height) p.y = 0;
+                    this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255,255,255,${p.o})`; this.ctx.fill();
+                });
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new ParticleSystem();
+            fetchSpotifySpotlight();
+            setupAutoSuggest('callSearch', 'callResults', callAvailability);
+        });
+    </script>
+</body>
+
+</html>

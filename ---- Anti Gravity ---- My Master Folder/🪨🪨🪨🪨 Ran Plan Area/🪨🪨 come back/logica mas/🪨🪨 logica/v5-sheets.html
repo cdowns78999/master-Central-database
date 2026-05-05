@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Campaign Dashboard — v5 Sheets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & base ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fff;
+      --border: #e4e4e4;
+      --accent: #0084ff;
+      --text: #111;
+      --text-2: #555;
+      --text-3: #999;
+      --sheet-bg: #fff;
+      --sheet-radius: 20px;
+      --handle-color: #d1d1d6;
+      --sheet-shadow: 0 -4px 40px rgba(0,0,0,0.14), 0 -1px 0 rgba(0,0,0,0.06);
+      --ease-sheet: cubic-bezier(0.4, 0, 0.2, 1);
+      --duration: 0.35s;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #f5f5f7;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── App shell ────────────────────────────────── */
+    #app {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ── Top bar ──────────────────────────────────── */
+    #topbar {
+      height: 60px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    #topbar h1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    #topbar .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    #topbar .meta {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-3);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Client grid background ───────────────────── */
+    #grid-bg {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 20px 20px 120px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+      align-content: start;
+    }
+
+    /* iPad landscape: force 4 cols minimum */
+    @media (min-width: 768px) {
+      #grid-bg {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        padding: 24px 28px 140px;
+        gap: 16px;
+      }
+    }
+
+    /* ── Client tile ──────────────────────────────── */
+    .client-tile {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 16px 18px;
+      cursor: pointer;
+      transition: transform 0.15s var(--ease-sheet), box-shadow 0.15s var(--ease-sheet), border-color 0.15s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .client-tile:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.09);
+      border-color: #c8c8c8;
+    }
+
+    .client-tile:active {
+      transform: translateY(0px) scale(0.97);
+      box-shadow: none;
+    }
+
+    .client-tile .emoji {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .client-tile .name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .client-tile .badge-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .client-tile .badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: #f0f0f0;
+      color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+
+    .client-tile .badge.active { background: #e6f4ea; color: #1a7f37; }
+    .client-tile .badge.draft  { background: #fdecea; color: #c0392b; }
+    .client-tile .badge.done   { background: #f0f0f0; color: #888; }
+
+    /* ── Dim overlay ──────────────────────────────── */
+    #dim {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration) var(--ease-sheet);
+    }
+
+    #dim.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ── Sheet container ──────────────────────────── */
+    .sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 76vh;
+      background: var(--sheet-bg);
+      border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+      box-shadow: var(--sheet-shadow);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      transform: translate3d(0, 100%, 0);
+      will-change: transform;
+      transition: transform var(--duration) var(--ease-sheet);
+    }
+
+    /* Stacking offsets — each higher sheet peeks behind the one above */
+    .sheet[data-depth="1"] { z-index: 201; }
+    .sheet[data-depth="2"] { z-index: 202; height: 74vh; }
+    .sheet[data-depth="3"] { z-index: 203; height: 72vh; }
+    .sheet[data-depth="4"] { z-index: 204; height: 70vh; }
+
+    .sheet.open {
+      transform: translate3d(0, 0, 0);
+    }
+
+    /* When a deeper sheet is open, push this sheet down slightly */
+    .sheet.pushed {
+      transform: translate3d(0, -12px, 0) scale(0.97);
+      border-radius: var(--sheet-radius);
+    }
+
+    /* ── Sheet internals ─────────────────────────── */
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--handle-color);
+      border-radius: 2px;
+      margin: 12px auto 0;
+      flex-shrink: 0;
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px 12px;
+      gap: 10px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sheet-back {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 4px 0;
+      -webkit-tap-highlight-color: transparent;
+      background: none;
+      border: none;
+      flex-shrink: 0;
+    }
+
+    .sheet-back:hover { opacity: 0.7; }
+    .sheet-back svg { flex-shrink: 0; }
+
+    .sheet-title {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .sheet-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--text-2);
+      flex-shrink: 0;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .sheet-close:hover { background: #e4e4e4; }
+    .sheet-close:active { background: #d8d8d8; }
+
+    .sheet-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Sheet 1: Entry ──────────────────────────── */
+    .client-hero {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 0 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .client-hero .hero-emoji {
+      font-size: 44px;
+      line-height: 1;
+    }
+
+    .client-hero .hero-info h2 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .client-hero .hero-info p {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 3px;
+    }
+
+    .entry-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .action-card {
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 16px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .action-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(0,132,255,0.1);
+    }
+
+    .action-card:active { transform: scale(0.97); }
+
+    .action-card .ac-icon { font-size: 24px; }
+    .action-card .ac-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .action-card .ac-sub {
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    /* Existing campaigns mini list */
+    .existing-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .existing-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .existing-item:hover { background: #fafafa; border-color: #c8c8c8; }
+
+    .existing-item .ei-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .existing-item .ei-dot.active { background: #1a7f37; }
+    .existing-item .ei-dot.draft  { background: #c0392b; }
+    .existing-item .ei-dot.done   { background: #aaa; }
+
+    .existing-item .ei-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      flex: 1;
+      color: var(--text);
+    }
+
+    .existing-item .ei-status {
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    /* ── Sheet 2: Service ────────────────────────── */
+    .service-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .service-card {
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 16px 18px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    .service-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(0,132,255,0.1);
+    }
+
+    .service-card:active { transform: scale(0.97); }
+
+    .service-card.selected {
+      border-color: var(--accent);
+      background: #f0f7ff;
+    }
+
+    .service-card.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .service-card .sc-emoji { font-size: 26px; }
+    .service-card .sc-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .service-card .sc-desc {
+      font-size: 11px;
+      color: var(--text-3);
+      line-height: 1.4;
+    }
+
+    .continue-btn {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 15px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .continue-btn:hover { background: #006fd6; }
+    .continue-btn:active { transform: scale(0.98); }
+    .continue-btn:disabled {
+      background: #e4e4e4;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+
+    /* ── Sheet 3: Budget ─────────────────────────── */
+    .budget-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .budget-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .budget-item:hover { border-color: #aaa; }
+    .budget-item:active { transform: scale(0.98); }
+
+    .budget-item.selected {
+      border-color: var(--accent);
+      background: #f0f7ff;
+    }
+
+    .budget-item .bi-radio {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s;
+    }
+
+    .budget-item.selected .bi-radio {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .budget-item.selected .bi-radio::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .budget-item .bi-info { flex: 1; }
+    .budget-item .bi-tier {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .budget-item .bi-price {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 2px;
+    }
+
+    .budget-item .bi-tag {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: #f0f0f0;
+      color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+
+    .budget-item.popular .bi-tag { background: #fff3e0; color: #e65100; }
+
+    /* Custom budget input */
+    .custom-input-wrap {
+      margin-top: 8px;
+      padding: 0 2px;
+    }
+
+    .custom-input-wrap input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .custom-input-wrap input:focus { border-color: var(--accent); }
+    .custom-input-wrap input::placeholder { color: var(--text-3); }
+
+    /* ── Sheet 4: Complete ───────────────────────── */
+    .complete-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 20px 0 24px;
+    }
+
+    .complete-check {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #e6f4ea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
+
+    .complete-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .complete-sub {
+      font-size: 13px;
+      color: var(--text-3);
+      text-align: center;
+      line-height: 1.5;
+      max-width: 280px;
+    }
+
+    /* Campaign summary card */
+    .summary-card {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .summary-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .summary-label {
+      font-size: 11px;
+      color: var(--text-3);
+      font-family: 'JetBrains Mono', monospace;
+      width: 70px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+
+    .summary-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* Stripe placeholder */
+    .stripe-block {
+      width: 100%;
+      border: 1.5px dashed #c8c8c8;
+      border-radius: 14px;
+      padding: 22px 18px;
+      text-align: center;
+      margin-top: 14px;
+      background: #fafafa;
+    }
+
+    .stripe-block .stripe-icon {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .stripe-block .stripe-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stripe-block .stripe-sub {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .stripe-block .stripe-badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 10px;
+      background: #f0f0f0;
+      border-radius: 20px;
+      font-size: 10px;
+      color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* See campaign btn (greyed) */
+    .see-campaign-btn {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      background: #f5f5f5;
+      color: #aaa;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1.5px solid #e4e4e4;
+      border-radius: 12px;
+      cursor: not-allowed;
+      text-align: center;
+    }
+
+    /* ── Existing campaign detail sheet ─────────── */
+    .campaign-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 0 18px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .campaign-detail-header .cdh-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .campaign-detail-header .cdh-dot.active { background: #1a7f37; }
+    .campaign-detail-header .cdh-dot.draft  { background: #c0392b; }
+    .campaign-detail-header .cdh-dot.done   { background: #aaa; }
+
+    .campaign-detail-header .cdh-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .campaign-detail-header .cdh-status {
+      margin-left: auto;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+    }
+
+    .cdh-status.active { background: #e6f4ea; color: #1a7f37; }
+    .cdh-status.draft  { background: #fdecea; color: #c0392b; }
+    .cdh-status.done   { background: #f0f0f0; color: #888; }
+
+    .detail-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .detail-stat {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 14px 12px;
+    }
+
+    .detail-stat .ds-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .detail-stat .ds-label {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 3px;
+    }
+
+    .service-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .service-tag {
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: #f0f0f0;
+      color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Section labels ──────────────────────────── */
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+      margin-top: 4px;
+    }
+
+    /* ── Scrollbar ───────────────────────────────── */
+    .sheet-body::-webkit-scrollbar { width: 3px; }
+    .sheet-body::-webkit-scrollbar-track { background: transparent; }
+    .sheet-body::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 2px; }
+
+    #grid-bg::-webkit-scrollbar { width: 4px; }
+    #grid-bg::-webkit-scrollbar-track { background: transparent; }
+    #grid-bg::-webkit-scrollbar-thumb { background: #d1d1d6; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div class="dot"></div>
+    <h1>Campaign Dashboard</h1>
+    <span class="meta">v5-sheets</span>
+  </div>
+
+  <!-- Client grid (always visible background) -->
+  <div id="grid-bg"></div>
+
+</div>
+
+<!-- Dim overlay -->
+<div id="dim"></div>
+
+<!-- SHEET 1: Entry (New / Existing) -->
+<div class="sheet" id="sheet1" data-depth="1">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span style="width:60px"></span>
+    <span class="sheet-title" id="sheet1-title">Client</span>
+    <button class="sheet-close" onclick="closeAll()">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="client-hero">
+      <span class="hero-emoji" id="sheet1-emoji">👤</span>
+      <div class="hero-info">
+        <h2 id="sheet1-name">Client</h2>
+        <p id="sheet1-meta">Select an option below</p>
+      </div>
+    </div>
+    <p class="section-label">Start</p>
+    <div class="entry-actions">
+      <div class="action-card" onclick="openSheet2('new')">
+        <span class="ac-icon">✦</span>
+        <span class="ac-label">New Campaign</span>
+        <span class="ac-sub">Set up a fresh campaign flow</span>
+      </div>
+      <div class="action-card" onclick="openSheet2('existing')">
+        <span class="ac-icon">📁</span>
+        <span class="ac-label">Existing Campaigns</span>
+        <span class="ac-sub">Review or update past work</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET 2a: Service Selection (New Campaign) -->
+<div class="sheet" id="sheet2new" data-depth="2">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-back" onclick="closeSheet('sheet2new')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="#0084ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </button>
+    <span class="sheet-title">Pick a Service</span>
+    <button class="sheet-close" onclick="closeAll()">✕</button>
+  </div>
+  <div class="sheet-body">
+    <p class="section-label">Services</p>
+    <div class="service-grid" id="serviceGrid"></div>
+    <button class="continue-btn" id="serviceContinueBtn" disabled onclick="openSheet3()">Continue →</button>
+  </div>
+</div>
+
+<!-- SHEET 2b: Existing Campaigns -->
+<div class="sheet" id="sheet2existing" data-depth="2">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-back" onclick="closeSheet('sheet2existing')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="#0084ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </button>
+    <span class="sheet-title">Existing Campaigns</span>
+    <button class="sheet-close" onclick="closeAll()">✕</button>
+  </div>
+  <div class="sheet-body">
+    <p class="section-label">All Campaigns</p>
+    <div class="existing-list" id="existingList"></div>
+  </div>
+</div>
+
+<!-- SHEET 3: Budget -->
+<div class="sheet" id="sheet3" data-depth="3">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-back" onclick="closeSheet('sheet3')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="#0084ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </button>
+    <span class="sheet-title">Budget</span>
+    <button class="sheet-close" onclick="closeAll()">✕</button>
+  </div>
+  <div class="sheet-body">
+    <p class="section-label">Choose a tier</p>
+    <div class="budget-list" id="budgetList"></div>
+    <button class="continue-btn" id="budgetContinueBtn" disabled onclick="openSheet4()">Review &amp; Pay →</button>
+  </div>
+</div>
+
+<!-- SHEET 4: Complete -->
+<div class="sheet" id="sheet4" data-depth="4">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-back" onclick="closeSheet('sheet4')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="#0084ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </button>
+    <span class="sheet-title">Order Complete</span>
+    <button class="sheet-close" onclick="closeAll()">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="complete-wrap">
+      <div class="complete-check">✅</div>
+      <span class="complete-title">Campaign Created!</span>
+      <p class="complete-sub" id="complete-sub-text">Your campaign is set up and ready to go.</p>
+    </div>
+
+    <div class="summary-card" id="summaryCard"></div>
+
+    <div class="stripe-block">
+      <div class="stripe-icon">💳</div>
+      <div class="stripe-label">Stripe Payment</div>
+      <div class="stripe-sub">Secure checkout integration</div>
+      <div class="stripe-badge">wired soon</div>
+    </div>
+
+    <div class="see-campaign-btn">See Campaign →</div>
+  </div>
+</div>
+
+<!-- SHEET: Campaign Detail (Existing) -->
+<div class="sheet" id="sheetDetail" data-depth="3">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <button class="sheet-back" onclick="closeSheet('sheetDetail')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="#0084ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back
+    </button>
+    <span class="sheet-title" id="detail-title">Campaign</span>
+    <button class="sheet-close" onclick="closeAll()">✕</button>
+  </div>
+  <div class="sheet-body" id="detail-body"></div>
+</div>
+
+<script>
+  /* ── Data ──────────────────────────────────────── */
+  const CLIENTS = [
+    { id: 'chad',    name: 'Chad Downs',           emoji: '🧔' },
+    { id: 'ray',     name: 'Ray Downs',             emoji: '👨' },
+    { id: 'family',  name: 'Family Chat',           emoji: '👩👦' },
+    { id: 'raykm',   name: 'Ray & Kim',             emoji: '👨👩' },
+    { id: 'randy',   name: 'Randy Engineersski',    emoji: '🎸' },
+    { id: 'james',   name: 'James Poddubny',        emoji: '🧑' },
+    { id: 'jenna',   name: 'Jenna Bodley',          emoji: '👩‍🦱' },
+    { id: 'kim',     name: 'Kim Downs',             emoji: '👩' },
+    { id: 'linda',   name: 'Linda-Brooke Thompson', emoji: '👩‍🦳' },
+    { id: 'ed',      name: 'Ed Adkins Sr.',         emoji: '👨‍🦳' },
+    { id: 'kayla',   name: 'Kayla Amber',           emoji: '🧕' },
+    { id: 'ari',     name: 'Ari Aloush',            emoji: '🧑‍💼' },
+  ];
+
+  const SERVICES = [
+    { id: 'press',   label: '📰 Press',       desc: 'Media coverage & PR outreach' },
+    { id: 'spotify', label: '🎵 Spotify',     desc: 'Playlist pitching & streaming' },
+    { id: 'sc',      label: '🎧 Soundcloud',  desc: 'Upload strategy & promotion' },
+    { id: 'social',  label: '📱 Social Media', desc: 'Content, ads, and growth' },
+  ];
+
+  const BUDGETS = [
+    { id: 'starter',  tier: '$500 Starter',  price: '$500 / mo',   tag: '',        popular: false },
+    { id: 'pro',      tier: '$1,500 Pro',    price: '$1,500 / mo', tag: 'Popular', popular: true  },
+    { id: 'premium',  tier: '$5,000 Premium',price: '$5,000 / mo', tag: 'Best',    popular: false },
+    { id: 'custom',   tier: 'Custom',        price: 'Enter amount', tag: '',        popular: false },
+  ];
+
+  const CAMPAIGNS = [
+    { name: 'Summer Drop 2025', status: 'active', label: '🟢 Active',  services: ['Press','Spotify'], budget: '$1,500 Pro', streams: '42.8K', reach: '18.2K' },
+    { name: 'Spring Launch',    status: 'done',   label: '✅ Done',    services: ['Social Media','Press'], budget: '$500 Starter', streams: '11.4K', reach: '8.9K' },
+    { name: 'Q1 Ads',           status: 'draft',  label: '🔴 Draft',   services: ['Social Media'], budget: '$5,000 Premium', streams: '—', reach: '—' },
+  ];
+
+  /* ── State ─────────────────────────────────────── */
+  let state = {
+    client: null,
+    service: null,
+    budget: null,
+    customBudget: '',
+    openSheets: [],   // stack of sheet ids
+  };
+
+  /* ── Build grid ────────────────────────────────── */
+  const grid = document.getElementById('grid-bg');
+
+  CLIENTS.forEach(client => {
+    const tile = document.createElement('div');
+    tile.className = 'client-tile';
+    tile.onclick = () => openSheet1(client);
+
+    // pick a couple placeholder campaign badges
+    const badges = getCampaignBadges();
+    tile.innerHTML = `
+      <span class="emoji">${client.emoji}</span>
+      <span class="name">${client.name}</span>
+      <div class="badge-row">${badges}</div>
+    `;
+    grid.appendChild(tile);
+  });
+
+  function getCampaignBadges() {
+    const pick = CAMPAIGNS[Math.floor(Math.random() * CAMPAIGNS.length)];
+    const cls = pick.status;
+    const short = pick.name.split(' ').slice(0,2).join(' ');
+    return `<span class="badge ${cls}">${short}</span>`;
+  }
+
+  /* ── Build service grid ────────────────────────── */
+  const serviceGrid = document.getElementById('serviceGrid');
+  SERVICES.forEach(svc => {
+    const card = document.createElement('div');
+    card.className = 'service-card';
+    card.dataset.id = svc.id;
+    card.innerHTML = `
+      <span class="sc-emoji">${svc.label.split(' ')[0]}</span>
+      <span class="sc-label">${svc.label}</span>
+      <span class="sc-desc">${svc.desc}</span>
+    `;
+    card.onclick = () => selectService(svc.id, card);
+    serviceGrid.appendChild(card);
+  });
+
+  /* ── Build budget list ─────────────────────────── */
+  const budgetList = document.getElementById('budgetList');
+  BUDGETS.forEach(b => {
+    const item = document.createElement('div');
+    item.className = 'budget-item' + (b.popular ? ' popular' : '');
+    item.dataset.id = b.id;
+    item.innerHTML = `
+      <div class="bi-radio"></div>
+      <div class="bi-info">
+        <div class="bi-tier">${b.tier}</div>
+        <div class="bi-price">${b.price}</div>
+        ${b.id === 'custom' ? `<div class="custom-input-wrap" id="customWrap" style="display:none"><input type="text" id="customInput" placeholder="e.g. $2,000 / mo" /></div>` : ''}
+      </div>
+      ${b.tag ? `<span class="bi-tag">${b.tag}</span>` : ''}
+    `;
+    item.onclick = () => selectBudget(b.id, item);
+    budgetList.appendChild(item);
+  });
+
+  /* ── Build existing list ───────────────────────── */
+  const existingList = document.getElementById('existingList');
+  CAMPAIGNS.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'existing-item';
+    item.innerHTML = `
+      <div class="ei-dot ${c.status}"></div>
+      <span class="ei-name">${c.name}</span>
+      <span class="ei-status">${c.label}</span>
+    `;
+    item.onclick = () => openSheetDetail(c);
+    existingList.appendChild(item);
+  });
+
+  /* ── Sheet management ──────────────────────────── */
+  function pushSheet(id) {
+    if (state.openSheets.includes(id)) return;
+    // push previous top sheet
+    if (state.openSheets.length > 0) {
+      const prev = state.openSheets[state.openSheets.length - 1];
+      document.getElementById(prev).classList.add('pushed');
+    }
+    state.openSheets.push(id);
+    const el = document.getElementById(id);
+    // force reflow so transition plays
+    el.offsetHeight;
+    el.classList.add('open');
+    updateDim();
+  }
+
+  function popSheet() {
+    if (state.openSheets.length === 0) return;
+    const id = state.openSheets.pop();
+    const el = document.getElementById(id);
+    el.classList.remove('open');
+    // restore pushed state of previous
+    if (state.openSheets.length > 0) {
+      const prev = state.openSheets[state.openSheets.length - 1];
+      document.getElementById(prev).classList.remove('pushed');
+    }
+    updateDim();
+  }
+
+  function closeSheet(id) {
+    // pop everything above it too
+    while (state.openSheets.length > 0 && state.openSheets[state.openSheets.length - 1] !== id) {
+      const above = state.openSheets[state.openSheets.length - 1];
+      document.getElementById(above).classList.remove('open', 'pushed');
+      state.openSheets.pop();
+    }
+    popSheet();
+  }
+
+  function closeAll() {
+    while (state.openSheets.length > 0) {
+      const id = state.openSheets.pop();
+      const el = document.getElementById(id);
+      el.classList.remove('open', 'pushed');
+    }
+    updateDim();
+    resetState();
+  }
+
+  function updateDim() {
+    const dim = document.getElementById('dim');
+    if (state.openSheets.length > 0) {
+      dim.classList.add('visible');
+    } else {
+      dim.classList.remove('visible');
+    }
+  }
+
+  document.getElementById('dim').addEventListener('click', closeAll);
+
+  /* ── Flow ──────────────────────────────────────── */
+  function openSheet1(client) {
+    closeAll();
+    state.client = client;
+    document.getElementById('sheet1-emoji').textContent = client.emoji;
+    document.getElementById('sheet1-name').textContent  = client.name;
+    document.getElementById('sheet1-title').textContent = client.name;
+    document.getElementById('sheet1-meta').textContent  = 'What would you like to do?';
+    pushSheet('sheet1');
+  }
+
+  function openSheet2(mode) {
+    if (mode === 'new') {
+      pushSheet('sheet2new');
+    } else {
+      pushSheet('sheet2existing');
+    }
+  }
+
+  function selectService(id, cardEl) {
+    state.service = id;
+    serviceGrid.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+    cardEl.classList.add('selected');
+    document.getElementById('serviceContinueBtn').disabled = false;
+  }
+
+  function openSheet3() {
+    if (!state.service) return;
+    pushSheet('sheet3');
+  }
+
+  function selectBudget(id, itemEl) {
+    state.budget = id;
+    budgetList.querySelectorAll('.budget-item').forEach(i => i.classList.remove('selected'));
+    itemEl.classList.add('selected');
+
+    // show/hide custom input
+    const customWrap = document.getElementById('customWrap');
+    if (id === 'custom') {
+      customWrap.style.display = '';
+    } else {
+      if (customWrap) customWrap.style.display = 'none';
+    }
+
+    document.getElementById('budgetContinueBtn').disabled = false;
+  }
+
+  function openSheet4() {
+    if (!state.budget) return;
+    buildSummary();
+    pushSheet('sheet4');
+  }
+
+  function buildSummary() {
+    const client   = state.client;
+    const svcData  = SERVICES.find(s => s.id === state.service);
+    const budData  = BUDGETS.find(b => b.id === state.budget);
+    let budLabel   = budData ? budData.tier : '—';
+
+    if (state.budget === 'custom') {
+      const customInput = document.getElementById('customInput');
+      if (customInput && customInput.value.trim()) {
+        budLabel = customInput.value.trim();
+        state.customBudget = budLabel;
+      }
+    }
+
+    const now = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    document.getElementById('complete-sub-text').textContent =
+      `${client.name}'s campaign is ready. Review below before payment.`;
+
+    document.getElementById('summaryCard').innerHTML = `
+      <div class="summary-row">
+        <span class="summary-label">Client</span>
+        <span class="summary-val">${client.emoji} ${client.name}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Service</span>
+        <span class="summary-val">${svcData ? svcData.label : '—'}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Budget</span>
+        <span class="summary-val">${budLabel}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Date</span>
+        <span class="summary-val">${now}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Status</span>
+        <span class="summary-val" style="color:#1a7f37;">🟢 Active</span>
+      </div>
+    `;
+  }
+
+  /* ── Existing campaign detail ─────────────────── */
+  function openSheetDetail(campaign) {
+    const statusMap = { active: 'Active', draft: 'Draft', done: 'Done' };
+    document.getElementById('detail-title').textContent = campaign.name;
+
+    document.getElementById('detail-body').innerHTML = `
+      <div class="campaign-detail-header">
+        <div class="cdh-dot ${campaign.status}"></div>
+        <span class="cdh-name">${campaign.name}</span>
+        <span class="cdh-status ${campaign.status}">${campaign.label}</span>
+      </div>
+
+      <p class="section-label">Stats</p>
+      <div class="detail-stat-grid">
+        <div class="detail-stat">
+          <div class="ds-val">${campaign.streams}</div>
+          <div class="ds-label">Total Streams</div>
+        </div>
+        <div class="detail-stat">
+          <div class="ds-val">${campaign.reach}</div>
+          <div class="ds-label">Reach</div>
+        </div>
+        <div class="detail-stat">
+          <div class="ds-val">${campaign.budget}</div>
+          <div class="ds-label">Budget Tier</div>
+        </div>
+        <div class="detail-stat">
+          <div class="ds-val">${campaign.status === 'active' ? 'Live' : campaign.status === 'draft' ? 'Pending' : 'Closed'}</div>
+          <div class="ds-label">Campaign State</div>
+        </div>
+      </div>
+
+      <p class="section-label">Services</p>
+      <div class="service-tags">
+        ${campaign.services.map(s => `<span class="service-tag">${s}</span>`).join('')}
+      </div>
+
+      <div class="stripe-block">
+        <div class="stripe-icon">💳</div>
+        <div class="stripe-label">Stripe Payment</div>
+        <div class="stripe-sub">Payment history & billing</div>
+        <div class="stripe-badge">wired soon</div>
+      </div>
+    `;
+
+    pushSheet('sheetDetail');
+  }
+
+  /* ── Reset ─────────────────────────────────────── */
+  function resetState() {
+    state.service = null;
+    state.budget  = null;
+    state.customBudget = '';
+    serviceGrid.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+    budgetList.querySelectorAll('.budget-item').forEach(i => i.classList.remove('selected'));
+    document.getElementById('serviceContinueBtn').disabled = true;
+    document.getElementById('budgetContinueBtn').disabled  = true;
+    const customWrap = document.getElementById('customWrap');
+    if (customWrap) {
+      customWrap.style.display = 'none';
+      document.getElementById('customInput').value = '';
+    }
+  }
+</script>
+</body>
+</html>

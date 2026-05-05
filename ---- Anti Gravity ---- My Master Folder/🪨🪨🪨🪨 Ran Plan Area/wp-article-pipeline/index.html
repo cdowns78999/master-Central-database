@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%232271b1'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-weight='bold'>W</text></svg>" type="image/svg+xml">
+<title>WP Article Builder</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    background: #f0f0f1;
+    color: #1d2327;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── WP Admin Bar ── */
+  .wp-admin-bar {
+    background: #1d2327;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .wp-admin-bar .wp-logo {
+    width: 20px; height: 20px;
+    background: #2271b1;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #fff; font-weight: 700;
+  }
+  .wp-admin-bar span {
+    color: #c3c4c7; font-size: 13px;
+  }
+  .wp-admin-bar .site-name {
+    color: #eee; font-weight: 500;
+  }
+
+  /* ── Top Toolbar ── */
+  .toolbar {
+    background: #fff;
+    border-bottom: 1px solid #c3c4c7;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .toolbar h1 {
+    font-size: 23px;
+    font-weight: 400;
+    color: #1d2327;
+    margin-right: auto;
+  }
+  .toolbar button {
+    padding: 4px 12px;
+    border: 1px solid #2271b1;
+    background: #fff;
+    color: #2271b1;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .toolbar button:hover {
+    background: #2271b1;
+    color: #fff;
+  }
+  .toolbar button.primary {
+    background: #2271b1;
+    color: #fff;
+  }
+  .toolbar button.primary:hover {
+    background: #135e96;
+  }
+  .toolbar button.active {
+    background: #2271b1;
+    color: #fff;
+  }
+
+  /* ── Main Layout ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 160px;
+    background: #1d2327;
+    padding: 12px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+  .sidebar .menu-label {
+    color: #a7aaad;
+    font-size: 11px;
+    text-transform: uppercase;
+    padding: 8px 16px 4px;
+    letter-spacing: 0.5px;
+  }
+  .sidebar button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: #c3c4c7;
+    padding: 6px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sidebar button:hover {
+    color: #72aee6;
+    background: rgba(255,255,255,0.04);
+  }
+  .sidebar button.active {
+    color: #fff;
+    background: #2271b1;
+  }
+
+  /* ── Editor Area ── */
+  .editor-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    background: #fff;
+    border-bottom: 1px solid #c3c4c7;
+    flex-shrink: 0;
+  }
+  .tab-bar button {
+    padding: 8px 16px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-bottom: none;
+    margin-left: -1px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #50575e;
+    transition: all 0.15s;
+  }
+  .tab-bar button:first-child { margin-left: 12px; }
+  .tab-bar button.active {
+    background: #fff;
+    color: #1d2327;
+    border-bottom: 2px solid #fff;
+    margin-bottom: -1px;
+    font-weight: 500;
+  }
+
+  /* Title input */
+  .title-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 22px;
+    border: none;
+    border-bottom: 1px solid #dcdcde;
+    outline: none;
+    font-family: inherit;
+    color: #1d2327;
+    background: #fff;
+  }
+  .title-input::placeholder { color: #a7aaad; }
+
+  /* Code editor */
+  .code-editor {
+    flex: 1;
+    width: 100%;
+    padding: 16px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    border: none;
+    outline: none;
+    resize: none;
+    background: #fff;
+    color: #1d2327;
+    tab-size: 2;
+  }
+
+  /* Visual preview */
+  .visual-preview {
+    flex: 1;
+    padding: 24px 40px;
+    overflow-y: auto;
+    background: #fff;
+    display: none;
+    font-size: 16px;
+    line-height: 1.8;
+    max-width: 100%;
+  }
+  .visual-preview.active { display: block; }
+  .code-editor.active { display: block; }
+  .code-editor.hidden { display: none; }
+
+  /* WP-style content rendering */
+  .visual-preview h2 { font-size: 1.6em; margin: 1em 0 0.5em; color: #1d2327; }
+  .visual-preview h3 { font-size: 1.3em; margin: 1em 0 0.5em; color: #1d2327; }
+  .visual-preview h4 { font-size: 1.1em; margin: 1em 0 0.5em; color: #1d2327; }
+  .visual-preview p { margin: 0 0 1em; }
+  .visual-preview a { color: #2271b1; text-decoration: underline; }
+  .visual-preview blockquote {
+    border-left: 4px solid #2271b1;
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    background: #f0f6fc;
+    color: #50575e;
+  }
+  .visual-preview img {
+    max-width: 100%;
+    height: auto;
+    margin: 1em 0;
+  }
+  .visual-preview ul, .visual-preview ol {
+    margin: 0 0 1em 1.5em;
+  }
+  .visual-preview li { margin-bottom: 0.3em; }
+  .visual-preview hr {
+    border: none;
+    border-top: 2px solid #dcdcde;
+    margin: 1.5em 0;
+  }
+  .visual-preview pre {
+    background: #2d2d2d;
+    color: #f8f8f2;
+    padding: 16px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 1em 0;
+  }
+  .visual-preview code {
+    background: #f0f0f1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  .visual-preview pre code {
+    background: none;
+    padding: 0;
+  }
+  .visual-preview table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+  }
+  .visual-preview th, .visual-preview td {
+    border: 1px solid #c3c4c7;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  .visual-preview th { background: #f0f0f1; font-weight: 600; }
+  .visual-preview .aligncenter { text-align: center; }
+  .visual-preview .alignleft { float: left; margin-right: 1em; }
+  .visual-preview .alignright { float: right; margin-left: 1em; }
+
+  /* ── Right Sidebar (Post Settings) ── */
+  .post-settings {
+    width: 280px;
+    background: #fff;
+    border-left: 1px solid #c3c4c7;
+    padding: 16px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .post-settings h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #1d2327;
+  }
+  .setting-group {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f1;
+  }
+  .setting-group label {
+    display: block;
+    font-size: 12px;
+    color: #50575e;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .setting-group select,
+  .setting-group input[type="text"] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #c3c4c7;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .tag {
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #50575e;
+    cursor: pointer;
+  }
+
+  /* ── Claude Prompt Drawer ── */
+  .claude-drawer {
+    background: #1a1a2e;
+    border-top: 2px solid #6366f1;
+    padding: 12px 16px;
+    display: none;
+    flex-shrink: 0;
+  }
+  .claude-drawer.open { display: flex; gap: 8px; align-items: flex-start; }
+  .claude-drawer textarea {
+    flex: 1;
+    background: #16213e;
+    color: #e0e0e0;
+    border: 1px solid #6366f1;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+  }
+  .claude-drawer textarea::placeholder { color: #6366f1; }
+  .claude-drawer button {
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .claude-drawer button:hover { background: #4f46e5; }
+
+  /* ── Snippet Bar ── */
+  .snippet-bar {
+    background: #f6f7f7;
+    border-bottom: 1px solid #dcdcde;
+    padding: 4px 12px;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .snippet-bar button {
+    padding: 3px 8px;
+    font-size: 12px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: Consolas, monospace;
+    color: #50575e;
+  }
+  .snippet-bar button:hover {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+  }
+
+  /* ── Status Bar ── */
+  .status-bar {
+    background: #1d2327;
+    color: #a7aaad;
+    font-size: 12px;
+    padding: 4px 16px;
+    display: flex;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  /* ── Copy Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #00a32a;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- WP Admin Bar -->
+<div class="wp-admin-bar">
+  <div class="wp-logo">W</div>
+  <span class="site-name">Article Builder</span>
+  <span>|</span>
+  <span>Add New Post</span>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <h1>Add New Post</h1>
+  <button onclick="toggleClaude()" id="claudeBtn">Claude Prompt</button>
+  <button onclick="copyHTML()" id="copyBtn">Copy HTML</button>
+  <button onclick="loadSample()">Sample</button>
+  <button onclick="clearEditor()">Clear</button>
+  <button class="primary" id="captureBtn" onclick="captureForExtension()">Capture for Extension</button>
+</div>
+
+<div class="main">
+  <!-- Left Sidebar -->
+  <div class="sidebar">
+    <div class="menu-label">Insert</div>
+    <button onclick="insert('&lt;p&gt;', '&lt;/p&gt;')">Paragraph</button>
+    <button onclick="insert('&lt;h2&gt;', '&lt;/h2&gt;')">Heading 2</button>
+    <button onclick="insert('&lt;h3&gt;', '&lt;/h3&gt;')">Heading 3</button>
+    <button onclick="insert('&lt;h4&gt;', '&lt;/h4&gt;')">Heading 4</button>
+    <button onclick="insert('&lt;strong&gt;', '&lt;/strong&gt;')">Bold</button>
+    <button onclick="insert('&lt;em&gt;', '&lt;/em&gt;')">Italic</button>
+    <button onclick="insert('&lt;a href=&quot;&quot;&gt;', '&lt;/a&gt;')">Link</button>
+    <button onclick="insertBlock('img')">Image</button>
+    <button onclick="insertBlock('ul')">Bullet List</button>
+    <button onclick="insertBlock('ol')">Number List</button>
+    <button onclick="insertBlock('blockquote')">Blockquote</button>
+    <button onclick="insert('&lt;hr /&gt;\n', '')">Separator</button>
+    <button onclick="insertBlock('table')">Table</button>
+    <button onclick="insert('&lt;code&gt;', '&lt;/code&gt;')">Inline Code</button>
+    <button onclick="insertBlock('pre')">Code Block</button>
+
+    <div class="menu-label" style="margin-top:12px;">Format</div>
+    <button onclick="wrapGutenberg()">Wrap Gutenberg</button>
+  </div>
+
+  <!-- Editor Area -->
+  <div class="editor-wrap">
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="active" id="textTab" onclick="switchTab('text')">Text</button>
+      <button id="visualTab" onclick="switchTab('visual')">Visual</button>
+    </div>
+
+    <!-- Snippet Quick-Insert Bar -->
+    <div class="snippet-bar" id="snippetBar">
+      <button onclick="insert('&lt;strong&gt;', '&lt;/strong&gt;')">b</button>
+      <button onclick="insert('&lt;em&gt;', '&lt;/em&gt;')">i</button>
+      <button onclick="insert('&lt;u&gt;', '&lt;/u&gt;')">u</button>
+      <button onclick="insert('&lt;s&gt;', '&lt;/s&gt;')">s</button>
+      <button onclick="insert('&lt;a href=&quot;&quot;&gt;', '&lt;/a&gt;')">link</button>
+      <button onclick="insert('&lt;blockquote&gt;&lt;p&gt;', '&lt;/p&gt;&lt;/blockquote&gt;')">b-quote</button>
+      <button onclick="insert('&lt;code&gt;', '&lt;/code&gt;')">code</button>
+      <button onclick="insert('&lt;br /&gt;\n', '')">br</button>
+      <button onclick="insert('&lt;img src=&quot;&quot; alt=&quot;&quot; class=&quot;aligncenter size-full&quot; /&gt;\n', '')">img</button>
+      <button onclick="insert('&lt;ul&gt;\n  &lt;li&gt;', '&lt;/li&gt;\n&lt;/ul&gt;')">ul</button>
+      <button onclick="insert('&lt;ol&gt;\n  &lt;li&gt;', '&lt;/li&gt;\n&lt;/ol&gt;')">ol</button>
+    </div>
+
+    <!-- Title -->
+    <input type="text" class="title-input" id="postTitle" placeholder="Enter title here" />
+
+    <!-- Code Editor -->
+    <textarea class="code-editor active" id="codeEditor" placeholder="Start writing your article HTML here...
+
+Example:
+<p>Your first paragraph goes here.</p>
+
+<h2>A Section Heading</h2>
+
+<p>More content with <strong>bold</strong> and <em>italic</em> text.</p>
+
+<ul>
+  <li>First point</li>
+  <li>Second point</li>
+</ul>"></textarea>
+
+    <!-- Visual Preview -->
+    <div class="visual-preview" id="visualPreview"></div>
+  </div>
+
+  <!-- Right Sidebar: Post Settings -->
+  <div class="post-settings">
+    <h3>Post Settings</h3>
+
+    <div class="setting-group">
+      <label>Status</label>
+      <select id="postStatus">
+        <option>Draft</option>
+        <option>Ready to Publish</option>
+      </select>
+    </div>
+
+    <div class="setting-group">
+      <label>Category</label>
+      <select id="postCategory">
+        <option>Uncategorized</option>
+        <option>News</option>
+        <option>Press Release</option>
+        <option>Blog</option>
+        <option>Feature</option>
+      </select>
+    </div>
+
+    <div class="setting-group">
+      <label>Tags</label>
+      <input type="text" id="postTags" placeholder="Add tag..." />
+      <div class="tag-list" id="tagList"></div>
+    </div>
+
+    <div class="setting-group">
+      <label>WordPress Site URL</label>
+      <input type="text" id="wpUrl" placeholder="https://yoursite.com" />
+    </div>
+
+    <div class="setting-group">
+      <label>Word Count</label>
+      <span id="wordCount" style="font-size:20px;font-weight:600;color:#2271b1;">0</span>
+    </div>
+
+    <div class="setting-group">
+      <label>HTML Size</label>
+      <span id="htmlSize" style="font-size:14px;color:#50575e;">0 bytes</span>
+    </div>
+
+    <div class="setting-group" style="border:none;">
+      <label>Quick Ref</label>
+      <div style="font-size:11px;color:#50575e;line-height:1.5;font-family:Consolas,monospace;">
+        &lt;p&gt; &lt;h2&gt; &lt;h3&gt;<br>
+        &lt;strong&gt; &lt;em&gt; &lt;a&gt;<br>
+        &lt;img&gt; &lt;ul&gt; &lt;ol&gt;<br>
+        &lt;blockquote&gt; &lt;hr /&gt;<br>
+        &lt;table&gt; &lt;code&gt; &lt;pre&gt;
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Claude Prompt Drawer -->
+<div class="claude-drawer" id="claudeDrawer">
+  <textarea id="claudePrompt" placeholder="Describe the article you want Claude to write... e.g. 'Write a 500-word press release about [artist] releasing [song]'"></textarea>
+  <button onclick="generatePrompt()">Copy Prompt</button>
+</div>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <span id="statusLeft">Text mode</span>
+  <span id="statusRight">Ready</span>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const codeEditor = document.getElementById('codeEditor');
+const visualPreview = document.getElementById('visualPreview');
+const postTitle = document.getElementById('postTitle');
+
+// ── Tab Switching ──
+function switchTab(tab) {
+  const textTab = document.getElementById('textTab');
+  const visualTab = document.getElementById('visualTab');
+  const snippetBar = document.getElementById('snippetBar');
+
+  if (tab === 'text') {
+    textTab.classList.add('active');
+    visualTab.classList.remove('active');
+    codeEditor.classList.add('active');
+    codeEditor.classList.remove('hidden');
+    visualPreview.classList.remove('active');
+    snippetBar.style.display = 'flex';
+    document.getElementById('statusLeft').textContent = 'Text mode';
+  } else {
+    visualTab.classList.add('active');
+    textTab.classList.remove('active');
+    codeEditor.classList.remove('active');
+    codeEditor.classList.add('hidden');
+    visualPreview.classList.add('active');
+    visualPreview.innerHTML = codeEditor.value;
+    snippetBar.style.display = 'none';
+    document.getElementById('statusLeft').textContent = 'Visual mode';
+  }
+}
+
+// ── Insert Tags ──
+function insert(open, close) {
+  const start = codeEditor.selectionStart;
+  const end = codeEditor.selectionEnd;
+  const selected = codeEditor.value.substring(start, end);
+  const before = codeEditor.value.substring(0, start);
+  const after = codeEditor.value.substring(end);
+
+  // Decode HTML entities for insertion
+  const openTag = decodeEntities(open);
+  const closeTag = decodeEntities(close);
+
+  codeEditor.value = before + openTag + selected + closeTag + after;
+  codeEditor.focus();
+  codeEditor.selectionStart = start + openTag.length;
+  codeEditor.selectionEnd = start + openTag.length + selected.length;
+  updateStats();
+}
+
+function decodeEntities(str) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = str;
+  return tmp.textContent;
+}
+
+function insertBlock(type) {
+  const blocks = {
+    img: '<img src="" alt="" class="aligncenter size-full" />\n',
+    ul: '<ul>\n  <li></li>\n  <li></li>\n  <li></li>\n</ul>\n',
+    ol: '<ol>\n  <li></li>\n  <li></li>\n  <li></li>\n</ol>\n',
+    blockquote: '<blockquote>\n  <p></p>\n</blockquote>\n',
+    table: '<table>\n  <tr>\n    <th>Header</th>\n    <th>Header</th>\n  </tr>\n  <tr>\n    <td>Cell</td>\n    <td>Cell</td>\n  </tr>\n</table>\n',
+    pre: '<pre><code>\n\n</code></pre>\n'
+  };
+  const pos = codeEditor.selectionStart;
+  const before = codeEditor.value.substring(0, pos);
+  const after = codeEditor.value.substring(pos);
+  codeEditor.value = before + blocks[type] + after;
+  codeEditor.focus();
+  updateStats();
+}
+
+// ── Wrap in Gutenberg Comments ──
+function wrapGutenberg() {
+  const html = codeEditor.value;
+  // Wrap common blocks in Gutenberg comments
+  let wrapped = html;
+  wrapped = wrapped.replace(/<p>([\s\S]*?)<\/p>/g, '<!-- wp:paragraph -->\n<p>$1</p>\n<!-- /wp:paragraph -->');
+  wrapped = wrapped.replace(/<h2>([\s\S]*?)<\/h2>/g, '<!-- wp:heading {"level":2} -->\n<h2>$1</h2>\n<!-- /wp:heading -->');
+  wrapped = wrapped.replace(/<h3>([\s\S]*?)<\/h3>/g, '<!-- wp:heading {"level":3} -->\n<h3>$1</h3>\n<!-- /wp:heading -->');
+  wrapped = wrapped.replace(/<blockquote>([\s\S]*?)<\/blockquote>/g, '<!-- wp:quote -->\n<blockquote>$1</blockquote>\n<!-- /wp:quote -->');
+  wrapped = wrapped.replace(/<ul>([\s\S]*?)<\/ul>/g, '<!-- wp:list -->\n<ul>$1</ul>\n<!-- /wp:list -->');
+  wrapped = wrapped.replace(/<ol>([\s\S]*?)<\/ol>/g, '<!-- wp:list {"ordered":true} -->\n<ol>$1</ol>\n<!-- /wp:list -->');
+  wrapped = wrapped.replace(/<hr\s*\/?>/g, '<!-- wp:separator -->\n<hr class="wp-block-separator"/>\n<!-- /wp:separator -->');
+  codeEditor.value = wrapped;
+  showToast('Wrapped in Gutenberg block comments');
+  updateStats();
+}
+
+// ── Claude Prompt ──
+function toggleClaude() {
+  const drawer = document.getElementById('claudeDrawer');
+  const btn = document.getElementById('claudeBtn');
+  if (drawer.classList.contains('open')) {
+    drawer.classList.remove('open');
+    btn.classList.remove('active');
+  } else {
+    drawer.classList.add('open');
+    btn.classList.add('active');
+    document.getElementById('claudePrompt').focus();
+  }
+}
+
+function generatePrompt() {
+  const userPrompt = document.getElementById('claudePrompt').value.trim();
+  if (!userPrompt) return;
+
+  const fullPrompt = `Write a WordPress article in clean HTML. Use only these tags: <p>, <h2>, <h3>, <h4>, <strong>, <em>, <a>, <img>, <ul>, <ol>, <li>, <blockquote>, <hr />, <table>, <tr>, <th>, <td>, <code>, <pre>.
+
+Do NOT include <!DOCTYPE>, <html>, <head>, <body>, or any wrapper — ONLY the article body HTML.
+
+Article request: ${userPrompt}`;
+
+  navigator.clipboard.writeText(fullPrompt).then(() => {
+    showToast('Prompt copied to clipboard — paste into Claude');
+  });
+}
+
+// ── Copy / Capture ──
+function copyHTML() {
+  const html = codeEditor.value;
+  if (!html.trim()) {
+    showToast('Nothing to copy');
+    return;
+  }
+  navigator.clipboard.writeText(html).then(() => {
+    showToast('HTML copied to clipboard');
+  });
+}
+
+function captureForExtension() {
+  const data = {
+    title: postTitle.value,
+    html: codeEditor.value,
+    category: document.getElementById('postCategory').value,
+    tags: document.getElementById('postTags').value,
+    wpUrl: document.getElementById('wpUrl').value,
+    timestamp: new Date().toISOString()
+  };
+
+  // Store in localStorage for the extension to pick up
+  localStorage.setItem('wp-article-capture', JSON.stringify(data));
+
+  // Also dispatch a custom event the extension can listen for
+  window.dispatchEvent(new CustomEvent('wp-article-captured', { detail: data }));
+
+  showToast('Captured! Extension can grab it now.');
+  document.getElementById('statusRight').textContent = 'Captured at ' + new Date().toLocaleTimeString();
+}
+
+// ── Sample Article ──
+function loadSample() {
+  postTitle.value = 'New Single "Midnight" Drops This Friday';
+  codeEditor.value = `<h2>Breaking: Artist Name Announces New Single</h2>
+
+<p><strong>Artist Name</strong> is set to release their highly anticipated new single <em>"Midnight"</em> this Friday, available on all major streaming platforms.</p>
+
+<p>The track marks a bold new direction for the artist, blending electronic production with soulful vocals that showcase their evolving artistry.</p>
+
+<h3>About the Single</h3>
+
+<blockquote>
+  <p>"Midnight is about those 2am moments when everything becomes crystal clear. I wanted to capture that feeling in a song."</p>
+</blockquote>
+
+<ul>
+  <li>Release Date: March 28, 2026</li>
+  <li>Label: Independent</li>
+  <li>Producer: Producer Name</li>
+  <li>Available on: Spotify, Apple Music, YouTube Music</li>
+</ul>
+
+<h3>Streaming Links</h3>
+
+<p><a href="https://spotify.com" target="_blank" rel="noopener">Listen on Spotify</a> | <a href="https://music.apple.com" target="_blank" rel="noopener">Listen on Apple Music</a></p>
+
+<hr />
+
+<h3>About the Artist</h3>
+
+<p>Artist Name is an independent musician known for pushing boundaries and creating authentic connections through music. With over 500K monthly listeners, they continue to grow their audience organically.</p>
+
+<p>For press inquiries, contact <a href="mailto:press@example.com">press@example.com</a></p>`;
+
+  updateStats();
+  showToast('Sample article loaded');
+}
+
+function clearEditor() {
+  if (codeEditor.value.trim() && !confirm('Clear the editor?')) return;
+  postTitle.value = '';
+  codeEditor.value = '';
+  updateStats();
+}
+
+// ── Stats ──
+function updateStats() {
+  const html = codeEditor.value;
+  const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const words = text ? text.split(' ').length : 0;
+  document.getElementById('wordCount').textContent = words;
+  document.getElementById('htmlSize').textContent = new Blob([html]).size + ' bytes';
+}
+
+codeEditor.addEventListener('input', updateStats);
+
+// ── Tags ──
+document.getElementById('postTags').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const tag = this.value.trim();
+    if (!tag) return;
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.textContent = tag;
+    span.onclick = () => span.remove();
+    document.getElementById('tagList').appendChild(span);
+    this.value = '';
+  }
+});
+
+// ── Toast ──
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ── Keyboard Shortcuts ──
+document.addEventListener('keydown', function(e) {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'b') { e.preventDefault(); insert('<strong>', '</strong>'); }
+    if (e.key === 'i') { e.preventDefault(); insert('<em>', '</em>'); }
+    if (e.key === 'k') { e.preventDefault(); insert('<a href="">', '</a>'); }
+    if (e.key === 's') { e.preventDefault(); captureForExtension(); }
+  }
+});
+
+// Init
+updateStats();
+</script>
+</body>
+</html>

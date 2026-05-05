@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Nighttime Intelligence Report</title>
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ──────────────────────────────────────────────
+           DESIGN TOKENS
+        ────────────────────────────────────────────── */
+        :root {
+            --bg: #0a0a0a;
+            --bg-elevated: #141414;
+            --bg-float: #1a1a1a;
+            --bg-hover: #222;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(99, 102, 241, 0.25);
+            --text: #e8e8e8;
+            --text-dim: rgba(255, 255, 255, 0.45);
+            --text-ghost: rgba(255, 255, 255, 0.25);
+            --primary: #6366f1;
+            --primary-dim: rgba(99, 102, 241, 0.15);
+            --primary-ghost: rgba(99, 102, 241, 0.06);
+            --cyan: #22d3ee;
+            --amber: #f59e0b;
+            --green: #1ed760;
+            --blue: #3b82f6;
+            --purple: #a855f7;
+            --red: #ef4444;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius: 20px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+            --transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+            --shadow-lift: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.06);
+            --shadow-glow: 0 0 80px rgba(99, 102, 241, 0.12);
+        }
+
+        /* ──────────────────────────────────────────────
+           RESET & BASE
+        ────────────────────────────────────────────── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 40px;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: var(--font-body);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-bottom: 100px;
+        }
+
+        ::selection {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ──────────────────────────────────────────────
+           AMBIENT BACKGROUND
+        ────────────────────────────────────────────── */
+        .ambient-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.12;
+        }
+
+        .orb-1 {
+            width: 60vw;
+            height: 60vw;
+            max-width: 800px;
+            max-height: 800px;
+            top: -20%;
+            left: -15%;
+            background: var(--primary);
+            animation: orbDrift1 25s ease-in-out infinite alternate;
+        }
+
+        .orb-2 {
+            width: 45vw;
+            height: 45vw;
+            max-width: 600px;
+            max-height: 600px;
+            bottom: -15%;
+            right: -10%;
+            background: var(--cyan);
+            animation: orbDrift2 30s ease-in-out infinite alternate;
+        }
+
+        .orb-3 {
+            width: 35vw;
+            height: 35vw;
+            max-width: 500px;
+            max-height: 500px;
+            top: 40%;
+            left: 50%;
+            background: var(--purple);
+            opacity: 0.06;
+            animation: orbDrift3 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes orbDrift1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 60px) scale(1.15); }
+        }
+
+        @keyframes orbDrift2 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-60px, -40px) scale(1.1); }
+        }
+
+        @keyframes orbDrift3 {
+            0% { transform: translate(-50%, 0) scale(1); }
+            100% { transform: translate(-50%, -60px) scale(1.2); }
+        }
+
+        /* Starfield dots */
+        .starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            animation: twinkle var(--dur) ease-in-out infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* ──────────────────────────────────────────────
+           LAYOUT CONTAINER
+        ────────────────────────────────────────────── */
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ──────────────────────────────────────────────
+           HERO SECTION
+        ────────────────────────────────────────────── */
+        .hero {
+            text-align: center;
+            padding: 100px 0 80px;
+            position: relative;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--primary);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: var(--primary-ghost);
+            padding: 6px 16px;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            margin-bottom: 28px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
+            50% { box-shadow: 0 0 35px rgba(99, 102, 241, 0.25); }
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: clamp(2.8rem, 7vw, 5rem);
+            font-weight: 900;
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            background: linear-gradient(to bottom, #ffffff 30%, rgba(255, 255, 255, 0.5));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-title .accent {
+            -webkit-text-fill-color: var(--primary);
+            background: none;
+            text-shadow: 0 0 60px rgba(99, 102, 241, 0.4);
+        }
+
+        .hero-subtitle {
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            color: var(--text-dim);
+            max-width: 620px;
+            margin: 0 auto;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+
+        .hero-divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--cyan));
+            border-radius: 2px;
+            margin: 40px auto 0;
+            opacity: 0.6;
+        }
+
+        /* ──────────────────────────────────────────────
+           SECTION HEADERS
+        ────────────────────────────────────────────── */
+        .section {
+            margin-bottom: 80px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .section-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .section-dot.green { background: var(--green); box-shadow: 0 0 12px rgba(30, 215, 96, 0.4); }
+        .section-dot.amber { background: var(--amber); box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+        .section-dot.blue { background: var(--blue); box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); }
+        .section-dot.purple { background: var(--purple); box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }
+        .section-dot.red { background: var(--red); box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+        .section-dot.cyan { background: var(--cyan); box-shadow: 0 0 12px rgba(34, 211, 238, 0.4); }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+
+        .section-subtitle {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-top: -20px;
+            margin-bottom: 32px;
+            padding-left: 22px;
+        }
+
+        /* ──────────────────────────────────────────────
+           CARD FOUNDATIONS
+        ────────────────────────────────────────────── */
+        .card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), transparent 60%);
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lift);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        /* ──────────────────────────────────────────────
+           BENCHMARK GRID (Section 1)
+        ────────────────────────────────────────────── */
+        .benchmark-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .benchmark-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benchmark-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--green);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .benchmark-card:hover {
+            border-color: rgba(30, 215, 96, 0.25);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 30px rgba(30, 215, 96, 0.06);
+        }
+
+        .benchmark-card:hover::before {
+            opacity: 1;
+        }
+
+        .benchmark-stat {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--green);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .benchmark-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-ghost);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        .benchmark-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* ──────────────────────────────────────────────
+           MULTIPLIER SECTION (Section 2)
+        ────────────────────────────────────────────── */
+        .multiplier-callout {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 48px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .multiplier-callout::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, rgba(245, 158, 11, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .multiplier-callout:hover {
+            border-color: rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 60px rgba(245, 158, 11, 0.06);
+        }
+
+        .multiplier-equation {
+            font-family: var(--font-heading);
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .multiplier-equation .highlight {
+            color: var(--amber);
+        }
+
+        .multiplier-body {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        .compound-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .compound-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .compound-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--amber);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .compound-card:hover {
+            border-color: rgba(245, 158, 11, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+        }
+
+        .compound-card:hover::after {
+            opacity: 1;
+        }
+
+        .compound-day {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--amber);
+            margin-bottom: 8px;
+        }
+
+        .compound-text {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* ──────────────────────────────────────────────
+           PATTERN CARDS (Section 3)
+        ────────────────────────────────────────────── */
+        .pattern-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .pattern-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .pattern-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .pattern-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lift);
+        }
+
+        .pattern-card:hover::before {
+            opacity: 1;
+        }
+
+        .pattern-card[data-color="green"]::before { background: var(--green); }
+        .pattern-card[data-color="green"]:hover { border-color: rgba(30, 215, 96, 0.2); }
+        .pattern-card[data-color="blue"]::before { background: var(--blue); }
+        .pattern-card[data-color="blue"]:hover { border-color: rgba(59, 130, 246, 0.2); }
+        .pattern-card[data-color="cyan"]::before { background: var(--cyan); }
+        .pattern-card[data-color="cyan"]:hover { border-color: rgba(34, 211, 238, 0.2); }
+        .pattern-card[data-color="amber"]::before { background: var(--amber); }
+        .pattern-card[data-color="amber"]:hover { border-color: rgba(245, 158, 11, 0.2); }
+        .pattern-card[data-color="purple"]::before { background: var(--purple); }
+        .pattern-card[data-color="purple"]:hover { border-color: rgba(168, 85, 247, 0.2); }
+        .pattern-card[data-color="red"]::before { background: var(--red); }
+        .pattern-card[data-color="red"]:hover { border-color: rgba(239, 68, 68, 0.2); }
+
+        .pattern-number {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--text-ghost);
+            line-height: 1;
+            min-width: 36px;
+        }
+
+        .pattern-content {
+            flex: 1;
+        }
+
+        .pattern-name {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }
+
+        .pattern-code {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--primary);
+            background: var(--primary-ghost);
+            border: 1px solid var(--primary-dim);
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .pattern-desc {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .pattern-best {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-ghost);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pattern-best strong {
+            color: var(--text-dim);
+        }
+
+        .pattern-tag {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            white-space: nowrap;
+            align-self: center;
+        }
+
+        .pattern-card[data-color="green"] .pattern-tag {
+            color: var(--green);
+            background: rgba(30, 215, 96, 0.1);
+            border: 1px solid rgba(30, 215, 96, 0.2);
+        }
+
+        .pattern-card[data-color="blue"] .pattern-tag {
+            color: var(--blue);
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .pattern-card[data-color="cyan"] .pattern-tag {
+            color: var(--cyan);
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+        }
+
+        .pattern-card[data-color="amber"] .pattern-tag {
+            color: var(--amber);
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .pattern-card[data-color="purple"] .pattern-tag {
+            color: var(--purple);
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .pattern-card[data-color="red"] .pattern-tag {
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* ──────────────────────────────────────────────
+           ANALYSIS GRID (Section 4)
+        ────────────────────────────────────────────── */
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .insight-grid .insight-card:last-child {
+            grid-column: 1 / -1;
+        }
+
+        .insight-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .insight-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, transparent 70%);
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .insight-card:hover {
+            border-color: rgba(168, 85, 247, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3), 0 0 20px rgba(168, 85, 247, 0.04);
+        }
+
+        .insight-card:hover::before {
+            opacity: 1;
+        }
+
+        .insight-number {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--purple);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+
+        .insight-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .insight-body {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        /* ──────────────────────────────────────────────
+           PATHWAY GRID (Section 5)
+        ────────────────────────────────────────────── */
+        .pathway-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .pathway-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pathway-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(239, 68, 68, 0.04) 0%, transparent 50%);
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .pathway-card:hover {
+            border-color: rgba(239, 68, 68, 0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 25px rgba(239, 68, 68, 0.04);
+        }
+
+        .pathway-card:hover::before {
+            opacity: 1;
+        }
+
+        .pathway-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        .pathway-role {
+            font-family: var(--font-heading);
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .pathway-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .pathway-list li {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            padding: 4px 0;
+            position: relative;
+            padding-left: 14px;
+        }
+
+        .pathway-list li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--red);
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        /* ──────────────────────────────────────────────
+           TOOLS TABLE (Section 6)
+        ────────────────────────────────────────────── */
+        .tools-table-wrapper {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .tools-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tools-table thead th {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-ghost);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 18px 24px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-float);
+        }
+
+        .tools-table tbody td {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .tools-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tools-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .tools-table tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .tools-table tbody tr:hover td {
+            color: var(--text);
+        }
+
+        .tool-name {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            color: var(--text) !important;
+        }
+
+        .tool-category-pill {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .pill-agent {
+            color: var(--cyan);
+            background: rgba(34, 211, 238, 0.08);
+            border: 1px solid rgba(34, 211, 238, 0.15);
+        }
+
+        .pill-orchestrator {
+            color: var(--purple);
+            background: rgba(168, 85, 247, 0.08);
+            border: 1px solid rgba(168, 85, 247, 0.15);
+        }
+
+        .pill-automation {
+            color: var(--amber);
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+
+        .pill-integration {
+            color: var(--green);
+            background: rgba(30, 215, 96, 0.08);
+            border: 1px solid rgba(30, 215, 96, 0.15);
+        }
+
+        .pill-data {
+            color: var(--blue);
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        .tool-cost {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--green) !important;
+        }
+
+        /* ──────────────────────────────────────────────
+           BOTTOM NAVIGATION
+        ────────────────────────────────────────────── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid var(--border);
+            padding: 14px 24px;
+        }
+
+        .bottom-nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-dot-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            transition: var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .nav-dot-link:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-float);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-dot-link .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .nav-dot-link .dot.indigo { background: var(--primary); box-shadow: 0 0 8px rgba(99, 102, 241, 0.4); }
+        .nav-dot-link .dot.green { background: var(--green); box-shadow: 0 0 8px rgba(30, 215, 96, 0.4); }
+        .nav-dot-link .dot.amber { background: var(--amber); box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+
+        .nav-dot-link .nav-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .nav-dot-link:hover .nav-label {
+            color: var(--text);
+        }
+
+        .nav-current {
+            background: var(--primary-dim) !important;
+            border-color: rgba(99, 102, 241, 0.3) !important;
+        }
+
+        .nav-current .nav-label {
+            color: var(--primary) !important;
+        }
+
+        /* ──────────────────────────────────────────────
+           SCROLL ANIMATIONS
+        ────────────────────────────────────────────── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s cubic-bezier(0.23, 1, 0.32, 1),
+                        transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+        .reveal-delay-5 { transition-delay: 0.5s; }
+        .reveal-delay-6 { transition-delay: 0.6s; }
+
+        /* ──────────────────────────────────────────────
+           SCROLLBAR
+        ────────────────────────────────────────────── */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* ──────────────────────────────────────────────
+           RESPONSIVE
+        ────────────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .benchmark-grid,
+            .compound-grid,
+            .pathway-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .pattern-card {
+                grid-template-columns: auto 1fr;
+            }
+
+            .pattern-tag {
+                display: none;
+            }
+
+            .insight-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .insight-grid .insight-card:last-child {
+                grid-column: auto;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .hero {
+                padding: 70px 0 50px;
+            }
+
+            .benchmark-grid,
+            .compound-grid,
+            .pathway-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pattern-card {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .pattern-number {
+                font-size: 1.4rem;
+            }
+
+            .tools-table-wrapper {
+                overflow-x: auto;
+            }
+
+            .tools-table {
+                min-width: 600px;
+            }
+
+            .bottom-nav-inner {
+                gap: 6px;
+            }
+
+            .nav-dot-link {
+                padding: 6px 12px;
+            }
+
+            .nav-dot-link .nav-label {
+                font-size: 0.55rem;
+            }
+
+            .section {
+                margin-bottom: 60px;
+            }
+        }
+
+        /* ──────────────────────────────────────────────
+           UTILITY CLASSES
+        ────────────────────────────────────────────── */
+        .mono {
+            font-family: var(--font-mono);
+        }
+
+        .text-primary { color: var(--primary); }
+        .text-green { color: var(--green); }
+        .text-amber { color: var(--amber); }
+        .text-cyan { color: var(--cyan); }
+        .text-blue { color: var(--blue); }
+        .text-purple { color: var(--purple); }
+        .text-red { color: var(--red); }
+
+        /* Code block styling inside pattern cards */
+        .code-inline {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--cyan);
+            background: rgba(34, 211, 238, 0.06);
+            border: 1px solid rgba(34, 211, 238, 0.12);
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+
+        /* Section spacer line */
+        .section-rule {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 60px 0;
+            border: none;
+        }
+
+        /* Floating badge for callout */
+        .callout-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 4px 12px;
+            border-radius: 100px;
+            margin-bottom: 20px;
+        }
+
+        .callout-badge.amber {
+            color: var(--amber);
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        /* Glowing border effect for special cards */
+        .glow-border {
+            position: relative;
+        }
+
+        .glow-border::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), transparent 40%, transparent 60%, rgba(34, 211, 238, 0.15));
+            z-index: -1;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .glow-border:hover::after {
+            opacity: 1;
+        }
+
+        /* Night icon animation */
+        .night-icon {
+            display: inline-block;
+            animation: moonGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes moonGlow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3)); }
+            50% { filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.6)); }
+        }
+
+        /* Pulse dot for live/active indicators */
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+        }
+
+        .pulse-dot::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 1px solid currentColor;
+            opacity: 0.4;
+            animation: pulseDot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.8); opacity: 0; }
+        }
+
+        /* Page top indicator bar */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--cyan), var(--purple));
+            z-index: 200;
+            transform-origin: left;
+            transform: scaleX(0);
+            transition: transform 0.15s linear;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Progress bar -->
+    <div class="top-bar" id="progressBar"></div>
+
+    <!-- Ambient background -->
+    <div class="ambient-layer">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+    </div>
+    <div class="starfield" id="starfield"></div>
+
+    <div class="page-wrapper">
+
+        <!-- ═══════════════════════════════════════
+             HERO
+        ═══════════════════════════════════════ -->
+        <header class="hero" id="top">
+            <div class="hero-glow"></div>
+            <div class="hero-badge">VERIFIED PATTERNS FROM REAL USERS</div>
+            <h1 class="hero-title">
+                While You <span class="accent">Sleep</span>, AI Works
+            </h1>
+            <p class="hero-subtitle">
+                Every pattern, benchmark, and tool from verified real-world overnight automation &mdash; compiled into one intelligence report.
+            </p>
+            <div class="hero-divider"></div>
+        </header>
+
+        <!-- ═══════════════════════════════════════
+             SECTION 1: VERIFIED BENCHMARKS
+        ═══════════════════════════════════════ -->
+        <section class="section" id="benchmarks">
+            <div class="section-header reveal">
+                <div class="section-dot green"></div>
+                <h2 class="section-title">Verified Benchmarks</h2>
+            </div>
+            <p class="section-subtitle reveal reveal-delay-1">What Real Users Have Achieved</p>
+
+            <div class="benchmark-grid">
+                <!-- Card 1 -->
+                <div class="benchmark-card reveal reveal-delay-1">
+                    <div class="benchmark-stat">3 Months</div>
+                    <div class="benchmark-label">Continuous Runtime</div>
+                    <div class="benchmark-desc">
+                        Geoffrey Huntley ran a Ralph Wiggum loop for 3 months straight. It built an entire programming language with LLVM compilation and full editor support. No human intervention.
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="benchmark-card reveal reveal-delay-2">
+                    <div class="benchmark-stat">20 PRs</div>
+                    <div class="benchmark-label">Per Weekend</div>
+                    <div class="benchmark-desc">
+                        continuous-claude created 20 pull requests over a single weekend, each with CI validation. Full refactor across an entire codebase. Zero human intervention from Friday to Monday.
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="benchmark-card reveal reveal-delay-3">
+                    <div class="benchmark-stat">6 Repos</div>
+                    <div class="benchmark-label">Shipped Overnight</div>
+                    <div class="benchmark-desc">
+                        YC hackathon teams shipped 6+ repositories overnight for approximately $297 in API costs. Production-ready codebases by morning, deployed and tested.
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="benchmark-card reveal reveal-delay-1">
+                    <div class="benchmark-stat">$0 Briefs</div>
+                    <div class="benchmark-label">Morning Intelligence</div>
+                    <div class="benchmark-desc">
+                        AI-powered daily briefs aggregate 40+ sources, summarize with Claude, and deliver one email. Saves 2+ hours daily, 10+ hours per week. Runs while you sleep.
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="benchmark-card reveal reveal-delay-2">
+                    <div class="benchmark-stat">10,000+</div>
+                    <div class="benchmark-label">Lines Rebuilt</div>
+                    <div class="benchmark-desc">
+                        12 Claude agents rebuilt an entire frontend overnight &mdash; one refactoring, another testing, a third updating docs. A coordinated multi-agent swarm, working in parallel.
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="benchmark-card reveal reveal-delay-3">
+                    <div class="benchmark-stat">The Wiz</div>
+                    <div class="benchmark-label">Autonomous Agent</div>
+                    <div class="benchmark-desc">
+                        Pawel Jozefiak's Wiz Agent runs 10PM&ndash;5AM autonomously. Plans at 10PM, executes 11PM&ndash;4AM, reports at 5AM. Deploys to production while you're asleep.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-rule">
+
+        <!-- ═══════════════════════════════════════
+             SECTION 2: THE MULTIPLIER
+        ═══════════════════════════════════════ -->
+        <section class="section" id="multiplier">
+            <div class="section-header reveal">
+                <div class="section-dot amber"></div>
+                <h2 class="section-title">The Overnight Multiplier Effect</h2>
+            </div>
+
+            <div class="multiplier-callout reveal reveal-delay-1">
+                <div class="callout-badge amber">
+                    <span class="pulse-dot" style="background:var(--amber);color:var(--amber);"></span>
+                    Compound Intelligence
+                </div>
+                <div class="multiplier-equation">
+                    <span class="highlight">8 hours</span> of sleep = <span class="highlight">8 hours</span> of productive output.
+                </div>
+                <div class="multiplier-body">
+                    The compound effect isn't the agent &mdash; it's the consistency. Nightly iteration beats sprint sessions. Every night the agent runs, it compounds yesterday's work. Day after day, the gap between you and everyone else widens exponentially.
+                </div>
+            </div>
+
+            <div class="compound-grid">
+                <!-- Night 1 -->
+                <div class="compound-card reveal reveal-delay-1">
+                    <div class="compound-day">Night 1</div>
+                    <div class="compound-text">
+                        Agent writes 3 pull requests. You review them in 15 minutes over coffee. Approve, merge. Day starts ahead of schedule.
+                    </div>
+                </div>
+
+                <!-- Night 7 -->
+                <div class="compound-card reveal reveal-delay-2">
+                    <div class="compound-day">Night 7</div>
+                    <div class="compound-text">
+                        Agent has shipped a full feature end-to-end. All tests passing. Documentation updated. Changelog written. You only reviewed.
+                    </div>
+                </div>
+
+                <!-- Night 30 -->
+                <div class="compound-card reveal reveal-delay-3">
+                    <div class="compound-day">Night 30</div>
+                    <div class="compound-text">
+                        Agent has refactored an entire codebase. Every module touched, tested, and merged. What would take a team of engineers a quarter, done in a month of sleeping.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-rule">
+
+        <!-- ═══════════════════════════════════════
+             SECTION 3: THE 7 PATTERNS
+        ═══════════════════════════════════════ -->
+        <section class="section" id="patterns">
+            <div class="section-header reveal">
+                <div class="section-dot blue"></div>
+                <h2 class="section-title">Automation Patterns</h2>
+            </div>
+            <p class="section-subtitle reveal reveal-delay-1">The 7 proven architectures for overnight AI</p>
+
+            <div class="pattern-stack">
+                <!-- Pattern 1 -->
+                <div class="pattern-card reveal" data-color="green">
+                    <div class="pattern-number">01</div>
+                    <div class="pattern-content">
+                        <div class="pattern-name">The Ralph Loop</div>
+                        <div class="pattern-code">while true; do claude-code --prompt task.md; done</div>
+                        <div class="pattern-desc">
+                            The simplest and most battle-tested pattern. An infinite loop that feeds a task file to Claude Code on repeat. Each iteration picks up where the last left off. Named after Geoffrey Huntley's Ralph Wiggum loop that ran for 3 months straight. The philosophy is persistent iteration &mdash; brute-force consistency that compounds over time.
+                        </div>
+                        <div class="pattern-best"><strong>Best for:</strong> batch operations, large refactors, test coverage expansion, repetitive file processing</div>
+                    </div>
+                    <span class="pattern-tag">Persistent</span>
+                </div>
+
+                <!-- Pattern 2 -->
+                <div class="pattern-card reveal" data-color="blue">
+                    <div class="pattern-number">02</div>
+                    <div class="pattern-content">
+                        <div class="pattern-name">Continuous PR Loop</div>
+                        <div class="pattern-code">Branch &rarr; Code &rarr; Commit &rarr; Push &rarr; PR &rarr; CI &rarr; Merge &rarr; Repeat</div>
+                        <div class="pattern-desc">
+                            A structured loop that creates proper git branches, writes code, commits, pushes, opens a pull request, waits for CI, and merges on success. A <span class="code-inline">SHARED_TASK_NOTES.md</span> file preserves context between iterations so the agent remembers what it did and what comes next. Each PR is atomic and reviewable.
+                        </div>
+                        <div class="pattern-best"><strong>Best for:</strong> multi-step refactors, incremental feature development, teams that need audit trails</div>
+                    </div>
+                    <span class="pattern-tag">Structured</span>
+                </div>
+
+                <!-- Pattern 3 -->
+                <div class="pattern-card reveal" data-color="cyan">
+                    <div class="pattern-number">03</div>
+                    <div class="pattern-content">
+                        <div class="pattern-name">Cron-Triggered Agent</div>
+                        <div class="pattern-code">0 2 * * * /usr/bin/claude-agent run nightly-review</div>
+                        <div class="pattern-desc">
+                            Schedule-based one-shot execution. Set it via crontab, launchd, Windows Task Scheduler, or GitHub Actions cron. The agent wakes at a fixed time (typically 2AM), performs its task, saves a report, and exits cleanly. No loops, no state management. Each run is independent.
+                        </div>
+                        <div class="pattern-best"><strong>Best for:</strong> nightly code reviews, documentation generation, security scans, dependency audits</div>
+                    </div>
+                    <span class="pattern-tag">Scheduled</span>
+                </div>
+
+                <!-- Pattern 4 -->
+                <div class="pattern-card reveal" data-color="amber">
+                    <div class="pattern-number">04</div>
+                    <div class="pattern-content">
+                        <div class="pattern-name">Heartbeat Agent</div>
+                        <div class="pattern-code">wake(interval) &rarr; check_queue() &rarr; execute() &rarr; report() &rarr; sleep()</div>
+                        <div class="pattern-desc">
+                            A long-running daemon that wakes at configurable intervals (typically hourly). It checks a task queue or inbox for new work, executes any pending tasks, writes a status report, then goes back to sleep. Long-term memory persists across cycles via a local context file. Think of it as a dedicated overnight employee.
+                        </div>
+                        <div class="pattern-best"><strong>Best for:</strong> always-on assistants, inbox monitoring, task queues, long-running research</div>
+                    </div>
+                    <span class="pattern-tag">Daemon</span>
+                </div>
+
+                <!-- Pattern 5 -->
+                <div class="pattern-card reveal" data-color="purple">
+                    <div class="pattern-number">05</div>
+                    <div class="pattern-content">
+                        <div class="pattern-name">Multi-Agent Swarm</div>
+                        <div class="pattern-code">lead.assign(specialists) &rarr; parallel_execute() &rarr; lead.merge(results)</div>
+                        <div class="pattern-desc">
+                            A team lead agent coordinates specialist agents, each running in their own context window and git worktree. One agent refactors, another writes tests, a third handles docs, a fourth does security review. The lead assigns work, monitors progress, and merges results. This is the overnight factory floor.
+                        </div>
+                        <div class="pattern-best"><strong>Best for:</strong> large-scale overnight work, full-stack rewrites, multi-concern codebases</div>
+                    </div>
+                    <span class="pattern-tag">Parallel</span>
+                </div>
+
+                <!-- Pattern 6 -->
+                <div class="pattern-card reveal" data-color="green">
+                    <div class="pattern-number">06</div>
+                    <div class="pattern-content">
+                        <div class="pattern-name">GitHub Actions Pipeline</div>
+                        <div class="pattern-code">on: [schedule, issues, pull_request] &rarr; @claude &rarr; execute</div>
+                        <div class="pattern-desc">
+                            Triggered by schedule, issue creation, or PR events inside GitHub Actions. Use <span class="code-inline">@claude</span> mentions in issues or comments to trigger work. The agent runs in CI, has access to the full repo, and can create PRs, review code, or close issues. Fully cloud-hosted &mdash; no local machine needed.
+                        </div>
+                        <div class="pattern-best"><strong>Best for:</strong> team workflows, CI/CD integration, automated code review, issue triage</div>
+                    </div>
+                    <span class="pattern-tag">Cloud</span>
+                </div>
+
+                <!-- Pattern 7 -->
+                <div class="pattern-card reveal" data-color="red">
+                    <div class="pattern-number">07</div>
+                    <div class="pattern-content">
+                        <div class="pattern-name">Slack-Driven Queue</div>
+                        <div class="pattern-code">slack_cmd &rarr; sqlite_queue &rarr; agent_daemon &rarr; claude_executor</div>
+                        <div class="pattern-desc">
+                            Team members submit tasks via a Slack command. Tasks go into a SQLite queue with priority levels. An agent daemon monitors the queue and dispatches work to Claude. Day/night cost thresholds control spend &mdash; cheap tasks run immediately, expensive ones queue for off-peak. Results post back to Slack.
+                        </div>
+                        <div class="pattern-best"><strong>Best for:</strong> team task management, cost optimization, async workflows, non-technical stakeholders</div>
+                    </div>
+                    <span class="pattern-tag">Queue</span>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-rule">
+
+        <!-- ═══════════════════════════════════════
+             SECTION 4: ANALYSIS GRID
+        ═══════════════════════════════════════ -->
+        <section class="section" id="analysis">
+            <div class="section-header reveal">
+                <div class="section-dot purple"></div>
+                <h2 class="section-title">What The Data Tells Us</h2>
+            </div>
+            <p class="section-subtitle reveal reveal-delay-1">5 insights from hundreds of overnight agent runs</p>
+
+            <div class="insight-grid">
+                <!-- Insight 1 -->
+                <div class="insight-card reveal reveal-delay-1">
+                    <div class="insight-number">Insight 01</div>
+                    <div class="insight-title">Consistency > Intensity</div>
+                    <div class="insight-body">
+                        Nightly 8-hour runs consistently outperform 16-hour weekend sprints. The compounding effect of daily incremental progress creates exponentially better outcomes than burst effort. The tortoise wins every time &mdash; especially when the tortoise never sleeps.
+                    </div>
+                </div>
+
+                <!-- Insight 2 -->
+                <div class="insight-card reveal reveal-delay-2">
+                    <div class="insight-number">Insight 02</div>
+                    <div class="insight-title">TDD Is Non-Negotiable</div>
+                    <div class="insight-body">
+                        Overnight agents without test validation create net-negative cleanup work. Every successful overnight operation has test-driven development baked in. The agent writes the test first, then the code, then validates. No exceptions. Without TDD, you wake up to a mess.
+                    </div>
+                </div>
+
+                <!-- Insight 3 -->
+                <div class="insight-card reveal reveal-delay-3">
+                    <div class="insight-number">Insight 03</div>
+                    <div class="insight-title">Context Is King</div>
+                    <div class="insight-body">
+                        <span class="code-inline">SHARED_TASK_NOTES.md</span> between iterations is what separates good runs from wasted API costs. Without persistent context, each agent invocation starts cold. With it, the agent knows its history, its failures, and its plan. Context files are the overnight agent's memory.
+                    </div>
+                </div>
+
+                <!-- Insight 4 -->
+                <div class="insight-card reveal reveal-delay-4">
+                    <div class="insight-number">Insight 04</div>
+                    <div class="insight-title">Trust Calibration</div>
+                    <div class="insight-body">
+                        95% accuracy per step equals chaos over 20-step workflows. If each step has a 5% failure rate, the probability of a clean 20-step run is just 36%. Design the handoff, not the agent. Human checkpoints at critical junctures are the architecture &mdash; not the bottleneck.
+                    </div>
+                </div>
+
+                <!-- Insight 5 -->
+                <div class="insight-card reveal reveal-delay-5">
+                    <div class="insight-number">Insight 05</div>
+                    <div class="insight-title">Guardrails > Guidance</div>
+                    <div class="insight-body">
+                        Rate limiting, CI gates, and PR reviews are your safety net. Not prompts. You cannot prompt your way to overnight reliability. You build it with hard infrastructure: test suites that block merges, cost caps that kill runaway agents, and review gates that require approval. Guardrails are the architecture of trust.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-rule">
+
+        <!-- ═══════════════════════════════════════
+             SECTION 5: USE CASE PATHWAYS
+        ═══════════════════════════════════════ -->
+        <section class="section" id="pathways">
+            <div class="section-header reveal">
+                <div class="section-dot red"></div>
+                <h2 class="section-title">Who This Is For</h2>
+            </div>
+            <p class="section-subtitle reveal reveal-delay-1">6 pathways for different roles and workflows</p>
+
+            <div class="pathway-grid">
+                <!-- Developer -->
+                <div class="pathway-card reveal reveal-delay-1">
+                    <div class="pathway-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    </div>
+                    <div class="pathway-role">Developer</div>
+                    <ul class="pathway-list">
+                        <li>Overnight refactors across entire codebases</li>
+                        <li>Test coverage expansion while you sleep</li>
+                        <li>Dependency updates with automated testing</li>
+                        <li>Automated code reviews on every PR</li>
+                    </ul>
+                </div>
+
+                <!-- Founder -->
+                <div class="pathway-card reveal reveal-delay-2">
+                    <div class="pathway-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <div class="pathway-role">Founder</div>
+                    <ul class="pathway-list">
+                        <li>Automated lead response and follow-up</li>
+                        <li>Content publishing on schedule</li>
+                        <li>Market research and competitor monitoring</li>
+                        <li>Inbox triage and priority sorting</li>
+                    </ul>
+                </div>
+
+                <!-- Researcher -->
+                <div class="pathway-card reveal reveal-delay-3">
+                    <div class="pathway-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+                    <div class="pathway-role">Researcher</div>
+                    <ul class="pathway-list">
+                        <li>Literature review across hundreds of papers</li>
+                        <li>Paper summaries with key findings extracted</li>
+                        <li>Knowledge base vectorization overnight</li>
+                        <li>Citation mapping and gap analysis</li>
+                    </ul>
+                </div>
+
+                <!-- Content Creator -->
+                <div class="pathway-card reveal reveal-delay-4">
+                    <div class="pathway-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                    </div>
+                    <div class="pathway-role">Content Creator</div>
+                    <ul class="pathway-list">
+                        <li>Blog draft generation from outlines</li>
+                        <li>Newsletter compilation from curated sources</li>
+                        <li>Social media scheduling and repurposing</li>
+                        <li>Content repurposing across formats</li>
+                    </ul>
+                </div>
+
+                <!-- Student -->
+                <div class="pathway-card reveal reveal-delay-5">
+                    <div class="pathway-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    </div>
+                    <div class="pathway-role">Student</div>
+                    <ul class="pathway-list">
+                        <li>Study material preparation overnight</li>
+                        <li>Learning summaries from lecture notes</li>
+                        <li>Note organization and cross-referencing</li>
+                        <li>Goal tracking and progress reports</li>
+                    </ul>
+                </div>
+
+                <!-- Business Ops -->
+                <div class="pathway-card reveal reveal-delay-6">
+                    <div class="pathway-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    </div>
+                    <div class="pathway-role">Business Ops</div>
+                    <ul class="pathway-list">
+                        <li>Invoice processing and reconciliation</li>
+                        <li>CRM updates and data hygiene</li>
+                        <li>Price monitoring across competitors</li>
+                        <li>Competitor tracking and alert generation</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <hr class="section-rule">
+
+        <!-- ═══════════════════════════════════════
+             SECTION 6: TOOLS & STACK
+        ═══════════════════════════════════════ -->
+        <section class="section" id="tools">
+            <div class="section-header reveal">
+                <div class="section-dot cyan"></div>
+                <h2 class="section-title">The Tools People Are Using</h2>
+            </div>
+            <p class="section-subtitle reveal reveal-delay-1">Open-source and commercial tools powering overnight automation</p>
+
+            <div class="tools-table-wrapper reveal reveal-delay-2">
+                <table class="tools-table">
+                    <thead>
+                        <tr>
+                            <th>Tool</th>
+                            <th>Category</th>
+                            <th>Cost</th>
+                            <th>What It Does</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="tool-name">runCLAUDErun</td>
+                            <td><span class="tool-category-pill pill-agent">Agent</span></td>
+                            <td class="tool-cost">Free / OSS</td>
+                            <td>Ralph Loop implementation with task management, error recovery, and progress tracking. Drop-in overnight runner.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">continuous-claude</td>
+                            <td><span class="tool-category-pill pill-agent">Agent</span></td>
+                            <td class="tool-cost">Free / OSS</td>
+                            <td>Continuous PR loop with SHARED_TASK_NOTES.md context. Creates branches, commits, PRs, waits for CI, merges, repeats.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">claude-flow</td>
+                            <td><span class="tool-category-pill pill-orchestrator">Orchestrator</span></td>
+                            <td class="tool-cost">Free / OSS</td>
+                            <td>Multi-agent orchestration framework. Coordinates specialist agents with DAG-based task planning and parallel execution.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">ccswarm</td>
+                            <td><span class="tool-category-pill pill-orchestrator">Orchestrator</span></td>
+                            <td class="tool-cost">Free / OSS</td>
+                            <td>Swarm intelligence for Claude agents. Each agent gets its own git worktree. Team lead coordinates and merges results.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Auto-Claude</td>
+                            <td><span class="tool-category-pill pill-automation">Automation</span></td>
+                            <td class="tool-cost">Free / OSS</td>
+                            <td>Automated Claude Code wrapper with retry logic, cost tracking, and configurable prompts. Built for unattended execution.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Sleepless Agent</td>
+                            <td><span class="tool-category-pill pill-agent">Agent</span></td>
+                            <td class="tool-cost">Free / OSS</td>
+                            <td>Heartbeat-style agent daemon. Wakes at intervals, checks queue, executes tasks, sleeps. Persistent memory across cycles.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">n8n</td>
+                            <td><span class="tool-category-pill pill-automation">Automation</span></td>
+                            <td class="tool-cost">Free / Paid</td>
+                            <td>Visual workflow automation. Connect Claude to 400+ integrations. Schedule overnight pipelines with drag-and-drop nodes.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Obsidian MCP</td>
+                            <td><span class="tool-category-pill pill-data">Data</span></td>
+                            <td class="tool-cost">Free / OSS</td>
+                            <td>Model Context Protocol server for Obsidian vaults. Gives Claude direct read/write access to your knowledge base overnight.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">Perplexity MCP</td>
+                            <td><span class="tool-category-pill pill-integration">Integration</span></td>
+                            <td class="tool-cost">API Costs</td>
+                            <td>MCP server for Perplexity search. Gives overnight agents real-time web research capabilities. Pairs with research workflows.</td>
+                        </tr>
+                        <tr>
+                            <td class="tool-name">GitHub Actions</td>
+                            <td><span class="tool-category-pill pill-integration">Integration</span></td>
+                            <td class="tool-cost">Free Tier</td>
+                            <td>Native CI/CD integration. Schedule Claude runs via cron, trigger on issues or PRs. Cloud-hosted, no local machine needed.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div><!-- end .page-wrapper -->
+
+    <!-- ═══════════════════════════════════════
+         BOTTOM NAVIGATION
+    ═══════════════════════════════════════ -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="getting-started.html" class="nav-dot-link">
+                <span class="dot indigo"></span>
+                <span class="nav-label">Foundation Playbook</span>
+            </a>
+            <a href="#top" class="nav-dot-link nav-current">
+                <span class="dot amber"></span>
+                <span class="nav-label">Intelligence Report</span>
+            </a>
+            <a href="routine-cards.html" class="nav-dot-link">
+                <span class="dot green"></span>
+                <span class="nav-label">Routine Cards</span>
+            </a>
+            <a href="the-complete-path.html" class="nav-dot-link">
+                <span class="dot amber"></span>
+                <span class="nav-label">Zero to Autopilot</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════
+         JAVASCRIPT
+    ═══════════════════════════════════════ -->
+    <script>
+        /* ──────────────────────────────────────
+           STARFIELD GENERATOR
+        ────────────────────────────────────── */
+        (function generateStarfield() {
+            const container = document.getElementById('starfield');
+            const starCount = 80;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.setProperty('--dur', (2 + Math.random() * 4) + 's');
+                star.style.animationDelay = (Math.random() * 3) + 's';
+
+                // Vary star sizes slightly
+                const size = 1 + Math.random() * 2;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+
+                // Some brighter stars
+                if (Math.random() > 0.85) {
+                    star.style.background = 'rgba(99, 102, 241, 0.3)';
+                } else if (Math.random() > 0.9) {
+                    star.style.background = 'rgba(34, 211, 238, 0.25)';
+                }
+
+                container.appendChild(star);
+            }
+        })();
+
+        /* ──────────────────────────────────────
+           SCROLL REVEAL
+        ────────────────────────────────────── */
+        (function initScrollReveal() {
+            const reveals = document.querySelectorAll('.reveal');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -40px 0px'
+            });
+
+            reveals.forEach(el => observer.observe(el));
+        })();
+
+        /* ──────────────────────────────────────
+           PROGRESS BAR
+        ────────────────────────────────────── */
+        (function initProgressBar() {
+            const bar = document.getElementById('progressBar');
+
+            function updateProgress() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const progress = docHeight > 0 ? scrollTop / docHeight : 0;
+                bar.style.transform = 'scaleX(' + Math.min(progress, 1) + ')';
+            }
+
+            window.addEventListener('scroll', updateProgress, { passive: true });
+            updateProgress();
+        })();
+
+        /* ──────────────────────────────────────
+           SMOOTH ANCHOR SCROLLING
+        ────────────────────────────────────── */
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        /* ──────────────────────────────────────
+           CARD PARALLAX TILT (subtle)
+        ────────────────────────────────────── */
+        (function initCardTilt() {
+            const cards = document.querySelectorAll('.benchmark-card, .compound-card, .pathway-card, .insight-card');
+
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = (y - centerY) / centerY * -2;
+                    const rotateY = (x - centerX) / centerX * 2;
+
+                    card.style.transform = `translateY(-4px) perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0) perspective(1000px) rotateX(0deg) rotateY(0deg)';
+                });
+            });
+        })();
+
+        /* ──────────────────────────────────────
+           PATTERN CARD NUMBER HIGHLIGHT
+        ────────────────────────────────────── */
+        (function initPatternHighlight() {
+            const patternCards = document.querySelectorAll('.pattern-card');
+
+            patternCards.forEach(card => {
+                const color = card.getAttribute('data-color');
+                const number = card.querySelector('.pattern-number');
+                const colorMap = {
+                    green: '#1ed760',
+                    blue: '#3b82f6',
+                    cyan: '#22d3ee',
+                    amber: '#f59e0b',
+                    purple: '#a855f7',
+                    red: '#ef4444'
+                };
+
+                card.addEventListener('mouseenter', () => {
+                    if (number && colorMap[color]) {
+                        number.style.color = colorMap[color];
+                        number.style.transition = 'color 0.35s ease';
+                    }
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    if (number) {
+                        number.style.color = '';
+                    }
+                });
+            });
+        })();
+
+        /* ──────────────────────────────────────
+           TABLE ROW HIGHLIGHT
+        ────────────────────────────────────── */
+        (function initTableHighlight() {
+            const rows = document.querySelectorAll('.tools-table tbody tr');
+
+            rows.forEach(row => {
+                row.addEventListener('mouseenter', () => {
+                    row.style.background = 'var(--bg-hover)';
+                });
+                row.addEventListener('mouseleave', () => {
+                    row.style.background = '';
+                });
+            });
+        })();
+
+        /* ──────────────────────────────────────
+           HERO ENTRANCE ANIMATION
+        ────────────────────────────────────── */
+        (function heroEntrance() {
+            const badge = document.querySelector('.hero-badge');
+            const title = document.querySelector('.hero-title');
+            const subtitle = document.querySelector('.hero-subtitle');
+            const divider = document.querySelector('.hero-divider');
+
+            const elements = [badge, title, subtitle, divider];
+
+            elements.forEach((el, i) => {
+                if (el) {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(20px)';
+                    el.style.transition = `opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1) ${i * 0.15}s, transform 0.8s cubic-bezier(0.23, 1, 0.32, 1) ${i * 0.15}s`;
+
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            el.style.opacity = '1';
+                            el.style.transform = 'translateY(0)';
+                        });
+                    });
+                }
+            });
+        })();
+
+        /* ──────────────────────────────────────
+           KEYBOARD NAVIGATION (Arrow keys)
+        ────────────────────────────────────── */
+        (function initKeyNav() {
+            const sections = ['top', 'benchmarks', 'multiplier', 'patterns', 'analysis', 'pathways', 'tools'];
+            let currentIndex = 0;
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    currentIndex = Math.min(currentIndex + 1, sections.length - 1);
+                    document.getElementById(sections[currentIndex])?.scrollIntoView({ behavior: 'smooth' });
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    currentIndex = Math.max(currentIndex - 1, 0);
+                    document.getElementById(sections[currentIndex])?.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+
+            // Track current section on scroll
+            window.addEventListener('scroll', () => {
+                const scrollPos = window.scrollY + window.innerHeight / 3;
+                for (let i = sections.length - 1; i >= 0; i--) {
+                    const el = document.getElementById(sections[i]);
+                    if (el && el.offsetTop <= scrollPos) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+            }, { passive: true });
+        })();
+
+        /* ──────────────────────────────────────
+           BENCHMARK CARD COUNTER ANIMATION
+        ────────────────────────────────────── */
+        (function initCounters() {
+            const stats = document.querySelectorAll('.benchmark-stat');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        el.style.opacity = '0';
+                        el.style.transform = 'scale(0.8)';
+
+                        setTimeout(() => {
+                            el.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
+                            el.style.opacity = '1';
+                            el.style.transform = 'scale(1)';
+                        }, 100);
+
+                        observer.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            stats.forEach(stat => observer.observe(stat));
+        })();
+
+        /* ──────────────────────────────────────
+           NAV ACTIVE STATE TRACKING
+        ────────────────────────────────────── */
+        (function trackNavState() {
+            const navLinks = document.querySelectorAll('.nav-dot-link');
+            const currentLink = document.querySelector('.nav-current');
+
+            // Subtle pulse on current nav item
+            if (currentLink) {
+                const dot = currentLink.querySelector('.dot');
+                if (dot) {
+                    dot.style.animation = 'pulseDot 2s ease-in-out infinite';
+                }
+            }
+        })();
+
+        /* ──────────────────────────────────────
+           RESPONSIVE TABLE SCROLL HINT
+        ────────────────────────────────────── */
+        (function tableScrollHint() {
+            const wrapper = document.querySelector('.tools-table-wrapper');
+            if (!wrapper) return;
+
+            function checkOverflow() {
+                if (wrapper.scrollWidth > wrapper.clientWidth) {
+                    wrapper.style.position = 'relative';
+
+                    // Only add gradient if it doesn't exist
+                    if (!wrapper.querySelector('.scroll-hint')) {
+                        const hint = document.createElement('div');
+                        hint.className = 'scroll-hint';
+                        hint.style.cssText = `
+                            position: absolute;
+                            top: 0;
+                            right: 0;
+                            bottom: 0;
+                            width: 40px;
+                            background: linear-gradient(90deg, transparent, var(--bg-elevated));
+                            pointer-events: none;
+                            border-radius: 0 var(--radius) var(--radius) 0;
+                            z-index: 2;
+                        `;
+                        wrapper.appendChild(hint);
+                    }
+                }
+            }
+
+            checkOverflow();
+            window.addEventListener('resize', checkOverflow);
+        })();
+
+        /* ──────────────────────────────────────
+           CONSOLE BRANDING
+        ────────────────────────────────────── */
+        console.log(
+            '%c NIGHTTIME INTELLIGENCE REPORT %c Built for overnight operators ',
+            'background: #6366f1; color: #fff; font-weight: bold; padding: 4px 8px; border-radius: 4px 0 0 4px;',
+            'background: #1a1a1a; color: #6366f1; padding: 4px 8px; border-radius: 0 4px 4px 0; border: 1px solid #6366f1;'
+        );
+    </script>
+</body>
+
+</html>

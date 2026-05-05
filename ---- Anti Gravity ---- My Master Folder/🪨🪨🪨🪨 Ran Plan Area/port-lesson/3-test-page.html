@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lesson 3 — Talking to Your Server</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 40px; }
+        h1 { color: #1DB954; margin-bottom: 8px; }
+        p.sub { color: #888; font-size: 0.9rem; margin-bottom: 30px; }
+        .card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+        input, button { font-family: inherit; font-size: 1rem; padding: 10px 16px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; }
+        input { width: 250px; margin-right: 8px; }
+        button { background: #1DB954; color: #000; font-weight: 700; cursor: pointer; border: none; }
+        button:hover { background: #1ed760; }
+        #log { margin-top: 16px; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #aaa; white-space: pre-wrap; }
+        #messages { margin-top: 12px; }
+        .msg { padding: 8px 12px; background: #222; border-radius: 8px; margin-bottom: 6px; }
+        .msg b { color: #1DB954; }
+    </style>
+</head>
+<body>
+    <h1>Lesson 3: POST to Your Server</h1>
+    <p class="sub">Make sure 3-post-server.py is running first!</p>
+
+    <div class="card">
+        <h3 style="margin-bottom: 12px;">Send a message to the server:</h3>
+        <input id="nameInput" placeholder="Your name" value="Chad">
+        <input id="msgInput" placeholder="Your message">
+        <button onclick="sendMessage()">Send (POST)</button>
+        <div id="log"></div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 12px;">Messages stored on server:</h3>
+        <button onclick="loadMessages()">Refresh (GET)</button>
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        var log = document.getElementById('log');
+
+        function sendMessage() {
+            var name = document.getElementById('nameInput').value;
+            var msg = document.getElementById('msgInput').value;
+
+            log.textContent = 'Sending POST to http://localhost:4444/send ...';
+
+            // This is EXACTLY what your dashboard does when it saves a file
+            fetch('http://localhost:4444/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, message: msg })
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                log.textContent = 'Server replied: ' + JSON.stringify(data, null, 2);
+                document.getElementById('msgInput').value = '';
+                loadMessages();
+            })
+            .catch(function(err) {
+                log.textContent = 'ERROR: ' + err + '\n\nIs the server running? Run: python 3-post-server.py';
+            });
+        }
+
+        function loadMessages() {
+            fetch('http://localhost:4444/messages')
+            .then(function(r) { return r.json(); })
+            .then(function(msgs) {
+                var html = '';
+                msgs.forEach(function(m) {
+                    html += '<div class="msg"><b>' + m.name + ':</b> ' + m.message + '</div>';
+                });
+                document.getElementById('messages').innerHTML = html || '<p style="color:#666;">No messages yet</p>';
+            })
+            .catch(function() {
+                document.getElementById('messages').innerHTML = '<p style="color:red;">Can\'t reach server</p>';
+            });
+        }
+
+        // Load on start
+        loadMessages();
+    </script>
+</body>
+</html>

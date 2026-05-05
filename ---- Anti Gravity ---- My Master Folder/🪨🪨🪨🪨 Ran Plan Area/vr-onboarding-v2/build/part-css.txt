@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Anti Gravity Music — Artist Onboarding</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎵%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg: #0e0f1e;
+  --surface: #1a1b36;
+  --surface-2: #252750;
+  --primary: #4d509c;
+  --primary-glow: rgba(77,80,156,0.5);
+  --accent: #ec4899;
+  --accent-glow: rgba(236,72,153,0.4);
+  --cyan: #22d3ee;
+  --text: #ffffff;
+  --text-dim: #cecfe7;
+  --text-muted: #8b8db8;
+  --border: rgba(77,80,156,0.2);
+  --border-strong: rgba(77,80,156,0.4);
+  --yellow: #f5c542;
+  --yellow-dark: #0e0f1e;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+
+
+/* ============================================================
+   RESET + BODY
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  overflow: hidden; /* NO scroll on root — quads handle their own scroll */
+}
+
+body {
+  background: var(--bg);
+  font-family: 'Exo 2', sans-serif;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* Grain overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: overlay;
+}
+
+
+/* ============================================================
+   QUAD GRID — MOBILE FIRST
+   ============================================================ */
+
+/* ── Mobile: single quad full-screen at a time ── */
+.quad-grid {
+  position: fixed;
+  inset: 0;
+  /* On mobile, we use a horizontal strip; JS handles showing/hiding */
+}
+
+.quad {
+  position: absolute;
+  inset: 0;
+  display: none; /* hidden by default */
+  flex-direction: column;
+  padding: 1.5rem 1.25rem 5rem; /* bottom padding for nav bar */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  animation: blurIn 0.45s ease forwards;
+}
+
+.quad.quad-active {
+  display: flex;
+  opacity: 1;
+}
+
+/* ── Desktop: 2×2 grid ── */
+@media (min-width: 768px) {
+  .quad-grid {
+    display: grid;
+    grid-template-columns: 55fr 45fr;
+    grid-template-rows: 56vh 44vh;
+    position: fixed;
+    inset: 0;
+  }
+
+  .quad {
+    position: relative;
+    inset: unset;
+    display: flex !important; /* always visible on desktop */
+    opacity: 1 !important;
+    padding: 2rem;
+    transition: transform 0.55s cubic-bezier(0.16,1,0.3,1), opacity 0.4s ease, box-shadow 0.4s ease;
+    animation: none;
+  }
+
+  /* Desktop zoom states */
+  body.zoom-q1 .quad:not(#quad-1) { opacity: 0.12; transform: scale(0.96); pointer-events: none; }
+  body.zoom-q2 .quad:not(#quad-2) { opacity: 0.12; transform: scale(0.96); pointer-events: none; }
+  body.zoom-q3 .quad:not(#quad-3) { opacity: 0.12; transform: scale(0.96); pointer-events: none; }
+  body.zoom-q4 .quad:not(#quad-4) { opacity: 0.12; transform: scale(0.96); pointer-events: none; }
+
+  body.zoom-q1 #quad-1 { transform: scale(1.02); box-shadow: 0 0 60px rgba(77,80,156,0.2); z-index: 2; }
+  body.zoom-q2 #quad-2 { transform: scale(1.02); box-shadow: 0 0 60px rgba(77,80,156,0.2); z-index: 2; }
+  body.zoom-q3 #quad-3 { transform: scale(1.02); box-shadow: 0 0 60px rgba(77,80,156,0.2); z-index: 2; }
+  body.zoom-q4 #quad-4 { transform: scale(1.02); box-shadow: 0 0 60px rgba(77,80,156,0.2); z-index: 2; }
+}
+
+
+/* ============================================================
+   QUAD LABELS
+   ============================================================ */
+.quad-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+
+/* ============================================================
+   SCOUT RECEIPT CARD
+   ============================================================ */
+.scout-receipt {
+  background: rgba(77,80,156,0.08);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(15px);
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.receipt-hero {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  margin-bottom: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .receipt-hero { font-size: 2rem; }
+}
+
+.receipt-sub {
+  font-size: 0.75rem;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(77,80,156,0.1);
+  font-size: 0.8rem;
+}
+.receipt-row:last-child { border-bottom: none; }
+
+.receipt-label { color: var(--text-muted); }
+.receipt-value { color: var(--text-dim); font-weight: 600; text-align: right; }
+.receipt-value.accent { color: var(--accent); }
+.receipt-value.cyan { color: var(--cyan); }
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+/* Yellow "How It Works" button */
+.hiw-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--yellow);
+  color: var(--yellow-dark);
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.65rem 1.25rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.hiw-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.hiw-btn:active { transform: scale(0.97); }
+
+/* "Shortcut to Full Plan" button */
+.fullplan-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: rgba(77,80,156,0.15);
+  color: var(--text-dim);
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+.fullplan-btn:hover { background: rgba(77,80,156,0.28); color: var(--text); border-color: var(--primary); }
+
+/* Platform banner buttons */
+.platform-banner-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.platform-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255,255,255,0.03);
+}
+.platform-banner:hover { border-color: var(--primary); background: rgba(77,80,156,0.1); }
+.platform-banner.selected { border-color: var(--primary); background: rgba(77,80,156,0.2); box-shadow: 0 0 12px rgba(77,80,156,0.2); }
+
+.platform-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.platform-name { font-size: 0.78rem; font-weight: 700; color: var(--text); }
+.platform-hint { font-size: 0.62rem; color: var(--text-muted); }
+
+/* Song URL input */
+.song-input-wrap {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.song-input {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  font-size: 0.82rem;
+  padding: 0.65rem 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.song-input:focus { border-color: var(--primary); }
+.song-input::placeholder { color: var(--text-muted); }
+
+.submit-btn {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.65rem 1.1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+.submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.submit-btn.success { background: #10b981; }
+
+/* Deal card */
+.deal-card {
+  background: rgba(77,80,156,0.08);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.deal-split {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 0.75rem 0;
+}
+.deal-pct {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.deal-pct.you { color: var(--accent); }
+.deal-pct.them { color: var(--primary); }
+.deal-divider { width: 1px; height: 48px; background: var(--border-strong); }
+.deal-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.deal-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.5rem; }
+.deal-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(77,80,156,0.15);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-dim);
+  margin-top: 0.65rem;
+}
+
+/* CTA button */
+.cta-btn {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  animation: floatCTA 3s ease-in-out infinite;
+  margin-bottom: 0.75rem;
+}
+.cta-btn:hover { opacity: 0.9; transform: translateY(-2px) scale(1.01); animation: none; }
+
+
+/* ============================================================
+   STEP SPINE (Q2 cards)
+   ============================================================ */
+.step-spine {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  overflow-y: auto;
+  flex: 1;
+  padding-bottom: 1rem;
+}
+
+.step-spine::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(77,80,156,0.5), transparent);
+  pointer-events: none;
+}
+
+.step-card {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.85rem 0.7rem 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+}
+.step-card:hover { background: rgba(77,80,156,0.08); }
+
+.step-num-bubble {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(77,80,156,0.2);
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-left: 0px;
+}
+
+.step-title { font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 0.15rem; }
+.step-desc { font-size: 0.72rem; color: var(--text-muted); }
+
+
+/* ============================================================
+   NAVIGATION — BOTTOM BAR (mobile) + ARROWS (desktop)
+   ============================================================ */
+
+/* Mobile bottom nav */
+.quad-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: rgba(14,15,30,0.95);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  z-index: 400;
+}
+
+.quad-nav-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.quad-nav-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+.quad-nav-dot.active {
+  background: var(--primary);
+  width: 22px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(77,80,156,0.5);
+}
+
+.quad-nav-arrow {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(77,80,156,0.15);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-family: 'Exo 2', sans-serif;
+}
+.quad-nav-arrow:hover { background: rgba(77,80,156,0.35); border-color: var(--primary); }
+
+/* GLOW GUIDE — special yellow glow on next arrow when on quad 1 */
+.quad-nav-arrow.glow-guide {
+  background: rgba(245,197,66,0.15);
+  border-color: var(--yellow);
+  color: var(--yellow);
+  box-shadow: 0 0 18px rgba(245,197,66,0.4), 0 0 4px rgba(245,197,66,0.6);
+  animation: guideGlow 1.6s ease-in-out infinite;
+}
+
+/* On desktop, hide mobile nav */
+@media (min-width: 768px) {
+  .quad-nav {
+    display: none;
+  }
+}
+
+
+/* ============================================================
+   HOW IT WORKS MODAL
+   ============================================================ */
+#hiw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8,9,20,0.8);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  padding: 1rem;
+}
+#hiw-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.hiw-modal {
+  background: #0e0f1e;
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+  overflow: hidden;
+  transform: translateY(16px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+#hiw-overlay.active .hiw-modal {
+  transform: translateY(0) scale(1);
+}
+
+.hiw-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.hiw-modal-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+.hiw-modal-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.hiw-modal-close:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+
+.hiw-modal-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  padding: 1.25rem 1.5rem;
+}
+
+.hiw-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.hiw-step-list::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 24px;
+  bottom: 24px;
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(77,80,156,0.5), rgba(77,80,156,0.08));
+}
+
+.hiw-step-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.75rem 0;
+}
+
+.hiw-step-num-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(77,80,156,0.2);
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--primary);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.hiw-step-title-row {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+}
+.hiw-step-subtitle {
+  font-size: 0.72rem;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+.hiw-step-detail {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  line-height: 1.65;
+}
+
+
+/* ============================================================
+   ANIME GIRL DECORATIONS
+   ============================================================ */
+.avi-girl {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.12;
+  z-index: 0;
+}
+.avi-girl.right {
+  right: -1rem;
+  bottom: 0;
+  height: 75%;
+  mask-image: linear-gradient(to left, rgba(0,0,0,0.4), transparent 70%);
+  -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.4), transparent 70%);
+}
+.avi-girl.left {
+  left: -1rem;
+  bottom: 0;
+  height: 65%;
+  mask-image: linear-gradient(to right, rgba(0,0,0,0.4), transparent 70%);
+  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.4), transparent 70%);
+}
+
+@media (min-width: 768px) {
+  .avi-girl { opacity: 0.16; }
+}
+
+
+/* ============================================================
+   CROSSHAIR (desktop only)
+   ============================================================ */
+.crosshair {
+  display: none;
+}
+@media (min-width: 768px) {
+  .crosshair {
+    display: block;
+    position: fixed;
+    left: 55%;
+    top: 56%;
+    width: 18px;
+    height: 18px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: var(--primary);
+    opacity: 0.6;
+    z-index: 10;
+    pointer-events: none;
+    box-shadow: 0 0 16px rgba(77,80,156,0.7);
+  }
+}
+
+
+/* ============================================================
+   OVERVIEW BUTTON (mobile FAB)
+   ============================================================ */
+.overview-btn {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(77,80,156,0.25);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 450;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+.overview-btn:hover { background: rgba(77,80,156,0.45); color: var(--text); }
+
+@media (min-width: 768px) {
+  .overview-btn { display: none; }
+}
+
+
+/* ============================================================
+   QUAD LABEL BADGE (top left of each quad on desktop)
+   ============================================================ */
+.quad-label-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(14,15,30,0.7);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+
+/* ============================================================
+   HELPER TEXT
+   ============================================================ */
+.helper-text {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.fine-print {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+
+/* ============================================================
+   EYEBROW
+   ============================================================ */
+.eyebrow {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 0.75rem;
+}
+
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes blurIn {
+  from { opacity: 0; filter: blur(8px); transform: scale(0.98); }
+  to { opacity: 1; filter: blur(0); transform: scale(1); }
+}
+
+@keyframes floatCTA {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes stepGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(77,80,156,0.3), 0 0 0 1px rgba(77,80,156,0.2); }
+  33% { box-shadow: 0 0 28px rgba(236,72,153,0.25), 0 0 0 1px rgba(236,72,153,0.15); }
+  66% { box-shadow: 0 0 24px rgba(99,102,241,0.3), 0 0 0 1px rgba(99,102,241,0.2); }
+}
+
+@keyframes guideGlow {
+  0%, 100% { box-shadow: 0 0 18px rgba(245,197,66,0.4), 0 0 4px rgba(245,197,66,0.6); }
+  50% { box-shadow: 0 0 30px rgba(245,197,66,0.7), 0 0 8px rgba(245,197,66,0.9); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(77,80,156,0.3); }
+  50% { box-shadow: 0 0 40px rgba(77,80,156,0.5), 0 0 60px rgba(77,80,156,0.15); }
+}
+
+.glow-pulse-slow { animation: glowPulse 4s ease-in-out infinite; }
+
+  </style>

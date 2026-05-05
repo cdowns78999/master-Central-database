@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equilibrium Predictor Engine v1</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0c0c0c;
+            --bg-elevated: #161616;
+            --bg-float: #1e1e1e;
+            --spotify: #1db954;
+            --spotify-bright: #1ed760;
+            --spotify-dim: #1aa34a;
+            --spotify-subtle: rgba(29, 185, 84, 0.15);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text: #ffffff;
+            --text-dim: #b3b3b3;
+            --text-ghost: #666666;
+            --accent: #7c4dff;
+            --theme-teal: #2de2e6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            padding: 30px;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        .predictor-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+            height: calc(100vh - 60px);
+        }
+
+        /* Sidebar / Config */
+        .config-panel {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .panel-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--spotify-bright);
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .budget-input-group {
+            position: relative;
+        }
+
+        .currency {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-ghost);
+        }
+
+        .budget-input {
+            width: 100%;
+            background: var(--bg-float);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 15px 15px 15px 35px;
+            color: #fff;
+            font-family: 'Outfit';
+            font-size: 1.4rem;
+            font-weight: 800;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .budget-input:focus {
+            border-color: var(--spotify);
+            box-shadow: 0 0 15px var(--spotify-subtle);
+        }
+
+        .tool-selector {
+            display: flex;
+            background: var(--bg-float);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .tool-opt {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tool-opt.active {
+            background: var(--bg-elevated);
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .segments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .seg-pill {
+            padding: 12px;
+            background: var(--bg-float);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .seg-pill.active {
+            background: var(--spotify-subtle);
+            border-color: var(--spotify);
+            color: var(--spotify-bright);
+        }
+
+        /* Main View */
+        .analysis-view {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .analysis-view::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .analysis-view::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .analysis-header {
+            margin-bottom: 5px;
+        }
+
+        .title-main {
+            font-family: 'Outfit';
+            font-size: 2.4rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, var(--spotify-bright) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-sub {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .stats-marquee {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .big-stat-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .big-stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--border);
+        }
+
+        .big-stat-card.active::after {
+            background: var(--spotify);
+        }
+
+        .stat-v {
+            display: block;
+            font-family: 'Outfit';
+            font-size: 2.8rem;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .stat-l {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-ghost);
+            font-weight: 800;
+        }
+
+        .deep-analysis {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 35px;
+        }
+
+        .chart-mock {
+            height: 180px;
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            margin: 30px 0;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: var(--spotify-subtle);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .chart-bar::before {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6rem;
+            color: var(--text-ghost);
+            white-space: nowrap;
+        }
+
+        .predict-trigger {
+            width: 100%;
+            background: var(--spotify);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Outfit';
+            font-size: 1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .predict-trigger:hover {
+            background: var(--spotify-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(30, 215, 96, 0.3);
+        }
+
+        .analyzing {
+            animation: pulse-op 1.5s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-op {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Generic Button Utilities */
+        .btn-json {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 15px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-plans {
+            background: rgba(255, 163, 26, 0.08) !important;
+            border-color: rgba(255, 163, 26, 0.2) !important;
+            color: rgb(255, 180, 80) !important;
+        }
+
+        .btn-plans:hover {
+            background: rgba(255, 163, 26, 0.15) !important;
+            border-color: rgba(255, 163, 26, 0.4) !important;
+            color: #fff !important;
+            box-shadow: 0 0 15px rgba(255, 163, 26, 0.2);
+        }
+
+        /* Breakdown Cards */
+        .breakdown-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .breakdown-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .breakdown-table th {
+            text-align: left;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-ghost);
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .breakdown-table td {
+            padding: 12px 0;
+            font-size: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .track-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--bg-float);
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="predictor-wrapper">
+        <aside class="config-panel">
+            <button class="btn-json btn-plans" onclick="injectParentData()"
+                style="width: 100%; height: 50px; background: rgba(30, 215, 96, 0.1) !important; border: 2px dashed var(--spotify) !important; color: white !important; margin-bottom: 20px; font-size: 0.8rem; letter-spacing: 1px;">
+                <span>💉</span> INJECT YOUR SELECTED PLAN HERE?
+            </button>
+
+            <div>
+                <span class="panel-label">Campaign Budget</span>
+                <div class="budget-input-group">
+                    <span class="currency">$</span>
+                    <input type="number" id="budget" class="budget-input" value="1500">
+                </div>
+            </div>
+
+            <div>
+                <span class="panel-label">Placement Mode</span>
+                <div class="tool-selector">
+                    <button class="tool-opt active" id="btnMarquee" onclick="setTool(true)">MARQUEE</button>
+                    <button class="tool-opt" id="btnShowcase" onclick="setTool(false)">SHOWCASE</button>
+                </div>
+            </div>
+
+            <div>
+                <span class="panel-label">Target Segments</span>
+                <div class="segments-list" id="segments">
+                    <!-- Dynamic -->
+                </div>
+            </div>
+
+            <button class="predict-trigger" id="masterTrigger" onclick="run()">Run Deep Analysis</button>
+        </aside>
+
+        <main class="analysis-view">
+            <header class="analysis-header">
+                <p class="title-sub">Equilibrium Strategic Engine</p>
+                <h1 class="title-main">Performance Forecast</h1>
+            </header>
+
+            <div class="stats-marquee">
+                <div class="big-stat-card active">
+                    <span class="stat-v" id="resReach">0</span>
+                    <span class="stat-l">Projected Reach</span>
+                </div>
+                <div class="big-stat-card active">
+                    <span class="stat-v" id="resConv">0</span>
+                    <span class="stat-l">New Listeners</span>
+                </div>
+                <div class="big-stat-card active">
+                    <span class="stat-v" id="resStreams" style="color: var(--spotify-bright);">0</span>
+                    <span class="stat-l">Est. Stream Yield</span>
+                </div>
+            </div>
+
+            <section class="deep-analysis">
+                <span class="panel-label">Conversion Funnel Modeling</span>
+                <div class="chart-mock" id="chart">
+                    <div class="chart-bar" style="height: 10%;" data-label="Cold"></div>
+                    <div class="chart-bar" style="height: 15%;" data-label="Warm"></div>
+                    <div class="chart-bar" style="height: 12%;" data-label="Reacted"></div>
+                    <div class="chart-bar" style="height: 8%;" data-label="Super"></div>
+                    <div class="chart-bar" style="height: 5%;" data-label="Potential"></div>
+                </div>
+
+                <div style="display: flex; gap: 20px; margin-top: 40px;">
+                    <div
+                        style="flex: 1; padding: 20px; background: var(--bg-float); border-radius: 12px; border: 1px solid var(--border);">
+                        <span class="panel-label" style="color: var(--accent);">Strategic Insight</span>
+                        <p style="font-size: 0.8rem; line-height: 1.6; color: var(--text-dim);" id="insight">
+                            Configure your campaign to generate strategic benchmarks and ROI projections.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="breakdown-grid">
+                <div class="breakdown-card">
+                    <span class="panel-label">Workflow: Phase Results</span>
+                    <table class="breakdown-table" id="phaseBreakdown">
+                        <thead>
+                            <tr>
+                                <th>Phase</th>
+                                <th>Reach</th>
+                                <th>Yield</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" style="color: var(--text-ghost); py-4;">Inject data to see phase
+                                    breakdown</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="breakdown-card">
+                    <span class="panel-label">Catalogue: Track Results</span>
+                    <table class="breakdown-table" id="trackBreakdown">
+                        <thead>
+                            <tr>
+                                <th>Track</th>
+                                <th>Projected Streams</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="2" style="color: var(--text-ghost); py-4;">Inject data to see track
+                                    breakdown</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const BENCHMARKS = {
+            marquee: { cpc: 0.55, reach: 40.0, conv: 0.16, streams: 8.2 },
+            showcase: { cpc: 0.27, reach: 81.46, conv: 0.0247, streams: 6.15 }
+        };
+
+        const SEGMENTS = {
+            'Super Listeners': { conv: 1.5, streams: 2.0, reach: 0.4 },
+            'Moderate Listeners': { conv: 1.2, streams: 1.3, reach: 0.7 },
+            'Light Listeners': { conv: 1.0, streams: 1.0, reach: 1.0 },
+            'Previously Active': { conv: 0.8, streams: 0.8, reach: 1.2 },
+            'Programmed': { conv: 0.5, streams: 0.6, reach: 2.0 },
+            'Potential': { conv: 0.3, streams: 0.5, reach: 3.0 }
+        };
+
+        let currentMarquee = true;
+        let activeSegs = ['Moderate Listeners'];
+        let injectedData = null;
+
+        const segContainer = document.getElementById('segments');
+        Object.keys(SEGMENTS).forEach(s => {
+            const div = document.createElement('div');
+            div.className = `seg-pill ${activeSegs.includes(s) ? 'active' : ''}`;
+            div.textContent = s;
+            div.onclick = () => {
+                if (activeSegs.includes(s)) {
+                    if (activeSegs.length > 1) activeSegs = activeSegs.filter(x => x !== s);
+                } else {
+                    activeSegs.push(s);
+                }
+                updateSegs();
+            };
+            segContainer.appendChild(div);
+        });
+
+        function updateSegs() {
+            document.querySelectorAll('.seg-pill').forEach(p => {
+                p.classList.toggle('active', activeSegs.includes(p.textContent));
+            });
+        }
+
+        function setTool(isMarquee) {
+            currentMarquee = isMarquee;
+            document.getElementById('btnMarquee').classList.toggle('active', isMarquee);
+            document.getElementById('btnShowcase').classList.toggle('active', !isMarquee);
+        }
+
+        function run() {
+            const btn = document.getElementById('masterTrigger');
+            const bars = document.querySelectorAll('.chart-bar');
+            const budget = parseFloat(document.getElementById('budget').value) || 0;
+
+            if (budget <= 0) return;
+
+            btn.classList.add('analyzing');
+            btn.textContent = "Crunching Patterns...";
+
+            bars.forEach(b => b.style.height = '5%');
+
+            setTimeout(() => {
+                const res = calculate(budget);
+                document.getElementById('resReach').textContent = res.reach;
+                document.getElementById('resConv').textContent = res.listeners;
+                document.getElementById('resStreams').textContent = res.streams;
+
+                bars.forEach((b, i) => {
+                    const h = 20 + Math.random() * 60;
+                    b.style.height = h + '%';
+                });
+
+                document.getElementById('insight').innerHTML = currentMarquee ?
+                    "<strong>Marquee Advantage:</strong> Captures high-intent audience segments at app-launch. Expect 2.4x higher conversion than standard display ads." :
+                    "<strong>Showcase Context:</strong> Builds catalog depth through persistent home-feed placement. Ideal for multi-track discovery cycles.";
+
+                if (injectedData) {
+                    renderBreakdowns(res);
+                }
+
+                btn.classList.remove('analyzing');
+                btn.textContent = "Re-Analyze Dataset";
+            }, 1000);
+        }
+
+        function calculate(budget) {
+            const tool = currentMarquee ? 'marquee' : 'showcase';
+            const base = BENCHMARKS[tool];
+            let cF = 0, sF = 0, rF = 0;
+
+            activeSegs.forEach(s => {
+                cF += SEGMENTS[s].conv;
+                sF += SEGMENTS[s].streams;
+                rF += SEGMENTS[s].reach;
+            });
+
+            cF /= activeSegs.length;
+            sF /= activeSegs.length;
+            rF /= activeSegs.length;
+
+            const reach = Math.round(budget * base.reach * rF);
+            const listeners = Math.round((budget / base.cpc) * base.conv * cF);
+            const streams = Math.round(listeners * base.streams * sF);
+
+            return {
+                reach: reach.toLocaleString(),
+                listeners: listeners.toLocaleString(),
+                streams: streams.toLocaleString()
+            };
+        }
+
+        function injectParentData() {
+            if (!window.parent || typeof window.parent.collectCampaignData !== 'function') {
+                alert("Campaign Kit data not accessible.");
+                return;
+            }
+
+            const data = window.parent.collectCampaignData();
+            injectedData = data;
+            console.log("💉 Injecting Campaign Data:", data);
+
+            // 1. Inject Budget
+            if (data.totalBudget) {
+                document.getElementById('budget').value = data.totalBudget;
+            }
+
+            // 2. Extract Tools & Segments from Timeline
+            if (data.timeline && data.timeline.length > 0) {
+                let toolFound = 'MARQUEE';
+                let segmentsFound = new Set();
+
+                data.timeline.forEach(block => {
+                    // Detect Tool (Marquee or Showcase)
+                    const blockTool = (block.tool || "").toUpperCase();
+                    if (blockTool.includes('MARQUEE')) toolFound = 'MARQUEE';
+                    if (blockTool.includes('SHOWCASE')) toolFound = 'SHOWCASE';
+
+                    // Detect Segments
+                    const blockTarget = block.target || "";
+                    // Check if blockTarget matches any of our segment names
+                    Object.keys(SEGMENTS).forEach(segName => {
+                        if (blockTarget.includes(segName)) {
+                            segmentsFound.add(segName);
+                        }
+                    });
+                });
+
+                // Update Tool UI
+                setTool(toolFound === 'MARQUEE');
+
+                // Update Segments UI
+                if (segmentsFound.size > 0) {
+                    activeSegs = Array.from(segmentsFound);
+                    updateSegs();
+                }
+            }
+
+            // 3. Auto-Trigger Analysis
+            run();
+        }
+
+        function renderBreakdowns(totalRes) {
+            if (!injectedData || !injectedData.timeline) return;
+
+            const phaseTbody = document.querySelector('#phaseBreakdown tbody');
+            const trackTbody = document.querySelector('#trackBreakdown tbody');
+            phaseTbody.innerHTML = '';
+            trackTbody.innerHTML = '';
+
+            const budget = parseFloat(document.getElementById('budget').value) || injectedData.totalBudget || 0;
+            const blockCount = injectedData.timeline.length;
+            const budgetPerBlock = budget / blockCount;
+
+            // Group by Track
+            const tracksMap = {};
+
+            injectedData.timeline.forEach(block => {
+                // Calculate individual block stats
+                const isMarquee = (block.tool || "").toUpperCase().includes('MARQUEE');
+                const segments = [block.target || "Light Listeners"];
+                const blockRes = calculate(budgetPerBlock, isMarquee, segments);
+
+                // Phase Row
+                const pRow = document.createElement('tr');
+                pRow.innerHTML = `
+                    <td style="font-weight: 700;">${block.phase || 'N/A'}</td>
+                    <td>${blockRes.reach}</td>
+                    <td style="color: var(--spotify-bright); font-weight: 700;">${blockRes.streams}</td>
+                `;
+                phaseTbody.appendChild(pRow);
+
+                // Track Accumulation
+                const tName = block.songName || "Unknown Track";
+                if (!tracksMap[tName]) tracksMap[tName] = 0;
+                tracksMap[tName] += parseInt(blockRes.streams.replace(/,/g, ''));
+            });
+
+            // Render Tracks
+            Object.keys(tracksMap).forEach(name => {
+                const tRow = document.createElement('tr');
+                tRow.innerHTML = `
+                    <td><span class="track-pill">🎵 ${name}</span></td>
+                    <td style="color: var(--theme-teal); font-weight: 700;">${tracksMap[name].toLocaleString()}</td>
+                `;
+                trackTbody.appendChild(tRow);
+            });
+        }
+
+        // Modified calculate to accept overrides for breakdown logic
+        function calculate(overrideBudget, overrideToolIsMarquee, overrideSegments) {
+            const budget = overrideBudget !== undefined ? overrideBudget : (parseFloat(document.getElementById('budget').value) || 0);
+            const tool = (overrideToolIsMarquee !== undefined ? overrideToolIsMarquee : currentMarquee) ? 'marquee' : 'showcase';
+            const segments = overrideSegments !== undefined ? overrideSegments : activeSegs;
+
+            const base = BENCHMARKS[tool];
+            let cF = 0, sF = 0, rF = 0;
+
+            segments.forEach(s => {
+                const factors = SEGMENTS[s] || SEGMENTS['Light Listeners'];
+                cF += factors.conv;
+                sF += factors.streams;
+                rF += factors.reach;
+            });
+
+            cF /= segments.length;
+            sF /= segments.length;
+            rF /= segments.length;
+
+            const reach = Math.round(budget * base.reach * rF);
+            const listeners = Math.round((budget / base.cpc) * base.conv * cF);
+            const streams = Math.round(listeners * base.streams * sF);
+
+            return {
+                reach: reach.toLocaleString(),
+                listeners: listeners.toLocaleString(),
+                streams: streams.toLocaleString()
+            };
+        }
+    </script>
+</body>
+
+</html>

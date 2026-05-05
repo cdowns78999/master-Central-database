@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heart Gradient</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a12;
+    overflow: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .top-tag {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1.4rem;
+    color: #ff6eb4;
+    letter-spacing: 3px;
+    text-shadow: 0 0 12px rgba(255,110,180,0.6);
+    z-index: 999;
+  }
+  .heart-grid {
+    display: grid;
+    gap: 0;
+    text-align: center;
+    animation: breathe 6s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  .heart {
+    font-size: 28px;
+    line-height: 1.1;
+    display: inline-block;
+    animation: float var(--dur) ease-in-out infinite;
+    animation-delay: var(--delay);
+    filter: brightness(1);
+    transition: filter 0.3s;
+    cursor: default;
+  }
+  .heart:hover {
+    filter: brightness(1.6) drop-shadow(0 0 8px currentColor);
+    transform: scale(1.4);
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.85; }
+    50% { transform: translateY(-6px) scale(1.08); opacity: 1; }
+  }
+  .row {
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  /* shimmer overlay */
+  .shimmer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      transparent 40%,
+      rgba(255,255,255,0.03) 50%,
+      transparent 60%
+    );
+    background-size: 200% 200%;
+    animation: shimmer 4s ease-in-out infinite;
+    z-index: 10;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 200%; }
+    100% { background-position: -200% -200%; }
+  }
+</style>
+</head>
+<body>
+<div class="top-tag">comingforya1</div>
+<div class="shimmer"></div>
+<div class="heart-grid" id="grid"></div>
+<script>
+const palette = [
+  ['🩷','🩷','💗','💖'],   // pink
+  ['❤️','❤️','💕','❣️'],   // red
+  ['🧡','🧡','🔶','🧡'],   // orange
+  ['💛','💛','⭐','💛'],    // yellow
+  ['💚','💚','🍀','💚'],    // green
+  ['💙','💙','🫧','💙'],    // blue
+  ['💜','💜','🔮','💜'],    // purple
+  ['🩷','💜','💙','🩵'],    // transition back
+];
+
+const grid = document.getElementById('grid');
+const vw = window.innerWidth;
+const vh = window.innerHeight;
+const heartSize = 34;
+const cols = Math.floor(vw / heartSize);
+const rows = Math.floor(vh / (heartSize * 1.1));
+
+for (let r = 0; r < rows; r++) {
+  const rowDiv = document.createElement('div');
+  rowDiv.className = 'row';
+
+  // diagonal gradient: mix row and col position
+  for (let c = 0; c < cols; c++) {
+    const span = document.createElement('span');
+    span.className = 'heart';
+
+    // diagonal position mapped to palette
+    const diag = (r / rows) * 0.7 + (c / cols) * 0.3;
+    const bandIndex = Math.floor(diag * palette.length) % palette.length;
+    const band = palette[bandIndex];
+    span.textContent = band[Math.floor(Math.random() * band.length)];
+
+    // staggered animation
+    const delay = (r * 0.08 + c * 0.04 + Math.random() * 0.3).toFixed(2);
+    const dur = (2.5 + Math.random() * 2).toFixed(2);
+    span.style.setProperty('--delay', delay + 's');
+    span.style.setProperty('--dur', dur + 's');
+
+    rowDiv.appendChild(span);
+  }
+  grid.appendChild(rowDiv);
+}
+</script>
+</body>
+</html>

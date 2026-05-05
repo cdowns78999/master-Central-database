@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karpathy Wiki Lab — Walkthrough</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg-2: #0f1629;
+    --card: #131a2e;
+    --card-hover: #182141;
+    --border: #1e2a4a;
+    --border-glow: #2d3b63;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --dim: #64748b;
+    --sky: #7dd3fc;
+    --violet: #c4b5fd;
+    --mint: #86efac;
+    --amber: #fcd34d;
+    --rose: #fda4af;
+    --accent: #7dd3fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    background: radial-gradient(ellipse at top, #0f1629 0%, #0a0e1a 60%);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding-bottom: 120px;
+  }
+
+  /* Sticky header */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10, 14, 26, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+  }
+  .header-inner {
+    max-width: 820px; margin: 0 auto;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .logo {
+    font-size: 18px; font-weight: 600;
+    background: linear-gradient(135deg, var(--sky), var(--violet));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .progress-wrap { flex: 1; height: 8px; background: var(--card); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--sky), var(--violet)); border-radius: 99px; transition: width 0.5s ease; }
+  .progress-text { font-size: 12px; color: var(--muted); min-width: 60px; text-align: right; }
+
+  /* Step pills row */
+  .step-pills {
+    max-width: 820px; margin: 12px auto 0;
+    display: flex; gap: 6px; padding: 0;
+    overflow-x: auto;
+  }
+  .pill {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .pill:hover { border-color: var(--sky); color: var(--text); }
+  .pill.done { background: rgba(134, 239, 172, 0.1); border-color: var(--mint); color: var(--mint); }
+  .pill.active { background: linear-gradient(135deg, rgba(125, 211, 252, 0.15), rgba(196, 181, 253, 0.15)); border-color: var(--sky); color: var(--text); }
+
+  /* Main content */
+  main { max-width: 820px; margin: 0 auto; padding: 24px; }
+  .hero {
+    text-align: center;
+    padding: 40px 20px 24px;
+  }
+  .hero h1 {
+    font-size: 32px; font-weight: 700;
+    background: linear-gradient(135deg, var(--sky), var(--violet));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .hero .subtitle { color: var(--muted); font-size: 14px; }
+
+  /* Step card */
+  .step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin: 20px 0;
+    scroll-margin-top: 100px;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .step:hover { border-color: var(--border-glow); }
+  .step-head {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px;
+  }
+  .step-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--sky), var(--violet));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: var(--bg); font-size: 15px;
+    flex-shrink: 0;
+  }
+  .step h2 { font-size: 20px; font-weight: 600; }
+  .step p { color: var(--text); margin: 10px 0; }
+  .step .muted { color: var(--muted); font-size: 14px; }
+  .step ul { margin: 12px 0 12px 24px; color: var(--text); }
+  .step li { margin: 6px 0; }
+  .step strong { color: var(--sky); font-weight: 600; }
+
+  /* Code / command blocks */
+  .cmd {
+    display: block;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--sky);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    color: var(--mint);
+    margin: 14px 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* Link buttons */
+  .link-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+  .link-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    color: var(--sky);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .link-btn:hover { background: var(--card-hover); border-color: var(--sky); transform: translateY(-1px); }
+  .link-btn.violet { color: var(--violet); }
+  .link-btn.violet:hover { border-color: var(--violet); }
+  .link-btn.mint { color: var(--mint); }
+  .link-btn.mint:hover { border-color: var(--mint); }
+
+  /* Video cards */
+  .vid-grid { display: grid; gap: 10px; margin: 14px 0; }
+  .vid-card {
+    padding: 14px 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--rose);
+    border-radius: 10px;
+    display: block;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .vid-card:hover { background: var(--card-hover); border-left-color: var(--sky); transform: translateX(4px); }
+  .vid-card .vid-title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .vid-card .vid-meta { font-size: 12px; color: var(--muted); }
+
+  /* Info callout */
+  .callout {
+    background: rgba(125, 211, 252, 0.06);
+    border: 1px solid rgba(125, 211, 252, 0.25);
+    border-left: 3px solid var(--sky);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 14px 0;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .callout.warn {
+    background: rgba(252, 211, 77, 0.06);
+    border-color: rgba(252, 211, 77, 0.25);
+    border-left-color: var(--amber);
+  }
+  .callout.mint {
+    background: rgba(134, 239, 172, 0.06);
+    border-color: rgba(134, 239, 172, 0.25);
+    border-left-color: var(--mint);
+  }
+
+  /* Tree view */
+  .tree {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin: 14px 0;
+  }
+  .tree .leaf { color: var(--sky); }
+  .tree .file { color: var(--violet); }
+  .tree .tag { color: var(--dim); font-size: 11px; }
+
+  /* Checkbox */
+  .step-complete {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .step-complete input[type="checkbox"] {
+    width: 18px; height: 18px; cursor: pointer; accent-color: var(--mint);
+  }
+  .step-complete label {
+    font-size: 13px; color: var(--muted); cursor: pointer;
+    user-select: none;
+  }
+  .step-complete input:checked + label { color: var(--mint); }
+
+  /* Nav buttons */
+  .nav-row {
+    display: flex; justify-content: space-between; gap: 10px;
+    margin-top: 14px;
+  }
+  .nav-btn {
+    flex: 1; padding: 10px 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted); font-size: 13px;
+    cursor: pointer; text-decoration: none;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { border-color: var(--sky); color: var(--text); }
+  .nav-btn.primary { background: linear-gradient(135deg, rgba(125, 211, 252, 0.15), rgba(196, 181, 253, 0.15)); border-color: var(--sky); color: var(--text); }
+
+  /* Footer */
+  footer {
+    text-align: center; padding: 40px 20px 20px;
+    color: var(--dim); font-size: 12px;
+  }
+  footer .kaomoji { color: var(--violet); font-size: 14px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">Karpathy Wiki Lab <span style="font-size: 11px; color: var(--mint); font-weight: 500; margin-left: 4px;">v0.2 · 7 fixes</span></div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">0 / 7</div>
+  </div>
+  <div class="step-pills">
+    <a href="#step1" class="pill" data-step="1">1 · What is this</a>
+    <a href="#step2" class="pill" data-step="2">2 · Folder tour</a>
+    <a href="#step3" class="pill" data-step="3">3 · Run launcher</a>
+    <a href="#step4" class="pill" data-step="4">4 · Pinecone setup</a>
+    <a href="#step5" class="pill" data-step="5">5 · First document</a>
+    <a href="#step6" class="pill" data-step="6">6 · Watch indexing</a>
+    <a href="#step7" class="pill" data-step="7">7 · Query + debug</a>
+  </div>
+</header>
+
+<main>
+
+<div class="hero">
+  <h1><span aria-hidden="true">🧪</span> Karpathy Wiki Lab</h1>
+  <div class="subtitle">LLM Wiki pattern + Pinecone RAG · hybrid memory test lab</div>
+</div>
+
+<!-- STEP 1 -->
+<section class="step" id="step1">
+  <div class="step-head">
+    <div class="step-num">1</div>
+    <h2>What even IS this?</h2>
+  </div>
+  <p>You're about to play with a pattern that went viral in April 2026: <strong>Andrej Karpathy's "LLM Wiki"</strong>. Instead of stuffing raw documents into a context window or a vector database, Claude reads your sources and compiles them into a cross-linked markdown wiki — an organized, compounding knowledge base you can actually read.</p>
+  <p class="muted">This lab adds one twist: a <strong>Pinecone vector database</strong> layer underneath for deep semantic search when the wiki alone isn't enough. That's the hybrid your dad was describing — a small curated wiki on top, a deep vector index below.</p>
+
+  <div class="callout">
+    <strong>The three layers you're building:</strong>
+    <ul>
+      <li><strong>sources/</strong> — raw files you drop in (transcripts, PDFs, notes)</li>
+      <li><strong>wiki/</strong> — the compiled markdown articles Claude writes</li>
+      <li><strong>Pinecone</strong> — the semantic search index for deep recall</li>
+    </ul>
+  </div>
+
+  <div class="link-row">
+    <a class="link-btn" href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f" target="_blank">📄 Karpathy's original gist</a>
+    <a class="link-btn violet" href="https://github.com/coleam00/claude-memory-compiler" target="_blank">🛠 claude-memory-compiler</a>
+  </div>
+
+  <div class="step-complete">
+    <input type="checkbox" id="c1"><label for="c1">I get what this is</label>
+  </div>
+  <div class="nav-row">
+    <a class="nav-btn primary" href="#step2" style="flex: 1;">Next: Folder tour →</a>
+  </div>
+</section>
+
+<!-- STEP 2 -->
+<section class="step" id="step2">
+  <div class="step-head">
+    <div class="step-num">2</div>
+    <h2>Folder tour</h2>
+  </div>
+  <p>Everything lives in one sealed folder. Nothing else on your computer gets touched.</p>
+
+  <div class="tree">
+📂 Karpathy Wiki Lab/
+├── 🚀 <span class="leaf">claude.ps1</span>       <span class="tag">← main launcher (PowerShell)</span>
+├── 🖱 <span class="leaf">claude.bat</span>       <span class="tag">← double-click wrapper</span>
+├── 📄 <span class="file">CLAUDE.md</span>        <span class="tag">← the rulebook</span>
+├── 📁 <span class="leaf">sources/</span>         <span class="tag">← drop raw files here</span>
+├── 📁 <span class="leaf">wiki/</span>            <span class="tag">← Claude writes articles here</span>
+├── 📁 <span class="leaf">logs/</span>            <span class="tag">← every action is logged</span>
+├── 📁 <span class="leaf">.backups/</span>        <span class="tag">← auto-snapshots before changes</span>
+└── 🌐 <span class="file">guide.html</span>       <span class="tag">← you're reading it</span>
+  </div>
+
+  <p class="muted">Each folder has a single, clean job. The <strong>.backups/</strong> folder is your safety net — every time you run the indexer, it snapshots the current wiki state first.</p>
+
+  <div class="step-complete">
+    <input type="checkbox" id="c2"><label for="c2">I toured the folders</label>
+  </div>
+  <div class="nav-row">
+    <a class="nav-btn" href="#step1">← Back</a>
+    <a class="nav-btn primary" href="#step3">Next: Run the launcher →</a>
+  </div>
+</section>
+
+<!-- STEP 3 -->
+<section class="step" id="step3">
+  <div class="step-head">
+    <div class="step-num">3</div>
+    <h2>Run the launcher</h2>
+  </div>
+  <p>Double-click <strong>claude.bat</strong> in the lab folder. A terminal window opens, you'll see a banner, then a menu. No typing commands — just press a number.</p>
+
+  <div class="cmd">  +--------------------------------------+
+  |  MENU                                |
+  +--------------------------------------+
+  |  [1] Health check                    |
+  |  [2] Dry-run (no writes)             |
+  |  [3] Index sources -> wiki           |
+  |  [4] View latest log                 |
+  |  [5] Pinecone setup (login + API)    |
+  |  [6] Open interactive guide          |
+  |  [q] Quit                            |
+  +--------------------------------------+</div>
+
+  <p>First time? Press <strong>1</strong> to run the health check. It verifies all folders exist and the schema is readable. Every action gets written to <strong>logs/</strong>.</p>
+
+  <div class="callout mint">
+    <strong>Safety:</strong> Option 2 (Dry-run) previews what WOULD happen without writing a single file. Use it anytime you're nervous.
+  </div>
+
+  <div class="step-complete">
+    <input type="checkbox" id="c3"><label for="c3">Launcher ran, health check passed</label>
+  </div>
+  <div class="nav-row">
+    <a class="nav-btn" href="#step2">← Back</a>
+    <a class="nav-btn primary" href="#step4">Next: Pinecone →</a>
+  </div>
+</section>
+
+<!-- STEP 4 — PINECONE -->
+<section class="step" id="step4">
+  <div class="step-head">
+    <div class="step-num">4</div>
+    <h2>Pinecone setup (login + API key)</h2>
+  </div>
+  <p>Pinecone is the vector database — it's where your embeddings live so the lab can do semantic search across thousands of chunks. The <strong>free tier is robust enough</strong> for a personal niche: one Starter index, roughly 100K vectors, serverless (no pod management).</p>
+
+  <ol style="margin: 12px 0 12px 24px;">
+    <li><strong>Sign up</strong> at <a class="link-btn" href="https://app.pinecone.io" target="_blank">app.pinecone.io</a> — email or Google auth</li>
+    <li><strong>Create a Starter index</strong> — name: <code>karpathy-lab</code>, dimensions: <code>1536</code>, metric: <code>cosine</code></li>
+    <li><strong>Grab your API key</strong> at <a class="link-btn violet" href="https://app.pinecone.io/keys" target="_blank">app.pinecone.io/keys</a></li>
+    <li>Back in the launcher, press <strong>[5]</strong> and paste the key when prompted</li>
+  </ol>
+
+  <div class="callout warn">
+    <strong>Security:</strong> The API key is stored locally in <code>.pinecone-config</code> inside the lab folder. Don't commit that file to git or share the folder zipped.
+  </div>
+
+  <p class="muted" style="margin-top: 20px;"><strong>📺 Videos for deeper context:</strong></p>
+  <div class="vid-grid">
+    <a class="vid-card" href="https://www.youtube.com/@JackRobertsAI" target="_blank">
+      <div class="vid-title">Jack Roberts — AI memory & Pinecone (channel)</div>
+      <div class="vid-meta">youtube.com/@JackRobertsAI · 3-tier memory: SQL + conversation buffer + Pinecone semantic layer</div>
+    </a>
+    <a class="vid-card" href="https://www.classcentral.com/course/youtube-ai-agent-evaluation-with-ragas-288413" target="_blank">
+      <div class="vid-title">James Briggs — AI Agent Evaluation with RAGAS, LangChain, Claude 3, Pinecone</div>
+      <div class="vid-meta">~20 min · ex-Pinecone engineer walks through a full RAG eval stack</div>
+    </a>
+    <a class="vid-card" href="https://community.pinecone.io/t/video-build-and-deploy-a-rag-app-with-pinecone-serverless/4114" target="_blank">
+      <div class="vid-title">Pinecone Official — Build & Deploy a RAG App with Pinecone Serverless</div>
+      <div class="vid-meta">pinecone community · free-tier serverless walkthrough, step by step</div>
+    </a>
+  </div>
+
+  <div class="link-row">
+    <a class="link-btn mint" href="https://docs.pinecone.io/guides/get-started/quickstart" target="_blank">📘 Pinecone Quickstart Docs</a>
+  </div>
+
+  <div class="step-complete">
+    <input type="checkbox" id="c4"><label for="c4">Pinecone account + API key in .pinecone-config</label>
+  </div>
+  <div class="nav-row">
+    <a class="nav-btn" href="#step3">← Back</a>
+    <a class="nav-btn primary" href="#step5">Next: First document →</a>
+  </div>
+</section>
+
+<!-- STEP 5 -->
+<section class="step" id="step5">
+  <div class="step-head">
+    <div class="step-num">5</div>
+    <h2>Drop your first document</h2>
+  </div>
+  <p>Time to give Claude some raw material. Open <strong>sources/</strong> and drop in any file — a transcript, a PDF, a .txt dump, an exported article. Markdown works great too.</p>
+
+  <div class="callout">
+    <strong>Pro move:</strong> Create a file called <code>sources/NICHE.md</code> first. Put one paragraph describing what niche this lab is focused on. Claude will use it as the filter — "what matters, what to ignore." Without it, the wiki sprawls.
+  </div>
+
+  <p class="muted">Example NICHE.md:</p>
+  <div class="cmd">This lab is scoped to music marketing campaigns
+for independent artists. Topics of interest:
+playlist pitching, TikTok strategy, ad spend ratios,
+PR outreach, release timing. Ignore anything unrelated.</div>
+
+  <div class="step-complete">
+    <input type="checkbox" id="c5"><label for="c5">First source file dropped in</label>
+  </div>
+  <div class="nav-row">
+    <a class="nav-btn" href="#step4">← Back</a>
+    <a class="nav-btn primary" href="#step6">Next: Watch indexing →</a>
+  </div>
+</section>
+
+<!-- STEP 6 -->
+<section class="step" id="step6">
+  <div class="step-head">
+    <div class="step-num">6</div>
+    <h2>Watch Claude index it</h2>
+  </div>
+  <p>Back in the launcher, press <strong>[3] Index sources → wiki</strong>. The script backs up the current wiki to <code>.backups/TIMESTAMP/</code> then signals Claude to process every file in sources/.</p>
+
+  <p>Claude reads each source, follows the rules in <strong>CLAUDE.md</strong>, and writes organized markdown articles into <strong>wiki/</strong>. Each article has frontmatter, a summary, key points, and cross-links to related articles.</p>
+
+  <div class="cmd">wiki/
+├── playlist-pitching.md
+├── tiktok-strategy.md
+├── release-timing.md
+└── ad-spend-ratios.md</div>
+
+  <p class="muted">Over time, the wiki <strong>compounds</strong>. New sources merge into existing articles instead of creating duplicates. That's the Karpathy insight — the artifact grows smarter the more you feed it.</p>
+
+  <div class="step-complete">
+    <input type="checkbox" id="c6"><label for="c6">Wiki articles appeared</label>
+  </div>
+  <div class="nav-row">
+    <a class="nav-btn" href="#step5">← Back</a>
+    <a class="nav-btn primary" href="#step7">Next: Query + debug →</a>
+  </div>
+</section>
+
+<!-- STEP 7 -->
+<section class="step" id="step7">
+  <div class="step-head">
+    <div class="step-num">7</div>
+    <h2>Query, iterate, debug</h2>
+  </div>
+  <p>Your wiki is now a real, searchable knowledge base. Two ways to pull info:</p>
+  <ul>
+    <li><strong>Open a wiki article directly</strong> — they're just markdown files, readable anywhere</li>
+    <li><strong>Ask Claude a semantic question</strong> — Claude uses Pinecone to retrieve the top-K most relevant chunks, then answers using the wiki article as anchor context</li>
+  </ul>
+
+  <div class="callout mint">
+    <strong>Debug loop when something looks off:</strong>
+    <ol style="margin-top: 8px;">
+      <li>Launcher → <strong>[4] View latest log</strong> — see every action that ran</li>
+      <li>Check <code>.backups/</code> — previous state is always recoverable</li>
+      <li>Tweak <code>CLAUDE.md</code> if article structure needs fixing</li>
+      <li>Re-run <strong>[3] Index</strong> — the wiki recompiles against new rules</li>
+    </ol>
+  </div>
+
+  <p class="muted">The whole point: it's a <strong>feedback loop you own</strong>. Dad was right — the tuning is in how you chunk, what you index, what CLAUDE.md tells Claude to prioritize. Keep iterating.</p>
+
+  <div class="step-complete">
+    <input type="checkbox" id="c7"><label for="c7">I'm ready to iterate</label>
+  </div>
+  <div class="nav-row">
+    <a class="nav-btn" href="#step6">← Back</a>
+    <a class="nav-btn primary" href="#step1">↑ Back to top</a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Karpathy Wiki Lab · <strong style="color: var(--mint);">v0.2</strong> · built in the Ran Plan Area
+  <div style="margin-top: 10px; font-size: 11px; color: var(--dim);">
+    Debug audit passed · 7 fixes applied · health 82 → 96
+  </div>
+  <div class="kaomoji">(⁄ ⁄•⁄ω⁄•⁄ ⁄)</div>
+</footer>
+
+<script>
+  // Persist checkbox state in localStorage + update progress
+  const checks = document.querySelectorAll('.step-complete input[type="checkbox"]');
+  const total = checks.length;
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  const pills = document.querySelectorAll('.pill');
+
+  function updateProgress() {
+    const done = [...checks].filter(c => c.checked).length;
+    const pct = (done / total) * 100;
+    progressBar.style.width = pct + '%';
+    progressText.textContent = done + ' / ' + total;
+    pills.forEach((pill, i) => {
+      pill.classList.toggle('done', checks[i].checked);
+    });
+  }
+
+  checks.forEach((cb, i) => {
+    const saved = localStorage.getItem('kwl-step-' + (i+1));
+    if (saved === '1') cb.checked = true;
+    cb.addEventListener('change', () => {
+      localStorage.setItem('kwl-step-' + (i+1), cb.checked ? '1' : '0');
+      updateProgress();
+    });
+  });
+  updateProgress();
+
+  // Active pill on scroll (initial state + IntersectionObserver)
+  if (pills.length) pills[0].classList.add('active');
+  const sections = document.querySelectorAll('.step');
+  let activeId = 'step1';
+  const io = new IntersectionObserver((entries) => {
+    // Pick the one closest to the top of the viewport
+    const visible = entries.filter(e => e.isIntersecting)
+                           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (visible.length) {
+      const id = visible[0].target.id;
+      if (id !== activeId) {
+        activeId = id;
+        pills.forEach(p => p.classList.toggle('active', p.getAttribute('href') === '#' + id));
+      }
+    }
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  sections.forEach(s => io.observe(s));
+</script>
+
+</body>
+</html>

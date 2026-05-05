@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payback List</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ROOT TOKENS
+   ============================================================ */
+:root {
+  --bg:           #f7f5ef;
+  --surface:      #faf9f5;
+  --surface2:     #f0ede4;
+  --border:       #e8e4d9;
+  --border-light: #f0ede4;
+  --text-primary: #1a1814;
+  --text-second:  #4a4640;
+  --text-muted:   #9a958c;
+  --text-ghost:   #c8c3ba;
+  --blue:         #2e7be8;
+  --blue-soft:    rgba(46, 123, 232, 0.08);
+  --blue-glow:    rgba(46, 123, 232, 0.18);
+  --green:        #1a9e6e;
+  --green-soft:   rgba(26, 158, 110, 0.08);
+  --green-glow:   rgba(26, 158, 110, 0.18);
+  --amber:        #c07a1a;
+  --amber-soft:   rgba(192, 122, 26, 0.08);
+  --red:          #d94040;
+  --red-soft:     rgba(217, 64, 64, 0.08);
+  --purple:       #7c5cbf;
+  --purple-soft:  rgba(124, 92, 191, 0.08);
+  --mono:         'JetBrains Mono', monospace;
+  --sans:         'Outfit', system-ui, sans-serif;
+  --r:            6px;
+  --r-lg:         10px;
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:    0 4px 16px rgba(0,0,0,0.08);
+  --transition:   all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  font-family: var(--mono);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   AMBIENT GLOW ORBS
+   ============================================================ */
+.ambient-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+.glow-1 {
+  top: -10%;  left: -8%;
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(46,123,232,0.09) 0%, transparent 70%);
+  animation: glow-breathe 9s ease-in-out infinite;
+}
+.glow-2 {
+  bottom: -20%; right: -4%;
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, rgba(26,158,110,0.08) 0%, transparent 70%);
+  animation: glow-breathe 11s ease-in-out infinite 1.5s;
+}
+.glow-3 {
+  top: 42%; left: 45%;
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(124,92,191,0.06) 0%, transparent 70%);
+  animation: glow-breathe 14s ease-in-out infinite 3s;
+}
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.06); }
+}
+
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.page-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 56px 40px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  animation: fade-up 0.55s ease-out both;
+}
+.header-left {}
+.header-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.header-title {
+  font-family: var(--sans);
+  font-size: clamp(1.55rem, 3.5vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.header-title span {
+  color: var(--blue);
+}
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+.meta-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+.meta-dot.blue   { background: var(--blue); box-shadow: 0 0 6px var(--blue-glow); }
+.meta-dot.green  { background: var(--green); box-shadow: 0 0 6px var(--green-glow); }
+.meta-dot.amber  { background: var(--amber); }
+.meta-pill {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--surface);
+}
+
+/* ============================================================
+   SUMMARY STAT STRIP
+   ============================================================ */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  animation: fade-up 0.55s ease-out 0.08s both;
+}
+@media (max-width: 900px) { .stat-strip { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .stat-strip { grid-template-columns: repeat(2, 1fr); } }
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  transition: var(--transition);
+  cursor: default;
+}
+.stat-card:hover {
+  border-color: transparent;
+  box-shadow: 0 0 0 1.5px var(--blue), var(--shadow-md), 0 0 20px var(--blue-glow);
+  transform: translateY(-1px);
+}
+.stat-card.green:hover {
+  box-shadow: 0 0 0 1.5px var(--green), var(--shadow-md), 0 0 20px var(--green-glow);
+}
+.stat-card.amber:hover {
+  box-shadow: 0 0 0 1.5px var(--amber), var(--shadow-md), 0 0 16px var(--amber-soft);
+}
+.stat-tag {
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-family: var(--sans);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.stat-value.blue   { color: var(--blue); }
+.stat-value.green  { color: var(--green); }
+.stat-value.amber  { color: var(--amber); }
+.stat-value.red    { color: var(--red); }
+.stat-value.purple { color: var(--purple); }
+.stat-sub {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   SECTION LABEL
+   ============================================================ */
+.section-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-light);
+}
+
+/* ============================================================
+   MAIN TABLE
+   ============================================================ */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: fade-up 0.55s ease-out 0.14s both;
+}
+
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+/* Header row */
+.pricing-table thead th {
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.pricing-table thead th.col-num {
+  text-align: right;
+  color: var(--text-ghost);
+}
+.pricing-table thead th.th-blue   { color: var(--blue); }
+.pricing-table thead th.th-green  { color: var(--green); }
+.pricing-table thead th.th-amber  { color: var(--amber); }
+.pricing-table thead th.th-purple { color: var(--purple); }
+.pricing-table thead th.th-red    { color: var(--red); }
+
+/* Category header rows */
+.pricing-table tr.cat-header td {
+  background: var(--bg);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  padding: 10px 14px 8px;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+}
+.pricing-table tr.cat-header td .cat-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
+/* Data rows */
+.pricing-table tbody tr.data-row {
+  border-bottom: 1px solid var(--border-light);
+  transition: var(--transition);
+  cursor: default;
+}
+.pricing-table tbody tr.data-row:last-of-type {
+  border-bottom: none;
+}
+.pricing-table tbody tr.data-row:hover {
+  background: rgba(46, 123, 232, 0.035);
+}
+.pricing-table tbody tr.data-row:hover td {
+  color: var(--text-primary);
+}
+.pricing-table tbody tr.data-row:hover td.item-name::before {
+  opacity: 1;
+  color: var(--blue);
+}
+
+/* Cells */
+.pricing-table td {
+  padding: 11px 14px;
+  vertical-align: middle;
+  color: var(--text-second);
+  line-height: 1;
+  transition: var(--transition);
+}
+.pricing-table td.item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  position: relative;
+}
+.pricing-table td.item-name::before {
+  content: '// ';
+  color: var(--text-ghost);
+  font-size: 0.625rem;
+  opacity: 0.5;
+  transition: var(--transition);
+}
+.pricing-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.pricing-table td.blue-val   { color: var(--blue); }
+.pricing-table td.green-val  { color: var(--green); }
+.pricing-table td.amber-val  { color: var(--amber); }
+.pricing-table td.red-val    { color: var(--red); }
+.pricing-table td.purple-val { color: var(--purple); }
+.pricing-table td.muted-val  { color: var(--text-muted); }
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.badge.active  { background: var(--green-soft); color: var(--green); }
+.badge.pending { background: var(--amber-soft); color: var(--amber); }
+.badge.review  { background: var(--blue-soft);  color: var(--blue);  }
+.badge.hold    { background: var(--red-soft);   color: var(--red);   }
+
+/* Editable cells */
+.cell-edit {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--border);
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  width: 100%;
+  min-width: 60px;
+  padding: 0 2px;
+  outline: none;
+  text-align: right;
+  transition: var(--transition);
+  -webkit-font-smoothing: antialiased;
+}
+.cell-edit:focus {
+  border-bottom-color: var(--blue);
+  background: var(--blue-soft);
+  border-radius: 2px;
+  color: var(--text-primary);
+}
+.cell-edit::placeholder { color: var(--text-ghost); }
+
+/* Totals row */
+.pricing-table tr.totals-row td {
+  background: linear-gradient(to right, rgba(46,123,232,0.04), rgba(26,158,110,0.04));
+  border-top: 1.5px solid var(--border);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 14px 14px;
+  color: var(--text-primary);
+}
+.pricing-table tr.totals-row td.item-name::before {
+  content: '';
+}
+
+/* ============================================================
+   NOTES SECTION
+   ============================================================ */
+.notes-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  animation: fade-up 0.55s ease-out 0.38s both;
+}
+@media (max-width: 700px) { .notes-wrap { grid-template-columns: 1fr; } }
+
+.notes-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.notes-card-header {
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.notes-textarea {
+  width: 100%;
+  min-height: 130px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-second);
+  padding: 14px 16px;
+  resize: vertical;
+  line-height: 1.65;
+  transition: var(--transition);
+}
+.notes-textarea::placeholder { color: var(--text-ghost); }
+.notes-textarea:focus { background: rgba(46,123,232,0.02); }
+
+/* Quick-edit field grid */
+.fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.field-cell {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+.field-cell:nth-child(2n) { border-right: none; }
+.field-cell:nth-last-child(-n+2) { border-bottom: none; }
+.field-cell:hover { background: rgba(46,123,232,0.03); }
+.field-label {
+  font-size: 0.565rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  margin-bottom: 5px;
+}
+.field-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--border);
+  outline: none;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  padding: 2px 0;
+  transition: var(--transition);
+}
+.field-input:focus {
+  border-bottom-color: var(--blue);
+  background: var(--blue-soft);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   PAGE FOOTER
+   ============================================================ */
+.page-footer {
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.585rem;
+  color: var(--text-ghost);
+  letter-spacing: 0.12em;
+  animation: fade-up 0.4s ease-out 0.5s both;
+}
+.footer-id { font-weight: 700; color: var(--text-ghost); }
+.footer-dots { display: flex; gap: 5px; align-items: center; }
+.footer-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-ghost); }
+
+/* ============================================================
+   TOP TOOLBAR
+   ============================================================ */
+.top-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 38px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 var(--border-light), 0 2px 12px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  gap: 12px;
+}
+
+.toolbar-breadcrumb {
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.toolbar-breadcrumb .tb-sep {
+  color: var(--border);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.toolbar-breadcrumb .tb-current {
+  color: var(--text-muted);
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  outline: none;
+}
+.tb-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+.tb-btn:active { transform: scale(0.97); }
+.tb-btn.tb-icon {
+  padding: 0 7px;
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-ghost);
+}
+.tb-btn.tb-icon:hover {
+  border-color: var(--border);
+  color: var(--text-muted);
+  background: var(--surface2);
+}
+
+.tb-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Sortable column hints */
+.pricing-table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.pricing-table thead th.sortable:hover {
+  color: var(--text-second);
+  background: var(--surface);
+}
+.pricing-table thead th.sortable::after {
+  content: '↕';
+  font-size: 0.6rem;
+  opacity: 0;
+  margin-left: 4px;
+  transition: opacity 0.15s ease;
+  color: var(--text-ghost);
+}
+.pricing-table thead th.sortable:hover::after { opacity: 1; }
+.pricing-table thead th.sort-asc::after  { content: '↑'; opacity: 0.7; color: var(--blue); }
+.pricing-table thead th.sort-desc::after { content: '↓'; opacity: 0.7; color: var(--blue); }
+
+/* Urgent row glow */
+.pricing-table tbody tr.data-row.urgent-glow {
+  box-shadow: 0 0 0 1px rgba(239,68,68,0.4), 0 0 12px rgba(239,68,68,0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.tb-btn.tb-sort-active {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+.tb-btn.tb-urgent-active {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-soft);
+}
+</style>
+</head>
+<body>
+
+<!-- ─── TOP TOOLBAR ─── -->
+<div class="top-toolbar">
+  <div class="toolbar-breadcrumb">
+    <span>Ahead</span>
+    <span class="tb-sep">/</span>
+    <span>Come Back</span>
+    <span class="tb-sep">/</span>
+    <span class="tb-current">Payback List</span>
+  </div>
+  <div class="toolbar-actions">
+    <button class="tb-btn" id="tb-sort-az">A→Z</button>
+    <button class="tb-btn" id="tb-sort-za">Z→A</button>
+    <div class="tb-divider"></div>
+    <button class="tb-btn" id="tb-urgent">⚡ Urgent</button>
+    <div class="tb-divider"></div>
+    <button class="tb-btn tb-icon" id="tb-settings">⚙</button>
+  </div>
+</div>
+
+<!-- Ambient glow orbs -->
+<div class="ambient-glow glow-1"></div>
+<div class="ambient-glow glow-2"></div>
+<div class="ambient-glow glow-3"></div>
+
+<div class="page-wrap">
+
+  <!-- ─── HEADER ─── -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-label">// payback list · come back</div>
+      <h1 class="header-title">Payback <span>/ List</span></h1>
+    </div>
+    <div class="header-meta">
+      <span class="meta-pill"><span class="meta-dot blue"></span>Owed to Me</span>
+      <span class="meta-pill"><span class="meta-dot amber"></span>I Owe</span>
+      <span class="meta-pill"><span class="meta-dot green"></span>Settled</span>
+    </div>
+  </header>
+
+  <!-- ─── STAT STRIP ─── -->
+  <div class="stat-strip">
+    <div class="stat-card">
+      <div class="stat-tag">Owed to Me</div>
+      <div class="stat-value blue" id="stat-owed-to-me">$0</div>
+      <div class="stat-sub">total incoming</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-tag">I Owe</div>
+      <div class="stat-value amber" id="stat-i-owe">$0</div>
+      <div class="stat-sub">total outgoing</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-tag">Net</div>
+      <div class="stat-value green" id="stat-net">$0</div>
+      <div class="stat-sub">owed to me − i owe</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-tag">Settled</div>
+      <div class="stat-value" id="stat-settled">0</div>
+      <div class="stat-sub">items closed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-tag">Open Items</div>
+      <div class="stat-value purple" id="stat-open">0</div>
+      <div class="stat-sub">pending resolution</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-tag">Urgent</div>
+      <div class="stat-value red" id="stat-urgent">0</div>
+      <div class="stat-sub">high priority</div>
+    </div>
+  </div>
+
+  <!-- ─── MAIN TABLE ─── -->
+  <div>
+    <div class="section-label" style="margin-bottom:12px;">Payback Entries</div>
+    <div class="table-wrap">
+      <table class="pricing-table">
+        <thead>
+          <tr>
+            <th class="sortable" id="th-name">Person / Item</th>
+            <th class="col-num th-blue sortable" id="th-amount">Amount</th>
+            <th class="col-num sortable" id="th-direction">Direction</th>
+            <th class="col-num th-amber sortable" id="th-date">Due / Date</th>
+            <th class="col-num th-purple sortable" id="th-category">Category</th>
+            <th class="col-num sortable" id="th-notes">Notes</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="main-tbody">
+
+          <tr class="data-row">
+            <td class="item-name">Randy Perez</td>
+            <td class="num blue-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td class="num amber-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num purple-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td><span class="badge pending">Pending</span></td>
+          </tr>
+
+          <tr class="data-row">
+            <td class="item-name">Cape Studio</td>
+            <td class="num blue-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td class="num amber-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num purple-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td><span class="badge pending">Pending</span></td>
+          </tr>
+
+          <tr class="data-row">
+            <td class="item-name">Bearcat</td>
+            <td class="num blue-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td class="num amber-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num purple-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td><span class="badge pending">Pending</span></td>
+          </tr>
+
+          <tr class="data-row">
+            <td class="item-name">Oliver</td>
+            <td class="num blue-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td class="num amber-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num purple-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td><span class="badge pending">Pending</span></td>
+          </tr>
+
+          <tr class="data-row">
+            <td class="item-name">Rich Furness</td>
+            <td class="num blue-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td class="num amber-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num purple-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td><span class="badge pending">Pending</span></td>
+          </tr>
+
+          <tr class="data-row">
+            <td class="item-name">Eric</td>
+            <td class="num blue-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td class="num amber-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num purple-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td><span class="badge pending">Pending</span></td>
+          </tr>
+
+          <tr class="data-row">
+            <td class="item-name">John Gilman — Artist 1</td>
+            <td class="num blue-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td class="num amber-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num purple-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td><span class="badge pending">Pending</span></td>
+          </tr>
+
+          <tr class="data-row">
+            <td class="item-name">John Gilman — Artist 2</td>
+            <td class="num blue-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td class="num amber-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num purple-val"><input class="cell-edit" placeholder="—"></td>
+            <td class="num"><input class="cell-edit" placeholder="—"></td>
+            <td><span class="badge pending">Pending</span></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─── NOTES + QUICK FIELDS ─── -->
+  <div>
+    <div class="section-label" style="margin-bottom:12px;">Notes + Context</div>
+    <div class="notes-wrap">
+
+      <div class="notes-card">
+        <div class="notes-card-header">// session notes</div>
+        <textarea class="notes-textarea" placeholder="People, context, follow-ups, agreements...&#10;&#10;// type freely"></textarea>
+      </div>
+
+      <div class="notes-card">
+        <div class="notes-card-header">// quick fields</div>
+        <div class="fields-grid">
+          <div class="field-cell">
+            <div class="field-label">Last Updated</div>
+            <input class="field-input" placeholder="—">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Focus Period</div>
+            <input class="field-input" placeholder="—">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Total Goal</div>
+            <input class="field-input" placeholder="$0">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Priority Note</div>
+            <input class="field-input" placeholder="—">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <footer class="page-footer">
+    <div class="footer-id">payback · list · v1</div>
+    <div class="footer-dots">
+      <div class="footer-dot" style="background:var(--blue);"></div>
+      <div class="footer-dot" style="background:var(--green);"></div>
+      <div class="footer-dot" style="background:var(--amber);"></div>
+      <div class="footer-dot" style="background:var(--purple);"></div>
+      <div class="footer-dot" style="background:var(--red);"></div>
+    </div>
+    <div>ahead · artist solutions · come back</div>
+  </footer>
+
+</div>
+
+<script>
+  // placeholder — data + logic will be added via sub-agents
+</script>
+
+</body>
+</html>

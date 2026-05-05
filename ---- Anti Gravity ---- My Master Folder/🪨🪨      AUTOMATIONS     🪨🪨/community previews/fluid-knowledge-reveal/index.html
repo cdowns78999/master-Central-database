@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>/community — fluid knowledge reveal · 5 flavors</title>
+<style>
+  :root{
+    --bg:#F5F4ED; --ink:#191818; --dim:#6B6862;
+    --accent:#CC785C; --card:#FEFDF8;
+    --line:rgba(25,24,24,.10);
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .page{max-width:1180px;margin:0 auto;padding:40px 28px 80px}
+  header.top{margin-bottom:28px;border-bottom:1px solid var(--line);padding-bottom:18px}
+  header.top h1{font-family:var(--serif);font-weight:500;font-size:28px;margin:0 0 6px;letter-spacing:-.01em}
+  header.top p{margin:0;color:var(--dim);font-size:13.5px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--dim)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;min-height:280px;position:relative;overflow:hidden}
+  .tile-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .tile-head h3{font-family:var(--serif);font-weight:500;font-size:16px;margin:0;letter-spacing:-.005em}
+  .tile-head .n{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.04em}
+  .vibe{font-size:11.5px;color:var(--dim);margin:0 0 12px;line-height:1.35}
+  .stage{flex:1;position:relative;border:1px dashed var(--line);border-radius:10px;background:#FBFAF2;min-height:170px;display:flex;align-items:center;justify-content:center;padding:14px;overflow:hidden}
+  .kc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;width:100%;max-width:250px;box-shadow:0 6px 18px -10px rgba(25,24,24,.25)}
+  .kc h4{font-family:var(--serif);font-weight:500;font-size:14.5px;margin:0 0 6px;color:var(--ink)}
+  .kc p{margin:0;font-size:12.5px;line-height:1.45;color:var(--dim)}
+  .kc .pill{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:2px 7px;margin-bottom:8px}
+  .ctrl{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px;font-size:11.5px;color:var(--dim)}
+  .ctrl button{font-family:var(--sans);font-size:11.5px;background:transparent;border:1px solid var(--line);color:var(--ink);padding:5px 10px;border-radius:999px;cursor:pointer;transition:background .15s}
+  .ctrl button:hover{background:#EFEDE3}
+  .ctrl .idx{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+  details{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+  details summary{cursor:pointer;font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;outline:none;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary:before{content:"› ";color:var(--accent)}
+  details[open] summary:before{content:"⌄ "}
+  pre{margin:8px 0 0;font-family:var(--mono);font-size:10.5px;line-height:1.5;color:#2a2927;background:#EFEDE3;padding:10px;border-radius:8px;overflow:auto;max-height:180px}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.03em}
+
+  /* ---- Flavor A: Swipe/Drag deck ---- */
+  .fA .stage{perspective:800px}
+  .fA .deck{position:relative;width:100%;max-width:240px;height:150px}
+  .fA .deck .kc{position:absolute;inset:0;max-width:none;transition:transform .35s cubic-bezier(.2,.7,.2,1),opacity .35s}
+  .fA .deck .kc[data-state="0"]{transform:translateY(0) scale(1);z-index:3}
+  .fA .deck .kc[data-state="1"]{transform:translateY(8px) scale(.96);z-index:2;opacity:.75}
+  .fA .deck .kc[data-state="2"]{transform:translateY(16px) scale(.92);z-index:1;opacity:.45}
+  .fA .deck .kc.gone{transform:translateX(var(--dx,320px)) rotate(var(--dr,18deg));opacity:0}
+
+  /* ---- Flavor B: Scroll-snap reel ---- */
+  .fB .stage{padding:0;align-items:stretch}
+  .fB .reel{width:100%;height:170px;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:thin}
+  .fB .reel::-webkit-scrollbar{width:4px}
+  .fB .reel::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .fB .slide{height:170px;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;padding:14px}
+
+  /* ---- Flavor C: Tap-to-advance (page turn) ---- */
+  .fC .stage{perspective:1200px}
+  .fC .book{position:relative;width:100%;max-width:240px;height:150px;transform-style:preserve-3d}
+  .fC .book .kc{position:absolute;inset:0;max-width:none;transform-origin:left center;transition:transform .6s cubic-bezier(.45,.05,.2,1),opacity .4s;backface-visibility:hidden}
+  .fC .book .kc.turning{transform:rotateY(-160deg);opacity:.2}
+  .fC .book .kc.future{transform:rotateY(0);opacity:0;pointer-events:none}
+
+  /* ---- Flavor D: Keyboard-nav fade ---- */
+  .fD .stage{outline:none}
+  .fD .stage:focus{border-color:var(--accent)}
+  .fD .fader{position:relative;width:100%;max-width:250px;height:150px}
+  .fD .fader .kc{position:absolute;inset:0;max-width:none;opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s ease}
+  .fD .fader .kc.on{opacity:1;transform:translateY(0)}
+  .fD .hint{font-family:var(--mono);font-size:10px;color:var(--dim);position:absolute;bottom:6px;left:10px;letter-spacing:.05em}
+
+  /* ---- Flavor E: Autopilot w/ hover pause ---- */
+  .fE .stage{overflow:hidden}
+  .fE .loop{position:relative;width:100%;max-width:250px;height:150px}
+  .fE .loop .kc{position:absolute;inset:0;max-width:none;opacity:0;transform:scale(.98);transition:opacity .6s ease,transform .6s ease}
+  .fE .loop .kc.on{opacity:1;transform:scale(1)}
+  .fE .bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--line)}
+  .fE .bar i{display:block;height:100%;background:var(--accent);width:0%;transition:width .15s linear}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <h1>/community — fluid knowledge reveal · 5 flavors, one category</h1>
+    <p>Same 3 Sync Licensing cards. Five ways to meet them one at a time. Compare the feel — pick the one you want to scale.</p>
+    <div class="legend">
+      <span><i class="dot"></i> category: fluid one-at-a-time reveal</span>
+      <span>content: sync licensing (3 facts)</span>
+      <span>research fallback: in-context (codepen 403)</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ================= TILE A: SWIPE DECK ================= -->
+    <section class="tile fA" id="tileA">
+      <div class="tile-head"><h3>Swipe Deck</h3><span class="n">A · tinder-style</span></div>
+      <p class="vibe">Drag right to accept, left to pass. Cards stack, peel away, next rises.</p>
+      <div class="stage">
+        <div class="deck" id="deckA"></div>
+      </div>
+      <div class="ctrl">
+        <span class="idx" id="idxA">card 1 of 3</span>
+        <div>
+          <button data-act="pass">← pass</button>
+          <button data-act="keep">keep →</button>
+        </div>
+      </div>
+      <details><summary>view code</summary>
+<pre>(()=&gt;{
+  const cards=[/*3 cards*/];
+  const deck=document.getElementById('deckA');
+  let i=0; render();
+  function render(){
+    deck.innerHTML='';
+    cards.slice(i,i+3).forEach((c,k)=&gt;{
+      const el=make(c); el.dataset.state=k; deck.appendChild(el);
+    });
+  }
+  function advance(dir){
+    const top=deck.firstElementChild; if(!top) return;
+    top.style.setProperty('--dx', dir*320+'px');
+    top.style.setProperty('--dr', dir*18+'deg');
+    top.classList.add('gone');
+    setTimeout(()=&gt;{ i=Math.min(i+1,cards.length); render(); }, 320);
+  }
+})();</pre></details>
+    </section>
+
+    <!-- ================= TILE B: SCROLL-SNAP REEL ================= -->
+    <section class="tile fB" id="tileB">
+      <div class="tile-head"><h3>Scroll-Snap Reel</h3><span class="n">B · reels-style</span></div>
+      <p class="vibe">Flick / scroll. Each card snaps to center. Trackpad-native, zero chrome.</p>
+      <div class="stage">
+        <div class="reel" id="reelB"></div>
+      </div>
+      <div class="ctrl">
+        <span class="idx" id="idxB">card 1 of 3</span>
+        <div><button data-act="next">next ↓</button></div>
+      </div>
+      <details><summary>view code</summary>
+<pre>.reel{overflow-y:auto;scroll-snap-type:y mandatory;height:170px}
+.slide{height:170px;scroll-snap-align:center}
+// JS: observe which slide is centered, update idx label.
+const io=new IntersectionObserver((es)=&gt;{
+  es.forEach(e=&gt;{ if(e.isIntersecting) setIdx(+e.target.dataset.i); });
+},{root:reel,threshold:.6});</pre></details>
+    </section>
+
+    <!-- ================= TILE C: TAP-TO-ADVANCE (PAGE TURN) ================= -->
+    <section class="tile fC" id="tileC">
+      <div class="tile-head"><h3>Page Turn</h3><span class="n">C · storybook</span></div>
+      <p class="vibe">Tap the card. It rotates away like a page. The next card was already underneath.</p>
+      <div class="stage">
+        <div class="book" id="bookC"></div>
+      </div>
+      <div class="ctrl">
+        <span class="idx" id="idxC">card 1 of 3</span>
+        <div><button data-act="turn">turn page</button></div>
+      </div>
+      <details><summary>view code</summary>
+<pre>.kc{transform-origin:left center;transition:transform .6s}
+.kc.turning{transform:rotateY(-160deg);opacity:.2}
+card.addEventListener('click',()=&gt;{
+  card.classList.add('turning');
+  setTimeout(()=&gt;advance(),500);
+});</pre></details>
+    </section>
+
+    <!-- ================= TILE D: KEYBOARD NAV FADE ================= -->
+    <section class="tile fD" id="tileD">
+      <div class="tile-head"><h3>Keyboard Nav</h3><span class="n">D · spacebar</span></div>
+      <p class="vibe">Click the frame, press space / arrow. Elegant cross-fade. Desk-ergonomic.</p>
+      <div class="stage" id="stageD" tabindex="0">
+        <div class="fader" id="faderD"></div>
+        <span class="hint">click here · space / → to advance</span>
+      </div>
+      <div class="ctrl">
+        <span class="idx" id="idxD">card 1 of 3</span>
+        <div><button data-act="next">space →</button></div>
+      </div>
+      <details><summary>view code</summary>
+<pre>stage.addEventListener('keydown',(e)=&gt;{
+  if(e.key===' '||e.key==='ArrowRight'){ e.preventDefault(); advance(); }
+  if(e.key==='ArrowLeft'){ back(); }
+});
+// cross-fade: toggle .on class on the active slide</pre></details>
+    </section>
+
+    <!-- ================= TILE E: AUTOPILOT + HOVER PAUSE ================= -->
+    <section class="tile fE" id="tileE">
+      <div class="tile-head"><h3>Autopilot</h3><span class="n">E · hover pauses</span></div>
+      <p class="vibe">Cards advance themselves every 4s. Hover to pause and read. Progress bar shows rhythm.</p>
+      <div class="stage">
+        <div class="loop" id="loopE"></div>
+        <div class="bar"><i id="barE"></i></div>
+      </div>
+      <div class="ctrl">
+        <span class="idx" id="idxE">card 1 of 3 · auto</span>
+        <div><button data-act="toggle">pause</button></div>
+      </div>
+      <details><summary>view code</summary>
+<pre>let t=0, paused=false;
+setInterval(()=&gt;{
+  if(paused) return;
+  t+=100; barE.style.width=(t/4000*100)+'%';
+  if(t&gt;=4000){ t=0; advance(); }
+},100);
+stage.addEventListener('mouseenter',()=&gt;paused=true);
+stage.addEventListener('mouseleave',()=&gt;paused=false);</pre></details>
+    </section>
+
+  </div>
+
+  <footer>generated by /community · job: fluid-knowledge-reveal · 5 microsamples</footer>
+</div>
+
+<script>
+// ============ SHARED CONTENT ============
+const SYNC_CARDS = [
+  { tag:"Sync · Fees",     title:"Sync Fees Range Wildly",         body:"Placement fees run $500 on the low end to $500K for major campaigns — scope, term, and territory drive the number." },
+  { tag:"Sync · Market",   title:"TV Spots Pay ~2x Festivals",     body:"A national TV sync typically pays roughly twice what a film festival placement does for the same song." },
+  { tag:"Sync · Splits",   title:"Publishers Split 50/50",         body:"On sync income, publishers and writers conventionally split 50/50 — the writer's share stays with the writer." }
+];
+
+function kcHTML(c){
+  return '<div class="kc"><span class="pill">'+c.tag+'</span><h4>'+c.title+'</h4><p>'+c.body+'</p></div>';
+}
+function kcEl(c){ const d=document.createElement('div'); d.innerHTML=kcHTML(c); return d.firstElementChild; }
+
+// ============ FLAVOR A — SWIPE DECK ============
+(function(){
+  const deck=document.getElementById('deckA');
+  const idx=document.getElementById('idxA');
+  const tile=document.getElementById('tileA');
+  let i=0;
+  function render(){
+    deck.innerHTML='';
+    const visible=SYNC_CARDS.slice(i, i+3);
+    if(!visible.length){
+      const done=document.createElement('div'); done.className='kc';
+      done.innerHTML='<span class="pill">Done</span><h4>End of deck</h4><p>You met all 3 sync cards. Reset to swipe again.</p>';
+      deck.appendChild(done);
+      idx.textContent='complete — '+SYNC_CARDS.length+' of '+SYNC_CARDS.length;
+      return;
+    }
+    visible.forEach((c,k)=>{
+      const el=kcEl(c); el.dataset.state=k; deck.appendChild(el);
+    });
+    idx.textContent='card '+(i+1)+' of '+SYNC_CARDS.length;
+  }
+  function advance(dir){
+    const top=deck.firstElementChild; if(!top || !top.dataset.state) return;
+    top.style.setProperty('--dx', (dir*340)+'px');
+    top.style.setProperty('--dr', (dir*18)+'deg');
+    top.classList.add('gone');
+    setTimeout(()=>{ i=Math.min(i+1, SYNC_CARDS.length); render(); if(i>=SYNC_CARDS.length){ setTimeout(()=>{ i=0; render(); }, 1500); } }, 340);
+  }
+  // drag
+  let sx=null;
+  deck.addEventListener('pointerdown',(e)=>{ sx=e.clientX; });
+  deck.addEventListener('pointerup',(e)=>{
+    if(sx===null) return;
+    const dx=e.clientX-sx; sx=null;
+    if(Math.abs(dx)>40) advance(dx>0?1:-1);
+  });
+  tile.querySelectorAll('button[data-act]').forEach(b=>b.addEventListener('click',()=>{
+    advance(b.dataset.act==='keep'?1:-1);
+  }));
+  render();
+})();
+
+// ============ FLAVOR B — SCROLL-SNAP REEL ============
+(function(){
+  const reel=document.getElementById('reelB');
+  const idx=document.getElementById('idxB');
+  const tile=document.getElementById('tileB');
+  SYNC_CARDS.forEach((c,k)=>{
+    const s=document.createElement('div'); s.className='slide'; s.dataset.i=k;
+    s.appendChild(kcEl(c)); reel.appendChild(s);
+  });
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const n=+e.target.dataset.i + 1;
+        idx.textContent='card '+n+' of '+SYNC_CARDS.length;
+      }
+    });
+  },{root:reel, threshold:.6});
+  reel.querySelectorAll('.slide').forEach(s=>io.observe(s));
+  tile.querySelector('button[data-act="next"]').addEventListener('click',()=>{
+    const st=reel.scrollTop; reel.scrollTo({top:st+170, behavior:'smooth'});
+  });
+})();
+
+// ============ FLAVOR C — TAP-TO-ADVANCE PAGE TURN ============
+(function(){
+  const book=document.getElementById('bookC');
+  const idx=document.getElementById('idxC');
+  const tile=document.getElementById('tileC');
+  let i=0;
+  function render(){
+    book.innerHTML='';
+    const now=kcEl(SYNC_CARDS[i % SYNC_CARDS.length]);
+    book.appendChild(now);
+    idx.textContent='card '+((i%SYNC_CARDS.length)+1)+' of '+SYNC_CARDS.length;
+    now.addEventListener('click', turn);
+  }
+  function turn(){
+    const top=book.firstElementChild; if(!top) return;
+    top.classList.add('turning');
+    setTimeout(()=>{ i++; render(); }, 520);
+  }
+  tile.querySelector('button[data-act="turn"]').addEventListener('click', turn);
+  render();
+})();
+
+// ============ FLAVOR D — KEYBOARD NAV FADE ============
+(function(){
+  const fader=document.getElementById('faderD');
+  const idx=document.getElementById('idxD');
+  const stage=document.getElementById('stageD');
+  const tile=document.getElementById('tileD');
+  SYNC_CARDS.forEach((c)=>{ fader.appendChild(kcEl(c)); });
+  const cards=fader.querySelectorAll('.kc');
+  let i=0;
+  function show(n){
+    i=(n+cards.length)%cards.length;
+    cards.forEach((el,k)=>el.classList.toggle('on', k===i));
+    idx.textContent='card '+(i+1)+' of '+cards.length;
+  }
+  stage.addEventListener('keydown',(e)=>{
+    if(e.key===' '||e.key==='ArrowRight'||e.key==='ArrowDown'){ e.preventDefault(); show(i+1); }
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ e.preventDefault(); show(i-1); }
+  });
+  stage.addEventListener('click',()=>stage.focus());
+  tile.querySelector('button[data-act="next"]').addEventListener('click',()=>show(i+1));
+  show(0);
+})();
+
+// ============ FLAVOR E — AUTOPILOT + HOVER PAUSE ============
+(function(){
+  const loop=document.getElementById('loopE');
+  const bar=document.getElementById('barE');
+  const idx=document.getElementById('idxE');
+  const tile=document.getElementById('tileE');
+  const stage=tile.querySelector('.stage');
+  const toggleBtn=tile.querySelector('button[data-act="toggle"]');
+  SYNC_CARDS.forEach((c)=>{ loop.appendChild(kcEl(c)); });
+  const cards=loop.querySelectorAll('.kc');
+  let i=0, t=0, paused=false, stopped=false;
+  const DUR=4000, TICK=100;
+  function show(n){
+    i=(n+cards.length)%cards.length;
+    cards.forEach((el,k)=>el.classList.toggle('on', k===i));
+    idx.textContent='card '+(i+1)+' of '+cards.length+(stopped?' · paused':' · auto');
+  }
+  setInterval(()=>{
+    if(paused||stopped) return;
+    t+=TICK; bar.style.width=(t/DUR*100)+'%';
+    if(t>=DUR){ t=0; show(i+1); }
+  }, TICK);
+  stage.addEventListener('mouseenter',()=>{ paused=true; });
+  stage.addEventListener('mouseleave',()=>{ paused=false; });
+  toggleBtn.addEventListener('click',()=>{
+    stopped=!stopped; toggleBtn.textContent=stopped?'resume':'pause';
+    idx.textContent='card '+(i+1)+' of '+cards.length+(stopped?' · paused':' · auto');
+  });
+  show(0);
+})();
+</script>
+</body>
+</html>

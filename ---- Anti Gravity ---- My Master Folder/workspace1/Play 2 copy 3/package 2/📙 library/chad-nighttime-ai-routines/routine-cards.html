@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Routine Cards — Nighttime AI Routines</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════════
+           DESIGN TOKENS
+        ══════════════════════════════════════════════ */
+        :root {
+            --bg: #0a0a0a;
+            --bg-elevated: #141414;
+            --bg-float: #1a1a1a;
+            --bg-hover: #222;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(99, 102, 241, 0.25);
+            --text: #e8e8e8;
+            --text-dim: rgba(255, 255, 255, 0.45);
+            --text-ghost: rgba(255, 255, 255, 0.25);
+            --primary: #6366f1;
+            --primary-dim: rgba(99, 102, 241, 0.15);
+            --primary-ghost: rgba(99, 102, 241, 0.06);
+            --cyan: #22d3ee;
+            --amber: #f59e0b;
+            --green: #1ed760;
+            --blue: #3b82f6;
+            --purple: #a855f7;
+            --red: #ef4444;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius: 20px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+            --transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+            --shadow-lift: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.06);
+            --shadow-glow: 0 0 80px rgba(99, 102, 241, 0.12);
+        }
+
+        /* ══════════════════════════════════════════════
+           RESET & BASE
+        ══════════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 40px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: var(--font-body);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+            line-height: 1.6;
+            font-size: 15px;
+            padding-bottom: 100px;
+        }
+
+        ::selection {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ══════════════════════════════════════════════
+           AMBIENT BACKGROUND
+        ══════════════════════════════════════════════ */
+        .ambient-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.12;
+            will-change: transform;
+        }
+
+        .orb-1 {
+            width: 60vw;
+            height: 60vw;
+            max-width: 800px;
+            max-height: 800px;
+            top: -20%;
+            left: -15%;
+            background: var(--primary);
+            animation: orbDrift1 25s ease-in-out infinite alternate;
+        }
+
+        .orb-2 {
+            width: 45vw;
+            height: 45vw;
+            max-width: 600px;
+            max-height: 600px;
+            bottom: -15%;
+            right: -10%;
+            background: var(--cyan);
+            animation: orbDrift2 30s ease-in-out infinite alternate;
+        }
+
+        .orb-3 {
+            width: 35vw;
+            height: 35vw;
+            max-width: 500px;
+            max-height: 500px;
+            top: 40%;
+            left: 50%;
+            background: var(--purple);
+            opacity: 0.06;
+            animation: orbDrift3 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes orbDrift1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(80px, 60px) scale(1.15); }
+        }
+
+        @keyframes orbDrift2 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-60px, -40px) scale(1.1); }
+        }
+
+        @keyframes orbDrift3 {
+            0% { transform: translate(-50%, 0) scale(1); }
+            100% { transform: translate(-50%, -60px) scale(1.2); }
+        }
+
+        /* Starfield */
+        .starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            animation: twinkle var(--dur) ease-in-out infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* ══════════════════════════════════════════════
+           LAYOUT
+        ══════════════════════════════════════════════ */
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ══════════════════════════════════════════════
+           HERO
+        ══════════════════════════════════════════════ */
+        .hero {
+            text-align: center;
+            padding: 100px 0 80px;
+            position: relative;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--primary);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: var(--primary-ghost);
+            padding: 6px 16px;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            margin-bottom: 28px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
+            50% { box-shadow: 0 0 35px rgba(99, 102, 241, 0.25); }
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: clamp(2.8rem, 7vw, 5rem);
+            font-weight: 900;
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            background: linear-gradient(to bottom, #ffffff 30%, rgba(255, 255, 255, 0.5));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-title .accent {
+            -webkit-text-fill-color: var(--primary);
+            background: none;
+            text-shadow: 0 0 60px rgba(99, 102, 241, 0.4);
+        }
+
+        .hero-subtitle {
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            color: var(--text-dim);
+            max-width: 620px;
+            margin: 0 auto;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+
+        .hero-divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--cyan));
+            border-radius: 2px;
+            margin: 40px auto 0;
+            opacity: 0.6;
+        }
+
+        /* ══════════════════════════════════════════════
+           SECTIONS
+        ══════════════════════════════════════════════ */
+        .section {
+            margin-bottom: 80px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .section-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .section-dot.green { background: var(--green); box-shadow: 0 0 12px rgba(30, 215, 96, 0.4); }
+        .section-dot.amber { background: var(--amber); box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+        .section-dot.blue { background: var(--blue); box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); }
+        .section-dot.purple { background: var(--purple); box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }
+        .section-dot.primary { background: var(--primary); box-shadow: 0 0 12px rgba(99, 102, 241, 0.4); }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+
+        .section-subtitle {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-bottom: 32px;
+            padding-left: 22px;
+        }
+
+        .tier-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-left: auto;
+        }
+
+        .tier-label.free {
+            color: var(--green);
+            background: rgba(30, 215, 96, 0.1);
+            border: 1px solid rgba(30, 215, 96, 0.2);
+        }
+
+        .tier-label.scheduled {
+            color: var(--blue);
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .tier-label.advanced {
+            color: var(--amber);
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        /* ══════════════════════════════════════════════
+           ROUTINE CARDS GRID
+        ══════════════════════════════════════════════ */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .cards-grid.single-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        /* ══════════════════════════════════════════════
+           ROUTINE CARD
+        ══════════════════════════════════════════════ */
+        .routine-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .routine-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .routine-card.accent-green::before {
+            background: linear-gradient(135deg, rgba(30, 215, 96, 0.04), transparent 60%);
+        }
+
+        .routine-card.accent-blue::before {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.04), transparent 60%);
+        }
+
+        .routine-card.accent-amber::before {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.04), transparent 60%);
+        }
+
+        .routine-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lift);
+        }
+
+        .routine-card:hover::before {
+            opacity: 1;
+        }
+
+        .routine-card.accent-green:hover {
+            border-color: rgba(30, 215, 96, 0.25);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(30, 215, 96, 0.06);
+        }
+
+        .routine-card.accent-blue:hover {
+            border-color: rgba(59, 130, 246, 0.25);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(59, 130, 246, 0.06);
+        }
+
+        .routine-card.accent-amber:hover {
+            border-color: rgba(245, 158, 11, 0.25);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(245, 158, 11, 0.06);
+        }
+
+        /* Card Header */
+        .card-header {
+            padding: 24px 24px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .card-number {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .accent-green .card-number {
+            color: var(--green);
+            background: rgba(30, 215, 96, 0.1);
+            border: 1px solid rgba(30, 215, 96, 0.15);
+        }
+
+        .accent-blue .card-number {
+            color: var(--blue);
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        .accent-amber .card-number {
+            color: var(--amber);
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+
+        .card-title-block {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-name {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .card-what {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            line-height: 1.55;
+        }
+
+        .card-expand-icon {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            margin-top: 2px;
+        }
+
+        .card-expand-icon svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-ghost);
+            transition: var(--transition);
+        }
+
+        .routine-card:hover .card-expand-icon {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .routine-card:hover .card-expand-icon svg {
+            stroke: var(--text-dim);
+        }
+
+        .routine-card.expanded .card-expand-icon svg {
+            transform: rotate(180deg);
+        }
+
+        /* Card Preview Row */
+        .card-preview {
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .preview-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .preview-stat-icon {
+            width: 14px;
+            height: 14px;
+            opacity: 0.35;
+        }
+
+        .preview-stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--text-ghost);
+            letter-spacing: 0.5px;
+        }
+
+        .tool-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .tool-pill {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .accent-green .tool-pill {
+            background: rgba(30, 215, 96, 0.06);
+            border-color: rgba(30, 215, 96, 0.12);
+            color: rgba(30, 215, 96, 0.7);
+        }
+
+        .accent-blue .tool-pill {
+            background: rgba(59, 130, 246, 0.06);
+            border-color: rgba(59, 130, 246, 0.12);
+            color: rgba(59, 130, 246, 0.7);
+        }
+
+        .accent-amber .tool-pill {
+            background: rgba(245, 158, 11, 0.06);
+            border-color: rgba(245, 158, 11, 0.12);
+            color: rgba(245, 158, 11, 0.7);
+        }
+
+        /* Card Expanded Details */
+        .card-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s var(--ease), opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .routine-card.expanded .card-details {
+            max-height: 600px;
+            opacity: 1;
+        }
+
+        .card-details-inner {
+            padding: 0 24px 24px;
+            border-top: 1px solid var(--border);
+            margin-top: 0;
+            padding-top: 20px;
+        }
+
+        .detail-block {
+            margin-bottom: 16px;
+        }
+
+        .detail-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+
+        .accent-green .detail-label { color: var(--green); }
+        .accent-blue .detail-label { color: var(--blue); }
+        .accent-amber .detail-label { color: var(--amber); }
+
+        .detail-text {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        .detail-text code {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .cost-tag {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 6px;
+            margin-top: 4px;
+        }
+
+        .accent-green .cost-tag {
+            color: var(--green);
+            background: rgba(30, 215, 96, 0.08);
+        }
+
+        .accent-blue .cost-tag {
+            color: var(--blue);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .accent-amber .cost-tag {
+            color: var(--amber);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        /* ══════════════════════════════════════════════
+           GENERATOR SECTION
+        ══════════════════════════════════════════════ */
+        .generator-section {
+            margin-bottom: 80px;
+        }
+
+        .generator-wrapper {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .generator-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), transparent 60%);
+            pointer-events: none;
+        }
+
+        /* Stages */
+        .gen-stage {
+            margin-bottom: 36px;
+            display: none;
+        }
+
+        .gen-stage.active {
+            display: block;
+            animation: stageIn 0.5s var(--ease) forwards;
+        }
+
+        @keyframes stageIn {
+            0% { opacity: 0; transform: translateY(16px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .gen-stage-badge {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .gen-stage-title {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+        }
+
+        /* Option Cards */
+        .gen-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .gen-options.three-col {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .gen-option {
+            background: var(--bg-float);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .gen-option:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .gen-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-ghost);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
+        }
+
+        .gen-option.selected.opt-green {
+            border-color: var(--green);
+            background: rgba(30, 215, 96, 0.06);
+            box-shadow: 0 0 30px rgba(30, 215, 96, 0.08);
+        }
+
+        .gen-option.selected.opt-blue {
+            border-color: var(--blue);
+            background: rgba(59, 130, 246, 0.06);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.08);
+        }
+
+        .gen-option.selected.opt-amber {
+            border-color: var(--amber);
+            background: rgba(245, 158, 11, 0.06);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.08);
+        }
+
+        .gen-option.selected.opt-purple {
+            border-color: var(--purple);
+            background: rgba(168, 85, 247, 0.06);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.08);
+        }
+
+        .gen-option-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .gen-option-dot.green { background: var(--green); box-shadow: 0 0 10px rgba(30, 215, 96, 0.3); }
+        .gen-option-dot.blue { background: var(--blue); box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+        .gen-option-dot.amber { background: var(--amber); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+        .gen-option-dot.purple { background: var(--purple); box-shadow: 0 0 10px rgba(168, 85, 247, 0.3); }
+        .gen-option-dot.primary { background: var(--primary); box-shadow: 0 0 10px rgba(99, 102, 241, 0.3); }
+
+        .gen-option-title {
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .gen-option-desc {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* Stage 4: Input */
+        .gen-input-wrap {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .gen-input {
+            flex: 1;
+            background: var(--bg-float);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            color: var(--text);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .gen-input::placeholder {
+            color: var(--text-ghost);
+        }
+
+        .gen-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+        }
+
+        .gen-btn {
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 16px 32px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+            letter-spacing: -0.01em;
+        }
+
+        .gen-btn:hover {
+            background: #818cf8;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.3);
+        }
+
+        .gen-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Progress bar */
+        .gen-progress {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .gen-progress-step {
+            flex: 1;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.06);
+            transition: var(--transition);
+        }
+
+        .gen-progress-step.done {
+            background: var(--primary);
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .gen-progress-step.current {
+            background: rgba(99, 102, 241, 0.4);
+        }
+
+        /* Generated Output */
+        .gen-output {
+            display: none;
+            animation: stageIn 0.5s var(--ease) forwards;
+        }
+
+        .gen-output.visible {
+            display: block;
+        }
+
+        .gen-output-card {
+            background: var(--bg-float);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: var(--radius);
+            padding: 32px;
+            position: relative;
+        }
+
+        .gen-output-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), transparent 60%);
+            pointer-events: none;
+        }
+
+        .gen-output-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .gen-output-badge {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 8px;
+            color: var(--primary);
+            background: var(--primary-dim);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .gen-output-name {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .gen-output-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .gen-output-block {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+        }
+
+        .gen-output-block.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .gen-output-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .gen-output-text {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        .gen-output-text code {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: var(--text);
+            border: 1px solid var(--border);
+            display: inline-block;
+            margin: 2px 0;
+        }
+
+        .gen-output-text .cmd-line {
+            display: block;
+            margin: 4px 0;
+        }
+
+        .gen-reset-btn {
+            margin-top: 24px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 10px 24px;
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: var(--transition);
+            letter-spacing: 0.5px;
+        }
+
+        .gen-reset-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--text);
+            background: var(--bg-hover);
+        }
+
+        /* ══════════════════════════════════════════════
+           BOTTOM NAVIGATION
+        ══════════════════════════════════════════════ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid var(--border);
+            padding: 14px 24px;
+        }
+
+        .bottom-nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-dot-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            transition: var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .nav-dot-link:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-float);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-dot-link .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .nav-dot-link .dot.indigo { background: var(--primary); box-shadow: 0 0 8px rgba(99, 102, 241, 0.4); }
+        .nav-dot-link .dot.green { background: var(--green); box-shadow: 0 0 8px rgba(30, 215, 96, 0.4); }
+        .nav-dot-link .dot.amber { background: var(--amber); box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+
+        .nav-dot-link .nav-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .nav-dot-link:hover .nav-label {
+            color: var(--text);
+        }
+
+        .nav-current {
+            background: var(--primary-dim) !important;
+            border-color: rgba(99, 102, 241, 0.3) !important;
+        }
+
+        .nav-current .nav-label {
+            color: var(--primary) !important;
+        }
+
+        /* ══════════════════════════════════════════════
+           SCROLL REVEAL
+        ══════════════════════════════════════════════ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+        .reveal-delay-5 { transition-delay: 0.5s; }
+        .reveal-delay-6 { transition-delay: 0.6s; }
+
+        /* ══════════════════════════════════════════════
+           SCROLLBAR
+        ══════════════════════════════════════════════ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+
+        /* ══════════════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .hero { padding: 80px 0 60px; }
+            .hero-title { font-size: clamp(2rem, 8vw, 3rem); }
+
+            .cards-grid,
+            .cards-grid.single-row {
+                grid-template-columns: 1fr;
+            }
+
+            .gen-options,
+            .gen-options.three-col {
+                grid-template-columns: 1fr;
+            }
+
+            .gen-output-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gen-input-wrap {
+                flex-direction: column;
+            }
+
+            .generator-wrapper {
+                padding: 24px;
+            }
+
+            .bottom-nav-inner {
+                gap: 6px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .nav-dot-link {
+                padding: 6px 12px;
+            }
+
+            .tool-pills {
+                margin-left: 0;
+                margin-top: 4px;
+            }
+
+            .card-preview {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-wrapper {
+                padding: 0 16px;
+            }
+
+            .card-header {
+                padding: 16px 16px 0;
+            }
+
+            .card-preview {
+                padding: 12px 16px;
+            }
+
+            .card-details-inner {
+                padding: 0 16px 16px;
+                padding-top: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body id="top">
+    <!-- ═══════════════════════════════════════
+         AMBIENT BACKGROUND
+    ═══════════════════════════════════════ -->
+    <div class="ambient-layer">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+    </div>
+    <div class="starfield" id="starfield"></div>
+
+    <div class="page-wrapper">
+
+        <!-- ═══════════════════════════════════════
+             HERO
+        ═══════════════════════════════════════ -->
+        <section class="hero reveal">
+            <div class="hero-glow"></div>
+            <div class="hero-badge">9 Routines &middot; 3 Tiers &middot; 1 Generator</div>
+            <h1 class="hero-title">1 Night. 1 <span class="accent">Routine</span>. Every Time.</h1>
+            <p class="hero-subtitle">Pick a card. Each one is a complete overnight automation &mdash; what it does, how to set it up, what you wake up to.</p>
+            <div class="hero-divider"></div>
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             TIER 1 — FREE ROUTINES
+        ═══════════════════════════════════════ -->
+        <section class="section reveal" id="tier-1">
+            <div class="section-header">
+                <div class="section-dot green"></div>
+                <h2 class="section-title">Tier 1 &mdash; Free Routines</h2>
+                <span class="tier-label free">Free</span>
+            </div>
+            <p class="section-subtitle">Zero Cost. Maximum Impact.</p>
+
+            <div class="cards-grid">
+
+                <!-- Card 01 -->
+                <div class="routine-card accent-green reveal reveal-delay-1" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">01</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The Research Agent</div>
+                            <div class="card-what">Overnight deep research on any topic. Scans the web, reads papers, compiles findings into a structured report.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">15-45 min</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">Claude Code</span>
+                            <span class="tool-pill">CLAUDE.md</span>
+                            <span class="tool-pill">Slash Commands</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Create <code>.claude/commands/research.md</code> with your research question. Run manually or schedule with cron. The command file should contain your topic, desired depth, and any specific sources to prioritize.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text">A comprehensive <code>RESEARCH_REPORT.md</code> with sources, key findings, and action items. Fully structured with headings, citations, and a summary you can act on immediately.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">15&ndash;45 minutes depending on depth and breadth of the research question.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">$0 &mdash; Free with Claude Code</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 02 -->
+                <div class="routine-card accent-green reveal reveal-delay-2" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">02</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The Code Reviewer</div>
+                            <div class="card-what">Scans your entire codebase overnight. Finds bugs, unused imports, type errors, security issues, missing tests.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">10-30 min</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">Claude Code</span>
+                            <span class="tool-pill">Cron</span>
+                            <span class="tool-pill">Git</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Create <code>.claude/commands/overnight-review.md</code> with instructions to scan for bugs, unused code, type issues, and security vulnerabilities. Schedule at 2AM via cron or Windows Task Scheduler.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text"><code>MORNING_REPORT.md</code> with categorized findings &mdash; critical, warning, info. Each finding includes the file path, line number, and a suggested fix.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">10&ndash;30 minutes depending on codebase size. Scales well even for large monorepos.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">$0 &mdash; Free with Claude Code</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 03 -->
+                <div class="routine-card accent-green reveal reveal-delay-3" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">03</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The Note Organizer</div>
+                            <div class="card-what">Processes your Obsidian vault or markdown notes overnight. Links related notes, fills gaps, updates indexes.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">20-60 min</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">Claude Code</span>
+                            <span class="tool-pill">Obsidian MCP</span>
+                            <span class="tool-pill">Cron</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Add a <code>CLAUDE.md</code> in your notes repo with organization rules. Install the Obsidian MCP server for vault access. Schedule nightly with cron. Define your preferred folder structure and tagging conventions.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text">Freshly organized vault with new MOC (Maps of Content), linked references, and a <code>CHANGES.md</code> log showing exactly what was reorganized, linked, or updated.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">20&ndash;60 minutes depending on vault size. Works great with hundreds or thousands of notes.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">$0 &mdash; Free with Claude Code</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 04 -->
+                <div class="routine-card accent-green reveal reveal-delay-4" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">04</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The Morning Brief</div>
+                            <div class="card-what">Aggregates news from 40+ sources, filters for your interests, creates a daily intelligence briefing.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">5-15 min</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">Claude Code</span>
+                            <span class="tool-pill">Perplexity MCP</span>
+                            <span class="tool-pill">Brave Search MCP</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Create <code>.claude/commands/daily-brief.md</code> with your topics of interest &mdash; industries, competitors, technologies, keywords. Schedule at 6AM so it's ready when you wake up.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text"><code>DAILY_BRIEF.md</code> &mdash; curated news, key insights, action items for the day. Saves 2+ hours of manual scanning. Includes source links and relevance scores.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">5&ndash;15 minutes. The fastest routine in the collection &mdash; high ROI for minimal runtime.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">$0 &mdash; Free with Claude Code</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end cards-grid -->
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             TIER 2 — SCHEDULED AUTOMATION
+        ═══════════════════════════════════════ -->
+        <section class="section reveal" id="tier-2">
+            <div class="section-header">
+                <div class="section-dot blue"></div>
+                <h2 class="section-title">Tier 2 &mdash; Scheduled Automation</h2>
+                <span class="tier-label scheduled">Scheduled</span>
+            </div>
+            <p class="section-subtitle">Set the Schedule. Trust the Process.</p>
+
+            <div class="cards-grid">
+
+                <!-- Card 05 -->
+                <div class="routine-card accent-blue reveal reveal-delay-1" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">05</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The PR Machine</div>
+                            <div class="card-what">Runs continuous-claude overnight. Creates branches, writes code, pushes PRs, waits for CI, merges on green, repeats.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">6-12 hours</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">continuous-claude</span>
+                            <span class="tool-pill">GitHub Actions</span>
+                            <span class="tool-pill">CI/CD</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Install continuous-claude. Point at your repo. Define <code>SHARED_TASK_NOTES.md</code> with your refactoring goals and priorities. Start Friday night for a full weekend of autonomous coding.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text">5&ndash;20 merged PRs. Full refactor complete. CI all green. Each PR is atomic, well-documented, and tested. Monday morning you're sprints ahead.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">6&ndash;12 hours of continuous autonomous operation. Runs all night, creating and merging PRs in a loop.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">~$50-100 API costs per weekend run</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 06 -->
+                <div class="routine-card accent-blue reveal reveal-delay-2" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">06</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The Content Engine</div>
+                            <div class="card-what">Generates content overnight &mdash; blog drafts, newsletter compilations, social media posts from your content calendar.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">20-45 min</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">Claude Code</span>
+                            <span class="tool-pill">Cron</span>
+                            <span class="tool-pill">Git</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Maintain a content calendar in markdown. Create <code>.claude/commands/content-gen.md</code> with brand voice rules, tone guidelines, and target platforms. Schedule nightly.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text">Draft blog post, 5 social snippets, newsletter outline &mdash; all in your brand voice. Ready for your review and one-click publish.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">20&ndash;45 minutes. Efficient because it reads your existing content for voice matching.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">~$2-5 per run</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 07 -->
+                <div class="routine-card accent-blue reveal reveal-delay-3" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">07</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The Data Collector</div>
+                            <div class="card-what">Scrapes websites, monitors competitors, tracks prices, collects job postings overnight.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">Continuous</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">n8n</span>
+                            <span class="tool-pill">Firecrawl MCP</span>
+                            <span class="tool-pill">Slack</span>
+                            <span class="tool-pill">SQLite</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Build an n8n workflow or custom script with Firecrawl MCP. Define your target URLs, data points to collect, and update frequency. Configure Slack notifications for significant changes.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text">Updated dashboard with new data points. Slack alerts for significant price changes, new job postings, or competitor moves. Historical data in SQLite for trend analysis.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">Continuous &mdash; runs every hour around the clock. Set it and forget it.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">~$10-20/mo for n8n + API costs</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end cards-grid -->
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             TIER 3 — ADVANCED AUTOMATION
+        ═══════════════════════════════════════ -->
+        <section class="section reveal" id="tier-3">
+            <div class="section-header">
+                <div class="section-dot amber"></div>
+                <h2 class="section-title">Tier 3 &mdash; Advanced Automation</h2>
+                <span class="tier-label advanced">Advanced</span>
+            </div>
+            <p class="section-subtitle">The Compound Machine.</p>
+
+            <div class="cards-grid single-row">
+
+                <!-- Card 08 -->
+                <div class="routine-card accent-amber reveal reveal-delay-1" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">08</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The Swarm</div>
+                            <div class="card-what">12 Claude agents working in parallel on your codebase. One refactors, one tests, one documents, one optimizes. Coordinated via claude-flow.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">6-10 hours</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">claude-flow</span>
+                            <span class="tool-pill">ccswarm</span>
+                            <span class="tool-pill">Git worktrees</span>
+                            <span class="tool-pill">CI/CD</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Install claude-flow. Define agent roles in YAML &mdash; refactorer, tester, documenter, optimizer, reviewer, etc. Create a task backlog with priorities. Launch the swarm at 10PM and go to sleep.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text">10,000+ lines of coordinated changes. New features built. Tests passing. Docs updated. Performance optimized. All agents worked in isolated worktrees and merged cleanly.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">6&ndash;10 hours. The agents coordinate in parallel, so total throughput is 12x a single agent session.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">~$150-300 per swarm session</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 09 -->
+                <div class="routine-card accent-amber reveal reveal-delay-2" onclick="toggleCard(this)">
+                    <div class="card-header">
+                        <span class="card-number">09</span>
+                        <div class="card-title-block">
+                            <div class="card-name">The Autopilot</div>
+                            <div class="card-what">Full business automation. Responds to leads, processes invoices, publishes content, updates CRM, monitors competitors &mdash; all overnight.</div>
+                        </div>
+                        <div class="card-expand-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    <div class="card-preview">
+                        <div class="preview-stat">
+                            <svg class="preview-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span class="preview-stat-label">24/7 Continuous</span>
+                        </div>
+                        <div class="tool-pills">
+                            <span class="tool-pill">Sleepless Agent</span>
+                            <span class="tool-pill">Slack</span>
+                            <span class="tool-pill">n8n</span>
+                            <span class="tool-pill">Claude API</span>
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div class="card-details-inner">
+                            <div class="detail-block">
+                                <div class="detail-label">Setup</div>
+                                <div class="detail-text">Configure the Sleepless Agent daemon via Slack. Define task types and triggers &mdash; new lead arrives, invoice received, content scheduled. Set risk tiers: auto (handle it), notify (do it and tell me), approve (ask first).</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">You Wake Up To</div>
+                                <div class="detail-text">Leads responded to within minutes. Content published on schedule. Invoices processed and logged. Competitor report ready. CRM updated with every interaction. A full night of business operations handled.</div>
+                            </div>
+                            <div class="detail-block">
+                                <div class="detail-label">Estimated Time</div>
+                                <div class="detail-text">Continuous 24/7 operation. This isn't a one-off routine &mdash; it's a permanent automation layer for your business.</div>
+                            </div>
+                            <div class="detail-block">
+                                <span class="cost-tag">$100-500/mo depending on volume</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- end cards-grid -->
+        </section>
+
+        <!-- ═══════════════════════════════════════
+             ROUTINE GENERATOR
+        ═══════════════════════════════════════ -->
+        <section class="generator-section reveal" id="generator">
+            <div class="section-header">
+                <div class="section-dot primary"></div>
+                <h2 class="section-title">Interactive Routine Generator</h2>
+            </div>
+            <p class="section-subtitle">Build Your Custom Routine</p>
+
+            <div class="generator-wrapper">
+                <!-- Progress Bar -->
+                <div class="gen-progress">
+                    <div class="gen-progress-step current" id="prog-1"></div>
+                    <div class="gen-progress-step" id="prog-2"></div>
+                    <div class="gen-progress-step" id="prog-3"></div>
+                    <div class="gen-progress-step" id="prog-4"></div>
+                </div>
+
+                <!-- Stage 1: Focus -->
+                <div class="gen-stage active" id="stage-1">
+                    <div class="gen-stage-badge">Stage 1 of 4</div>
+                    <h3 class="gen-stage-title">What's Your Focus?</h3>
+                    <div class="gen-options">
+                        <div class="gen-option opt-green" onclick="selectOption(1, 'code', this)" data-value="code">
+                            <div class="gen-option-dot green"></div>
+                            <div class="gen-option-title">Code & Development</div>
+                            <div class="gen-option-desc">Overnight coding, refactoring, testing, PR automation</div>
+                        </div>
+                        <div class="gen-option opt-blue" onclick="selectOption(1, 'research', this)" data-value="research">
+                            <div class="gen-option-dot blue"></div>
+                            <div class="gen-option-title">Research & Knowledge</div>
+                            <div class="gen-option-desc">Deep research, note organization, learning compilation</div>
+                        </div>
+                        <div class="gen-option opt-amber" onclick="selectOption(1, 'business', this)" data-value="business">
+                            <div class="gen-option-dot amber"></div>
+                            <div class="gen-option-title">Business & Operations</div>
+                            <div class="gen-option-desc">Lead response, content, monitoring, invoicing</div>
+                        </div>
+                        <div class="gen-option opt-purple" onclick="selectOption(1, 'personal', this)" data-value="personal">
+                            <div class="gen-option-dot purple"></div>
+                            <div class="gen-option-title">Personal & Productivity</div>
+                            <div class="gen-option-desc">Morning briefs, journal analysis, goal tracking</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 2: Skill Level -->
+                <div class="gen-stage" id="stage-2">
+                    <div class="gen-stage-badge">Stage 2 of 4</div>
+                    <h3 class="gen-stage-title">How Technical Are You?</h3>
+                    <div class="gen-options three-col">
+                        <div class="gen-option" onclick="selectOption(2, 'beginner', this)" data-value="beginner">
+                            <div class="gen-option-dot primary"></div>
+                            <div class="gen-option-title">Beginner</div>
+                            <div class="gen-option-desc">I can use a terminal but that's about it</div>
+                        </div>
+                        <div class="gen-option" onclick="selectOption(2, 'intermediate', this)" data-value="intermediate">
+                            <div class="gen-option-dot primary"></div>
+                            <div class="gen-option-title">Intermediate</div>
+                            <div class="gen-option-desc">I know git and can edit config files</div>
+                        </div>
+                        <div class="gen-option" onclick="selectOption(2, 'advanced', this)" data-value="advanced">
+                            <div class="gen-option-dot primary"></div>
+                            <div class="gen-option-title">Advanced</div>
+                            <div class="gen-option-desc">I can write scripts and set up CI/CD</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 3: Time -->
+                <div class="gen-stage" id="stage-3">
+                    <div class="gen-stage-badge">Stage 3 of 4</div>
+                    <h3 class="gen-stage-title">How Much Time?</h3>
+                    <div class="gen-options three-col">
+                        <div class="gen-option" onclick="selectOption(3, 'quick', this)" data-value="quick">
+                            <div class="gen-option-dot green"></div>
+                            <div class="gen-option-title">Quick</div>
+                            <div class="gen-option-desc">15&ndash;30 min overnight task</div>
+                        </div>
+                        <div class="gen-option" onclick="selectOption(3, 'standard', this)" data-value="standard">
+                            <div class="gen-option-dot blue"></div>
+                            <div class="gen-option-title">Standard</div>
+                            <div class="gen-option-desc">1&ndash;4 hour overnight run</div>
+                        </div>
+                        <div class="gen-option" onclick="selectOption(3, 'allnight', this)" data-value="allnight">
+                            <div class="gen-option-dot amber"></div>
+                            <div class="gen-option-title">All Night</div>
+                            <div class="gen-option-desc">6&ndash;12 hour autonomous session</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stage 4: Name + Generate -->
+                <div class="gen-stage" id="stage-4">
+                    <div class="gen-stage-badge">Stage 4 of 4</div>
+                    <h3 class="gen-stage-title">Name Your Routine</h3>
+                    <div class="gen-input-wrap">
+                        <input type="text" class="gen-input" id="routine-name-input" placeholder="e.g. The Weekend Refactor" maxlength="60" autocomplete="off">
+                        <button class="gen-btn" id="generate-btn" onclick="generateRoutine()" disabled>Generate</button>
+                    </div>
+                </div>
+
+                <!-- Generated Output -->
+                <div class="gen-output" id="gen-output">
+                    <div class="gen-output-card">
+                        <div class="gen-output-header">
+                            <span class="gen-output-badge">Your Routine</span>
+                            <h3 class="gen-output-name" id="output-name"></h3>
+                        </div>
+                        <div class="gen-output-grid">
+                            <div class="gen-output-block">
+                                <div class="gen-output-label">Recommended Pattern</div>
+                                <div class="gen-output-text" id="output-pattern"></div>
+                            </div>
+                            <div class="gen-output-block">
+                                <div class="gen-output-label">Estimated Cost</div>
+                                <div class="gen-output-text" id="output-cost"></div>
+                            </div>
+                            <div class="gen-output-block full-width">
+                                <div class="gen-output-label">Files to Create</div>
+                                <div class="gen-output-text" id="output-files"></div>
+                            </div>
+                            <div class="gen-output-block full-width">
+                                <div class="gen-output-label">Setup Commands</div>
+                                <div class="gen-output-text" id="output-setup"></div>
+                            </div>
+                            <div class="gen-output-block">
+                                <div class="gen-output-label">Schedule Recommendation</div>
+                                <div class="gen-output-text" id="output-schedule"></div>
+                            </div>
+                            <div class="gen-output-block">
+                                <div class="gen-output-label">Expected Results</div>
+                                <div class="gen-output-text" id="output-results"></div>
+                            </div>
+                        </div>
+                        <button class="gen-reset-btn" onclick="resetGenerator()">Start Over</button>
+                    </div>
+                </div>
+
+            </div><!-- end generator-wrapper -->
+        </section>
+
+    </div><!-- end page-wrapper -->
+
+    <!-- ═══════════════════════════════════════
+         BOTTOM NAVIGATION
+    ═══════════════════════════════════════ -->
+    <nav class="bottom-nav">
+        <div class="bottom-nav-inner">
+            <a href="index.html" class="nav-dot-link">
+                <span class="dot amber"></span>
+                <span class="nav-label">Intelligence Report</span>
+            </a>
+            <a href="getting-started.html" class="nav-dot-link">
+                <span class="dot indigo"></span>
+                <span class="nav-label">Foundation Playbook</span>
+            </a>
+            <a href="#top" class="nav-dot-link nav-current">
+                <span class="dot green"></span>
+                <span class="nav-label">Routine Cards</span>
+            </a>
+            <a href="the-complete-path.html" class="nav-dot-link">
+                <span class="dot amber"></span>
+                <span class="nav-label">Zero to Autopilot</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════════════════════════
+         JAVASCRIPT
+    ═══════════════════════════════════════ -->
+    <script>
+        /* ══════════════════════════════════════════════
+           STARFIELD GENERATOR
+        ══════════════════════════════════════════════ */
+        (function generateStarfield() {
+            const container = document.getElementById('starfield');
+            const starCount = 80;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.setProperty('--dur', (2 + Math.random() * 4) + 's');
+                star.style.animationDelay = (Math.random() * 3) + 's';
+                const size = 1 + Math.random() * 2;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                if (Math.random() > 0.7) {
+                    star.style.background = 'rgba(99, 102, 241, 0.3)';
+                }
+                container.appendChild(star);
+            }
+        })();
+
+        /* ══════════════════════════════════════════════
+           SCROLL REVEAL
+        ══════════════════════════════════════════════ */
+        (function initReveal() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        })();
+
+        /* ══════════════════════════════════════════════
+           CARD EXPAND/COLLAPSE
+        ══════════════════════════════════════════════ */
+        function toggleCard(card) {
+            const wasExpanded = card.classList.contains('expanded');
+            // Collapse all other cards in the same grid
+            const grid = card.closest('.cards-grid');
+            if (grid) {
+                grid.querySelectorAll('.routine-card.expanded').forEach(c => {
+                    if (c !== card) c.classList.remove('expanded');
+                });
+            }
+            if (wasExpanded) {
+                card.classList.remove('expanded');
+            } else {
+                card.classList.add('expanded');
+                // Smooth scroll the card into view
+                setTimeout(() => {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            }
+        }
+
+        /* ══════════════════════════════════════════════
+           ROUTINE GENERATOR — STATE
+        ══════════════════════════════════════════════ */
+        const genState = {
+            focus: null,
+            skill: null,
+            time: null,
+            name: ''
+        };
+
+        /* ══════════════════════════════════════════════
+           GENERATOR — STAGE NAVIGATION
+        ══════════════════════════════════════════════ */
+        function selectOption(stage, value, el) {
+            // Clear previous selection in this stage
+            const stageEl = document.getElementById('stage-' + stage);
+            stageEl.querySelectorAll('.gen-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+
+            // Store the value
+            if (stage === 1) genState.focus = value;
+            if (stage === 2) genState.skill = value;
+            if (stage === 3) genState.time = value;
+
+            // Advance to next stage after a brief pause
+            setTimeout(() => {
+                advanceToStage(stage + 1);
+            }, 300);
+        }
+
+        function advanceToStage(stageNum) {
+            // Update progress bar
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById('prog-' + i);
+                step.classList.remove('done', 'current');
+                if (i < stageNum) step.classList.add('done');
+                if (i === stageNum) step.classList.add('current');
+            }
+
+            // Show the target stage
+            const target = document.getElementById('stage-' + stageNum);
+            if (target) {
+                target.classList.add('active');
+                // Scroll the new stage into view
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+
+        /* ══════════════════════════════════════════════
+           GENERATOR — NAME INPUT HANDLER
+        ══════════════════════════════════════════════ */
+        const nameInput = document.getElementById('routine-name-input');
+        const generateBtn = document.getElementById('generate-btn');
+
+        nameInput.addEventListener('input', function() {
+            genState.name = this.value.trim();
+            generateBtn.disabled = genState.name.length === 0;
+        });
+
+        nameInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && genState.name.length > 0) {
+                generateRoutine();
+            }
+        });
+
+        /* ══════════════════════════════════════════════
+           GENERATOR — ROUTINE LOGIC DATABASE
+        ══════════════════════════════════════════════ */
+        const routineData = {
+            // PATTERNS by focus + time
+            patterns: {
+                code: {
+                    quick: {
+                        name: 'Ralph Loop (Single Pass)',
+                        desc: 'A single Claude Code session with a slash command. Quick scan, quick output. Ideal for code review or linting.'
+                    },
+                    standard: {
+                        name: 'Cron + Claude Code Loop',
+                        desc: 'Scheduled cron job that launches Claude Code with a task file. Runs for 1-4 hours, creating branches and committing changes.'
+                    },
+                    allnight: {
+                        name: 'continuous-claude / Swarm',
+                        desc: 'Full autonomous operation via continuous-claude or claude-flow swarm. Multiple agents, multiple PRs, full-night coding session.'
+                    }
+                },
+                research: {
+                    quick: {
+                        name: 'Single Slash Command',
+                        desc: 'One Claude Code slash command that triggers deep research. Quick but thorough. Outputs a structured report file.'
+                    },
+                    standard: {
+                        name: 'Cron + Multi-Source Pipeline',
+                        desc: 'Scheduled pipeline using Perplexity MCP and Brave Search MCP. Gathers from multiple sources, cross-references, and compiles.'
+                    },
+                    allnight: {
+                        name: 'Research Swarm',
+                        desc: 'Multiple agents each researching different angles of your topic. One compiles, one fact-checks, one formats. Academic-grade output.'
+                    }
+                },
+                business: {
+                    quick: {
+                        name: 'Morning Brief Pattern',
+                        desc: 'Quick scheduled task that aggregates business intelligence — leads, metrics, competitor updates — into a single brief.'
+                    },
+                    standard: {
+                        name: 'n8n + Claude Code Pipeline',
+                        desc: 'n8n workflows handle triggers (new lead, new invoice). Claude Code processes each event. Responses sent via Slack/email.'
+                    },
+                    allnight: {
+                        name: 'Sleepless Agent Daemon',
+                        desc: 'Full 24/7 business automation via Sleepless Agent. Monitors Slack, responds to leads, processes operations, escalates when needed.'
+                    }
+                },
+                personal: {
+                    quick: {
+                        name: 'Daily Brief Command',
+                        desc: 'A single slash command that builds your personal daily brief — news, calendar prep, habit tracking, and goal check-in.'
+                    },
+                    standard: {
+                        name: 'Cron + Vault Organizer',
+                        desc: 'Scheduled session that processes your notes, journal entries, and goals. Links ideas, updates indexes, surfaces patterns.'
+                    },
+                    allnight: {
+                        name: 'Full Life Dashboard Pipeline',
+                        desc: 'Multi-agent system that processes all personal data — notes, habits, finances, health logs — and generates a comprehensive life dashboard.'
+                    }
+                }
+            },
+
+            // FILES by focus + skill
+            files: {
+                code: {
+                    beginner: [
+                        'CLAUDE.md — Project instructions and coding standards',
+                        '.claude/commands/overnight-review.md — Review task definition',
+                        'MORNING_REPORT.md — Auto-generated output (created by the routine)'
+                    ],
+                    intermediate: [
+                        'CLAUDE.md — Project rules, lint config, test patterns',
+                        '.claude/commands/overnight-review.md — Detailed review checklist',
+                        '.claude/settings.json — Permission and scope settings',
+                        'SHARED_TASK_NOTES.md — Refactoring goals and priorities'
+                    ],
+                    advanced: [
+                        'CLAUDE.md — Full project architecture and rules',
+                        '.claude/commands/overnight-review.md — Deep review pipeline',
+                        '.claude/settings.json — Agent permissions and API config',
+                        'SHARED_TASK_NOTES.md — Task backlog with priorities',
+                        'claude-flow.yaml — Swarm agent role definitions',
+                        '.github/workflows/ci.yml — CI pipeline for auto-merge'
+                    ]
+                },
+                research: {
+                    beginner: [
+                        'CLAUDE.md — Research preferences and output format',
+                        '.claude/commands/research.md — Your research question',
+                        'RESEARCH_REPORT.md — Auto-generated output'
+                    ],
+                    intermediate: [
+                        'CLAUDE.md — Research methodology and source preferences',
+                        '.claude/commands/research.md — Research brief with scope',
+                        '.claude/commands/daily-brief.md — Daily news aggregation',
+                        'sources.md — Preferred sources and keywords'
+                    ],
+                    advanced: [
+                        'CLAUDE.md — Full research pipeline configuration',
+                        '.claude/commands/research.md — Multi-phase research brief',
+                        '.claude/commands/daily-brief.md — Advanced news pipeline',
+                        'mcp-config.json — Perplexity + Brave Search MCP setup',
+                        'sources.md — Source ranking and filtering rules'
+                    ]
+                },
+                business: {
+                    beginner: [
+                        'CLAUDE.md — Business context and voice guidelines',
+                        '.claude/commands/morning-ops.md — Daily operations check',
+                        'DAILY_OPS.md — Auto-generated operations report'
+                    ],
+                    intermediate: [
+                        'CLAUDE.md — Full business rules and escalation policies',
+                        '.claude/commands/morning-ops.md — Operations pipeline',
+                        '.claude/commands/content-gen.md — Content generation rules',
+                        'content-calendar.md — Publishing schedule',
+                        'brand-voice.md — Tone and style guidelines'
+                    ],
+                    advanced: [
+                        'CLAUDE.md — Complete business automation rules',
+                        '.claude/commands/morning-ops.md — Full ops pipeline',
+                        '.claude/commands/content-gen.md — Multi-platform content',
+                        'n8n-workflows/ — Trigger-based automation flows',
+                        'risk-tiers.yaml — Auto/notify/approve classifications',
+                        'integrations.md — Slack, CRM, email configurations'
+                    ]
+                },
+                personal: {
+                    beginner: [
+                        'CLAUDE.md — Personal preferences and output style',
+                        '.claude/commands/daily-brief.md — Topics of interest',
+                        'DAILY_BRIEF.md — Auto-generated morning brief'
+                    ],
+                    intermediate: [
+                        'CLAUDE.md — Personal knowledge management rules',
+                        '.claude/commands/daily-brief.md — Multi-source brief config',
+                        '.claude/commands/organize-notes.md — Vault organization rules',
+                        'topics.md — Interest areas and keywords'
+                    ],
+                    advanced: [
+                        'CLAUDE.md — Full personal automation config',
+                        '.claude/commands/daily-brief.md — Advanced brief pipeline',
+                        '.claude/commands/organize-notes.md — Deep vault processing',
+                        '.claude/commands/life-dashboard.md — Dashboard generation',
+                        'mcp-config.json — All MCP server connections',
+                        'data-sources.yaml — Personal data feed definitions'
+                    ]
+                }
+            },
+
+            // SETUP COMMANDS by skill
+            setup: {
+                beginner: {
+                    code: [
+                        'mkdir -p .claude/commands',
+                        'Create your CLAUDE.md with project description',
+                        'Create .claude/commands/overnight-review.md',
+                        'Run: claude "review my codebase using /overnight-review"'
+                    ],
+                    research: [
+                        'mkdir -p .claude/commands',
+                        'Create .claude/commands/research.md with your question',
+                        'Run: claude "execute /research"',
+                        'Find your report in RESEARCH_REPORT.md'
+                    ],
+                    business: [
+                        'mkdir -p .claude/commands',
+                        'Create CLAUDE.md with business context',
+                        'Create .claude/commands/morning-ops.md',
+                        'Run: claude "execute /morning-ops"'
+                    ],
+                    personal: [
+                        'mkdir -p .claude/commands',
+                        'Create .claude/commands/daily-brief.md with your topics',
+                        'Run: claude "execute /daily-brief"',
+                        'Check DAILY_BRIEF.md each morning'
+                    ]
+                },
+                intermediate: {
+                    code: [
+                        'mkdir -p .claude/commands',
+                        'Create CLAUDE.md and .claude/commands/overnight-review.md',
+                        'Add to crontab: 0 2 * * * cd /path/to/repo && claude --command overnight-review',
+                        'git config to auto-commit reports'
+                    ],
+                    research: [
+                        'mkdir -p .claude/commands',
+                        'npm install @anthropic/mcp-perplexity (if using MCP)',
+                        'Create .claude/commands/research.md and daily-brief.md',
+                        'Add to crontab: 0 6 * * * cd /path/to/repo && claude --command daily-brief'
+                    ],
+                    business: [
+                        'mkdir -p .claude/commands',
+                        'Create content-calendar.md and brand-voice.md',
+                        'Add to crontab: 0 5 * * * cd /path/to/repo && claude --command content-gen',
+                        'Configure Slack webhook for notifications'
+                    ],
+                    personal: [
+                        'mkdir -p .claude/commands',
+                        'Install Obsidian MCP server (if using Obsidian)',
+                        'Create .claude/commands/daily-brief.md and organize-notes.md',
+                        'Add to crontab: 0 6 * * * claude --command daily-brief'
+                    ]
+                },
+                advanced: {
+                    code: [
+                        'npm install -g continuous-claude claude-flow',
+                        'Create claude-flow.yaml with agent role definitions',
+                        'Create SHARED_TASK_NOTES.md with task backlog',
+                        'Set up CI pipeline for automated PR checks',
+                        'Launch: ccswarm --config claude-flow.yaml --tasks SHARED_TASK_NOTES.md'
+                    ],
+                    research: [
+                        'npm install -g claude-flow',
+                        'Configure mcp-config.json with Perplexity + Brave Search',
+                        'Create multi-phase research pipeline in .claude/commands/',
+                        'Set up cron for daily and weekly research cycles',
+                        'Configure git auto-push for report distribution'
+                    ],
+                    business: [
+                        'Self-host n8n or use n8n.cloud',
+                        'Create trigger workflows for leads, invoices, content',
+                        'Configure Sleepless Agent with Slack integration',
+                        'Define risk-tiers.yaml for auto/notify/approve',
+                        'Set up monitoring dashboard for overnight operations'
+                    ],
+                    personal: [
+                        'npm install -g claude-flow',
+                        'Configure all MCP servers (Obsidian, Perplexity, etc.)',
+                        'Create data-sources.yaml for all personal feeds',
+                        'Build multi-agent pipeline for parallel processing',
+                        'Set up automated daily, weekly, and monthly routines via cron'
+                    ]
+                }
+            },
+
+            // SCHEDULES
+            schedules: {
+                quick: 'Run at 6:00 AM daily. Completes before you wake up. Use cron (Linux/Mac) or Task Scheduler (Windows).',
+                standard: 'Start at 1:00 AM. Allow 4-hour window. Schedule on weeknights or as needed. Monitor via Slack notifications.',
+                allnight: 'Launch at 10:00 PM. Runs through the night. Best for weekends or before important milestones. Set up Slack alerts for progress updates.'
+            },
+
+            // RESULTS
+            results: {
+                code: {
+                    quick: 'A MORNING_REPORT.md with categorized code issues. Fix the critical ones first, address warnings over time.',
+                    standard: 'Multiple commits with improvements. Refactored files, new tests, cleaned imports. Review the diff over morning coffee.',
+                    allnight: '5-20 merged PRs. Major refactors complete. New features built and tested. Monday morning you are sprints ahead.'
+                },
+                research: {
+                    quick: 'A structured RESEARCH_REPORT.md with key findings, sources, and action items. Ready to share or act on.',
+                    standard: 'Multi-source compiled report with cross-references. Daily brief with curated insights. Knowledge base growing automatically.',
+                    allnight: 'Academic-grade research output. Multiple perspectives analyzed. Fact-checked findings with confidence ratings. Publication-ready.'
+                },
+                business: {
+                    quick: 'Daily operations brief with metrics, alerts, and action items. Know exactly what needs attention before your first meeting.',
+                    standard: 'Content published, leads responded to, invoices logged. Operations humming while you slept.',
+                    allnight: 'Full business cycle handled. Leads nurtured, content scheduled, competitors tracked, CRM updated. You wake up to a business that ran itself.'
+                },
+                personal: {
+                    quick: 'A personalized DAILY_BRIEF.md with news, calendar prep, and goal check-in. Start every day informed and intentional.',
+                    standard: 'Organized notes, linked ideas, updated indexes. Your second brain got smarter while you slept.',
+                    allnight: 'Complete life dashboard. Habits tracked, finances summarized, goals updated, knowledge base reorganized. Total clarity.'
+                }
+            },
+
+            // COSTS
+            costs: {
+                quick: '$0 — Free with Claude Code subscription. No additional API costs for a single-pass routine.',
+                standard: '$2-10 per run depending on scope. Monthly cost around $30-60 if running nightly.',
+                allnight: '$50-300 per session depending on agent count. Reserve for high-impact weekends or critical milestones.'
+            }
+        };
+
+        /* ══════════════════════════════════════════════
+           GENERATOR — BUILD OUTPUT
+        ══════════════════════════════════════════════ */
+        function generateRoutine() {
+            if (!genState.focus || !genState.skill || !genState.time || !genState.name) return;
+
+            const { focus, skill, time, name } = genState;
+
+            // Get data
+            const pattern = routineData.patterns[focus][time];
+            const files = routineData.files[focus][skill];
+            const setup = routineData.setup[skill][focus];
+            const schedule = routineData.schedules[time];
+            const results = routineData.results[focus][time];
+            const cost = routineData.costs[time];
+
+            // Populate output
+            document.getElementById('output-name').textContent = name;
+            document.getElementById('output-pattern').innerHTML =
+                '<strong>' + pattern.name + '</strong><br>' + pattern.desc;
+
+            document.getElementById('output-cost').textContent = cost;
+
+            // Files — render as code blocks
+            let filesHTML = '';
+            files.forEach(f => {
+                const parts = f.split(' — ');
+                filesHTML += '<span class="cmd-line"><code>' + parts[0] + '</code>';
+                if (parts[1]) filesHTML += ' — ' + parts[1];
+                filesHTML += '</span>';
+            });
+            document.getElementById('output-files').innerHTML = filesHTML;
+
+            // Setup commands
+            let setupHTML = '';
+            setup.forEach((cmd, i) => {
+                setupHTML += '<span class="cmd-line">' + (i + 1) + '. ';
+                // Wrap anything that looks like a command in code tags
+                if (cmd.startsWith('mkdir') || cmd.startsWith('npm') || cmd.startsWith('git') ||
+                    cmd.startsWith('Add to crontab') || cmd.startsWith('Run:') ||
+                    cmd.startsWith('Launch:') || cmd.startsWith('Self-host') || cmd.startsWith('Configure') ||
+                    cmd.startsWith('Set up') || cmd.startsWith('Build') || cmd.startsWith('Create')) {
+                    setupHTML += cmd;
+                } else {
+                    setupHTML += cmd;
+                }
+                setupHTML += '</span>';
+            });
+            document.getElementById('output-setup').innerHTML = setupHTML;
+
+            document.getElementById('output-schedule').textContent = schedule;
+            document.getElementById('output-results').textContent = results;
+
+            // Hide stages, show output
+            document.querySelectorAll('.gen-stage').forEach(s => s.classList.remove('active'));
+
+            // Mark all progress as done
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById('prog-' + i);
+                step.classList.remove('current');
+                step.classList.add('done');
+            }
+
+            const output = document.getElementById('gen-output');
+            output.classList.add('visible');
+
+            setTimeout(() => {
+                output.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+
+        /* ══════════════════════════════════════════════
+           GENERATOR — RESET
+        ══════════════════════════════════════════════ */
+        function resetGenerator() {
+            genState.focus = null;
+            genState.skill = null;
+            genState.time = null;
+            genState.name = '';
+
+            // Reset input
+            nameInput.value = '';
+            generateBtn.disabled = true;
+
+            // Reset all option selections
+            document.querySelectorAll('.gen-option').forEach(opt => opt.classList.remove('selected'));
+
+            // Hide all stages except stage 1
+            document.querySelectorAll('.gen-stage').forEach(s => s.classList.remove('active'));
+            document.getElementById('stage-1').classList.add('active');
+
+            // Hide output
+            document.getElementById('gen-output').classList.remove('visible');
+
+            // Reset progress bar
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById('prog-' + i);
+                step.classList.remove('done', 'current');
+            }
+            document.getElementById('prog-1').classList.add('current');
+
+            // Scroll generator into view
+            setTimeout(() => {
+                document.getElementById('generator').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        /* ══════════════════════════════════════════════
+           KEYBOARD SHORTCUTS
+        ══════════════════════════════════════════════ */
+        document.addEventListener('keydown', function(e) {
+            // Escape closes any expanded card
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.routine-card.expanded').forEach(c => {
+                    c.classList.remove('expanded');
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

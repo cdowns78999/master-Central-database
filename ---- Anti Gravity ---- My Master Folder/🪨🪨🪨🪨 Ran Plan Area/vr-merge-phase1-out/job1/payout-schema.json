@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://api.vr-merge.local/schemas/payout-payload.json",
+  "title": "VR-MERGE Payout Payload",
+  "description": "50/50 split payout payload executed on the 15th of each month for the prior month's revenue. Validated server-side via Ajv before /api/payout/payload accepts the request.",
+  "type": "object",
+  "required": [
+    "artist_id",
+    "period",
+    "gross_revenue",
+    "label_share",
+    "artist_share",
+    "payout_method",
+    "recipient_email_or_acct",
+    "scheduled_for",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "artist_id": {
+      "type": "string",
+      "description": "ULID of the artist record. Format: art_<26-char-ULID>.",
+      "pattern": "^art_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "period": {
+      "type": "string",
+      "description": "Revenue period being paid out, in YYYY-MM format. Always the calendar month BEFORE scheduled_for.",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$",
+      "examples": ["2026-03", "2026-04"]
+    },
+    "gross_revenue": {
+      "type": "number",
+      "description": "Total revenue collected for this artist in the period (USD). Two-decimal precision.",
+      "minimum": 0,
+      "multipleOf": 0.01
+    },
+    "label_share": {
+      "type": "number",
+      "description": "Label's 50% cut. MUST equal gross_revenue / 2 (rounded to cents). Server enforces label_share + artist_share === gross_revenue.",
+      "minimum": 0,
+      "multipleOf": 0.01
+    },
+    "artist_share": {
+      "type": "number",
+      "description": "Artist's 50% cut. MUST equal gross_revenue / 2 (rounded to cents). This is the amount actually transmitted to recipient_email_or_acct.",
+      "minimum": 0,
+      "multipleOf": 0.01
+    },
+    "payout_method": {
+      "type": "string",
+      "description": "Channel through which the artist_share is transmitted.",
+      "enum": ["paypal", "bank"]
+    },
+    "recipient_email_or_acct": {
+      "type": "string",
+      "description": "If payout_method=paypal: RFC5322 email tied to the artist's PayPal account. If payout_method=bank: opaque account reference (tokenized via banking partner; never raw account/routing).",
+      "minLength": 3,
+      "maxLength": 254
+    },
+    "scheduled_for": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 datetime when the payout will be (or was) executed. MUST be the 15th of a month at 09:00 UTC. Cron 'POST /api/payout/payload' batch fires at this moment.",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-15T09:00:00\\.000Z$"
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle state of this payout record.",
+      "enum": [
+        "scheduled",
+        "queued",
+        "executing",
+        "executed",
+        "failed",
+        "cancelled",
+        "refunded"
+      ]
+    },
+    "dry_run": {
+      "type": "boolean",
+      "description": "When true, payload is validated and logged but no actual transfer is initiated. Defaults to false.",
+      "default": false
+    },
+    "paypal_batch_id": {
+      "type": ["string", "null"],
+      "description": "PayPal Payouts API batch ID, populated after successful execution.",
+      "default": null
+    },
+    "bank_transfer_ref": {
+      "type": ["string", "null"],
+      "description": "Banking partner transfer reference, populated after successful execution when payout_method=bank.",
+      "default": null
+    },
+    "executed_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 datetime when execution actually completed. Null until status=executed.",
+      "default": null
+    },
+    "failure_reason": {
+      "type": ["string", "null"],
+      "description": "Human-readable reason when status=failed.",
+      "default": null
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional admin note attached to this payout (e.g. correction reason).",
+      "maxLength": 500
+    }
+  },
+  "allOf": [
+    {
+      "description": "PayPal recipient must be a valid email.",
+      "if": { "properties": { "payout_method": { "const": "paypal" } } },
+      "then": {
+        "properties": {
+          "recipient_email_or_acct": {
+            "format": "email",
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+          }
+        }
+      }
+    },
+    {
+      "description": "Bank recipient must be a tokenized account reference (acct_<token>).",
+      "if": { "properties": { "payout_method": { "const": "bank" } } },
+      "then": {
+        "properties": {
+          "recipient_email_or_acct": {
+            "pattern": "^acct_[A-Za-z0-9_-]{8,}$"
+          }
+        }
+      }
+    }
+  ],
+  "examples": [
+    {
+      "artist_id": "art_01HK7Z8X9Y2N3M4P5Q6R7S8T9V",
+      "period": "2026-03",
+      "gross_revenue": 1240.50,
+      "label_share": 620.25,
+      "artist_share": 620.25,
+      "payout_method": "paypal",
+      "recipient_email_or_acct": "maya@example.com",
+      "scheduled_for": "2026-04-15T09:00:00.000Z",
+      "status": "scheduled",
+      "dry_run": false
+    }
+  ]
+}

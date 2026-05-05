@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Photo Showcase</title>
+  <link rel="stylesheet" href="assets/tokens.css" />
+  <link rel="stylesheet" href="assets/base.css" />
+  <link rel="stylesheet" href="nav/nav.css" />
+  <style>
+    /* ============================================================
+       Landing page — scoped to .home
+       ============================================================ */
+    .home {
+      min-height: 100vh;
+      padding: 72px clamp(28px, 5vw, 72px) 40px;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(48px, 6vh, 88px);
+    }
+
+    /* ---- Hero ---- */
+    .home__hero {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      max-width: 1100px;
+    }
+    .home__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+    }
+    .home__eyebrow::before {
+      content: "";
+      width: 28px;
+      height: var(--line-w);
+      min-height: 1px;
+      background: var(--line-yellow);
+      box-shadow: 0 0 8px rgba(255, 212, 0, 0.55);
+    }
+    .home__title {
+      font-size: clamp(2.5rem, 7vw, 5.75rem);
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      line-height: 0.98;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+    }
+    .home__title .accent {
+      color: var(--line-yellow);
+      text-shadow: 0 0 18px rgba(255, 212, 0, 0.28);
+    }
+    .home__subtitle {
+      font-size: clamp(0.95rem, 1.2vw, 1.1rem);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+    }
+    .home__subtitle .dot {
+      display: inline-block;
+      margin: 0 0.5em;
+      color: var(--line-yellow);
+      transform: translateY(-1px);
+    }
+
+    /* ---- Grid of 4 showcase tiles ---- */
+    .home__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(18px, 2.2vw, 28px);
+      max-width: 1400px;
+      width: 100%;
+      align-self: stretch;
+    }
+    @media (max-width: 880px) {
+      .home__grid { grid-template-columns: 1fr; }
+    }
+
+    .tile {
+      position: relative;
+      display: block;
+      aspect-ratio: var(--card-aspect);
+      background: var(--card-surface);
+      border: var(--line-w) solid var(--line-yellow);
+      overflow: hidden;
+      isolation: isolate;
+      text-decoration: none;
+      color: inherit;
+      transform: translateZ(0);
+      transition:
+        transform var(--dur-med) var(--ease-out),
+        box-shadow var(--dur-med) var(--ease-out),
+        border-color var(--dur-med) var(--ease-out),
+        filter var(--dur-med) var(--ease-out);
+      box-shadow:
+        0 1px 0 rgba(255, 212, 0, 0.05) inset,
+        0 10px 30px rgba(0, 0, 0, 0.55);
+    }
+    @supports (border-width: 0.5px) {
+      .tile { border-width: 0.5px; }
+    }
+
+    /* decorative ambient glow inside each tile */
+    .tile::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(255, 212, 0, 0.08), transparent 45%),
+        radial-gradient(circle at 100% 100%, rgba(255, 212, 0, 0.05), transparent 55%);
+      opacity: 0.7;
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity var(--dur-med) var(--ease-out);
+    }
+    /* faint scanline sheen */
+    .tile::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(125deg, transparent 0%, rgba(255, 212, 0, 0.06) 48%, transparent 58%);
+      transform: translateX(-120%);
+      transition: transform var(--dur-slow) var(--ease-out);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .tile__body {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(22px, 3vw, 38px);
+      z-index: 2;
+    }
+    .tile__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .tile__idx {
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+      font-feature-settings: "tnum" 1;
+    }
+    .tile__idx .idx-num {
+      color: var(--line-yellow);
+      margin-right: 8px;
+    }
+    .tile__chip {
+      width: 8px;
+      height: 8px;
+      background: var(--line-yellow);
+      transform: rotate(45deg);
+      box-shadow: 0 0 10px rgba(255, 212, 0, 0.65);
+      transition: transform var(--dur-med) var(--ease-out);
+    }
+    .tile__foot {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .tile__name {
+      font-size: clamp(1.6rem, 3vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.02;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .tile__desc {
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+      max-width: 46ch;
+    }
+    .tile__cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      align-self: flex-start;
+      padding-top: 10px;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--ink-60);
+      transition: color var(--dur-fast) var(--ease-out), gap var(--dur-med) var(--ease-out);
+    }
+    .tile__cta::before {
+      content: "";
+      width: 22px;
+      height: var(--line-w);
+      min-height: 1px;
+      background: var(--line-yellow);
+      transition: width var(--dur-med) var(--ease-out);
+    }
+
+    /* ---- Hover: subtle 3D lift ---- */
+    .tile:hover {
+      transform: translateY(-6px);
+      box-shadow:
+        0 1px 0 rgba(255, 212, 0, 0.08) inset,
+        0 26px 60px rgba(0, 0, 0, 0.75),
+        0 0 0 1px rgba(255, 212, 0, 0.12);
+      border-color: var(--line-yellow);
+      filter: brightness(1.06);
+    }
+    .tile:hover::before { opacity: 1; }
+    .tile:hover::after { transform: translateX(120%); }
+    .tile:hover .tile__chip { transform: rotate(135deg); }
+    .tile:hover .tile__cta { color: #fff; gap: 16px; }
+    .tile:hover .tile__cta::before { width: 40px; }
+
+    .tile:focus-visible {
+      outline: none;
+      border-color: var(--line-yellow);
+      box-shadow:
+        0 0 0 2px rgba(255, 212, 0, 0.35),
+        0 20px 50px rgba(0, 0, 0, 0.7);
+    }
+
+    /* ---- Footer ---- */
+    .home__foot {
+      margin-top: auto;
+      padding-top: 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--ink-30);
+    }
+    .home__foot-line {
+      flex: 0 0 auto;
+      width: 64px;
+      height: var(--line-w);
+      min-height: 1px;
+      background: var(--line-yellow);
+      box-shadow: 0 0 6px rgba(255, 212, 0, 0.5);
+    }
+  </style>
+</head>
+<body class="has-left-nav">
+
+  <div id="nav-mount"></div>
+
+  <main class="home">
+
+    <section class="home__hero">
+      <span class="home__eyebrow">Index · 00</span>
+      <h1 class="home__title">3D Photo <span class="accent">Showcase</span></h1>
+      <p class="home__subtitle">four approaches<span class="dot">·</span>one centerpiece</p>
+    </section>
+
+    <section class="home__grid" aria-label="Four approaches">
+
+      <a class="tile" href="pages/01-css-3d.html">
+        <div class="tile__body">
+          <div class="tile__head">
+            <span class="tile__idx"><span class="idx-num">01</span>Approach</span>
+            <span class="tile__chip" aria-hidden="true"></span>
+          </div>
+          <div class="tile__foot">
+            <h2 class="tile__name">CSS 3D Tilt</h2>
+            <p class="tile__desc">Pure CSS transforms — perspective, rotateY, mouse-tracked parallax on hover.</p>
+            <span class="tile__cta">Enter</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tile" href="pages/02-parallax.html">
+        <div class="tile__body">
+          <div class="tile__head">
+            <span class="tile__idx"><span class="idx-num">02</span>Approach</span>
+            <span class="tile__chip" aria-hidden="true"></span>
+          </div>
+          <div class="tile__foot">
+            <h2 class="tile__name">Parallax Depth</h2>
+            <p class="tile__desc">Layered scroll motion — foreground, midground, and haze moving at different rates.</p>
+            <span class="tile__cta">Enter</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tile" href="pages/03-webgl.html">
+        <div class="tile__body">
+          <div class="tile__head">
+            <span class="tile__idx"><span class="idx-num">03</span>Approach</span>
+            <span class="tile__chip" aria-hidden="true"></span>
+          </div>
+          <div class="tile__foot">
+            <h2 class="tile__name">WebGL Carousel</h2>
+            <p class="tile__desc">Hardware-accelerated shader-driven rotator with depth distortion and light falloff.</p>
+            <span class="tile__cta">Enter</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="tile" href="pages/04-spring.html">
+        <div class="tile__body">
+          <div class="tile__head">
+            <span class="tile__idx"><span class="idx-num">04</span>Approach</span>
+            <span class="tile__chip" aria-hidden="true"></span>
+          </div>
+          <div class="tile__foot">
+            <h2 class="tile__name">Spring Drag</h2>
+            <p class="tile__desc">Physics-based drag with spring rebound and momentum — tactile, kinetic, alive.</p>
+            <span class="tile__cta">Enter</span>
+          </div>
+        </div>
+      </a>
+
+    </section>
+
+    <footer class="home__foot">
+      <span class="home__foot-line" aria-hidden="true"></span>
+      <span>Drop photos into /photos/ as 01.jpg–12.jpg</span>
+    </footer>
+
+  </main>
+
+  <script>
+    // Inject shared nav (relative to this page — index.html at root)
+    (function () {
+      fetch('nav/nav.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          // rewrite ../ paths (nav was authored for /pages/) to work from root
+          html = html.replace(/href="\.\.\//g, 'href="');
+          var mount = document.getElementById('nav-mount');
+          if (mount) mount.innerHTML = html;
+          var s = document.createElement('script');
+          s.src = 'nav/nav.js';
+          document.body.appendChild(s);
+        })
+        .catch(function () { /* fail silent */ });
+    })();
+  </script>
+</body>
+</html>

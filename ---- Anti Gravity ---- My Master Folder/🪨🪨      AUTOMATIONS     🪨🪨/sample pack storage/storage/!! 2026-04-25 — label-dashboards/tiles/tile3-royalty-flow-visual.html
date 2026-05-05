@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Royalty Flow Visual</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --pane: #ffffff;
+    --line: #e3e6ec;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --accent: #4a6da7;
+    --accent-soft: #eaf0fa;
+    --green: #1ea832;
+    --amber: #dfa122;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    padding: 26px 32px 60px;
+  }
+  .back {
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 12px;
+    margin-bottom: 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .back:hover { text-decoration: underline; }
+  h1 {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-weight: 300;
+    font-size: 26px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .lede {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 22px;
+    max-width: 640px;
+    line-height: 1.5;
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .btn:hover { background: #3d5d92; }
+  .btn.ghost { background: var(--pane); color: var(--ink); border: 1px solid var(--line); }
+  .btn.ghost:hover { background: #f9fbfe; }
+  .stat {
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11.5px;
+  }
+
+  .stage {
+    position: relative;
+    background: var(--pane);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 22px;
+    max-width: 1100px;
+    margin-bottom: 22px;
+  }
+  .stage h2 {
+    margin: 0 0 14px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 220px 1fr 220px;
+    gap: 18px;
+    align-items: stretch;
+    min-height: 200px;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card {
+    background: #fafbfd;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    transition: all 0.4s ease;
+    position: relative;
+  }
+  .card.in { background: var(--accent-soft); border-color: var(--accent); }
+  .card.matched { background: #e8f5ec; border-color: var(--green); }
+  .card .label {
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+  }
+  .card .src {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .card .amt {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .card.matched .amt { color: var(--green); }
+
+  .lookup {
+    background: linear-gradient(180deg,#fbfcfd,#eef0f4);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 11.5px;
+  }
+  .lookup table { width: 100%; border-collapse: collapse; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .lookup th, .lookup td {
+    padding: 5px 6px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+  }
+  .lookup th { color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+  .lookup tr.flash { background: #fff7df; transition: background 0.6s; }
+
+  .arrows {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .arrows svg { width: 100%; height: 100%; }
+  .arrow-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .arrow-line.show { opacity: 0.6; }
+  .arrow-line.flow {
+    animation: dash 1.2s linear infinite;
+  }
+  @keyframes dash { to { stroke-dashoffset: -16; } }
+
+  .ledger {
+    background: var(--pane);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 22px;
+    max-width: 1100px;
+  }
+  .ledger h2 {
+    margin: 0 0 14px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .ledger table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .ledger th, .ledger td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+  .ledger th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .ledger td.amt { font-family: ui-monospace, "SF Mono", Menlo, monospace; text-align: right; color: var(--green); font-weight: 600; }
+  .ledger tr.new { background: #fff7df; animation: fade 1.6s forwards; }
+  @keyframes fade { to { background: transparent; } }
+  .empty { color: var(--muted); font-style: italic; padding: 12px; text-align: center; }
+</style>
+</head>
+<body>
+  <a class="back" href="../index.html">← back to pack</a>
+  <h1>Royalty Flow Visual</h1>
+  <p class="lede">Receive a mock royalty statement, watch it flow through the points lookup table, then settle into the payouts ledger. Re-trigger to see the animation again. (sourced via github.com — common pattern in label admin dashboards)</p>
+
+  <div class="toolbar">
+    <button class="btn" id="receiveBtn">Receive new statement</button>
+    <button class="btn ghost" id="resetBtn">Reset ledger</button>
+    <span class="stat" id="stat">0 statements processed · ledger total: $0.00</span>
+  </div>
+
+  <div class="stage">
+    <h2>Flow stage</h2>
+    <div class="row">
+      <div class="col">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px">1. Inbound statement</div>
+        <div class="card" id="inbox">
+          <div class="label">Awaiting</div>
+          <div class="src">—</div>
+          <div class="amt">$0.00</div>
+        </div>
+      </div>
+      <div class="col">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px">2. Points lookup</div>
+        <div class="lookup">
+          <table>
+            <thead><tr><th>DSP</th><th>Per-stream</th><th>Multiplier</th></tr></thead>
+            <tbody id="lookupBody">
+              <tr data-dsp="spotify"><td>Spotify</td><td>$0.00318</td><td>1.0×</td></tr>
+              <tr data-dsp="apple"><td>Apple Music</td><td>$0.00735</td><td>1.0×</td></tr>
+              <tr data-dsp="youtube"><td>YouTube</td><td>$0.00183</td><td>1.0×</td></tr>
+              <tr data-dsp="tidal"><td>Tidal</td><td>$0.01284</td><td>1.0×</td></tr>
+              <tr data-dsp="amazon"><td>Amazon</td><td>$0.00402</td><td>1.0×</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px">3. Matched payout</div>
+        <div class="card" id="outbox">
+          <div class="label">Pending</div>
+          <div class="src">—</div>
+          <div class="amt">$0.00</div>
+        </div>
+      </div>
+    </div>
+    <div class="arrows">
+      <svg viewBox="0 0 1100 220" preserveAspectRatio="none">
+        <path id="arr1" class="arrow-line" d="M 220 100 C 320 100, 350 100, 440 100"></path>
+        <path id="arr2" class="arrow-line" d="M 660 100 C 760 100, 790 100, 880 100"></path>
+      </svg>
+    </div>
+  </div>
+
+  <div class="ledger">
+    <h2>Payouts ledger</h2>
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Statement</th><th>DSP</th><th>Streams</th><th style="text-align:right">Amount</th></tr>
+      </thead>
+      <tbody id="ledgerBody">
+        <tr><td colspan="5" class="empty">No statements yet — click "Receive new statement"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const dsps = [
+      { key: "spotify", name: "Spotify", rate: 0.00318 },
+      { key: "apple", name: "Apple Music", rate: 0.00735 },
+      { key: "youtube", name: "YouTube", rate: 0.00183 },
+      { key: "tidal", name: "Tidal", rate: 0.01284 },
+      { key: "amazon", name: "Amazon", rate: 0.00402 }
+    ];
+    const tracks = ["Coastline", "Birdsong Letter", "Lantern Hours", "Quiet Engine", "Velvet", "Saguaro"];
+
+    let count = 0;
+    let total = 0;
+    let busy = false;
+    const ledgerBody = document.getElementById('ledgerBody');
+    const stat = document.getElementById('stat');
+    const inbox = document.getElementById('inbox');
+    const outbox = document.getElementById('outbox');
+    const arr1 = document.getElementById('arr1');
+    const arr2 = document.getElementById('arr2');
+
+    function makeStatement() {
+      const dsp = dsps[Math.floor(Math.random() * dsps.length)];
+      const streams = Math.floor(2000 + Math.random() * 80000);
+      const amount = streams * dsp.rate;
+      const track = tracks[Math.floor(Math.random() * tracks.length)];
+      return { dsp, streams, amount, track, id: ++count };
+    }
+
+    function fmt(n) {
+      return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    async function flow(s) {
+      busy = true;
+      // step 1: inbound shows up
+      inbox.classList.add('in');
+      inbox.querySelector('.label').textContent = 'Inbound · ' + s.track;
+      inbox.querySelector('.src').textContent = `${s.dsp.name} statement #${s.id}`;
+      inbox.querySelector('.amt').textContent = `${s.streams.toLocaleString()} streams`;
+      arr1.classList.add('show', 'flow');
+
+      await wait(900);
+      // step 2: lookup row flashes
+      const row = document.querySelector(`#lookupBody tr[data-dsp="${s.dsp.key}"]`);
+      row.classList.add('flash');
+      await wait(900);
+      arr2.classList.add('show', 'flow');
+
+      // step 3: outbox computes
+      outbox.classList.add('matched');
+      outbox.querySelector('.label').textContent = 'Settled';
+      outbox.querySelector('.src').textContent = `${s.dsp.name} → ledger`;
+      outbox.querySelector('.amt').textContent = fmt(s.amount);
+
+      await wait(700);
+      // step 4: append to ledger
+      appendLedger(s);
+      total += s.amount;
+      stat.textContent = `${count} statement${count === 1 ? '' : 's'} processed · ledger total: ${fmt(total)}`;
+
+      await wait(800);
+      // reset stage
+      inbox.classList.remove('in');
+      inbox.querySelector('.label').textContent = 'Awaiting';
+      inbox.querySelector('.src').textContent = '—';
+      inbox.querySelector('.amt').textContent = '$0.00';
+      outbox.classList.remove('matched');
+      outbox.querySelector('.label').textContent = 'Pending';
+      outbox.querySelector('.src').textContent = '—';
+      outbox.querySelector('.amt').textContent = '$0.00';
+      row.classList.remove('flash');
+      arr1.classList.remove('show', 'flow');
+      arr2.classList.remove('show', 'flow');
+      busy = false;
+    }
+
+    function appendLedger(s) {
+      // remove empty row
+      const empty = ledgerBody.querySelector('.empty');
+      if (empty) ledgerBody.innerHTML = '';
+      const tr = document.createElement('tr');
+      tr.className = 'new';
+      const date = new Date().toISOString().slice(0,10);
+      tr.innerHTML = `
+        <td>${date}</td>
+        <td>#${s.id} · ${s.track}</td>
+        <td>${s.dsp.name}</td>
+        <td>${s.streams.toLocaleString()}</td>
+        <td class="amt">${fmt(s.amount)}</td>
+      `;
+      ledgerBody.insertBefore(tr, ledgerBody.firstChild);
+    }
+
+    function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    document.getElementById('receiveBtn').addEventListener('click', () => {
+      if (busy) return;
+      flow(makeStatement());
+    });
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (busy) return;
+      count = 0; total = 0;
+      ledgerBody.innerHTML = '<tr><td colspan="5" class="empty">No statements yet — click "Receive new statement"</td></tr>';
+      stat.textContent = '0 statements processed · ledger total: $0.00';
+    });
+  </script>
+</body>
+</html>

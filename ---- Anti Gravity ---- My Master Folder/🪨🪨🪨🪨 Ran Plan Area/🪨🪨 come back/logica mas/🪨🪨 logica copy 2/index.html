@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Messenger — iPad Split View</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif; }
+  body { background: #fff; height: 100vh; display: flex; overflow: hidden; }
+
+  /* ─── LEFT PANEL ─── */
+  #left-panel {
+    width: 370px;
+    min-width: 370px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #e4e4e4;
+    background: #fff;
+  }
+
+  #left-header {
+    padding: 14px 16px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  #messenger-logo {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0084ff;
+    letter-spacing: -0.5px;
+  }
+  #left-header-icons { display: flex; gap: 10px; }
+  .header-icon {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; color: #333;
+    position: relative;
+  }
+  .badge {
+    position: absolute; top: -2px; right: -2px;
+    background: #e41e2a; color: #fff;
+    font-size: 10px; font-weight: 700;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff;
+  }
+
+  #chat-list { flex: 1; overflow-y: auto; }
+  #chat-list::-webkit-scrollbar { width: 0; }
+
+  .chat-item {
+    display: flex; align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-radius: 10px;
+    margin: 1px 6px;
+    transition: background 0.12s;
+    position: relative;
+  }
+  .chat-item:hover { background: #f2f2f2; }
+  .chat-item.active { background: #e8f4ff; }
+
+  .avatar-wrap { position: relative; margin-right: 12px; flex-shrink: 0; }
+  .avatar {
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #ddd;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    color: #666;
+    overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .avatar-group { position: relative; width: 54px; height: 54px; }
+  .avatar-group .av1 {
+    width: 38px; height: 38px; border-radius: 50%; position: absolute; top: 0; left: 0;
+    background: #ccc; display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .avatar-group .av2 {
+    width: 28px; height: 28px; border-radius: 50%; position: absolute; bottom: 0; right: 0;
+    background: #bbb; display: flex; align-items: center; justify-content: center; font-size: 11px;
+    border: 2px solid #fff;
+  }
+  .online-dot {
+    width: 14px; height: 14px; background: #31a24c;
+    border-radius: 50%; border: 2.5px solid #fff;
+    position: absolute; bottom: 1px; right: 1px;
+  }
+  .chat-info { flex: 1; min-width: 0; }
+  .chat-name { font-size: 15px; font-weight: 600; color: #050505; }
+  .chat-preview { font-size: 13.5px; color: #65676b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .chat-preview.unread { color: #050505; font-weight: 500; }
+  .chat-time { font-size: 12px; color: #65676b; white-space: nowrap; margin-left: 8px; }
+  .unread-dot {
+    width: 10px; height: 10px; background: #0084ff;
+    border-radius: 50%; margin-left: 8px; flex-shrink: 0;
+  }
+
+  /* bottom nav */
+  #left-nav {
+    display: flex; border-top: 1px solid #e4e4e4;
+    padding: 6px 0 18px;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 6px 0; cursor: pointer; position: relative;
+  }
+  .nav-icon { font-size: 22px; color: #65676b; position: relative; }
+  .nav-icon.active-nav { color: #0084ff; }
+  .nav-label { font-size: 10px; color: #65676b; margin-top: 2px; }
+  .nav-label.active-nav { color: #0084ff; }
+  .nav-badge {
+    position: absolute; top: -4px; right: -8px;
+    background: #e41e2a; color: #fff;
+    font-size: 10px; font-weight: 700;
+    min-width: 16px; height: 16px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px;
+    border: 2px solid #fff;
+  }
+
+  /* ─── RIGHT PANEL ─── */
+  #right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  #right-header {
+    display: flex; align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e4e4e4;
+    gap: 10px;
+  }
+  #back-btn {
+    display: flex; align-items: center; gap: 4px;
+    color: #0084ff; font-size: 16px; cursor: pointer; font-weight: 500;
+  }
+  .back-count {
+    background: #0084ff; color: #fff;
+    font-size: 12px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+  }
+  #convo-info { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .convo-avatars { display: flex; }
+  .convo-av {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #ddd; border: 2px solid #fff;
+    margin-left: -8px; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .convo-av:first-child { margin-left: 0; }
+  #convo-name { font-size: 13px; font-weight: 500; color: #050505; margin-top: 2px; }
+  #convo-sub { font-size: 12px; color: #0084ff; }
+
+  /* message thread */
+  #thread {
+    flex: 1; overflow-y: auto;
+    padding: 16px 16px 8px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  #thread::-webkit-scrollbar { width: 4px; }
+  #thread::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+  .timestamp-label {
+    text-align: center;
+    font-size: 12px; color: #65676b;
+    margin: 12px 0 6px;
+  }
+
+  .msg-row {
+    display: flex; align-items: flex-end; gap: 6px;
+    margin: 1px 0;
+  }
+  .msg-row.sent { justify-content: flex-end; }
+  .msg-row.recv { justify-content: flex-start; }
+
+  .msg-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #ddd; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #666;
+  }
+  .msg-avatar.hidden { visibility: hidden; }
+
+  .bubble {
+    max-width: 72%;
+    padding: 9px 14px;
+    border-radius: 20px;
+    font-size: 15px;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .bubble.sent {
+    background: #0084ff;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .bubble.recv {
+    background: #f0f0f0;
+    color: #050505;
+    border-bottom-left-radius: 4px;
+  }
+  .sender-name {
+    font-size: 11px; color: #65676b;
+    margin-bottom: 2px; margin-left: 36px;
+  }
+
+  /* input */
+  #input-area {
+    display: flex; align-items: center;
+    padding: 10px 16px 22px;
+    border-top: 1px solid #e4e4e4;
+    gap: 10px;
+  }
+  #plus-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #f0f0f0; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 20px; color: #0084ff; flex-shrink: 0;
+  }
+  #msg-input {
+    flex: 1; border: 1px solid #e4e4e4; border-radius: 20px;
+    padding: 9px 16px; font-size: 15px; color: #050505;
+    outline: none; background: #f0f0f0;
+    resize: none;
+  }
+  #msg-input::placeholder { color: #8e8e93; }
+  #mic-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #f0f0f0; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; color: #0084ff; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LEFT PANEL ═══════════════ -->
+<div id="left-panel">
+  <div id="left-header">
+    <span id="messenger-logo">messenger</span>
+    <div id="left-header-icons">
+      <div class="header-icon">✏️</div>
+      <div class="header-icon">
+        <span>📘</span>
+        <span class="badge">1</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="chat-list">
+
+    <div class="chat-item" onclick="loadConvo('family')">
+      <div class="avatar-wrap">
+        <div class="avatar-group">
+          <div class="av1">👩</div>
+          <div class="av2">👦</div>
+        </div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">FAMILY CHAT</div>
+        <div class="chat-preview">You: Ok · 2:05 pm</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('ray')">
+      <div class="avatar-wrap">
+        <div class="avatar">👨</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Ray Downs</div>
+        <div class="chat-preview">You: Thank you ! · 2:05 pm</div>
+      </div>
+    </div>
+
+    <div class="chat-item active" onclick="loadConvo('chad')">
+      <div class="avatar-wrap">
+        <div class="avatar">🧔</div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Chad Downs</div>
+        <div class="chat-preview">You sent a photo. · 2:01 pm</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('raykim')">
+      <div class="avatar-wrap">
+        <div class="avatar-group">
+          <div class="av1">👨</div>
+          <div class="av2">👩</div>
+        </div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Ray, Kim</div>
+        <div class="chat-preview">You: that sounds like... · Sun</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('randy')">
+      <div class="avatar-wrap">
+        <div class="avatar">🎸</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Randy Engineersski</div>
+        <div class="chat-preview unread">2 new messages · Sun</div>
+      </div>
+      <div class="unread-dot"></div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('james')">
+      <div class="avatar-wrap">
+        <div class="avatar">🧑</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">James Poddubny</div>
+        <div class="chat-preview">❤️❤️❤️❤️❤️❤️love you... · Sun</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('jenna')">
+      <div class="avatar-wrap">
+        <div class="avatar">👩‍🦱</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Jenna Bodley</div>
+        <div class="chat-preview">You: hollar whenever u my fri... · Sat</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('kim')">
+      <div class="avatar-wrap">
+        <div class="avatar">👩</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Kim Downs</div>
+        <div class="chat-preview">You: kim · Fri</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('linda')">
+      <div class="avatar-wrap">
+        <div class="avatar">👩‍🦳</div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Linda-Brooke Thompson</div>
+        <div class="chat-preview unread">4 new messages · Fri</div>
+      </div>
+      <div class="unread-dot"></div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('ed')">
+      <div class="avatar-wrap">
+        <div class="avatar">👨‍🦳</div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Ed Adkins Sr.</div>
+        <div class="chat-preview">You: work going well th... · Thu</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('kayla')">
+      <div class="avatar-wrap">
+        <div class="avatar">🧕</div>
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Kayla Amber</div>
+        <div class="chat-preview">You: That was waay... · Mar 22</div>
+      </div>
+    </div>
+
+    <div class="chat-item" onclick="loadConvo('ari')">
+      <div class="avatar-wrap">
+        <div class="avatar">🧑‍💼</div>
+      </div>
+      <div class="chat-info">
+        <div class="chat-name">Ari Aloush</div>
+        <div class="chat-preview unread">Hey, at this rate I thi... · Mar 16</div>
+      </div>
+      <div class="unread-dot"></div>
+    </div>
+
+  </div><!-- end chat-list -->
+
+  <div id="left-nav">
+    <div class="nav-item">
+      <div class="nav-icon active-nav" style="position:relative;">💬<span class="nav-badge">7</span></div>
+      <div class="nav-label active-nav">Chats</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">📖<span class="nav-badge">●</span></div>
+      <div class="nav-label">Stories</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">🔔<span class="nav-badge">●</span></div>
+      <div class="nav-label">Notifications</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">☰<span class="nav-badge">●</span></div>
+      <div class="nav-label">Menu</div>
+    </div>
+  </div>
+</div><!-- end left-panel -->
+
+<!-- ═══════════════ RIGHT PANEL ═══════════════ -->
+<div id="right-panel">
+  <div id="right-header">
+    <div id="back-btn">‹ <span class="back-count">57</span></div>
+    <div id="convo-info">
+      <div class="convo-avatars">
+        <div class="convo-av">🧔</div>
+        <div class="convo-av">👨</div>
+      </div>
+      <div id="convo-name">2 People ›</div>
+    </div>
+  </div>
+
+  <div id="thread">
+    <!-- Populated by JS -->
+  </div>
+
+  <div id="input-area">
+    <div id="plus-btn">+</div>
+    <input id="msg-input" placeholder="Text Message • RCS" onkeydown="handleKey(event)" />
+    <div id="mic-btn">🎤</div>
+  </div>
+</div><!-- end right-panel -->
+
+<script>
+const convos = {
+  chad: {
+    headerAvatars: ['🧔','👨'],
+    name: '2 People ›',
+    messages: [
+      { type:'sent', text:"I don't really want a lot of frantic panic energy. lol" },
+      { type:'sent', text:"But come on over lol" },
+      { type:'sent', text:"Are you stopping somewhere before you stop here? That's ok it's" },
+      { type:'sent', text:"If so*" },
+      { type:'time', label:'Yesterday 8:54 PM' },
+      { type:'sent', text:"Thank you dad\n\nThank you very much for the help guys\n\nAnd the Claude payment yesterday guys" },
+      { type:'sent', text:"I've been setting them timers today!" },
+      { type:'recv', sender:'Ray Downs', avatar:'👨', text:"I just sent you $5.00 by Zelle.  Let me know if you got it." },
+      { type:'time', label:'Yesterday 10:56 PM' },
+      { type:'sent', text:"I did get it!" },
+      { type:'time', label:'Today 5:53 AM' },
+      { type:'recv', sender:'Ray Downs', avatar:'👨', text:"Ok. Good so I have that setup.  I will send you the funds for your mortgage tonight" },
+      { type:'sent', text:"Good morning" },
+      { type:'sent', text:"Let's call first 1 but sure" },
+      { type:'sent', text:"This is ganna be such a good week thank you dad" },
+      { type:'time', label:'Today 8:14 AM' },
+      { type:'recv', sender:'Ray Downs', avatar:'👨', text:"Hey @Chad Downs  can you give me a call about Kids on Campus" },
+      { type:'recv', sender:'Ray Downs', avatar:'👨', text:"I am trying to register James.  I really need the login and password to his account with Kids on Campus." },
+    ]
+  },
+  family: {
+    headerAvatars: ['👩','👦'],
+    name: 'Family Chat',
+    messages: [
+      { type:'sent', text:"Ok" },
+    ]
+  },
+  ray: {
+    headerAvatars: ['👨'],
+    name: 'Ray Downs',
+    messages: [
+      { type:'sent', text:"Thank you !" },
+    ]
+  },
+};
+
+let activeConvo = 'chad';
+
+function loadConvo(id) {
+  activeConvo = id;
+  // update active highlight
+  document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  const c = convos[id] || { headerAvatars:['👤'], name:'Conversation', messages:[] };
+
+  // update header
+  const wrap = document.querySelector('.convo-avatars');
+  wrap.innerHTML = c.headerAvatars.map(a => `<div class="convo-av">${a}</div>`).join('');
+  document.getElementById('convo-name').textContent = c.name;
+
+  renderThread(c.messages);
+}
+
+function renderThread(msgs) {
+  const thread = document.getElementById('thread');
+  thread.innerHTML = '';
+
+  let lastSender = null;
+
+  msgs.forEach((m, i) => {
+    if (m.type === 'time') {
+      const ts = document.createElement('div');
+      ts.className = 'timestamp-label';
+      ts.textContent = m.label;
+      thread.appendChild(ts);
+      lastSender = null;
+      return;
+    }
+
+    const isLast = i === msgs.length - 1 || msgs[i+1].type === 'time' || msgs[i+1].type !== m.type || (m.type === 'recv' && msgs[i+1].sender !== m.sender);
+
+    if (m.type === 'recv' && m.sender && m.sender !== lastSender) {
+      const sn = document.createElement('div');
+      sn.className = 'sender-name';
+      sn.textContent = m.sender;
+      thread.appendChild(sn);
+    }
+
+    const row = document.createElement('div');
+    row.className = `msg-row ${m.type}`;
+
+    if (m.type === 'recv') {
+      const av = document.createElement('div');
+      av.className = 'msg-avatar' + (isLast ? '' : ' hidden');
+      av.textContent = m.avatar || '👤';
+      row.appendChild(av);
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = `bubble ${m.type}`;
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.textContent = m.text;
+
+    // click to react
+    bubble.addEventListener('dblclick', () => {
+      const existing = bubble.querySelector('.reaction');
+      if (existing) { existing.remove(); return; }
+      const r = document.createElement('span');
+      r.className = 'reaction';
+      r.style.cssText = 'position:absolute;bottom:-14px;right:6px;font-size:14px;';
+      r.textContent = '❤️';
+      bubble.style.position = 'relative';
+      bubble.appendChild(r);
+    });
+
+    row.appendChild(bubble);
+    thread.appendChild(row);
+
+    lastSender = m.type === 'recv' ? m.sender : null;
+  });
+
+  thread.scrollTop = thread.scrollHeight;
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const c = convos[activeConvo];
+  if (!c) return;
+
+  c.messages.push({ type:'sent', text });
+  renderThread(c.messages);
+  input.value = '';
+}
+</script>
+</body>
+</html>

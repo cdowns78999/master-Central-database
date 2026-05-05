@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%232271b1'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='18' font-weight='bold'>W</text></svg>" type="image/svg+xml">
+<title>WP Article Launcher</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #ffffff;
+    color: #1e1e1e;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── CLIENT HEADER ── */
+  .client-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 28px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+    color: #6b7280;
+    user-select: none;
+  }
+  .client-header .client-name {
+    font-weight: 600;
+    color: #1e1e1e;
+    font-size: 14px;
+  }
+  .client-header .tag {
+    font-size: 11px;
+    background: #f3f4f6;
+    padding: 3px 10px;
+    border-radius: 20px;
+    color: #9ca3af;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main-wrap {
+    flex: 1;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ── PASTE INPUT BOX ── */
+  .paste-zone {
+    position: relative;
+  }
+  .paste-zone textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 18px 20px;
+    font-size: 15px;
+    line-height: 1.6;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    color: #1e1e1e;
+    background: #fff;
+  }
+  .paste-zone textarea::placeholder { color: #b0b7c3; }
+  .paste-zone textarea:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 3px rgba(34,113,177,0.08);
+  }
+  .paste-zone .paste-btn {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .paste-zone .paste-btn:hover { background: #1a5a8e; }
+
+  /* ── BANNERS AREA ── */
+  .banners-section {
+    min-height: 32px;
+  }
+  .banners-section .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #9ca3af;
+    margin-bottom: 8px;
+    display: none;
+  }
+  .banners-section .label.visible { display: block; }
+  .banners-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* individual banner card */
+  .banner-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 12px;
+    max-width: 320px;
+    position: relative;
+    animation: bannerIn 0.3s ease;
+  }
+  @keyframes bannerIn {
+    from { opacity: 0; transform: translateY(6px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .banner-card.processing {
+    border-color: #d97706;
+    box-shadow: 0 0 10px rgba(217,119,6,0.2);
+    transition: border-color 0.6s, box-shadow 0.6s;
+  }
+  .banner-card .thumb {
+    width: 80px;
+    height: 50px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #f3f4f6;
+  }
+  .banner-card .icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .banner-card .icon-box.dropbox { background: #e8f0fe; color: #0061ff; }
+  .banner-card .icon-box.gdrive  { background: #e6f9ef; color: #1ea362; }
+  .banner-card .icon-box.text    { background: #f3f4f6; color: #6b7280; }
+  .banner-card .info {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: #4b5563;
+    line-height: 1.4;
+  }
+  .banner-card .info .type-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #9ca3af;
+    margin-bottom: 2px;
+  }
+  .banner-card .info .text-preview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .banner-card .x-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: #ef4444;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    font-size: 11px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .banner-card:hover .x-btn { opacity: 1; }
+
+  /* ── CLIENT DRIVE LINK ── */
+  .drive-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #6b7280;
+  }
+  .drive-bar svg { flex-shrink: 0; }
+  .drive-bar a {
+    color: #2271b1;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .drive-bar a:hover { text-decoration: underline; }
+  .drive-bar .drive-client {
+    margin-left: auto;
+    font-size: 11px;
+    color: #9ca3af;
+  }
+
+  /* ── WP EDITOR ── */
+  .wp-editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 420px;
+    transition: border-color 0.4s, box-shadow 0.4s;
+  }
+  .wp-editor.churning {
+    border-color: #d97706;
+    box-shadow: 0 0 18px rgba(217,119,6,0.25), 0 0 4px rgba(217,119,6,0.15);
+  }
+  @keyframes churnPulse {
+    0%, 100% { box-shadow: 0 0 18px rgba(217,119,6,0.25), 0 0 4px rgba(217,119,6,0.15); }
+    50% { box-shadow: 0 0 28px rgba(217,119,6,0.35), 0 0 8px rgba(217,119,6,0.2); }
+  }
+  .wp-editor.churning { animation: churnPulse 1.8s ease-in-out infinite; }
+
+  /* tab bar */
+  .wp-tabs {
+    display: flex;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    user-select: none;
+  }
+  .wp-tabs button {
+    padding: 9px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .wp-tabs button.active {
+    color: #2271b1;
+    border-bottom-color: #2271b1;
+    background: #fff;
+  }
+  .wp-tabs button:hover:not(.active) { color: #374151; }
+
+  /* snippet bar */
+  .snippet-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fdfdfd;
+  }
+  .snippet-bar button {
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    color: #444;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  .snippet-bar button:hover {
+    background: #f0f4ff;
+    border-color: #2271b1;
+    color: #2271b1;
+  }
+
+  /* editor area */
+  .editor-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .editor-body textarea {
+    flex: 1;
+    width: 100%;
+    min-height: 340px;
+    padding: 16px 18px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    border: none;
+    outline: none;
+    resize: none;
+    color: #1e1e1e;
+    background: #fff;
+  }
+  .editor-body .visual-preview {
+    flex: 1;
+    padding: 20px 24px;
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-y: auto;
+    display: none;
+    color: #1e1e1e;
+  }
+  .editor-body .visual-preview h2 { font-size: 22px; margin: 16px 0 8px; }
+  .editor-body .visual-preview h3 { font-size: 18px; margin: 14px 0 6px; }
+  .editor-body .visual-preview p { margin: 0 0 12px; }
+  .editor-body .visual-preview blockquote {
+    border-left: 3px solid #2271b1;
+    padding: 8px 16px;
+    margin: 12px 0;
+    color: #555;
+    background: #f9fafb;
+  }
+  .editor-body .visual-preview img { max-width: 100%; height: auto; border-radius: 6px; }
+  .editor-body .visual-preview ul, .editor-body .visual-preview ol { margin: 8px 0 12px 24px; }
+  .editor-body .visual-preview a { color: #2271b1; }
+  .editor-body .visual-preview hr { border: none; border-top: 1px solid #e5e7eb; margin: 16px 0; }
+
+  /* stats corner */
+  .editor-stats {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    padding: 6px 14px;
+    font-size: 11px;
+    color: #9ca3af;
+    border-top: 1px solid #f0f0f0;
+    background: #fdfdfd;
+  }
+
+  /* ── BOTTOM STATUS BAR ── */
+  .bottom-bar {
+    padding: 10px 28px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 12px;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+  }
+  .bottom-bar .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    flex-shrink: 0;
+  }
+  .bottom-bar .status-dot.busy { background: #f59e0b; animation: pulse 1s infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .bottom-bar .status-text { font-weight: 500; }
+
+  /* ── CAPTURE BUTTON (sticky) ── */
+  .capture-btn {
+    position: fixed;
+    top: 56px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(34,113,177,0.25);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+    user-select: none;
+  }
+  .capture-btn:hover {
+    background: #1a5a8e;
+    box-shadow: 0 4px 14px rgba(34,113,177,0.35);
+    transform: translateY(-1px);
+  }
+  .capture-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(34,113,177,0.2);
+  }
+  .capture-btn .cap-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #9ca3af;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .capture-btn .cap-dot.captured {
+    background: #10b981;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<!-- CAPTURE FOR EXTENSION (sticky) -->
+<button class="capture-btn" id="captureBtn" title="Capture for Extension (Ctrl+S)">
+  <span class="cap-dot" id="capDot"></span>
+  <span id="capLabel">Capture for Extension</span>
+</button>
+
+<!-- CLIENT HEADER -->
+<header class="client-header">
+  <div>
+    <span style="color:#9ca3af">Client:</span>
+    <span class="client-name" id="clientName">Select Client</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <input type="password" id="apiKeyInput" placeholder="Claude API Key" style="padding:4px 8px;font-size:11px;border:1px solid #e5e7eb;border-radius:4px;width:180px;color:#6b7280;background:#f9fafb;" />
+    <span class="tag">WP Article Launcher</span>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<div class="main-wrap">
+
+  <!-- PASTE INPUT BOX -->
+  <div class="paste-zone">
+    <textarea id="pasteInput" placeholder="Drop your content here &#8212; text, links, images, anything..."></textarea>
+    <button class="paste-btn" id="addBtn">Add</button>
+  </div>
+
+  <!-- BANNERS AREA -->
+  <div class="banners-section">
+    <div class="label" id="bannersLabel">Pasted Materials</div>
+    <div class="banners-wrap" id="bannersWrap"></div>
+  </div>
+
+  <!-- CLIENT GOOGLE DRIVE FOLDER -->
+  <div class="drive-bar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2271b1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <a href="https://drive.google.com/drive/u/0/folders/16Vwze5wxvJ7WDlNJ_F4zm-2NjdriBLaB" target="_blank" rel="noopener">Client Google Drive Folder</a>
+    <span class="drive-client" id="driveClientLabel"></span>
+  </div>
+
+  <!-- WORDPRESS HTML EMULATOR -->
+  <div class="wp-editor">
+    <div class="wp-tabs">
+      <button class="active" data-tab="text">Text</button>
+      <button data-tab="visual">Visual</button>
+    </div>
+    <div class="snippet-bar" id="snippetBar">
+      <button data-tag="b">b</button>
+      <button data-tag="i">i</button>
+      <button data-tag="u">u</button>
+      <button data-tag="link">link</button>
+      <button data-tag="h2">h2</button>
+      <button data-tag="h3">h3</button>
+      <button data-tag="img">img</button>
+      <button data-tag="ul">ul</button>
+      <button data-tag="ol">ol</button>
+      <button data-tag="blockquote">blockquote</button>
+      <button data-tag="hr">hr</button>
+    </div>
+    <div class="editor-body">
+      <textarea id="editorText"></textarea>
+      <div class="visual-preview" id="visualPreview"></div>
+    </div>
+    <div class="editor-stats">
+      <span id="wordCount">0 words</span>
+      <span id="htmlSize">0 B</span>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM STATUS BAR -->
+<div class="bottom-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span class="status-text" id="statusText">Ready</span>
+</div>
+
+<script src="paste-engine.js"></script>
+<script src="churn-engine.js"></script>
+<script src="writing-standards.js"></script>
+<script>
+(function() {
+  // ── STATE ──
+  let banners = [];
+  let currentTab = 'text';
+  const LS_BANNERS = 'wpal_banners';
+  const LS_EDITOR  = 'wpal_editor';
+  const LS_CLIENT  = 'wpal_client';
+
+  // ── DOM REFS ──
+  const pasteInput     = document.getElementById('pasteInput');
+  const addBtn         = document.getElementById('addBtn');
+  const bannersWrap    = document.getElementById('bannersWrap');
+  const bannersLabel   = document.getElementById('bannersLabel');
+  const editorText     = document.getElementById('editorText');
+  const visualPreview  = document.getElementById('visualPreview');
+  const wordCountEl    = document.getElementById('wordCount');
+  const htmlSizeEl     = document.getElementById('htmlSize');
+  const statusDot      = document.getElementById('statusDot');
+  const statusText     = document.getElementById('statusText');
+  const clientNameEl   = document.getElementById('clientName');
+  const driveClientEl  = document.getElementById('driveClientLabel');
+  const tabBtns        = document.querySelectorAll('.wp-tabs button');
+  const snippetBtns    = document.querySelectorAll('#snippetBar button');
+  const wpEditor       = document.querySelector('.wp-editor');
+  const apiKeyInput    = document.getElementById('apiKeyInput');
+
+  // ── ERROR TOAST (visible, impossible to miss) ──
+  function showError(msg) {
+    var existing = document.querySelector('.churn-error-toast');
+    if (existing) existing.remove();
+    var toast = document.createElement('div');
+    toast.className = 'churn-error-toast';
+    toast.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;background:#dc2626;color:#fff;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:600;box-shadow:0 6px 24px rgba(220,38,38,0.45);max-width:520px;text-align:center;font-family:inherit;animation:toastSlide 0.35s ease;';
+    toast.textContent = msg;
+    var closeSpan = document.createElement('span');
+    closeSpan.textContent = ' \u2715';
+    closeSpan.style.cssText = 'cursor:pointer;margin-left:14px;opacity:0.7;';
+    closeSpan.onclick = function() { toast.remove(); };
+    toast.appendChild(closeSpan);
+    document.body.appendChild(toast);
+    setTimeout(function() { if (toast.parentNode) toast.remove(); }, 8000);
+  }
+
+  // Inject toast animation
+  var toastStyle = document.createElement('style');
+  toastStyle.textContent = '@keyframes toastSlide{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+  document.head.appendChild(toastStyle);
+
+  // ── INIT: LOAD FROM LOCALSTORAGE ──
+  function init() {
+    var saved = localStorage.getItem(LS_BANNERS);
+    if (saved) { try { banners = JSON.parse(saved); } catch(e) { banners = []; } }
+    var savedEditor = localStorage.getItem(LS_EDITOR);
+    if (savedEditor) editorText.value = savedEditor;
+    var savedClient = localStorage.getItem(LS_CLIENT);
+    if (savedClient) setClient(savedClient);
+    renderBanners();
+    updateStats();
+  }
+
+  // ── SAVE ──
+  function saveBanners() { localStorage.setItem(LS_BANNERS, JSON.stringify(banners)); }
+  function saveEditor()  { localStorage.setItem(LS_EDITOR, editorText.value); }
+
+  // ── CLIENT ──
+  function setClient(name) {
+    clientNameEl.textContent = name || 'Select Client';
+    driveClientEl.textContent = name && name !== 'Select Client' ? name : '';
+    localStorage.setItem(LS_CLIENT, name);
+  }
+  window.setWPALClient = setClient;
+
+  // ── DETECT PASTE TYPE ──
+  function detectType(text) {
+    var trimmed = text.trim();
+    var ytMatch = trimmed.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) return { type: 'youtube', id: ytMatch[1], raw: trimmed };
+    if (/dropbox\.com/i.test(trimmed)) return { type: 'dropbox', raw: trimmed };
+    if (/drive\.google\.com/i.test(trimmed)) return { type: 'gdrive', raw: trimmed };
+    if (/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(trimmed)) return { type: 'image', raw: trimmed };
+    return { type: 'text', raw: trimmed };
+  }
+
+  // ── ADD BANNER ──
+  function addBanner(input) {
+    if (!input.trim()) return;
+    var info = detectType(input);
+    var banner = Object.assign({}, info, { id_key: Date.now() + '_' + Math.random().toString(36).slice(2,6) });
+    banners.push(banner);
+    saveBanners();
+    renderBanners();
+    triggerChurn();
+  }
+
+  // ── REMOVE BANNER ──
+  function removeBanner(id_key) {
+    banners = banners.filter(function(b) { return b.id_key !== id_key; });
+    saveBanners();
+    renderBanners();
+    if (banners.length) triggerChurn();
+  }
+
+  // ── TRIGGER CHURN — IMMEDIATE visual feedback, then API ──
+  function triggerChurn() {
+    if (!banners.length) return;
+
+    // INSTANT orange glow — user sees feedback the MOMENT they click Add
+    wpEditor.classList.add('churning');
+    statusDot.classList.add('busy');
+    statusText.textContent = 'Churning...';
+    bannersWrap.querySelectorAll('.banner-card').forEach(function(c) { c.classList.add('processing'); });
+
+    // Pre-flight: check API key BEFORE calling engine
+    if (typeof ChurnEngine === 'undefined') {
+      killChurnVisuals();
+      showError('ChurnEngine not loaded. Hard refresh the page (Ctrl+Shift+R).');
+      return;
+    }
+    if (!ChurnEngine.hasApiKey()) {
+      killChurnVisuals();
+      showError('No API key! Enter your Anthropic API key in the header bar, then click Add again.');
+      return;
+    }
+
+    // Fire the churn — engine handles streaming, callbacks update UI
+    ChurnEngine.churn(banners).catch(function() {
+      // Error already surfaced by onChurnError callback
+    });
+  }
+
+  function killChurnVisuals() {
+    wpEditor.classList.remove('churning');
+    statusDot.classList.remove('busy');
+    statusText.textContent = 'Error';
+    clearBannerGlow();
+  }
+
+  // ── RENDER BANNERS ──
+  function renderBanners() {
+    bannersWrap.innerHTML = '';
+    bannersLabel.classList.toggle('visible', banners.length > 0);
+    var isChurning = wpEditor.classList.contains('churning');
+
+    banners.forEach(function(b) {
+      var card = document.createElement('div');
+      card.className = 'banner-card';
+      if (isChurning) card.classList.add('processing');
+
+      var inner = '';
+      if (b.type === 'youtube') {
+        inner = '<img class="thumb" src="https://img.youtube.com/vi/' + b.id + '/mqdefault.jpg" alt="YT"><div class="info"><div class="type-label">YouTube</div><div class="text-preview">' + escHtml(b.raw) + '</div></div>';
+      } else if (b.type === 'dropbox') {
+        inner = '<div class="icon-box dropbox"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L6 6l6 4-6 4 6 4 6-4-6-4 6-4-6-4zm-6 8l-6-4 6-4 6 4-6 4zm12 0l6-4-6-4-6 4 6 4zm-12 4l-6-4 6-4 6 4-6 4zm12 0l6-4-6-4-6 4 6 4z"/></svg></div><div class="info"><div class="type-label">Dropbox</div><div class="text-preview">' + escHtml(b.raw) + '</div></div>';
+      } else if (b.type === 'gdrive') {
+        inner = '<div class="icon-box gdrive"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8.3 3L1.5 15h6.8L15 3H8.3zm7.3 0L22.5 15H15l.6-1L9 3h6.6zm-3.7 13.5L8.6 22h13.9l3.3-5.5H11.9z"/></svg></div><div class="info"><div class="type-label">Google Drive</div><div class="text-preview">' + escHtml(b.raw) + '</div></div>';
+      } else if (b.type === 'image') {
+        inner = '<img class="thumb" src="' + escHtml(b.raw) + '" alt="img" onerror="this.style.background=\'#f3f4f6\'"><div class="info"><div class="type-label">Image</div><div class="text-preview">' + escHtml(b.raw) + '</div></div>';
+      } else {
+        var preview = b.raw.length > 100 ? b.raw.slice(0, 100) + '...' : b.raw;
+        inner = '<div class="icon-box text"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="info"><div class="type-label">Text</div><div class="text-preview">' + escHtml(preview) + '</div></div>';
+      }
+
+      var xBtn = document.createElement('div');
+      xBtn.className = 'x-btn';
+      xBtn.textContent = '\u00d7';
+      xBtn.addEventListener('click', function() { removeBanner(b.id_key); });
+
+      card.innerHTML = inner;
+      card.appendChild(xBtn);
+      bannersWrap.appendChild(card);
+    });
+  }
+
+  function clearBannerGlow() {
+    bannersWrap.querySelectorAll('.banner-card.processing').forEach(function(c) { c.classList.remove('processing'); });
+  }
+  window.clearBannerGlow = clearBannerGlow;
+
+  function escHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ── ADD BUTTON ──
+  addBtn.addEventListener('click', function() {
+    addBanner(pasteInput.value);
+    pasteInput.value = '';
+    pasteInput.focus();
+  });
+
+  pasteInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      addBtn.click();
+    }
+  });
+
+  // ── TABS ──
+  tabBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      currentTab = btn.dataset.tab;
+      tabBtns.forEach(function(b) { b.classList.toggle('active', b === btn); });
+      if (currentTab === 'visual') {
+        editorText.style.display = 'none';
+        visualPreview.style.display = 'block';
+        visualPreview.innerHTML = editorText.value || '<p style="color:#ccc">Nothing to preview yet.</p>';
+        document.getElementById('snippetBar').style.display = 'none';
+      } else {
+        editorText.style.display = '';
+        visualPreview.style.display = 'none';
+        document.getElementById('snippetBar').style.display = '';
+        editorText.focus();
+      }
+    });
+  });
+
+  // ── SNIPPET QUICK-INSERT ──
+  var snippetMap = {
+    'b':          { before: '<strong>',      after: '</strong>' },
+    'i':          { before: '<em>',          after: '</em>' },
+    'u':          { before: '<u>',           after: '</u>' },
+    'link':       { before: '<a href="">',   after: '</a>' },
+    'h2':         { before: '<h2>',          after: '</h2>' },
+    'h3':         { before: '<h3>',          after: '</h3>' },
+    'img':        { before: '<img src="',    after: '" alt="" />', selfClose: true },
+    'ul':         { before: '<ul>\n  <li>',  after: '</li>\n</ul>' },
+    'ol':         { before: '<ol>\n  <li>',  after: '</li>\n</ol>' },
+    'blockquote': { before: '<blockquote>',  after: '</blockquote>' },
+    'hr':         { before: '<hr />\n',      after: '', selfClose: true }
+  };
+
+  snippetBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var tag = btn.dataset.tag;
+      var snip = snippetMap[tag];
+      if (!snip) return;
+      insertSnippet(snip.before, snip.after);
+    });
+  });
+
+  function insertSnippet(before, after) {
+    var start = editorText.selectionStart;
+    var end   = editorText.selectionEnd;
+    var sel   = editorText.value.substring(start, end);
+    var insert = before + sel + after;
+    editorText.setRangeText(insert, start, end, 'end');
+    editorText.focus();
+    saveEditor();
+    updateStats();
+  }
+
+  // ── EDITOR STATS ──
+  function updateStats() {
+    var text = editorText.value;
+    var words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    wordCountEl.textContent = words + ' word' + (words !== 1 ? 's' : '');
+    var bytes = new Blob([text]).size;
+    htmlSizeEl.textContent = bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB';
+  }
+
+  editorText.addEventListener('input', function() {
+    saveEditor();
+    updateStats();
+  });
+
+  // ── STATUS BAR ──
+  function setStatus(state, msg) {
+    statusText.textContent = msg || state;
+    statusDot.classList.toggle('busy', state === 'busy');
+  }
+  window.setWPALStatus = setStatus;
+
+  // ── WIRE UP CHURN ENGINE CALLBACKS (ONCE, not per-churn) ──
+  if (typeof ChurnEngine !== 'undefined') {
+    ChurnEngine.onChurnStart(function() {
+      // Visual feedback already applied in triggerChurn()
+      console.log('[Launcher] Churn API call fired');
+    });
+
+    ChurnEngine.onChurnChunk(function(partial) {
+      editorText.value = partial;
+      updateStats();
+    });
+
+    ChurnEngine.onChurnComplete(function(html) {
+      editorText.value = html;
+      saveEditor();
+      updateStats();
+      wpEditor.classList.remove('churning');
+      clearBannerGlow();
+      statusDot.classList.remove('busy');
+      setStatus('ready', 'Article ready \u2014 ' + new Date().toLocaleTimeString());
+    });
+
+    ChurnEngine.onChurnError(function(err) {
+      killChurnVisuals();
+      setStatus('ready', 'Error: ' + err.message);
+      showError(err.message);
+    });
+  }
+
+  // ── WRITING STANDARDS STICKY NOTE ──
+  if (typeof WritingStandards !== 'undefined') {
+    WritingStandards.init(document.body);
+  }
+
+  // ── URL PARAM: client ──
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('client')) setClient(params.get('client'));
+
+  // ── BOOT ──
+  init();
+
+  // Init ChurnEngine (it handles its own key persistence via wpal_api_key)
+  if (typeof ChurnEngine !== 'undefined') {
+    ChurnEngine.init(editorText, apiKeyInput);
+  }
+
+  // ── CAPTURE FOR EXTENSION ──
+  var captureBtn = document.getElementById('captureBtn');
+  var capDot     = document.getElementById('capDot');
+  var capLabel   = document.getElementById('capLabel');
+
+  function captureForExtension() {
+    var payload = {
+      title: clientNameEl.textContent || '',
+      html: editorText.value,
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem('wp-article-capture', JSON.stringify(payload));
+    window.dispatchEvent(new CustomEvent('wp-article-capture', { detail: payload }));
+    capDot.classList.add('captured');
+    capLabel.textContent = 'Captured!';
+    setTimeout(function() { capLabel.textContent = 'Capture for Extension'; }, 1800);
+  }
+
+  captureBtn.addEventListener('click', captureForExtension);
+
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      captureForExtension();
+    }
+  });
+
+  if (localStorage.getItem('wp-article-capture')) {
+    capDot.classList.add('captured');
+  }
+})();
+</script>
+</body>
+</html>

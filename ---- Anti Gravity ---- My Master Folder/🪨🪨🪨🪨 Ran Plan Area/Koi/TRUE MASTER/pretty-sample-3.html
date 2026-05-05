@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KOI // CONSOLE — pretty sample 3 · Web3 Console</title>
+<style>
+  :root{
+    --bg:#0a0a14; --panel:#11122080; --panel-solid:#13142b;
+    --ink:#e6e8ff; --dim:#8b8fb5; --hair:#ffffff14;
+    --violet:#8b5cf6; --cyan:#22d3ee; --gold:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;overflow:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(800px 600px at 55% 35%,#8b5cf633 0%,transparent 60%),
+               radial-gradient(500px 400px at 85% 70%,#22d3ee22 0%,transparent 60%)}
+  .app{display:grid;grid-template-columns:80px 1fr 320px;height:100vh;position:relative;z-index:1}
+
+  /* LEFT RAIL */
+  .rail{background:#08081099;border-right:1px solid var(--hair);
+    display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;backdrop-filter:blur(8px)}
+  .rail .back{font-size:18px;color:var(--dim);text-decoration:none;padding:10px;border-radius:8px;
+    transition:.2s}
+  .rail .back:hover{color:var(--cyan);background:#22d3ee14}
+  .rail .logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--violet),var(--cyan));
+    display:grid;place-items:center;font-weight:900;color:#0a0a14;font-size:14px;margin:8px 0 18px;
+    box-shadow:0 0 24px var(--violet)66}
+  .rail .ic{width:46px;height:46px;border-radius:10px;display:grid;place-items:center;
+    cursor:pointer;color:var(--dim);font-size:18px;transition:.2s;position:relative}
+  .rail .ic:hover{color:var(--ink);background:#ffffff08}
+  .rail .ic.active{color:var(--cyan);background:#22d3ee14}
+  .rail .ic.active::before{content:"";position:absolute;left:-2px;top:8px;bottom:8px;width:3px;
+    background:var(--cyan);border-radius:0 3px 3px 0;box-shadow:0 0 12px var(--cyan)}
+
+  /* CENTER */
+  .center{display:flex;flex-direction:column;overflow-y:auto}
+  .topbar{display:flex;align-items:center;gap:14px;padding:14px 26px;border-bottom:1px solid var(--hair);
+    backdrop-filter:blur(8px)}
+  .wm{font-weight:800;letter-spacing:.3em;font-size:13px;color:var(--ink)}
+  .wm span{color:var(--violet)}
+  .search{flex:1;max-width:380px;background:#ffffff08;border:1px solid var(--hair);
+    border-radius:10px;padding:10px 14px;color:var(--dim);font-size:13px}
+  .avatar{margin-left:auto;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#fbbf24,#f97316);
+    display:grid;place-items:center;font-weight:800;color:#0a0a14;font-size:13px;border:2px solid #fbbf2444}
+
+  .stage{padding:26px;display:flex;flex-direction:column;gap:22px}
+
+  /* HERO */
+  .hero{background:linear-gradient(135deg,#13142bcc,#0a0a14ee);
+    border:1px solid var(--hair);border-radius:18px;padding:30px;
+    box-shadow:0 24px 60px #0008,inset 0 1px 0 #ffffff08;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;top:-100px;right:-80px;width:360px;height:360px;
+    background:radial-gradient(circle,var(--violet)44,transparent 60%);filter:blur(40px)}
+  .tag{display:inline-block;font-size:10px;letter-spacing:.3em;color:var(--cyan);
+    padding:5px 10px;border:1px solid var(--cyan);border-radius:999px;margin-bottom:12px}
+  .name{font-size:48px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+  .sub{color:var(--dim);font-size:14px;margin-bottom:24px}
+  .stat-big{font-size:88px;font-weight:900;line-height:1;letter-spacing:-.04em;
+    background:linear-gradient(180deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;text-shadow:0 0 40px #22d3ee44;display:inline-block}
+  .stat-label{display:block;font-size:11px;letter-spacing:.25em;color:var(--dim);margin-top:6px}
+  .sig{margin-top:18px;color:var(--ink);font-size:15px}
+  .sig em{color:var(--cyan);font-style:normal;font-weight:600}
+
+  /* CHART */
+  .chart{display:flex;gap:6px;align-items:flex-end;height:72px;margin-top:22px;
+    padding:14px;background:#0a0a14aa;border-radius:10px;border:1px solid var(--hair)}
+  .chart .bar{flex:1;background:linear-gradient(180deg,var(--violet),var(--cyan));
+    border-radius:3px 3px 0 0;animation:grow .9s ease-out backwards;min-width:0;
+    box-shadow:0 0 8px var(--violet)66}
+  .chart .bar:nth-child(1){height:32%;animation-delay:.05s}
+  .chart .bar:nth-child(2){height:48%;animation-delay:.10s}
+  .chart .bar:nth-child(3){height:38%;animation-delay:.15s}
+  .chart .bar:nth-child(4){height:62%;animation-delay:.20s}
+  .chart .bar:nth-child(5){height:78%;animation-delay:.25s}
+  .chart .bar:nth-child(6){height:90%;animation-delay:.30s}
+  .chart .bar:nth-child(7){height:100%;animation-delay:.35s}
+  @keyframes grow{from{height:0}}
+
+  /* METRIC STRIP */
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .tile{background:var(--panel);border:1px solid var(--hair);border-radius:14px;padding:16px;
+    backdrop-filter:blur(8px);transition:.2s}
+  .tile:hover{transform:translateY(-3px);border-color:var(--violet);box-shadow:0 12px 30px var(--violet)22}
+  .tile .lbl{font-size:10px;letter-spacing:.25em;color:var(--dim);text-transform:uppercase}
+  .tile .val{font-size:24px;font-weight:800;margin-top:6px}
+  .tile .delta{font-size:11px;color:#34d399;margin-top:4px}
+  .tile .delta.down{color:#f87171}
+
+  /* RIGHT SIDEBAR */
+  .side{background:#11122baa;border-left:1px solid var(--hair);padding:22px 20px;backdrop-filter:blur(10px);
+    box-shadow:-8px 0 24px #0006;overflow-y:auto}
+  .side h3{font-size:11px;letter-spacing:.3em;color:var(--dim);margin:0 0 14px;text-transform:uppercase}
+  .compare-card{background:linear-gradient(135deg,#13142bcc,#0a0a14ee);border:1px solid var(--hair);
+    border-radius:14px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
+  .compare-card::before{content:"";position:absolute;top:-40px;right:-40px;width:140px;height:140px;
+    background:radial-gradient(circle,var(--cyan)33,transparent 60%);filter:blur(20px)}
+  .compare-card img{width:64px;height:64px;border-radius:50%;border:2px solid var(--cyan);
+    box-shadow:0 0 20px var(--cyan)44;display:block;margin-bottom:12px;object-fit:cover}
+  .compare-card .nm{font-size:18px;font-weight:700;margin:0 0 4px}
+  .compare-card .gn{font-size:12px;color:var(--dim);margin-bottom:14px}
+  .compare-card .stat-row{display:flex;justify-content:space-between;align-items:baseline;
+    padding:10px 0;border-top:1px solid var(--hair)}
+  .compare-card .k{font-size:11px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase}
+  .compare-card .v{font-size:14px;font-weight:700;color:var(--cyan)}
+  .pill{display:inline-block;font-size:9px;letter-spacing:.25em;color:var(--violet);
+    border:1px solid var(--violet);padding:3px 8px;border-radius:999px}
+  .row-link{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);
+    padding:8px 0;border-bottom:1px solid var(--hair);cursor:pointer;transition:.2s}
+  .row-link:hover{color:var(--ink)}
+
+  @media (max-width:1100px){.app{grid-template-columns:64px 1fr 280px}.stat-big{font-size:64px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- LEFT RAIL -->
+  <nav class="rail">
+    <a class="back" href="pretty.html" title="Back to PRETTY hub">↩</a>
+    <div class="logo">K</div>
+    <div class="ic active" title="Dashboard">▣</div>
+    <div class="ic" title="Artists">♪</div>
+    <div class="ic" title="Streams">▶</div>
+    <div class="ic" title="Royalties">$</div>
+    <div class="ic" title="Analytics">∿</div>
+    <div class="ic" title="Vault">⌂</div>
+    <div class="ic" title="Settings">⚙</div>
+  </nav>
+
+  <!-- CENTER -->
+  <main class="center">
+    <div class="topbar">
+      <div class="wm">KOI <span>// CONSOLE</span></div>
+      <input class="search" placeholder="Search artists, tracks, markets…" readonly>
+      <div class="avatar">CD</div>
+    </div>
+
+    <div class="stage">
+      <!-- HERO -->
+      <section class="hero">
+        <span class="tag">ACTIVE PROFILE</span>
+        <h1 class="name">KOI</h1>
+        <p class="sub">Future R&B / Electronic Pop · Los Angeles</p>
+        <div>
+          <span class="stat-big">2.4M</span>
+          <span class="stat-label">MONTHLY LISTENERS</span>
+        </div>
+        <p class="sig">Signature track · <em>Velvet Hours</em></p>
+        <div class="chart" aria-label="Monthly streams trend">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+      </section>
+
+      <!-- METRIC STRIP -->
+      <section class="strip">
+        <div class="tile"><div class="lbl">Total Streams</div><div class="val">48.2M</div><div class="delta">+12.4%</div></div>
+        <div class="tile"><div class="lbl">Unique Listeners</div><div class="val">2.4M</div><div class="delta">+8.1%</div></div>
+        <div class="tile"><div class="lbl">Top Country</div><div class="val">USA</div><div class="delta">37% of plays</div></div>
+        <div class="tile"><div class="lbl">Engagement</div><div class="val">94%</div><div class="delta">+2.3%</div></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- RIGHT SIDEBAR -->
+  <aside class="side">
+    <h3>Compare</h3>
+    <div class="compare-card">
+      <span class="pill">SECONDARY</span>
+      <img src="https://picsum.photos/seed/elijah-console/200/200" alt="Elijah Osbourne">
+      <h2 class="nm">Elijah Osbourne</h2>
+      <p class="gn">Indie Folk · Portland</p>
+      <div class="stat-row"><span class="k">Listeners</span><span class="v">185K</span></div>
+      <div class="stat-row"><span class="k">Signature</span><span class="v">Pacific Standard</span></div>
+      <div class="stat-row"><span class="k">Genre Match</span><span class="v">12%</span></div>
+      <div class="stat-row"><span class="k">Audience Lift</span><span class="v">+4.2%</span></div>
+    </div>
+
+    <h3 style="margin-top:22px">Quick Links</h3>
+    <div class="row-link"><span>Royalty Statement Q1</span><span>→</span></div>
+    <div class="row-link"><span>Spotify for Artists</span><span>→</span></div>
+    <div class="row-link"><span>Distro Pipeline</span><span>→</span></div>
+    <div class="row-link"><span>Sync Opportunities</span><span>→</span></div>
+    <div class="row-link"><span>Touring Calendar</span><span>→</span></div>
+  </aside>
+
+</div>
+</body>
+</html>

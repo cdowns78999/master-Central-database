@@ -1,0 +1,4101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Kit | Stage-by-Stage Ad Set Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* Spotify green dominant palette - VIBRANT */
+            --spotify: #1ed760;
+            --spotify-bright: #1fdf64;
+            --spotify-dim: rgba(30, 215, 96, 0.75);
+            --spotify-subtle: rgba(30, 215, 96, 0.18);
+            --spotify-ghost: rgba(30, 215, 96, 0.10);
+            --spotify-whisper: rgba(30, 215, 96, 0.04);
+
+            /* Ultra-subtle base tones */
+            --bg: #09090b;
+            --bg-elevated: rgba(255, 255, 255, 0.018);
+            --bg-float: rgba(255, 255, 255, 0.028);
+            --panel: rgba(255, 255, 255, 0.02);
+            --border: rgba(255, 255, 255, 0.055);
+            --border-hover: rgba(30, 215, 96, 0.35);
+
+            /* Muted accent variants (all green-shifted) */
+            --accent-soft: rgba(30, 215, 96, 0.5);
+            --accent-glow: rgba(30, 215, 96, 0.15);
+
+            /* Text hierarchy - READABLE */
+            --text: #f0f0f5;
+            --text-mid: rgba(240, 240, 245, 0.7);
+            --text-dim: rgba(240, 240, 245, 0.5);
+            --text-ghost: rgba(240, 240, 245, 0.3);
+
+            /* Subtle theme colors (muted, green-harmonized) */
+            --theme-green: rgba(30, 215, 96, 0.8);
+            --theme-teal: rgba(30, 190, 130, 0.7);
+            --theme-emerald: rgba(45, 200, 110, 0.7);
+            --theme-sage: rgba(70, 170, 100, 0.6);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse at 20% 0%, var(--spotify-whisper) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, var(--spotify-whisper) 0%, transparent 50%);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 50% 50%, transparent 0%, var(--bg) 80%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .glow-sphere {
+            position: fixed;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--spotify-whisper) 0%, transparent 60%);
+            z-index: -1;
+            top: -300px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            filter: blur(60px);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 40px;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--spotify);
+            margin-bottom: 10px;
+            text-shadow: 0 0 60px var(--spotify-ghost);
+        }
+
+        .page-header p {
+            color: var(--text-mid);
+            font-size: 0.95rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* INCENTIVE STAT BADGES */
+        .incentive-strip {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 45px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 26px;
+            text-align: center;
+            min-width: 150px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: help;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-badge:hover {
+            border-color: var(--border-hover);
+            background: var(--spotify-whisper);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25), 0 0 30px var(--spotify-whisper);
+        }
+
+        .stat-badge .value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--spotify);
+            line-height: 1;
+        }
+
+        .stat-badge .label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-mid);
+            margin-top: 8px;
+        }
+
+        .stat-badge .source {
+            font-size: 0.55rem;
+            color: var(--text-ghost);
+            margin-top: 4px;
+        }
+
+        /* TOOLTIP BUBBLE */
+        .stat-bubble {
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            width: 260px;
+            background: rgba(12, 13, 16, 0.95);
+            border: 1px solid var(--border-hover);
+            border-radius: 14px;
+            padding: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 20px var(--spotify-whisper);
+            z-index: 3000;
+            text-align: left;
+            backdrop-filter: blur(20px);
+        }
+
+        .stat-bubble::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid var(--border-hover);
+        }
+
+        .stat-badge:hover .stat-bubble {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+
+        .bubble-title {
+            color: var(--spotify-dim);
+            font-family: 'Outfit';
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            display: block;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+
+        .bubble-text {
+            font-size: 0.78rem;
+            color: var(--text);
+            line-height: 1.55;
+        }
+
+        /* PHASE NAVIGATOR */
+        .phase-navigator {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 28px 36px;
+            margin-bottom: 36px;
+            backdrop-filter: blur(10px);
+        }
+
+        .phase-timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .phase-timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .phase-timeline::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--spotify), var(--theme-teal));
+            transform: translateY(-50%);
+            z-index: 1;
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px var(--spotify-ghost);
+        }
+
+        .phase-timeline.phase-1::after {
+            width: 0%;
+        }
+
+        .phase-timeline.phase-2::after {
+            width: 33%;
+        }
+
+        .phase-timeline.phase-3::after {
+            width: 66%;
+        }
+
+        .phase-timeline.phase-4::after {
+            width: 100%;
+        }
+
+        .phase-item {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .phase-dot {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .phase-item.active .phase-dot,
+        .phase-item.completed .phase-dot {
+            border-color: var(--spotify-dim);
+            background: var(--spotify-ghost);
+            color: var(--spotify);
+            box-shadow: 0 0 20px var(--spotify-whisper);
+        }
+
+        .phase-item.completed .phase-dot {
+            background: var(--spotify-subtle);
+            border-color: var(--spotify);
+        }
+
+        .phase-item:hover .phase-dot {
+            transform: scale(1.08);
+            border-color: var(--spotify-dim);
+        }
+
+        .phase-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            transition: color 0.3s ease;
+        }
+
+        .phase-item.active .phase-label,
+        .phase-item.completed .phase-label {
+            color: var(--spotify-dim);
+        }
+
+        .phase-timing {
+            font-size: 0.6rem;
+            color: var(--text-ghost);
+            margin-top: 3px;
+        }
+
+        /* MAIN LAYOUT */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 370px 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* TOOL SEQUENCER SIDEBAR */
+        .tool-sequencer {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: sticky;
+            top: 40px;
+            height: fit-content;
+        }
+
+        .sequencer-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--spotify-dim);
+            margin-bottom: 8px;
+        }
+
+        /* TOOL CARDS */
+        .tool-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .tool-card.active {
+            display: block;
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .tool-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .tool-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            background: var(--spotify-ghost);
+            border: 1px solid var(--border);
+        }
+
+        .tool-icon.discovery {
+            background: var(--spotify-ghost);
+        }
+
+        .tool-icon.marquee {
+            background: var(--spotify-ghost);
+        }
+
+        .tool-icon.showcase {
+            background: var(--spotify-ghost);
+        }
+
+        .tool-icon.pitching {
+            background: var(--spotify-ghost);
+        }
+
+        .tool-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .tool-purpose {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .tool-section {
+            margin-bottom: 18px;
+        }
+
+        .tool-section-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--spotify);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        /* CHECKBOXES */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .checkbox-item:hover {
+            border-color: var(--border-hover);
+            background: var(--spotify-whisper);
+        }
+
+        .checkbox-item.selected {
+            border-color: var(--border-hover);
+            background: var(--spotify-ghost);
+        }
+
+        .checkbox-item input {
+            display: none;
+        }
+
+        .checkbox-box {
+            width: 16px;
+            height: 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .checkbox-item.selected .checkbox-box {
+            background: var(--spotify);
+            border-color: var(--spotify);
+        }
+
+        .checkbox-box::after {
+            content: '✓';
+            color: var(--bg);
+            font-size: 0.6rem;
+            font-weight: 900;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .checkbox-item.selected .checkbox-box::after {
+            opacity: 1;
+        }
+
+        .checkbox-label {
+            font-size: 0.8rem;
+            flex: 1;
+            color: var(--text);
+        }
+
+        .checkbox-item.selected .checkbox-label {
+            color: var(--text);
+        }
+
+        .checkbox-desc {
+            font-size: 0.6rem;
+            color: var(--text-ghost);
+        }
+
+        /* RADIO BUTTONS */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 12px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .radio-item:hover {
+            border-color: var(--border-hover);
+            background: var(--spotify-whisper);
+        }
+
+        .radio-item.selected {
+            border-color: var(--border-hover);
+            background: var(--spotify-ghost);
+        }
+
+        .radio-item input {
+            display: none;
+        }
+
+        .radio-circle {
+            width: 16px;
+            height: 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .radio-item.selected .radio-circle {
+            border-color: var(--spotify);
+        }
+
+        .radio-circle::after {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background: var(--spotify);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .radio-item.selected .radio-circle::after {
+            opacity: 1;
+        }
+
+        .radio-label {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .radio-item.selected .radio-label {
+            color: var(--text);
+        }
+
+        /* BUDGET SLIDER */
+        .budget-control {
+            padding: 18px;
+            background: var(--bg-elevated);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .budget-val-display {
+            color: var(--spotify);
+            font-family: 'Outfit';
+            font-weight: 900;
+            font-size: 1.1rem;
+        }
+
+        input[type=range].budget-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range].budget-slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        input[type=range].budget-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: var(--spotify);
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px var(--spotify-ghost);
+            border: 2px solid var(--bg);
+        }
+
+        /* DATE PICKER */
+        .date-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-mid);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .date-input:focus {
+            border-color: var(--border-hover);
+            color: var(--text);
+            box-shadow: 0 0 15px var(--spotify-whisper);
+        }
+
+        /* ACTION BUTTONS */
+        .btn-action {
+            width: 100%;
+            padding: 14px;
+            background: var(--spotify-subtle);
+            border: 1px solid var(--spotify-dim);
+            border-radius: 10px;
+            color: var(--spotify);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-action:hover {
+            background: var(--spotify);
+            color: var(--bg);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px var(--spotify-ghost);
+        }
+
+        .btn-action:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-mid);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--border-hover);
+            color: var(--spotify-dim);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* CASE STUDY PROOF */
+        .case-study-proof {
+            background: var(--spotify-whisper);
+            border: 1px solid rgba(29, 185, 84, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 14px;
+        }
+
+        .case-study-proof .artist {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--spotify);
+            font-weight: 600;
+        }
+
+        .case-study-proof .result {
+            font-size: 0.78rem;
+            color: var(--text);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        /* CAMPAIGN PREVIEW AREA */
+        .campaign-preview {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 26px;
+            min-height: 600px;
+            backdrop-filter: blur(10px);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 26px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .preview-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .preview-stats {
+            display: flex;
+            gap: 18px;
+        }
+
+        .preview-stat {
+            text-align: right;
+        }
+
+        .preview-stat .value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--spotify);
+        }
+
+        .preview-stat .label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-ghost);
+        }
+
+        /* TIMELINE BLOCKS */
+        .timeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .timeline-block {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-block.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .timeline-block.theme-green {
+            border-left-color: var(--theme-green);
+        }
+
+        .timeline-block.theme-purple {
+            border-left-color: var(--theme-teal);
+        }
+
+        .timeline-block.theme-blue {
+            border-left-color: var(--theme-emerald);
+        }
+
+        .timeline-block.theme-orange {
+            border-left-color: var(--theme-sage);
+        }
+
+        .block-header {
+            background: var(--bg-float);
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .block-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .block-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--spotify-whisper);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            border: 1px solid var(--border);
+        }
+
+        .block-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .block-timing {
+            font-size: 0.68rem;
+            color: var(--text-ghost);
+        }
+
+        .block-badge {
+            background: var(--spotify-whisper);
+            border: 1px solid var(--border-hover);
+            color: var(--spotify-dim);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .block-body {
+            padding: 16px 18px;
+        }
+
+        .block-desc {
+            font-size: 0.8rem;
+            color: var(--text-mid);
+            line-height: 1.55;
+            margin-bottom: 14px;
+        }
+
+        .block-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .detail-cell {
+            background: var(--bg);
+            padding: 10px 12px;
+        }
+
+        .detail-label {
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--spotify);
+            font-weight: 600;
+        }
+
+        .detail-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.78rem;
+            color: var(--text);
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        /* EMPTY STATE */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: var(--text-dim);
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 3.5rem;
+            margin-bottom: 18px;
+            opacity: 0.25;
+        }
+
+        .empty-state-text {
+            font-size: 0.9rem;
+            max-width: 280px;
+            line-height: 1.5;
+        }
+
+        /* PHASE CONTENT SECTIONS */
+        .phase-content {
+            display: none;
+        }
+
+        .phase-content.active {
+            display: block;
+        }
+
+        /* WATERFALL SINGLES */
+        .waterfall-single {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .waterfall-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .waterfall-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--spotify);
+        }
+
+        .remove-single {
+            background: none;
+            border: none;
+            color: var(--text-ghost);
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+        }
+
+        .remove-single:hover {
+            opacity: 1;
+            color: rgba(255, 100, 100, 0.7);
+        }
+
+        .add-single-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            color: var(--text-ghost);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-bottom: 12px;
+        }
+
+        .add-single-btn:hover {
+            border-color: var(--border-hover);
+            color: var(--spotify-dim);
+            background: var(--spotify-whisper);
+        }
+
+        /* SHOWCASE WAVES */
+        .showcase-wave {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        /* TOTAL SUMMARY */
+        .campaign-summary {
+            background: var(--spotify-whisper);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+            margin-top: 24px;
+        }
+
+        .summary-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--spotify);
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-item .value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--spotify);
+        }
+
+        .summary-item .label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-ghost);
+            margin-top: 4px;
+        }
+
+        /* GENERATE BUTTON */
+        .generate-section {
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Expected Outcomes */
+        .expected-outcomes {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .outcome-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .outcome-row:last-child {
+            border-bottom: none;
+        }
+
+        .outcome-label {
+            font-size: 0.7rem;
+            color: var(--text-ghost);
+        }
+
+        .outcome-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--spotify-dim);
+        }
+
+        /* Info tooltip */
+        .info-tip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            background: var(--border);
+            border-radius: 50%;
+            font-size: 0.55rem;
+            color: var(--text-ghost);
+            cursor: help;
+            margin-left: 5px;
+        }
+
+        /* DELUXE TOGGLE */
+        .deluxe-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-bottom: 16px;
+        }
+
+        .deluxe-toggle:hover {
+            border-color: var(--border-hover);
+            background: var(--spotify-whisper);
+        }
+
+        .deluxe-toggle.active {
+            border-color: var(--border-hover);
+            background: var(--spotify-ghost);
+        }
+
+        .toggle-switch {
+            width: 40px;
+            height: 22px;
+            background: var(--border);
+            border-radius: 11px;
+            position: relative;
+            transition: background 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .deluxe-toggle.active .toggle-switch {
+            background: var(--spotify-dim);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+            background: var(--text-dim);
+            border-radius: 50%;
+            transition: all 0.25s ease;
+        }
+
+        .deluxe-toggle.active .toggle-switch::after {
+            transform: translateX(18px);
+            background: var(--bg);
+        }
+
+        .toggle-text {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .deluxe-toggle.active .toggle-text {
+            color: var(--spotify);
+        }
+
+        /* Phase indicators on timeline */
+        .phase-indicator {
+            display: inline-block;
+            padding: 3px 8px;
+            background: var(--spotify-ghost);
+            border-radius: 4px;
+            font-size: 0.55rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--spotify);
+            margin-bottom: 8px;
+        }
+
+        /* JSON Buttons */
+        .preview-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-json {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-dim);
+            font-size: 0.68rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-json:hover {
+            border-color: var(--border-hover);
+            color: var(--spotify);
+            background: var(--spotify-whisper);
+        }
+
+        .btn-json span {
+            font-size: 0.8rem;
+        }
+
+        .btn-json.btn-upload {
+            cursor: pointer;
+        }
+
+        .btn-json.btn-reset {
+            border-color: rgba(255, 120, 120, 0.2);
+        }
+
+        .btn-json.btn-reset:hover {
+            border-color: rgba(255, 120, 120, 0.5);
+            color: rgba(255, 140, 140, 0.9);
+            background: rgba(255, 100, 100, 0.04);
+        }
+
+        .btn-plans {
+            background: rgba(255, 163, 26, 0.08) !important;
+            border-color: rgba(255, 163, 26, 0.2) !important;
+            color: rgb(255, 180, 80) !important;
+            border-radius: 20px !important;
+            font-weight: 700 !important;
+            padding: 6px 0 !important;
+            width: 105px !important;
+            justify-content: center !important;
+            font-size: 0.62rem !important;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .btn-plans:hover {
+            background: rgba(255, 163, 26, 0.15) !important;
+            border-color: rgba(255, 163, 26, 0.4) !important;
+            color: #fff !important;
+            box-shadow: 0 0 15px rgba(255, 163, 26, 0.2);
+        }
+
+        .btn-predictor {
+            background: rgba(45, 226, 230, 0.08) !important;
+            border-color: rgba(45, 226, 230, 0.2) !important;
+            color: var(--theme-teal) !important;
+            border-radius: 20px !important;
+            font-weight: 700 !important;
+            padding: 6px 0 !important;
+            width: 105px !important;
+            justify-content: center !important;
+            font-size: 0.62rem !important;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .btn-predictor:hover {
+            background: rgba(45, 226, 230, 0.15) !important;
+            border-color: rgba(45, 226, 230, 0.4) !important;
+            color: #fff !important;
+            box-shadow: 0 0 15px rgba(45, 226, 230, 0.2);
+        }
+
+        /* Smooth scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
+        /* Selection color */
+        ::selection {
+            background: var(--spotify-subtle);
+            color: var(--text);
+        }
+
+        /* GOAL TILE */
+        .goal-tile {
+            text-align: center;
+            margin-bottom: 45px;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .goal-header {
+            margin-bottom: 28px;
+        }
+
+        .goal-label {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--spotify);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .goal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .goal-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .goal-item {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            text-align: left;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            transition: all 0.25s ease;
+        }
+
+        .goal-item:hover {
+            border-color: var(--border-hover);
+            background: var(--spotify-whisper);
+        }
+
+        .detail-cell:hover {
+            border-color: var(--spotify-dim);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .sub-field {
+            color: var(--text-ghost);
+            font-size: 0.72rem;
+            margin-left: 8px;
+            font-weight: 500;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.55;
+            letter-spacing: 0.01em;
+        }
+
+        .detail-cell:hover .sub-field {
+            color: #fff;
+            opacity: 1;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .goal-number {
+            width: 28px;
+            height: 28px;
+            background: var(--spotify-ghost);
+            border: 1px solid var(--border-hover);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--spotify);
+            flex-shrink: 0;
+        }
+
+        .goal-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+        }
+
+        .goal-text strong {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .goal-text span {
+            font-size: 0.75rem;
+            color: var(--text-mid);
+            line-height: 1.4;
+        }
+
+        @keyframes glimmer-flash {
+            0% {
+                background: rgba(255, 255, 255, 0);
+                box-shadow: 0 0 0 rgba(30, 215, 96, 0);
+            }
+
+            30% {
+                background: rgba(30, 215, 96, 0.15);
+                box-shadow: 0 0 20px rgba(30, 215, 96, 0.3);
+            }
+
+            100% {
+                background: rgba(255, 255, 255, 0);
+                box-shadow: 0 0 0 rgba(30, 215, 96, 0);
+            }
+        }
+
+        .glimmer-effect {
+            animation: glimmer-flash 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .song-field {
+            margin: 12px 0;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .song-field:hover,
+        .song-field:focus-within {
+            background: rgba(30, 215, 96, 0.05);
+            border-color: var(--spotify-dim);
+        }
+
+        .song-icon {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .song-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        .song-input {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-weight: 600;
+            width: 100%;
+            outline: none;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .song-input::placeholder {
+            color: var(--text-ghost);
+            font-weight: 400;
+        }
+
+        /* WINDMILL EFFECT */
+        .windmill-container {
+            width: 36px;
+            height: 36px;
+            position: relative;
+            flex-shrink: 0;
+            margin-left: auto;
+            margin-right: 15px;
+        }
+
+        .windmill {
+            position: absolute;
+            inset: 0;
+            animation: spin-windmill 4s linear infinite;
+        }
+
+        .windmill .blade {
+            position: absolute;
+            width: 3px;
+            height: 14px;
+            background: var(--spotify);
+            border-radius: 2px;
+            left: 50%;
+            top: 50%;
+            transform-origin: center bottom;
+            box-shadow: 0 0 8px var(--spotify-subtle);
+        }
+
+        .windmill .blade:nth-child(1) {
+            transform: translateX(-50%) translateY(-100%) rotate(0deg);
+        }
+
+        .windmill .blade:nth-child(2) {
+            transform: translateX(-50%) translateY(-100%) rotate(90deg);
+        }
+
+        .windmill .blade:nth-child(3) {
+            transform: translateX(-50%) translateY(-100%) rotate(180deg);
+        }
+
+        .windmill .blade:nth-child(4) {
+            transform: translateX(-50%) translateY(-100%) rotate(270deg);
+        }
+
+        .windmill::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--spotify);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px var(--spotify);
+        }
+
+        @keyframes spin-windmill {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ORBIT EFFECT */
+        .orbit-container {
+            width: 36px;
+            height: 36px;
+            position: relative;
+            flex-shrink: 0;
+            margin-left: auto;
+            margin-right: 15px;
+        }
+
+        .orbit-ring {
+            position: absolute;
+            inset: 0;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        .orbit-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--spotify);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            margin: -3px 0 0 -3px;
+            box-shadow: 0 0 8px var(--spotify), 0 0 16px var(--spotify-subtle);
+            animation: orbit 3s linear infinite;
+        }
+
+        @keyframes orbit {
+            0% {
+                transform: rotate(0deg) translateX(15px) rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg) translateX(15px) rotate(-360deg);
+            }
+        }
+
+        /* CATAPULT EFFECT */
+        .catapult-container {
+            width: 36px;
+            height: 36px;
+            position: relative;
+            flex-shrink: 0;
+            margin-left: auto;
+            margin-right: 15px;
+        }
+
+        .catapult-arm {
+            position: absolute;
+            width: 3px;
+            height: 18px;
+            background: var(--spotify);
+            border-radius: 2px;
+            bottom: 8px;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(-45deg);
+            box-shadow: 0 0 6px var(--spotify-subtle);
+            animation: catapult-swing 3s ease-in-out infinite;
+        }
+
+        @keyframes catapult-swing {
+
+            0%,
+            5% {
+                transform: translateX(-50%) rotate(-90deg);
+            }
+
+            20% {
+                transform: translateX(-50%) rotate(0deg);
+            }
+
+            25%,
+            60% {
+                transform: translateX(-50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translateX(-50%) rotate(-90deg);
+            }
+        }
+
+        /* CONTROL PANEL OVERLAY */
+        .control-panel-overlay {
+            position: fixed;
+            top: 0;
+            right: -500px;
+            width: 450px;
+            height: 100vh;
+            background: rgba(12, 13, 16, 0.98);
+            backdrop-filter: blur(25px);
+            border-left: 1px solid var(--border-hover);
+            z-index: 1000;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .control-panel-overlay.active {
+            right: 0;
+        }
+
+        .prediction-panel-overlay {
+            position: fixed;
+            top: 0;
+            left: -500px;
+            width: 450px;
+            height: 100vh;
+            background: rgba(12, 13, 16, 0.98);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid var(--border-hover);
+            z-index: 1000;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .prediction-panel-overlay.active {
+            left: 0;
+        }
+
+        .cp-header {
+            padding: 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .cp-title {
+            font-family: 'Outfit';
+            font-size: 1.2rem;
+            color: var(--spotify);
+        }
+
+        .cp-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .cp-close:hover {
+            color: var(--text-main);
+        }
+
+        .cp-content {
+            padding: 30px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .cp-footer {
+            padding: 20px 30px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+
+        /* MAKE BLOCKS CLICKABLE */
+        .detail-cell {
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+
+        .detail-cell:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+
+        .detail-cell::after {
+            content: '⚙️';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.6rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .detail-cell:hover::after {
+            opacity: 0.5;
+        }
+
+        /* MAD SCIENTIST SELECTION BADGE */
+        .selection-badge {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(30, 215, 96, 0.15);
+            border: 1.5px solid var(--spotify);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            color: var(--spotify-bright);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: badge-bob 2s ease-in-out infinite;
+            z-index: 5;
+            pointer-events: none;
+            box-shadow: 0 0 15px rgba(30, 215, 96, 0.2);
+        }
+
+        .selection-badge::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            background: radial-gradient(circle, var(--spotify) 0%, transparent 65%);
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: bubble-flutter 2.5s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes badge-bob {
+
+            0%,
+            100% {
+                transform: translateY(-50%) scale(1);
+            }
+
+            50% {
+                transform: translateY(-70%) scale(1.05);
+            }
+        }
+
+        @keyframes bubble-flutter {
+
+            0%,
+            100% {
+                transform: scale(0.8) opacity(0.2);
+            }
+
+            50% {
+                transform: scale(1.4) opacity(0.5);
+            }
+        }
+
+
+        .global-predict {
+            width: 100%;
+            height: 55px;
+            font-size: 0.9rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .global-predict:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(30, 215, 96, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .global-predict:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .overlay-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 999;
+        }
+
+        .overlay-mask.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* PLANS OVERLAY */
+        .plans-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(12, 13, 16, 0.95);
+            backdrop-filter: blur(25px);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .plans-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .plans-header {
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-elevated);
+        }
+
+        .plans-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .plans-close:hover {
+            background: rgba(255, 100, 100, 0.2);
+            color: #ff6b6b;
+            border-color: rgba(255, 100, 100, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .plans-frame {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+    <!-- Load Mapping Database -->
+    <script src="equilibrium_mapping_db.js"></script>
+</head>
+
+<body>
+    <div class="glow-sphere"></div>
+    <div class="container">
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+            <h1>Campaign Kit Generator</h1>
+            <p>Build your complete Spotify advertising strategy using proven sequences from Campaign Kit case studies
+            </p>
+        </div>
+
+        <!-- GOAL OVERVIEW -->
+        <div class="goal-tile">
+            <div class="goal-header">
+                <span class="goal-label">The Strategy</span>
+                <h2 class="goal-title">Build a Self-Sustaining Fan Machine</h2>
+            </div>
+            <div class="goal-content">
+                <div class="goal-item">
+                    <span class="goal-number">1</span>
+                    <div class="goal-text">
+                        <strong>Discovery Mode Always On</strong>
+                        <span>Perpetual vacuum pulling cold listeners into your warm funnel 24/7</span>
+                    </div>
+                    <div class="windmill-container">
+                        <div class="windmill">
+                            <div class="blade"></div>
+                            <div class="blade"></div>
+                            <div class="blade"></div>
+                            <div class="blade"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="goal-item">
+                    <span class="goal-number">2</span>
+                    <div class="goal-text">
+                        <strong>Waterfall Marquee Sequence</strong>
+                        <span>Cycle fans through Single 1 → Single 2 → Single 3 → EP release</span>
+                    </div>
+                    <div class="orbit-container">
+                        <div class="orbit-ring"></div>
+                        <div class="orbit-dot"></div>
+                    </div>
+                </div>
+                <div class="goal-item">
+                    <span class="goal-number">3</span>
+                    <div class="goal-text">
+                        <strong>Pitch While Marquee Runs</strong>
+                        <span>Submit playlist pitches 7+ days ahead while your ads are active</span>
+                    </div>
+                    <div class="catapult-container">
+                        <div class="catapult-arm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INCENTIVE STAT BADGES -->
+        <div class="incentive-strip">
+            <div class="stat-badge">
+                <div class="value">40X</div>
+                <div class="label">Combined Lift</div>
+                <div class="source">Marquee + Showcase</div>
+                <div class="stat-bubble">
+                    <span class="bubble-title">The Magic Formula</span>
+                    <div class="bubble-text">Marquee alone delivers 8x lift in new active listeners. Adding Showcase
+                        increases this to 40x - that's 5x MORE than Marquee alone. The synergy effect is real.</div>
+                </div>
+            </div>
+            <div class="stat-badge">
+                <div class="value">385%</div>
+                <div class="label">Discovery Lift</div>
+                <div class="source">William Black</div>
+                <div class="stat-bubble">
+                    <span class="bubble-title">William Black Case Study</span>
+                    <div class="bubble-text">Discovery Mode delivered 385% streaming lift by feeding cold audiences into
+                        the warm funnel. Zero upfront cost, perpetual algorithmic yield.</div>
+                </div>
+            </div>
+            <div class="stat-badge">
+                <div class="value">50%</div>
+                <div class="label">New to Artist</div>
+                <div class="source">Collab Leverage</div>
+                <div class="stat-bubble">
+                    <span class="bubble-title">Collaboration Power</span>
+                    <div class="bubble-text">William Black's collab strategy resulted in 50% of listeners being
+                        completely new to his music. Strategic collaborations unlock entirely new audience pools.</div>
+                </div>
+            </div>
+            <div class="stat-badge">
+                <div class="value">6X</div>
+                <div class="label">Stream Multiplier</div>
+                <div class="source">Full Funnel Strategy</div>
+                <div class="stat-bubble">
+                    <span class="bubble-title">Multiple Case Studies</span>
+                    <div class="bubble-text">Artists using the full funnel approach (Discovery + Marquee + Showcase)
+                        consistently see 6x stream multipliers compared to single-tool campaigns.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PHASE NAVIGATOR -->
+        <div class="phase-navigator">
+            <div class="phase-timeline phase-1" id="phaseTimeline">
+                <div class="phase-item active" data-phase="1" onclick="switchPhase(1)">
+                    <div class="phase-dot">1</div>
+                    <div class="phase-label">Pre-Release</div>
+                    <div class="phase-timing">Weeks -4 to -1</div>
+                </div>
+                <div class="phase-item" data-phase="2" onclick="switchPhase(2)">
+                    <div class="phase-dot">2</div>
+                    <div class="phase-label">Release Week</div>
+                    <div class="phase-timing">Days 0-14</div>
+                </div>
+                <div class="phase-item" data-phase="3" onclick="switchPhase(3)">
+                    <div class="phase-dot">3</div>
+                    <div class="phase-label">Post-Release</div>
+                    <div class="phase-timing">Weeks 3-8+</div>
+                </div>
+                <div class="phase-item" data-phase="4" onclick="switchPhase(4)">
+                    <div class="phase-dot">4</div>
+                    <div class="phase-label">Extended/Deluxe</div>
+                    <div class="phase-timing">Optional</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN LAYOUT -->
+        <div class="main-layout">
+            <!-- TOOL SEQUENCER SIDEBAR -->
+            <div class="tool-sequencer">
+                <div class="sequencer-title">Phase Configuration</div>
+
+                <!-- PHASE 1: PRE-RELEASE -->
+                <div class="phase-content active" id="phase1Content">
+                    <!-- Discovery Mode Setup -->
+                    <div class="tool-card active" id="card-discovery-pre">
+                        <div class="tool-header">
+                            <div class="tool-icon discovery">🌱</div>
+                            <div>
+                                <div class="tool-name">Discovery Mode</div>
+                                <div class="tool-purpose">Find NEW listeners via Radio/Autoplay</div>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Timeline</div>
+                            <p id="discoveryTimingText"
+                                style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Start 3-4 months
+                                before release for best results</p>
+                            <input type="date" class="date-input" id="discoveryStartDate">
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Select songs to seed (15-20 recommended)</div>
+                            <div class="checkbox-group" id="discoverySongs">
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Top performing catalog tracks</span>
+                                </label>
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Previous singles</span>
+                                </label>
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Collaboration tracks</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="case-study-proof">
+                            <div class="artist">NERIAH Case Study</div>
+                            <div class="result">Gained 500K new listeners in 3 months using Discovery Mode seeding</div>
+                        </div>
+                    </div>
+
+                    <!-- Waterfall Singles + Marquee -->
+                    <div class="tool-card active" id="card-waterfall">
+                        <div class="tool-header">
+                            <div class="tool-icon marquee">🎯</div>
+                            <div>
+                                <div class="tool-name">Waterfall Marquee Sequence</div>
+                                <div class="tool-purpose">Singles leading to album release</div>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Pre-Release Singles</div>
+                            <div id="waterfallSingles">
+                                <div class="waterfall-single" data-single="1">
+                                    <div class="waterfall-header">
+                                        <span class="waterfall-number">Single 1</span>
+                                        <button class="remove-single" onclick="removeSingle(this)">×</button>
+                                    </div>
+                                    <input type="date" class="date-input" style="margin-bottom: 10px;"
+                                        placeholder="Release Date" onchange="updateDiscoveryTiming()">
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                            <input type="checkbox" checked>
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">Light Listeners</span>
+                                        </label>
+                                        <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                            <input type="checkbox">
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">Previously Active</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="add-single-btn" onclick="addSingle()">+ Add Another Single</button>
+                        </div>
+
+                        <div class="case-study-proof">
+                            <div class="artist">Jillian Rossi Case Study</div>
+                            <div class="result">30x more streams after 30 days using waterfall + Marquee overlap</div>
+                        </div>
+                    </div>
+
+                    <!-- Playlist Pitching -->
+                    <div class="tool-card active" id="card-pitching">
+                        <div class="tool-header">
+                            <div class="tool-icon pitching">📋</div>
+                            <div>
+                                <div class="tool-name">Playlist Pitch</div>
+                                <div class="tool-purpose">7+ days before release</div>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Include in your pitch</div>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Musical influences & comparable artists</span>
+                                </label>
+                                <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Story behind the track</span>
+                                </label>
+                                <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Target mood/activity</span>
+                                </label>
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Marketing campaign details</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="case-study-proof">
+                            <div class="artist">Jay Wheeler Case Study</div>
+                            <div class="result">Landed Trap Land playlist placement through strategic pitching</div>
+                        </div>
+                    </div>
+
+                    <div class="generate-section">
+                        <button class="btn-action" onclick="addPhaseToTimeline(1)">Add Pre-Release to Campaign</button>
+                    </div>
+                </div>
+
+                <!-- PHASE 2: RELEASE WEEK -->
+                <div class="phase-content" id="phase2Content">
+                    <!-- Marquee Launch -->
+                    <div class="tool-card active" id="card-marquee-launch">
+                        <div class="tool-header">
+                            <div class="tool-icon marquee">🎯</div>
+                            <div>
+                                <div class="tool-name">Marquee Launch</div>
+                                <div class="tool-purpose">Full-screen splash - Day 1-2</div>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Timing <span class="info-tip">?</span></div>
+                            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Launch within 48
+                                hours of release for maximum impact</p>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Target Selection</div>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <div>
+                                        <span class="checkbox-label">Active Listeners</span>
+                                        <div class="checkbox-desc">Engaged in last 28 days</div>
+                                    </div>
+                                </label>
+                                <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <div>
+                                        <span class="checkbox-label">Previously Active</span>
+                                        <div class="checkbox-desc">Lapsed fans - 35% re-entry rate</div>
+                                    </div>
+                                </label>
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox">
+                                    <div class="checkbox-box"></div>
+                                    <div>
+                                        <span class="checkbox-label">Light Listeners</span>
+                                        <div class="checkbox-desc">Casual interest</div>
+                                    </div>
+                                </label>
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox">
+                                    <div class="checkbox-box"></div>
+                                    <div>
+                                        <span class="checkbox-label">Moderate Listeners</span>
+                                        <div class="checkbox-desc">Growing interest</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Budget</div>
+                            <div class="budget-control">
+                                <div class="budget-header">
+                                    <span style="font-size: 0.7rem; color: var(--text-dim);">Campaign Budget</span>
+                                    <span class="budget-val-display" id="marqueeBudgetDisplay">$500</span>
+                                </div>
+                                <input type="range" min="100" max="10000" step="100" value="500" class="budget-slider"
+                                    oninput="updateBudgetDisplay('marqueeBudgetDisplay', this.value)">
+                                <p style="font-size: 0.65rem; color: var(--text-dim); margin-top: 8px;">Minimum $100</p>
+                            </div>
+                        </div>
+
+                        <div class="expected-outcomes">
+                            <div class="outcome-row">
+                                <span class="outcome-label">Expected Saves Lift</span>
+                                <span class="outcome-value">3x</span>
+                            </div>
+                            <div class="outcome-row">
+                                <span class="outcome-label">Intent Rate</span>
+                                <span class="outcome-value">15%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Showcase Follow-up -->
+                    <div class="tool-card active" id="card-showcase-launch">
+                        <div class="tool-header">
+                            <div class="tool-icon showcase">🌊</div>
+                            <div>
+                                <div class="tool-name">Showcase Follow-up</div>
+                                <div class="tool-purpose">Home placement - Week 2</div>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Timing</div>
+                            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px;">Start 1-2 weeks
+                                after Marquee launch</p>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Headline Selection</div>
+                            <div class="radio-group" id="showcaseHeadlines">
+                                <label class="radio-item selected"
+                                    onclick="selectRadio(event, this, 'showcaseHeadlines')">
+                                    <input type="radio" name="headline" checked>
+                                    <div class="radio-circle"></div>
+                                    <span class="radio-label">"Getting buzz" - Use during organic social momentum</span>
+                                </label>
+                                <label class="radio-item" onclick="selectRadio(event, this, 'showcaseHeadlines')">
+                                    <input type="radio" name="headline">
+                                    <div class="radio-circle"></div>
+                                    <span class="radio-label">"New music" - Standard new release</span>
+                                </label>
+                                <label class="radio-item" onclick="selectRadio(event, this, 'showcaseHeadlines')">
+                                    <input type="radio" name="headline">
+                                    <div class="radio-circle"></div>
+                                    <span class="radio-label">"On tour" - Target super listeners near shows</span>
+                                </label>
+                                <label class="radio-item" onclick="selectRadio(event, this, 'showcaseHeadlines')">
+                                    <input type="radio" name="headline">
+                                    <div class="radio-circle"></div>
+                                    <span class="radio-label">"You might like" - Re-engagement</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Target Selection</div>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <div>
+                                        <span class="checkbox-label">Super Listeners</span>
+                                        <div class="checkbox-desc">Most dedicated fans</div>
+                                    </div>
+                                </label>
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Moderate Listeners</span>
+                                </label>
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Light Listeners</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Budget</div>
+                            <div class="budget-control">
+                                <div class="budget-header">
+                                    <span style="font-size: 0.7rem; color: var(--text-dim);">Campaign Budget</span>
+                                    <span class="budget-val-display" id="showcaseBudgetDisplay">$300</span>
+                                </div>
+                                <input type="range" min="100" max="10000" step="100" value="300" class="budget-slider"
+                                    oninput="updateBudgetDisplay('showcaseBudgetDisplay', this.value)">
+                            </div>
+                        </div>
+
+                        <div class="expected-outcomes">
+                            <div class="outcome-row">
+                                <span class="outcome-label">Depth per Listener</span>
+                                <span class="outcome-value">31x</span>
+                            </div>
+                            <div class="outcome-row">
+                                <span class="outcome-label">Stream Multiplier</span>
+                                <span class="outcome-value">6x</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="generate-section">
+                        <button class="btn-action" onclick="addPhaseToTimeline(2)">Add Release Week to Campaign</button>
+                    </div>
+                </div>
+
+                <!-- PHASE 3: POST-RELEASE -->
+                <div class="phase-content" id="phase3Content">
+                    <!-- Discovery Mode Sustain -->
+                    <div class="tool-card active" id="card-discovery-sustain">
+                        <div class="tool-header">
+                            <div class="tool-icon discovery">🌱</div>
+                            <div>
+                                <div class="tool-name">Discovery Mode - Sustain</div>
+                                <div class="tool-purpose">Long-tail algorithmic reach</div>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Add album tracks to Discovery Mode</div>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Lead single</span>
+                                </label>
+                                <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox" checked>
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Fan favorites (based on early data)</span>
+                                </label>
+                                <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                                    <input type="checkbox">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Deep cuts with streaming potential</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="case-study-proof">
+                            <div class="artist">Khalia Case Study</div>
+                            <div class="result">440% stream lift in December through sustained Discovery Mode</div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Showcase Waves -->
+                    <div class="tool-card active" id="card-showcase-waves">
+                        <div class="tool-header">
+                            <div class="tool-icon showcase">🌊</div>
+                            <div>
+                                <div class="tool-name">Showcase Waves</div>
+                                <div class="tool-purpose">Sequential targeting for depth</div>
+                            </div>
+                        </div>
+
+                        <div class="tool-section">
+                            <div class="tool-section-label">Wave Schedule</div>
+                            <div id="showcaseWaves">
+                                <div class="showcase-wave">
+                                    <div class="waterfall-header">
+                                        <span class="waterfall-number">Wave 2</span>
+                                    </div>
+                                    <input type="date" class="date-input" style="margin-bottom: 10px;">
+                                    <div class="radio-group" id="wave2Headline">
+                                        <label class="radio-item selected"
+                                            onclick="selectRadio(event, this, 'wave2Headline')">
+                                            <input type="radio" name="wave2" checked>
+                                            <div class="radio-circle"></div>
+                                            <span class="radio-label">"You might like"</span>
+                                        </label>
+                                        <label class="radio-item" onclick="selectRadio(event, this, 'wave2Headline')">
+                                            <input type="radio" name="wave2">
+                                            <div class="radio-circle"></div>
+                                            <span class="radio-label">"Getting buzz"</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="showcase-wave">
+                                    <div class="waterfall-header">
+                                        <span class="waterfall-number">Wave 3</span>
+                                    </div>
+                                    <input type="date" class="date-input" style="margin-bottom: 10px;">
+                                    <div class="radio-group" id="wave3Headline">
+                                        <label class="radio-item selected"
+                                            onclick="selectRadio(event, this, 'wave3Headline')">
+                                            <input type="radio" name="wave3" checked>
+                                            <div class="radio-circle"></div>
+                                            <span class="radio-label">"On tour"</span>
+                                        </label>
+                                        <label class="radio-item" onclick="selectRadio(event, this, 'wave3Headline')">
+                                            <input type="radio" name="wave3">
+                                            <div class="radio-circle"></div>
+                                            <span class="radio-label">"New music"</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 10px;">Target different
+                                segments each wave for maximum coverage</p>
+                        </div>
+                    </div>
+
+                    <div class="generate-section">
+                        <button class="btn-action" onclick="addPhaseToTimeline(3)">Add Post-Release to Campaign</button>
+                    </div>
+                </div>
+
+                <!-- PHASE 4: EXTENDED/DELUXE -->
+                <div class="phase-content" id="phase4Content">
+                    <div class="tool-card active" id="card-deluxe">
+                        <div class="tool-header">
+                            <div class="tool-icon marquee">🔄</div>
+                            <div>
+                                <div class="tool-name">Deluxe Release Sequence</div>
+                                <div class="tool-purpose">Repeat the magic with new content</div>
+                            </div>
+                        </div>
+
+                        <div class="deluxe-toggle" id="deluxeToggle" onclick="toggleDeluxe()">
+                            <div class="toggle-switch"></div>
+                            <span class="toggle-text">Enable Deluxe Campaign</span>
+                        </div>
+
+                        <div id="deluxeContent" style="display: none;">
+                            <div class="tool-section">
+                                <div class="tool-section-label">Deluxe Strategy</div>
+                                <p style="font-size: 0.85rem; color: var(--text); margin-bottom: 15px;">
+                                    Repeat the proven sequence: <strong>Marquee → Showcase "New music" → Discovery
+                                        Mode</strong>
+                                </p>
+
+                                <div class="checkbox-group">
+                                    <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                        <input type="checkbox" checked>
+                                        <div class="checkbox-box"></div>
+                                        <span class="checkbox-label">Launch Marquee for deluxe tracks</span>
+                                    </label>
+                                    <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                        <input type="checkbox" checked>
+                                        <div class="checkbox-box"></div>
+                                        <span class="checkbox-label">Showcase with "New music" headline</span>
+                                    </label>
+                                    <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                                        <input type="checkbox" checked>
+                                        <div class="checkbox-box"></div>
+                                        <span class="checkbox-label">Add new tracks to Discovery Mode</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="tool-section">
+                                <div class="tool-section-label">Deluxe Budget</div>
+                                <div class="budget-control">
+                                    <div class="budget-header">
+                                        <span style="font-size: 0.7rem; color: var(--text-dim);">Total Deluxe
+                                            Budget</span>
+                                        <span class="budget-val-display" id="deluxeBudgetDisplay">$800</span>
+                                    </div>
+                                    <input type="range" min="200" max="15000" step="100" value="800"
+                                        class="budget-slider"
+                                        oninput="updateBudgetDisplay('deluxeBudgetDisplay', this.value)">
+                                </div>
+                            </div>
+
+                            <div class="case-study-proof">
+                                <div class="artist">Luis R Conriquez Case Study</div>
+                                <div class="result">Reached #5 Billboard Latin using sequential release waves</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="generate-section">
+                        <button class="btn-action" onclick="addPhaseToTimeline(4)">Add Extended to Campaign</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CAMPAIGN PREVIEW -->
+            <div class="campaign-preview">
+                <div class="preview-header">
+                    <div class="preview-title">Campaign Timeline</div>
+                    <div class="preview-actions">
+                        <button class="btn-json" onclick="exportCampaignJSON()">
+                            <span>↓</span> Export JSON
+                        </button>
+                        <label class="btn-json btn-upload">
+                            <span>↑</span> Import JSON
+                            <input type="file" accept=".json" onchange="importCampaignJSON(event)" hidden>
+                        </label>
+                        <button class="btn-json btn-reset" onclick="resetCampaign()">
+                            <span>↻</span> Reset
+                        </button>
+                    </div>
+                    <div class="preview-stats">
+                        <div class="preview-stat">
+                            <div class="value" id="totalBudget">$0</div>
+                            <div class="label">Total Budget</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="value" id="totalPhases">0</div>
+                            <div class="label">Phases</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-container" id="timelineContainer">
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-text">Configure your campaign phases on the left and add them to build
+                            your timeline</div>
+                        <button class="btn-json btn-predictor" onclick="togglePredictorOverlay()"
+                            style="margin-top: 15px; width: 140px; height: 35px;">
+                            <span>🧪</span> Run Predictor
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CAMPAIGN SUMMARY -->
+                <div class="campaign-summary" id="campaignSummary" style="display: none;">
+                    <div class="summary-title">Expected Campaign Results</div>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="value" id="expectedLift">40x</div>
+                            <div class="label">Combined Lift</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value" id="expectedSaves">3x</div>
+                            <div class="label">Saves Lift</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value" id="expectedDepth">31x</div>
+                            <div class="label">Depth/Listener</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="value" id="expectedStreams">6x</div>
+                            <div class="label">Stream Multiplier</div>
+                        </div>
+                    </div>
+
+                    <button class="global-predict" onclick="togglePredictorOverlay()"
+                        style="background: linear-gradient(135deg, var(--theme-teal), #1aa34a); margin-top: 25px;">
+                        <span>🧪</span> ANALYZE DATA & PREDICT PERFORMANCE
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- CONTROL PANEL OVERLAY -->
+    <div class="overlay-mask" id="overlayMask" onclick="closeControlPanel()"></div>
+    <div class="control-panel-overlay" id="controlPanel">
+        <div class="cp-header">
+            <div class="cp-title" id="cpTitle">Target Market Search</div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn-json btn-plans" onclick="togglePlansOverlay()">
+                    <span>📙</span> View Plans
+                </button>
+                <button class="btn-json btn-predictor" onclick="togglePredictorOverlay()">
+                    <span>🧪</span> Predictor
+                </button>
+                <button class="cp-close" onclick="closeControlPanel()">×</button>
+            </div>
+        </div>
+        <div class="cp-content" id="cpContent">
+            <!-- Content will be injected based on click -->
+            <div class="tool-section">
+                <div class="tool-section-label">Select Markets</div>
+                <div class="search-box" style="margin-bottom: 20px;">
+                    <div class="search-icon">🔍</div>
+                    <input type="text" placeholder="Search countries or regions..."
+                        style="background:none; border:none; color:white; width:100%; outline:none;">
+                </div>
+                <div class="checkbox-group">
+                    <label class="checkbox-item selected">
+                        <input type="checkbox" checked>
+                        <div class="checkbox-box"></div>
+                        <span class="checkbox-label">United States</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox">
+                        <div class="checkbox-box"></div>
+                        <span class="checkbox-label">United Kingdom</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox">
+                        <div class="checkbox-box"></div>
+                        <span class="checkbox-label">Canada</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="cp-footer">
+            <button class="btn-action" style="padding: 10px 20px;" onclick="closeControlPanel()">Save Changes</button>
+            <button class="btn-json btn-reset" style="padding: 10px 20px;" onclick="closeControlPanel()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- PREDICTION PANEL OVERLAY (LEFT SIDE) -->
+    <div class="prediction-panel-overlay" id="predictionPanel">
+        <div class="cp-header">
+            <div class="cp-title" id="ppTitle">Analysis & Forecast</div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn-json btn-plans" onclick="togglePlansOverlay()">
+                    <span>📙</span> View Plans
+                </button>
+                <button class="btn-json btn-predictor" onclick="togglePredictorOverlay()">
+                    <span>🧪</span> Predictor
+                </button>
+                <button class="cp-close" onclick="closePredictionPanel()">×</button>
+            </div>
+        </div>
+        <div class="cp-content" id="ppContent">
+            <!-- Prediction results will be injected here -->
+        </div>
+        <div class="cp-footer">
+            <button class="btn-action" style="padding: 10px 20px; width: 100%;" onclick="closePredictionPanel()">Close
+                Analysis</button>
+        </div>
+    </div>
+
+    <!-- PLANS OVERLAY -->
+    <div class="plans-overlay" id="plansOverlay">
+        <div class="plans-header">
+            <div class="cp-title">Equilibrium Plans Reference</div>
+            <button class="plans-close" onclick="togglePlansOverlay()">×</button>
+        </div>
+        <iframe class="plans-frame" id="plansFrame"></iframe>
+    </div>
+
+    <!-- PREDICTOR OVERLAY -->
+    <div class="plans-overlay" id="predictorOverlay">
+        <div class="plans-header" style="border-bottom-color: var(--theme-teal);">
+            <div class="cp-title" style="color: var(--theme-teal);">Predictor Engine v1</div>
+            <button class="plans-close" onclick="togglePredictorOverlay()">×</button>
+        </div>
+        <iframe class="plans-frame" id="predictorFrame"></iframe>
+    </div>
+
+    <script>
+        // State management
+        let currentPhase = 1;
+        let campaignData = {
+            phases: [],
+            totalBudget: 0
+        };
+        let singleCount = 1;
+
+        // Equilibrium Plan Automation - Listening for Iframe events
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'APPLY_PLAN') {
+                console.log('🚀 Plan Received:', event.data.plan.name);
+                applyFullPlan(event.data.plan);
+                togglePlansOverlay(); // Close overlay after applying
+            }
+        });
+
+        function applyFullPlan(plan) {
+            console.log('🛠️ Applying Full Strategic Plan:', plan.name);
+
+            const container = document.getElementById('timelineContainer');
+            const emptyState = document.getElementById('emptyState');
+            const summary = document.getElementById('campaignSummary');
+
+            // 0. Reset State & Close Panels
+            closeControlPanel();
+            closePredictionPanel();
+
+            // 1. Clear current timeline & reset progress
+            container.innerHTML = '';
+            campaignData.phases = [];
+
+            // Reset phase item visuals
+            document.querySelectorAll('.phase-item').forEach(item => {
+                item.classList.remove('active', 'completed');
+            });
+
+            // 2. Setup visual state
+            emptyState.style.display = 'none';
+            summary.style.display = 'block';
+
+            // 3. Render each phase block from the plan
+            plan.phases.forEach((block, index) => {
+                setTimeout(() => {
+                    const blockEl = createTimelineBlock(block);
+                    container.appendChild(blockEl);
+                    setTimeout(() => blockEl.classList.add('visible'), 50);
+
+                    // Add to campaign data for budget tracking
+                    campaignData.phases.push({
+                        phase: block.phase,
+                        budget: block.budgetRange[0] // Use low end as default
+                    });
+
+                    document.getElementById('totalPhases').textContent = campaignData.phases.length;
+                    updateTotalBudget();
+                }, index * 150);
+            });
+
+            // 4. Reset to final visual state
+            setTimeout(() => {
+                switchPhase(4);
+                // Mark all phases as completed as it's a "Full Plan"
+                document.querySelectorAll('.phase-item').forEach(item => item.classList.add('completed'));
+            }, plan.phases.length * 150 + 100);
+        }
+
+        // Phase switching
+        function switchPhase(phase) {
+            currentPhase = phase;
+
+            // Update phase timeline visual
+            const timeline = document.getElementById('phaseTimeline');
+            timeline.className = `phase-timeline phase-${phase}`;
+
+            // Update phase items
+            document.querySelectorAll('.phase-item').forEach((item, index) => {
+                const itemPhase = index + 1;
+                item.classList.remove('active', 'completed');
+                if (itemPhase === phase) {
+                    item.classList.add('active');
+                } else if (itemPhase < phase) {
+                    item.classList.add('completed');
+                }
+            });
+
+            // Show correct content
+            document.querySelectorAll('.phase-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`phase${phase}Content`).classList.add('active');
+        }
+
+        // Checkbox toggle
+        function toggleCheckbox(event, element) {
+            event.preventDefault();
+            event.stopPropagation();
+            element.classList.toggle('selected');
+            const checkbox = element.querySelector('input');
+            checkbox.checked = element.classList.contains('selected');
+        }
+
+        // Radio selection
+        function selectRadio(event, element, groupId) {
+            event.preventDefault();
+            event.stopPropagation();
+            const group = element.closest('.radio-group');
+            group.querySelectorAll('.radio-item').forEach(item => {
+                item.classList.remove('selected');
+                item.querySelector('input').checked = false;
+            });
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+        }
+
+        // Budget display update
+        function updateBudgetDisplay(displayId, value) {
+            document.getElementById(displayId).textContent = '$' + parseInt(value).toLocaleString();
+            updateTotalBudget();
+        }
+
+        // Update total budget
+        function updateTotalBudget() {
+            let total = 0;
+            document.querySelectorAll('.budget-slider').forEach(slider => {
+                if (slider.closest('.tool-card').classList.contains('active') ||
+                    slider.closest('#deluxeContent')?.style.display !== 'none') {
+                    total += parseInt(slider.value);
+                }
+            });
+
+            // Add from already added phases
+            campaignData.phases.forEach(phase => {
+                total += phase.budget || 0;
+            });
+
+            document.getElementById('totalBudget').textContent = '$' + total.toLocaleString();
+        }
+
+        // Add waterfall single
+        function addSingle() {
+            singleCount++;
+            const container = document.getElementById('waterfallSingles');
+            const newSingle = document.createElement('div');
+            newSingle.className = 'waterfall-single';
+            newSingle.dataset.single = singleCount;
+            newSingle.innerHTML = `
+                <div class="waterfall-header">
+                    <span class="waterfall-number">Single ${singleCount}</span>
+                    <button class="remove-single" onclick="removeSingle(this)">×</button>
+                </div>
+                <input type="date" class="date-input" style="margin-bottom: 10px;" placeholder="Release Date" onchange="updateDiscoveryTiming()">
+                <div class="checkbox-group">
+                    <label class="checkbox-item selected" onclick="toggleCheckbox(event, this)">
+                        <input type="checkbox" checked>
+                        <div class="checkbox-box"></div>
+                        <span class="checkbox-label">Light Listeners</span>
+                    </label>
+                    <label class="checkbox-item" onclick="toggleCheckbox(event, this)">
+                        <input type="checkbox">
+                        <div class="checkbox-box"></div>
+                        <span class="checkbox-label">Previously Active</span>
+                    </label>
+                </div>
+            `;
+            container.appendChild(newSingle);
+        }
+
+        // Remove single
+        function removeSingle(btn) {
+            const single = btn.closest('.waterfall-single');
+            if (document.querySelectorAll('.waterfall-single').length > 1) {
+                single.remove();
+            }
+        }
+
+        // Toggle deluxe
+        function toggleDeluxe() {
+            const toggle = document.getElementById('deluxeToggle');
+            const content = document.getElementById('deluxeContent');
+            toggle.classList.toggle('active');
+            content.style.display = toggle.classList.contains('active') ? 'block' : 'none';
+            updateTotalBudget();
+        }
+
+        // Toggle Plans Overlay
+        function togglePlansOverlay() {
+            const overlay = document.getElementById('plansOverlay');
+            const frame = document.getElementById('plansFrame');
+            const isActive = overlay.classList.contains('active');
+
+            if (!isActive) {
+                // Open
+                frame.src = 'equilibrium_plans_v2.html';
+                overlay.classList.add('active');
+            } else {
+                // Close
+                overlay.classList.remove('active');
+                setTimeout(() => {
+                    frame.src = ''; // Clear source to stop playing/resources
+                }, 300);
+            }
+        }
+
+        // Add phase to timeline
+        function addPhaseToTimeline(phase) {
+            console.log(`➕ Adding Phase ${phase} to timeline...`);
+            const emptyState = document.getElementById('emptyState');
+            const container = document.getElementById('timelineContainer');
+            const summary = document.getElementById('campaignSummary');
+
+            // Hide empty state
+            emptyState.style.display = 'none';
+            summary.style.display = 'block';
+
+            // Create timeline blocks based on phase
+            const phaseBlocks = getPhaseBlocks(phase);
+            console.log(`📦 Generated ${phaseBlocks.length} blocks for Phase ${phase}`);
+
+            phaseBlocks.forEach((block, index) => {
+                setTimeout(() => {
+                    const blockEl = createTimelineBlock(block);
+                    container.appendChild(blockEl);
+                    console.log(`✨ Rendered Block: "${block.title}"`);
+                    setTimeout(() => blockEl.classList.add('visible'), 50);
+
+                    // Auto-open configuration for the first block added in this batch
+                    if (index === 0) {
+                        setTimeout(() => {
+                            // Start Wizard Mode: Tool -> Action -> Target
+                            openControlPanel('Tool', block.tool, blockEl.id, false);
+                        }, 800);
+                    }
+                }, index * 200);
+            });
+
+            // Update phase count
+            campaignData.phases.push({ phase, budget: getCurrentPhaseBudget(phase) });
+            document.getElementById('totalPhases').textContent = campaignData.phases.length;
+
+            // Mark phase as completed and move to next
+            document.querySelector(`.phase-item[data-phase="${phase}"]`).classList.add('completed');
+            if (phase < 4) {
+                setTimeout(() => switchPhase(phase + 1), 500);
+            }
+
+            updateTotalBudget();
+        }
+
+        // Get current phase budget
+        function getCurrentPhaseBudget(phase) {
+            let budget = 0;
+            if (phase === 2) {
+                budget = parseInt(document.querySelector('#card-marquee-launch .budget-slider')?.value || 0);
+                budget += parseInt(document.querySelector('#card-showcase-launch .budget-slider')?.value || 0);
+            } else if (phase === 4) {
+                const deluxeActive = document.getElementById('deluxeToggle').classList.contains('active');
+                if (deluxeActive) {
+                    budget = parseInt(document.querySelector('#deluxeContent .budget-slider')?.value || 0);
+                }
+            }
+            return budget;
+        }
+
+        // Update Discovery Timing based on Waterfall Dates
+        function updateDiscoveryTiming() {
+            const dateInputs = document.querySelectorAll('#waterfallSingles .date-input');
+            let earliestDate = null;
+
+            dateInputs.forEach(input => {
+                if (input.value) {
+                    const date = new Date(input.value);
+                    if (!earliestDate || date < earliestDate) {
+                        earliestDate = date;
+                    }
+                }
+            });
+
+            if (earliestDate) {
+                // Calculate 3 and 4 months prior
+                const threeMonthsPrior = new Date(earliestDate);
+                threeMonthsPrior.setMonth(earliestDate.getMonth() - 3);
+
+                const fourMonthsPrior = new Date(earliestDate);
+                fourMonthsPrior.setMonth(earliestDate.getMonth() - 4);
+
+                // Format dates
+                const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                const startStr = fourMonthsPrior.toLocaleDateString('en-US', options);
+                const endStr = threeMonthsPrior.toLocaleDateString('en-US', options);
+
+                const timelineText = `${startStr} - ${endStr}`;
+
+                // Update Left Panel Text
+                const timingText = document.getElementById('discoveryTimingText');
+                if (timingText) {
+                    timingText.innerHTML = `<span style="color: var(--spotify-bright); font-weight: 700;">${timelineText}</span> (Calculated from release)`;
+                }
+
+                // Update Right Panel Block if it exists
+                const blocks = document.querySelectorAll('.timeline-block');
+                blocks.forEach(block => {
+                    const title = block.querySelector('.block-title');
+                    if (title && title.textContent.includes('Discovery Mode')) {
+                        const timingDiv = block.querySelector('.block-timing');
+                        if (timingDiv) {
+                            timingDiv.textContent = timelineText;
+                            timingDiv.style.color = 'var(--spotify)';
+                            timingDiv.style.fontWeight = '700';
+                        }
+                    }
+                });
+
+                // Update the "Discovery Start Date" input itself if empty
+                const discoveryInput = document.getElementById('discoveryStartDate');
+                if (discoveryInput && !discoveryInput.value) {
+                    discoveryInput.valueAsDate = fourMonthsPrior;
+                }
+            }
+        }
+
+        // Get phase blocks data
+        function getPhaseBlocks(phase) {
+            // Dynamic Date Calculation
+            let discoveryTiming = '3-4 months before release';
+            let releaseWeekTiming = 'Days 0-14';
+
+            const dateInputs = document.querySelectorAll('#waterfallSingles .date-input');
+            let earliestDate = null;
+            dateInputs.forEach(input => {
+                if (input.value) {
+                    const date = new Date(input.value);
+                    if (!earliestDate || date < earliestDate) earliestDate = date;
+                }
+            });
+
+            if (earliestDate) {
+                const options = { month: 'short', day: 'numeric', year: 'numeric' };
+
+                // Phase 1: -4 to -3 months
+                const fourMP = new Date(earliestDate); fourMP.setMonth(earliestDate.getMonth() - 4);
+                const threeMP = new Date(earliestDate); threeMP.setMonth(earliestDate.getMonth() - 3);
+                discoveryTiming = `${fourMP.toLocaleDateString('en-US', options)} - ${threeMP.toLocaleDateString('en-US', options)}`;
+
+                // Phase 2: Day 0 to Day 14
+                const day14 = new Date(earliestDate); day14.setDate(earliestDate.getDate() + 14);
+                releaseWeekTiming = `${earliestDate.toLocaleDateString('en-US', options)} - ${day14.toLocaleDateString('en-US', options)}`;
+            }
+
+            const blocks = {
+                1: [
+                    {
+                        title: 'Discovery Mode - Pre-Release Seeding',
+                        timing: discoveryTiming,
+                        desc: 'Activate Discovery Mode on catalog tracks to build cold-to-warm audience funnel.',
+                        tool: 'Discovery Mode',
+                        target: 'Cold Audiences',
+                        action: 'Algorithmic Seeding',
+                        impact: '∞ ALGO YIELD',
+                        theme: 'theme-green',
+                        icon: '🌱',
+                        phase: 'Pre-Release',
+                        budget: 200,
+                        songName: 'Main Lead Track'
+                    },
+                    {
+                        title: 'Waterfall Singles + Marquee',
+                        timing: 'Each single release',
+                        desc: 'Strategic single releases with Marquee campaigns building momentum toward album.',
+                        tool: 'Marquee',
+                        target: 'Light & Moderate',
+                        action: 'Velocity Strike',
+                        impact: '30x STREAMS',
+                        theme: 'theme-purple',
+                        icon: '🎯',
+                        phase: 'Pre-Release',
+                        budget: 500,
+                        songName: 'Waterfall Single #1'
+                    },
+                    {
+                        title: 'Playlist Pitch Submission',
+                        timing: '7+ days before release',
+                        desc: 'Submit to Spotify editors with musical context, story, and target mood.',
+                        tool: 'Playlist Pitch',
+                        target: 'Spotify Editors',
+                        action: 'Editorial Pitch',
+                        impact: 'PLACEMENT',
+                        theme: 'theme-orange',
+                        icon: '📋',
+                        phase: 'Pre-Release',
+                        budget: 0,
+                        songName: 'Lead Pitching Demo'
+                    }
+                ],
+                2: [
+                    {
+                        title: 'Marquee Launch',
+                        timing: releaseWeekTiming,
+                        desc: 'Full-screen sponsored recommendation to active, previously active, and light listeners.',
+                        tool: 'Marquee',
+                        target: 'Active Listeners',
+                        action: 'Splash Strike',
+                        impact: '8x LIFT',
+                        theme: 'theme-purple',
+                        icon: '🎯',
+                        phase: 'Release Week',
+                        budget: 500
+                    },
+                    {
+                        title: 'Showcase - Week 2 Followup',
+                        timing: '1-2 weeks after Marquee',
+                        desc: 'Home placement with contextual headline to deepen engagement with release.',
+                        tool: 'Showcase',
+                        target: 'Super Listeners',
+                        action: 'Depth Deepening',
+                        impact: '31x DEPTH',
+                        theme: 'theme-blue',
+                        icon: '🌊',
+                        phase: 'Release Week',
+                        budget: 600
+                    }
+                ],
+                3: [
+                    {
+                        title: 'Discovery Mode - Sustain',
+                        timing: 'Weeks 3-8+',
+                        desc: 'Add album tracks to Discovery Mode for long-tail algorithmic reach.',
+                        tool: 'Discovery Mode',
+                        target: 'Cold Audiences',
+                        action: 'Sustain Seeding',
+                        impact: '440% LIFT',
+                        theme: 'theme-green',
+                        icon: '🌱',
+                        phase: 'Post-Release'
+                    },
+                    {
+                        title: 'Showcase Waves',
+                        timing: 'Staggered deployment',
+                        desc: 'Sequential Showcase campaigns targeting different segments for maximum coverage.',
+                        tool: 'Showcase',
+                        target: 'Rotating Segments',
+                        action: 'Wave Strategy',
+                        impact: '6x STREAMS',
+                        theme: 'theme-blue',
+                        icon: '🌊',
+                        phase: 'Post-Release'
+                    }
+                ],
+                4: [
+                    {
+                        title: 'Deluxe Marquee Launch',
+                        timing: 'Deluxe release day',
+                        desc: 'Repeat the Marquee strike for new deluxe tracks.',
+                        tool: 'Marquee',
+                        target: 'All Segments',
+                        action: 'Repeat Strike',
+                        impact: '3x SAVES',
+                        theme: 'theme-purple',
+                        icon: '🎯',
+                        phase: 'Extended/Deluxe'
+                    },
+                    {
+                        title: 'Showcase "New Music"',
+                        timing: 'Week 2 of deluxe',
+                        desc: 'Deploy Showcase with "New music" headline for deluxe content.',
+                        tool: 'Showcase',
+                        target: 'Super Listeners',
+                        action: 'New Music Push',
+                        impact: '31x DEPTH',
+                        theme: 'theme-blue',
+                        icon: '🌊',
+                        phase: 'Extended/Deluxe'
+                    },
+                    {
+                        title: 'Discovery Mode - Deluxe Tracks',
+                        timing: 'Ongoing',
+                        desc: 'Add deluxe tracks to Discovery Mode for perpetual reach.',
+                        tool: 'Discovery Mode',
+                        target: 'Cold Audiences',
+                        action: 'Perpetual Loop',
+                        impact: '∞ REACH',
+                        theme: 'theme-green',
+                        icon: '🔄',
+                        phase: 'Extended/Deluxe'
+                    }
+                ]
+            };
+            return blocks[phase] || [];
+        }
+
+        // Create timeline block element
+        let blockCounter = 0;
+        function createTimelineBlock(data) {
+            const blockId = `block-${Date.now()}-${++blockCounter}`;
+
+            // Helper to get subfield context from DB if it exists
+            const getSub = (type, val) => {
+                if (typeof EQUILIBRIUM_DB !== 'undefined' && EQUILIBRIUM_DB.fields[type] && EQUILIBRIUM_DB.fields[type][val]) {
+                    const info = EQUILIBRIUM_DB.fields[type][val];
+                    const text = info.desc || info.context || '';
+                    return text ? `<span class="sub-field">• ${text}</span>` : '';
+                }
+                return '';
+            };
+
+            const block = document.createElement('div');
+            block.id = blockId;
+            block.className = `timeline-block ${data.theme}`;
+            block.innerHTML = `
+                <div class="block-header">
+                    <div class="block-info">
+                        <div class="block-icon">${data.icon}</div>
+                        <div>
+                            <span class="phase-indicator">${data.phase}</span>
+                            <div class="block-title">${data.title}</div>
+                            <div class="block-timing">${data.timing}</div>
+                        </div>
+                    </div>
+                    <div class="block-badge">${data.impact}</div>
+                </div>
+                <!-- Container for Prediction Badges -->
+                <div class="block-badges"></div>
+                <div class="block-body">
+                    ${data.songName ? `
+                    <div class="song-field">
+                        <span class="song-icon">🎵</span>
+                        <div style="display: flex; flex-direction: column; flex: 1;">
+                            <span class="song-label">Active Song</span>
+                            <input type="text" class="song-input" placeholder="Enter song name..." value="${data.songName}">
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div class="block-desc">${data.desc}</div>
+                    <div class="block-details">
+                        <!-- 1. Audience Segments (Was Target) -->
+                        <div class="detail-cell" onclick="openControlPanel('Target', '${data.target}', '${blockId}', true)">
+                            <div class="detail-label">Audience Segments</div>
+                            <div class="detail-value">${data.target}${getSub('target', data.target)}</div>
+                        </div>
+                        
+                        <!-- 2. Action -->
+                        <div class="detail-cell" onclick="openControlPanel('Action', '${data.action}', '${blockId}', true)">
+                            <div class="detail-label">Campaign Action</div>
+                            <div class="detail-value">${data.action}${getSub('action', data.action)}</div>
+                        </div>
+
+                        <!-- 3. Format (Was Tool) -->
+                        <div class="detail-cell" onclick="openControlPanel('Tool', '${data.tool}', '${blockId}', true)">
+                            <div class="detail-label">Ad Format</div>
+                            <div class="detail-value">${data.tool}${getSub('tool', data.tool)}</div>
+                        </div>
+
+                        <!-- 4. Expected Results -->
+                        <div class="detail-cell" onclick="openPredictionPanel('Expected', '${data.impact}', '${blockId}')">
+                            <div class="detail-label">Projected Outcome</div>
+                            <div class="detail-value">${data.impact}${getSub('impact', data.impact)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return block;
+        }
+
+        // Unified Field Update Helper with Glimmer Effect
+        function updateBlockField(blockId, fieldType, newValue) {
+            const block = document.getElementById(blockId);
+            if (!block) return;
+
+            // Mapping UI labels to detail cells
+            const labelMap = {
+                'Target': 'Audience Segments',
+                'Action': 'Campaign Action',
+                'Tool': 'Ad Format',
+                'Expected': 'Projected Outcome'
+            };
+
+            const labelToFind = labelMap[fieldType];
+            const detailCells = block.querySelectorAll('.detail-cell');
+
+            detailCells.forEach(cell => {
+                const label = cell.querySelector('.detail-label')?.textContent;
+                if (label === labelToFind) {
+                    const valueEl = cell.querySelector('.detail-value');
+
+                    // Fetch subfield if exists
+                    let subFieldHTML = '';
+                    if (typeof EQUILIBRIUM_DB !== 'undefined' && EQUILIBRIUM_DB.fields[fieldType.toLowerCase()] && EQUILIBRIUM_DB.fields[fieldType.toLowerCase()][newValue]) {
+                        const info = EQUILIBRIUM_DB.fields[fieldType.toLowerCase()][newValue];
+                        const text = info.desc || info.context || '';
+                        if (text) subFieldHTML = `<span class="sub-field">• ${text}</span>`;
+                    } else if (fieldType === 'Expected') {
+                        // Special case for prediction results which might not be exact keys
+                        subFieldHTML = `<span class="sub-field">• Validated Forecast</span>`;
+                    }
+
+                    valueEl.innerHTML = `${newValue}${subFieldHTML}`;
+
+                    // Trigger Glimmer
+                    cell.classList.remove('glimmer-effect');
+                    void cell.offsetWidth; // Trigger reflow
+                    cell.classList.add('glimmer-effect');
+                }
+            });
+        }
+
+        // CONTROL PANEL LOGIC
+        function triggerGlobalPrediction() {
+            const btn = document.querySelector('.global-predict');
+            const totalBudget = parseInt(document.getElementById('totalBudget').textContent.replace(/[^0-9]/g, '')) || 0;
+
+            if (totalBudget === 0) {
+                alert("Please build your campaign timeline and set budgets before predicting outcomes.");
+                return;
+            }
+
+            console.log(`🌐 Running Global Prediction for $${totalBudget} campaign...`);
+            btn.textContent = "🧪 ANALYZING FULL CAMPAIGN...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const marqueeBudget = totalBudget * 0.6;
+                const showcaseBudget = totalBudget * 0.4;
+
+                const marqueeRes = calculateCampaignPrediction(marqueeBudget, true, ['Super Listeners', 'Moderate Listeners']);
+                const showcaseRes = calculateCampaignPrediction(showcaseBudget, false, ['Light Listeners', 'Potential']);
+
+                const totalReach = (parseInt(marqueeRes.reach.replace(/,/g, '')) + parseInt(showcaseRes.reach.replace(/,/g, ''))).toLocaleString();
+                const totalListeners = (parseInt(marqueeRes.listeners.replace(/,/g, '')) + parseInt(showcaseRes.listeners.replace(/,/g, ''))).toLocaleString();
+                const totalStreams = (parseInt(marqueeRes.streams.replace(/,/g, '')) + parseInt(showcaseRes.streams.replace(/,/g, ''))).toLocaleString();
+
+                const resultsHTML = `
+                    <div style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 12px; border: 1px solid var(--border-hover); animation: fadeIn 0.8s ease;">
+                        <h4 style="color: var(--spotify-bright); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 20px;">Estimated Holistic Impact</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                            <div class="stat-card">
+                                <span style="display: block; font-size: 1.5rem; color: #fff; font-weight: 800;">${totalReach}</span>
+                                <span style="font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase;">Total Reach</span>
+                            </div>
+                            <div class="stat-card">
+                                <span style="display: block; font-size: 1.5rem; color: #fff; font-weight: 800;">${totalListeners}</span>
+                                <span style="font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase;">New Listeners</span>
+                            </div>
+                            <div class="stat-card">
+                                <span style="display: block; font-size: 1.5rem; color: var(--spotify-bright); font-weight: 800;">${totalStreams}</span>
+                                <span style="font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase;">Est. Streams</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 25px; padding: 15px; background: rgba(30, 215, 96, 0.05); border-radius: 8px; font-size: 0.8rem; border-left: 4px solid var(--spotify);">
+                            🚀 <strong>Full Funnel Multiplier:</strong> Your ${campaignData.phases.length}-phase sequence leverages Marquee's high-intent conversion and Showcase's reach, creating a 6x compounding effect on your total stream yield.
+                        </div>
+                        <div style="margin-top: 20px; text-align: center;">
+                             <button class="btn-action" style="padding: 10px 20px; width: 100%; font-size: 0.7rem;" onclick="closePredictionPanel()">DISMISS ANALYSIS</button>
+                        </div>
+                    </div>
+                `;
+
+                // Open prediction panel on the left and inject content
+                openPredictionPanel('Analysis Complete');
+                const container = document.getElementById('ppContent');
+                container.innerHTML = resultsHTML;
+
+                // Reset button state
+                btn.textContent = "🧪 PREDICT TOTAL CAMPAIGN OUTCOME";
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }, 2000);
+        }
+
+        function triggerPrediction(budget) {
+            const btn = document.querySelector('.predict-btn');
+            if (!btn) return;
+
+            const activeBlockId = window.lastClickedBlockId;
+            const activeBlock = document.getElementById(activeBlockId);
+            const toolType = activeBlock?.querySelector('.detail-cell:first-child .detail-value')?.textContent || 'Showcase';
+            const isMarquee = toolType.toLowerCase().includes('marquee');
+
+            // Get selected segments from the block if any
+            const segments = Array.from(activeBlock?.querySelectorAll('.selection-badge span')).map(s => s.textContent) || ['Light Listeners'];
+
+            console.log(`🔮 Prediction Engine | Tool: ${toolType} | Segments: ${segments.join(', ')}`);
+            btn.textContent = "🧪 ANALYZING DATA...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const results = calculateCampaignPrediction(budget, isMarquee, segments);
+                const socialResults = calculateCampaignPrediction(budget, false, segments); // Always compare to social 'base'
+
+                const resultsHTML = `
+                    <div class="prediction-results" style="margin-top: 20px;">
+                        <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--spotify-bright); margin-bottom: 10px; font-weight: 800;">
+                            Forecast: ${toolType} strategy
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="stat-card" style="background: rgba(30, 215, 96, 0.05); padding: 12px; border: 1px solid var(--spotify); border-radius: 8px;">
+                                <span style="display: block; font-size: 1.1rem; color: var(--spotify-bright); font-weight: 800;">${results.streams}</span>
+                                <span style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase;">Est. Streams</span>
+                            </div>
+                            <div class="stat-card" style="background: rgba(255,255,255,0.02); padding: 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                                <span style="display: block; font-size: 1.1rem; color: var(--text-dim); font-weight: 800;">${socialResults.streams}</span>
+                                <span style="font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase;">Social Ads</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; background: rgba(124, 77, 255, 0.1); padding: 10px; border-radius: 8px; font-size: 0.7rem; color: var(--text-main); border-left: 3px solid var(--accent);">
+                            💡 <strong>${isMarquee ? 'Marquee Advantage' : 'Showcase Reach'}:</strong> ${isMarquee ? 'Captures intent on app-open, delivering higher conversion from active fans.' : 'Home feed placement creates persistent discovery across the catalog.'}
+                        </div>
+                    </div>
+                    <button class="predict-btn" style="margin-top: 15px; background: var(--spotify);" onclick="applyPrediction('${results.reach} REACH', '${results.streams} STRMS')">
+                        ✅ APPLY TO TIMELINE
+                    </button>
+                `;
+                const container = btn.parentElement;
+                container.innerHTML += resultsHTML;
+                btn.remove();
+            }, 1500);
+        }
+
+        function selectSingleTool(toolName, blockId) {
+            updateBlockField(blockId, 'Tool', toolName);
+
+            const block = document.getElementById(blockId);
+            if (block) {
+                const icon = block.querySelector('.block-icon');
+                if (icon) icon.textContent = toolName === 'Marquee' ? '🎞️' : '🖼️';
+            }
+
+            if (window.isDirectEdit) {
+                setTimeout(closeControlPanel, 300);
+            } else {
+                transitionToConfig('Action', blockId);
+            }
+        }
+
+        function selectAction(actionName, blockId) {
+            updateBlockField(blockId, 'Action', actionName);
+            if (window.isDirectEdit) {
+                setTimeout(closeControlPanel, 300);
+            } else {
+                // Auto-advance in Wizard Mode: Action -> Target
+                transitionToConfig('Target', blockId);
+            }
+        }
+
+        function saveSegments(blockId) {
+            const block = document.getElementById(blockId);
+            const panel = document.getElementById('controlPanel');
+            const selected = Array.from(panel.querySelectorAll('.checkbox-item.selected .checkbox-label')).map(el => el.textContent);
+
+            if (block && selected.length > 0) {
+                const badgeContainer = block.querySelector('.block-badges');
+                if (badgeContainer) {
+                    badgeContainer.innerHTML = selected.map(s => `<div class="selection-badge">🧪 ${s}</div>`).join('');
+                }
+                updateBlockField(blockId, 'Target', selected.join(', '));
+            }
+
+            if (window.isDirectEdit) {
+                setTimeout(closeControlPanel, 300);
+            } else {
+                transitionToConfig('Action', blockId);
+            }
+        }
+
+        // Helper to ensure item is selected before saving on double click
+        function selectAndSave(event, element, blockId) {
+            // Ensure it is selected if not already (toggleCheckbox handles the click, but dblclick might need insurance or logic)
+            // Actually, the click handler fires first, so it should be selected. 
+            // But if the user double clicks quickly on an unselected item: Click (Select) -> Click (Deselect).
+            // So we force selection here.
+            if (!element.classList.contains('selected')) {
+                element.classList.add('selected');
+                const input = element.querySelector('input');
+                if (input) input.checked = true;
+            }
+            saveSegments(blockId);
+            setTimeout(closeControlPanel, 300);
+        }
+
+        function applyPrediction(reachText, streamsText) {
+            console.log(`🧪 Applying prediction results to timeline: ${reachText}, ${streamsText}`);
+
+            // Target the block that was clicked
+            const activeBlockId = window.lastClickedBlockId;
+            const activeBlock = activeBlockId ? document.getElementById(activeBlockId) : (document.querySelector('.timeline-block.active') || document.querySelector('.timeline-block:last-child'));
+
+            if (activeBlock) {
+                const badgeContainer = activeBlock.querySelector('.block-badges');
+                if (badgeContainer) {
+                    badgeContainer.innerHTML = `
+                        <div class="selection-badge">🧪 ${reachText}</div>
+                        <div class="selection-badge" style="margin-top: 30px;">🧪 ${streamsText}</div>
+                    `;
+                    console.log("✅ Badges updated on block:", activeBlock.id);
+                }
+
+                updateBlockField(activeBlockId, 'Expected', streamsText);
+            }
+            closeControlPanel();
+        }
+
+        // Helper to transition to the next logical configuration field
+        function transitionToConfig(nextField, blockId) {
+            console.log(`⏩ Auto-Advancing to ${nextField} for block ${blockId}`);
+            const block = document.getElementById(blockId);
+            if (!block) return;
+
+            // Get current value for the next field to prepopulate the panel correctly
+            let currentValue = '';
+            if (nextField === 'Target') {
+                // Target is now 1st cell
+                currentValue = block.querySelector('.detail-cell:nth-child(1) .detail-value').textContent;
+            } else if (nextField === 'Action') {
+                // Action is now 2nd cell
+                currentValue = block.querySelector('.detail-cell:nth-child(2) .detail-value').textContent;
+            }
+
+            // Allow a small delay for the previous selection visual to register
+            setTimeout(() => {
+                openControlPanel(nextField, currentValue, blockId, false);
+            }, 200);
+        }
+
+        // Benchmark Data for Prediction Logic
+        const CAMPAIGN_BENCHMARKS = {
+            showcase: {
+                cpc: 0.27,
+                reachPerDollar: 81.46,
+                conversionRate: 0.0247, // ~2.5% Showcase baseline
+                streamsPerListener: 6.15
+            },
+            marquee: {
+                cpc: 0.55, // Marquee is higher CPC but 10x intent
+                reachPerDollar: 40.0,
+                conversionRate: 0.16, // ~16% Marquee conversion
+                streamsPerListener: 8.2 // Marquee listeners are high intent
+            }
+        };
+
+        const SEGMENT_FACTORS = {
+            'Super Listeners': { conv: 1.5, streams: 2.0, reach: 0.4 },
+            'Moderate Listeners': { conv: 1.2, streams: 1.3, reach: 0.7 },
+            'Light Listeners': { conv: 1.0, streams: 1.0, reach: 1.0 },
+            'Previously Active': { conv: 0.8, streams: 0.8, reach: 1.2 },
+            'Programmed': { conv: 0.5, streams: 0.6, reach: 2.0 },
+            'Potential': { conv: 0.3, streams: 0.5, reach: 3.0 }
+        };
+
+        function calculateCampaignPrediction(budget, isMarquee = true, segments = ['Light Listeners']) {
+            const tool = isMarquee ? 'marquee' : 'showcase';
+            const base = CAMPAIGN_BENCHMARKS[tool];
+
+            // Calculate weighted factors for selected segments
+            let convFactor = 0;
+            let streamFactor = 0;
+            let reachFactor = 0;
+
+            segments.forEach(seg => {
+                const factors = SEGMENT_FACTORS[seg] || SEGMENT_FACTORS['Light Listeners'];
+                convFactor += factors.conv;
+                streamFactor += factors.streams;
+                reachFactor += factors.reach;
+            });
+
+            convFactor /= segments.length;
+            streamFactor /= segments.length;
+            reachFactor /= segments.length;
+
+            const reach = Math.round(budget * base.reachPerDollar * reachFactor);
+            const clicks = Math.round(budget / base.cpc);
+            const listeners = Math.round(clicks * base.conversionRate * convFactor);
+            const streams = Math.round(listeners * base.streamsPerListener * streamFactor);
+
+            return {
+                reach: reach.toLocaleString(),
+                clicks: clicks.toLocaleString(),
+                listeners: listeners.toLocaleString(),
+                streams: streams.toLocaleString()
+            };
+        }
+
+        function openControlPanel(field, value, blockId = null, isDirectMode = true) {
+            window.lastClickedBlockId = blockId;
+            window.isDirectEdit = isDirectMode;
+            console.log(`🎛️ Right Panel (Config) | Field: ${field} | Direct: ${isDirectMode}`);
+
+            // Close left panel
+            closePredictionPanel();
+
+            const panel = document.getElementById('controlPanel');
+            const mask = document.getElementById('overlayMask');
+            const title = document.getElementById('cpTitle');
+            const content = document.getElementById('cpContent');
+
+            title.textContent = `Configure ${field}`;
+            content.innerHTML = '';
+
+            if (field === 'Tool') {
+                const tools = [
+                    { name: 'Marquee', desc: 'Full-screen app-open recommendation (New Releases)', icon: '🎞️' },
+                    { name: 'Showcase', desc: 'Banner in the Home feed (Catalog & New)', icon: '🖼️' }
+                ];
+                content.innerHTML = `
+                    <div class="cp-section">
+                        <label>Select Tool Format</label>
+                        <div class="checkbox-group" style="margin-top: 10px;">
+                            ${tools.map(t => `
+                                <div class="checkbox-item ${value.includes(t.name) ? 'selected' : ''}" onclick="selectSingleTool('${t.name}', '${blockId}')" ondblclick="transitionToConfig('Target', '${blockId}')">
+                                    <span style="font-size: 1.5rem; margin-right: 15px;">${t.icon}</span>
+                                    <div style="flex: 1;">
+                                        <div class="checkbox-label">${t.name}</div>
+                                        <div style="font-size: 0.65rem; color: var(--text-dim);">${t.desc}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (field === 'Action') {
+                const actions = [
+                    { name: 'Drive Streams', desc: 'Optimize for repeat listens and retention.' },
+                    { name: 'New Release Buzz', desc: 'Focus on launch week reach and virality.' },
+                    { name: 'Nurture Fans', desc: 'Move light listeners into moderate/super categories.' },
+                    { name: 'Catalog Discovery', desc: 'Surface older tracks to potential new fans.' }
+                ];
+                content.innerHTML = `
+                    <div class="cp-section">
+                        <label>Campaign Action</label>
+                        <div class="checkbox-group" style="margin-top: 10px;">
+                            ${actions.map(a => `
+                                <div class="checkbox-item ${value === a.name ? 'selected' : ''}" onclick="selectAction('${a.name}', '${blockId}')" ondblclick="transitionToConfig('Budget', '${blockId}')">
+                                    <div style="flex: 1;">
+                                        <div class="checkbox-label">${a.name}</div>
+                                        <div style="font-size: 0.65rem; color: var(--text-dim);">${a.desc}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (field === 'Target') {
+                content.innerHTML = `
+                    <div class="cp-section">
+                        <label>Audience Segments</label>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 20px;">
+                            Customize your audience. We'll include the audiences of all main artists on your release.
+                        </p>
+                        <div class="checkbox-group" style="margin-top: 10px;">
+                            ${(() => {
+                        const AUDIENCE_DETAILS = {
+                            'Super Listeners': { desc: 'Most dedicated active listeners (last 28 days). Most likely to keep streaming.' },
+                            'Moderate Listeners': { desc: 'Active listeners with multiple streams (last 28 days). Could develop into super listeners.' },
+                            'Light Listeners': { desc: 'Active listeners with 1-2 streams (last 28 days). Could develop into moderate listeners.' },
+                            'Previously Active': { desc: 'No intentional streams in 28+ days. May still stream from programmed sources.' },
+                            'Programmed': { desc: 'Only stream from editorial/algo playlists. No active streams in 2+ years.' },
+                            'Potential': { desc: 'No streams in 2+ years. Based on habits, they may stream your promoted release.' }
+                        };
+                        return Object.keys(AUDIENCE_DETAILS).map(seg => `
+                                <div class="checkbox-item ${value.includes(seg) ? 'selected' : ''}" onclick="toggleCheckbox(event, this)" ondblclick="selectAndSave(event, this, '${blockId}')" style="align-items: flex-start;">
+                                    <div style="flex: 1;">
+                                       <div style="display: flex; align-items: center; justify-content: space-between;">
+                                            <span class="checkbox-label" style="font-weight: 600;">${seg}</span>
+                                       </div>
+                                       <div class="segment-desc" style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; line-height: 1.3; opacity: 0.7;">
+                                            ${AUDIENCE_DETAILS[seg].desc}
+                                       </div>
+                                    </div>
+                                    <input type="checkbox" ${value.includes(seg) ? 'checked' : ''} style="margin-top: 4px;">
+                                </div>
+                                `).join('');
+                    })()}
+                        </div>
+                        <!-- Save button removed for streamlined UX -->
+                    </div>
+                `;
+            }
+
+            panel.classList.add('active');
+            mask.classList.add('active');
+        }
+
+        function openPredictionPanel(titleText) {
+            console.log(`🧪 Left Panel (Analysis) | ${titleText}`);
+
+            // Close right panel
+            closeControlPanel();
+
+            const panel = document.getElementById('predictionPanel');
+            const mask = document.getElementById('overlayMask');
+            const title = document.getElementById('ppTitle');
+            const content = document.getElementById('ppContent');
+
+            title.textContent = titleText || "Analysis & Forecast";
+
+            // If it's a block prediction, set up the initial UI
+            const blockId = window.lastClickedBlockId;
+            if (blockId && !titleText.includes('Complete')) {
+                const activeBlock = document.getElementById(blockId);
+                const budget = document.querySelector('.budget-slider')?.value || 500;
+
+                content.innerHTML = `
+                    <div class="cp-section">
+                        <label>Block Analysis</label>
+                        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px;">
+                            Running forest-model analysis for this specific strategy block.
+                        </p>
+                        <div style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px;">
+                            <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;">Current Config</div>
+                            <div style="font-size: 1rem; color: var(--text-main); font-weight: 800; margin-top: 5px;">
+                                $${budget} Budget → ${activeBlock.querySelector('.detail-cell .detail-value').textContent}
+                            </div>
+                        </div>
+                        <button class="predict-btn" onclick="triggerPrediction(${budget})">
+                            🧪 ANALYZE DATA & PREDICT
+                        </button>
+                    </div>
+                `;
+            }
+
+            panel.classList.add('active');
+            mask.classList.add('active');
+        }
+
+        function closePredictionPanel() {
+            document.getElementById('predictionPanel').classList.remove('active');
+            document.getElementById('overlayMask').classList.remove('active');
+        }
+
+        function closeControlPanel() {
+            document.getElementById('controlPanel').classList.remove('active');
+            document.getElementById('overlayMask').classList.remove('active');
+        }
+
+        // Export campaign to JSON
+        function exportCampaignJSON() {
+            const data = collectCampaignData();
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `campaign-kit-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Import campaign from JSON
+        function importCampaignJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    loadCampaignData(data);
+                } catch (err) {
+                    alert('Invalid JSON file. Please check the file format.');
+                    console.error('JSON parse error:', err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
+        }
+
+        // Collect all campaign data for export
+        function collectCampaignData() {
+            const data = {
+                exportDate: new Date().toISOString(),
+                version: '1.0',
+                currentPhase: currentPhase,
+                totalBudget: campaignData.totalBudget || 0,
+                phases: campaignData.phases,
+                configuration: {
+                    phase1: {
+                        discoveryStartDate: document.getElementById('discoveryStartDate')?.value || '',
+                        discoverySongs: getSelectedCheckboxes('#card-discovery-pre .checkbox-group'),
+                        waterfallSingles: getWaterfallSinglesData(),
+                        pitchingItems: getSelectedCheckboxes('#card-pitching .checkbox-group')
+                    },
+                    phase2: {
+                        marqueeTargets: getSelectedCheckboxes('#card-marquee-launch .checkbox-group'),
+                        marqueeBudget: document.querySelector('#card-marquee-launch .budget-slider')?.value || 500,
+                        showcaseHeadline: getSelectedRadio('#showcaseHeadlines'),
+                        showcaseTargets: getSelectedCheckboxes('#card-showcase-launch .checkbox-group'),
+                        showcaseBudget: document.querySelector('#card-showcase-launch .budget-slider')?.value || 300
+                    },
+                    phase3: {
+                        sustainTracks: getSelectedCheckboxes('#card-discovery-sustain .checkbox-group'),
+                        waves: getShowcaseWavesData()
+                    },
+                    phase4: {
+                        deluxeEnabled: document.getElementById('deluxeToggle')?.classList.contains('active') || false,
+                        deluxeItems: getSelectedCheckboxes('#deluxeContent .checkbox-group'),
+                        deluxeBudget: document.querySelector('#deluxeContent .budget-slider')?.value || 800
+                    }
+                },
+                timeline: getTimelineBlocksData()
+            };
+            return data;
+        }
+
+        // Helper: Get selected checkboxes in a container
+        function getSelectedCheckboxes(selector) {
+            const items = [];
+            document.querySelectorAll(`${selector} .checkbox-item`).forEach((item, index) => {
+                items.push({
+                    index: index,
+                    label: item.querySelector('.checkbox-label')?.textContent || '',
+                    selected: item.classList.contains('selected')
+                });
+            });
+            return items;
+        }
+
+        // Helper: Get selected radio in a group
+        function getSelectedRadio(selector) {
+            const selected = document.querySelector(`${selector} .radio-item.selected`);
+            return selected ? selected.querySelector('.radio-label')?.textContent || '' : '';
+        }
+
+        // Helper: Get waterfall singles data
+        function getWaterfallSinglesData() {
+            const singles = [];
+            document.querySelectorAll('.waterfall-single').forEach((single, index) => {
+                singles.push({
+                    number: index + 1,
+                    date: single.querySelector('.date-input')?.value || '',
+                    targets: getSelectedCheckboxes(`[data-single="${single.dataset.single}"] .checkbox-group`)
+                });
+            });
+            return singles;
+        }
+
+        // Helper: Get showcase waves data
+        function getShowcaseWavesData() {
+            const waves = [];
+            document.querySelectorAll('.showcase-wave').forEach((wave, index) => {
+                waves.push({
+                    number: index + 2,
+                    date: wave.querySelector('.date-input')?.value || '',
+                    headline: getSelectedRadio(`#wave${index + 2}Headline`)
+                });
+            });
+            return waves;
+        }
+
+        // Helper: Get timeline blocks data
+        function getTimelineBlocksData() {
+            const blocks = [];
+            document.querySelectorAll('.timeline-block').forEach(block => {
+                blocks.push({
+                    title: block.querySelector('.block-title')?.textContent || '',
+                    timing: block.querySelector('.block-timing')?.textContent || '',
+                    phase: block.querySelector('.phase-indicator')?.textContent || '',
+                    impact: block.querySelector('.block-badge')?.textContent || '',
+                    desc: block.querySelector('.block-desc')?.textContent || '',
+                    theme: Array.from(block.classList).find(c => c.startsWith('theme-')) || 'theme-blue',
+                    icon: block.querySelector('.block-icon')?.textContent || '🎯',
+                    songName: block.querySelector('.song-input')?.value || '',
+                    tool: block.querySelector('.detail-cell:nth-child(3) .detail-value')?.textContent.split('•')[0].trim() || '',
+                    target: block.querySelector('.detail-cell:nth-child(1) .detail-value')?.textContent.split('•')[0].trim() || '',
+                    action: block.querySelector('.detail-cell:nth-child(2) .detail-value')?.textContent.split('•')[0].trim() || ''
+                });
+            });
+            return blocks;
+        }
+
+        // Load campaign data from JSON
+        function loadCampaignData(data) {
+            // Reset first
+            resetCampaign(false);
+
+            if (!data.configuration) return;
+
+            const config = data.configuration;
+
+            // Phase 1
+            if (config.phase1) {
+                if (config.phase1.discoveryStartDate) {
+                    document.getElementById('discoveryStartDate').value = config.phase1.discoveryStartDate;
+                }
+                restoreCheckboxes('#card-discovery-pre .checkbox-group', config.phase1.discoverySongs);
+                restoreCheckboxes('#card-pitching .checkbox-group', config.phase1.pitchingItems);
+            }
+
+            // Phase 2
+            if (config.phase2) {
+                restoreCheckboxes('#card-marquee-launch .checkbox-group', config.phase2.marqueeTargets);
+                if (config.phase2.marqueeBudget) {
+                    const slider = document.querySelector('#card-marquee-launch .budget-slider');
+                    if (slider) {
+                        slider.value = config.phase2.marqueeBudget;
+                        updateBudgetDisplay('marqueeBudgetDisplay', config.phase2.marqueeBudget);
+                    }
+                }
+                restoreRadio('#showcaseHeadlines', config.phase2.showcaseHeadline);
+                restoreCheckboxes('#card-showcase-launch .checkbox-group', config.phase2.showcaseTargets);
+                if (config.phase2.showcaseBudget) {
+                    const slider = document.querySelector('#card-showcase-launch .budget-slider');
+                    if (slider) {
+                        slider.value = config.phase2.showcaseBudget;
+                        updateBudgetDisplay('showcaseBudgetDisplay', config.phase2.showcaseBudget);
+                    }
+                }
+            }
+
+            // Phase 3
+            if (config.phase3) {
+                restoreCheckboxes('#card-discovery-sustain .checkbox-group', config.phase3.sustainTracks);
+            }
+
+            // Phase 4
+            if (config.phase4) {
+                if (config.phase4.deluxeEnabled) {
+                    document.getElementById('deluxeToggle').classList.add('active');
+                    document.getElementById('deluxeContent').style.display = 'block';
+                }
+                restoreCheckboxes('#deluxeContent .checkbox-group', config.phase4.deluxeItems);
+                if (config.phase4.deluxeBudget) {
+                    const slider = document.querySelector('#deluxeContent .budget-slider');
+                    if (slider) {
+                        slider.value = config.phase4.deluxeBudget;
+                        updateBudgetDisplay('deluxeBudgetDisplay', config.phase4.deluxeBudget);
+                    }
+                }
+            }
+
+            // Restore timeline if present
+            if (data.timeline && data.timeline.length > 0) {
+                const container = document.getElementById('timelineContainer');
+                container.innerHTML = '';
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('campaignSummary').style.display = 'block';
+
+                data.timeline.forEach(blockData => {
+                    const blockEl = createTimelineBlock(blockData);
+                    container.appendChild(blockEl);
+                    blockEl.classList.add('visible');
+                });
+            }
+
+            // Restore phases
+            if (data.phases) {
+                campaignData.phases = data.phases;
+                document.getElementById('totalPhases').textContent = data.phases.length;
+            }
+
+            if (data.currentPhase) {
+                switchPhase(data.currentPhase);
+            }
+
+            updateTotalBudget();
+        }
+
+        // Helper: Restore checkboxes state
+        function restoreCheckboxes(selector, items) {
+            if (!items) return;
+            const checkboxItems = document.querySelectorAll(`${selector} .checkbox-item`);
+            items.forEach((item, index) => {
+                if (checkboxItems[index]) {
+                    const checkbox = checkboxItems[index];
+                    const input = checkbox.querySelector('input');
+                    if (item.selected) {
+                        checkbox.classList.add('selected');
+                        if (input) input.checked = true;
+                    } else {
+                        checkbox.classList.remove('selected');
+                        if (input) input.checked = false;
+                    }
+                }
+            });
+        }
+
+        // Helper: Restore radio state
+        function restoreRadio(selector, value) {
+            if (!value) return;
+            document.querySelectorAll(`${selector} .radio-item`).forEach(item => {
+                const label = item.querySelector('.radio-label')?.textContent || '';
+                if (label === value) {
+                    item.classList.add('selected');
+                    const input = item.querySelector('input');
+                    if (input) input.checked = true;
+                } else {
+                    item.classList.remove('selected');
+                    const input = item.querySelector('input');
+                    if (input) input.checked = false;
+                }
+            });
+        }
+
+        // Reset campaign
+        function resetCampaign(confirm = true) {
+            if (confirm && !window.confirm('Reset all campaign configuration? This cannot be undone.')) {
+                return;
+            }
+
+            // Reset state
+            currentPhase = 1;
+            campaignData = { phases: [], totalBudget: 0 };
+            singleCount = 1;
+
+            // Reset phase navigator
+            switchPhase(1);
+            document.querySelectorAll('.phase-item').forEach(item => {
+                item.classList.remove('completed');
+            });
+
+            // Clear timeline
+            const container = document.getElementById('timelineContainer');
+            container.querySelectorAll('.timeline-block').forEach(block => block.remove());
+            document.getElementById('emptyState').style.display = 'flex';
+            document.getElementById('campaignSummary').style.display = 'none';
+
+            // Reset counters
+            document.getElementById('totalPhases').textContent = '0';
+            document.getElementById('totalBudget').textContent = '$0';
+
+            // Reset deluxe toggle
+            document.getElementById('deluxeToggle').classList.remove('active');
+            document.getElementById('deluxeContent').style.display = 'none';
+
+            // Reset budget sliders
+            document.querySelectorAll('.budget-slider').forEach(slider => {
+                const defaultVal = slider.id === 'deluxeBudgetDisplay' ? 800 :
+                    slider.closest('#card-showcase-launch') ? 300 : 500;
+                slider.value = defaultVal;
+            });
+
+            updateTotalBudget();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("🧪 Campaign Kit System: Ready and Initialized.");
+            console.log("🛠️ Debug: Checking for Control Panel implementation...");
+            const cp = document.getElementById('controlPanel');
+            console.log(cp ? "✅ Control Panel Element found in DOM" : "❌ Control Panel Element MISSING");
+
+            // Set default dates
+            const today = new Date();
+            const threeMonthsAgo = new Date(today);
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+            const discoveryDate = document.getElementById('discoveryStartDate');
+            if (discoveryDate) {
+                discoveryDate.valueAsDate = threeMonthsAgo;
+            }
+
+            updateTotalBudget();
+        });
+
+        function togglePredictorOverlay() {
+            const overlay = document.getElementById('predictorOverlay');
+            const frame = document.getElementById('predictorFrame');
+            const isVisible = overlay.classList.contains('visible');
+
+            if (!isVisible) {
+                frame.src = 'predictor_v2.html';
+                overlay.classList.add('visible');
+            } else {
+                overlay.classList.remove('visible');
+                setTimeout(() => { frame.src = ''; }, 300);
+            }
+        }
+
+        function togglePlansOverlay() {
+            const overlay = document.getElementById('plansOverlay');
+            const frame = document.getElementById('plansFrame');
+            const isVisible = overlay.classList.contains('visible');
+
+            if (!isVisible) {
+                frame.src = 'equilibrium_plans_v2.html';
+                overlay.classList.add('visible');
+            } else {
+                overlay.classList.remove('visible');
+                setTimeout(() => { frame.src = ''; }, 300);
+            }
+        }
+    </script>
+</body>
+
+</html>

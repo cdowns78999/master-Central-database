@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own DSP — The Curriculum Nobody Published</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0a0a0a;
+    --bg-elevated: #141414;
+    --bg-float: #1a1a1a;
+    --bg-hover: #222;
+    --border: rgba(255,255,255,0.06);
+    --border-hover: rgba(30,215,96,0.25);
+    --text: #e8e8e8;
+    --text-dim: rgba(255,255,255,0.45);
+    --text-ghost: rgba(255,255,255,0.25);
+    --spotify: #1ed760;
+    --spotify-dim: rgba(30,215,96,0.15);
+    --spotify-ghost: rgba(30,215,96,0.06);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.15);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.12);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.12);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.12);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* ── HERO ── */
+.hero {
+    padding: 80px 40px 50px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -140px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(30,215,96,0.07) 0%, rgba(59,130,246,0.03) 40%, transparent 70%);
+    pointer-events: none;
+}
+.hero-badge {
+    display: inline-block;
+    font-size: 0.48rem;
+    text-transform: uppercase;
+    letter-spacing: 3.5px;
+    color: var(--amber);
+    font-weight: 900;
+    background: var(--amber-dim);
+    border: 1px solid rgba(245,158,11,0.15);
+    padding: 5px 16px;
+    border-radius: 100px;
+    margin-bottom: 22px;
+}
+.hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 14px;
+    line-height: 1.15;
+}
+.hero h1 .g { color: var(--spotify); }
+.hero h1 .dim { color: var(--text-dim); font-weight: 400; font-size: 1.2rem; display: block; margin-top: 6px; letter-spacing: 0; }
+.hero-sub {
+    max-width: 680px;
+    margin: 0 auto;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.8;
+}
+.hero-sub strong { color: #fff; }
+.hero-sub .g { color: var(--spotify); font-weight: 700; }
+
+/* ── CONTAINER ── */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 30px 80px; }
+
+/* ── SECTION HEADERS ── */
+.sec-head {
+    margin: 55px 0 8px;
+    display: flex; align-items: center; gap: 12px;
+}
+.sec-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sec-dot.green { background: var(--spotify); }
+.sec-dot.amber { background: var(--amber); }
+.sec-dot.blue { background: var(--blue); }
+.sec-dot.purple { background: var(--purple); }
+.sec-dot.red { background: var(--red); }
+.sec-dot.cyan { background: var(--cyan); }
+.sec-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+.sec-sub {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    line-height: 1.7;
+    max-width: 800px;
+}
+
+/* ── METRIC CARDS ── */
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.metric-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.metric-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+}
+.metric-card:hover { border-color: var(--border-hover); }
+.metric-card .mc-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+.metric-card .mc-value.green { color: var(--spotify); }
+.metric-card .mc-value.amber { color: var(--amber); }
+.metric-card .mc-value.blue { color: var(--blue); }
+.metric-card .mc-value.purple { color: var(--purple); }
+.metric-card .mc-value.red { color: var(--red); }
+.metric-card .mc-value.cyan { color: var(--cyan); }
+.metric-card .mc-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+/* ── QUOTE BLOCKS ── */
+.quote-block {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--spotify);
+    border-radius: 0 12px 12px 0;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.8;
+    font-style: italic;
+}
+.quote-block strong { color: #fff; font-style: normal; }
+.quote-block .g { color: var(--spotify); font-style: normal; font-weight: 700; }
+
+/* ── TIER / PHASE CARDS ── */
+.tier-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+.tier-head {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 26px;
+    background: var(--bg-float);
+    border-bottom: 1px solid var(--border);
+}
+.tier-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.tier-num.green { color: var(--spotify); }
+.tier-num.amber { color: var(--amber); }
+.tier-num.blue { color: var(--blue); }
+.tier-num.purple { color: var(--purple); }
+.tier-num.cyan { color: var(--cyan); }
+.tier-info { flex: 1; }
+.tier-info .ti-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 2px;
+}
+.tier-info .ti-sub {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+}
+.tier-badge {
+    font-size: 0.45rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 900;
+    padding: 4px 12px;
+    border-radius: 100px;
+    flex-shrink: 0;
+}
+.tier-badge.green { background: var(--spotify-dim); color: var(--spotify); border: 1px solid rgba(30,215,96,0.2); }
+.tier-badge.amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+.tier-badge.blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
+.tier-badge.purple { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(168,85,247,0.2); }
+.tier-body { padding: 22px 26px; }
+
+/* ── PILLAR ROWS ── */
+.pillar-row {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+.pillar-row:last-child { border-bottom: none; }
+.pillar-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.pillar-icon.green { background: var(--spotify-dim); }
+.pillar-icon.amber { background: var(--amber-dim); }
+.pillar-icon.blue { background: var(--blue-dim); }
+.pillar-icon.purple { background: var(--purple-dim); }
+.pillar-icon.cyan { background: var(--cyan-dim); }
+.pillar-icon.red { background: var(--red-dim); }
+.pillar-text .pt-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 3px;
+}
+.pillar-text .pt-desc {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+}
+
+/* ── PIPELINE FLOW ── */
+.flow-strip {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    padding: 12px 0;
+    margin-bottom: 16px;
+}
+.flow-step {
+    flex: 1;
+    min-width: 130px;
+    text-align: center;
+    padding: 14px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    position: relative;
+}
+.flow-step:first-child { border-radius: 12px 0 0 12px; }
+.flow-step:last-child { border-radius: 0 12px 12px 0; }
+.flow-step .fs-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.55rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+}
+.flow-step .fs-num.green { color: var(--spotify); }
+.flow-step .fs-num.amber { color: var(--amber); }
+.flow-step .fs-num.blue { color: var(--blue); }
+.flow-step .fs-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+.flow-step .fs-detail {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+}
+
+/* ── SOURCE BAR ── */
+.src-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-float);
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 0.55rem;
+    color: var(--text-ghost);
+}
+.src-bar .src-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--spotify);
+    flex-shrink: 0;
+}
+.src-bar a {
+    color: var(--text-ghost);
+    text-decoration: none;
+}
+.src-bar a:hover { color: var(--spotify); }
+
+/* ── DATA TABLE ── */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 0.72rem;
+}
+.data-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg-float);
+    color: var(--text-dim);
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 800;
+    border-bottom: 1px solid var(--border);
+}
+.data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+.data-table tr:hover td { background: var(--bg-float); }
+.data-table .val { color: var(--spotify); font-weight: 700; }
+.data-table .val.amber { color: var(--amber); }
+.data-table .val.blue { color: var(--blue); }
+.data-table .val.red { color: var(--red); }
+
+/* ── COST CARD ── */
+.cost-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.cost-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+}
+.cost-card .cc-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.cost-card .cc-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #fff;
+}
+.cost-card .cc-value .g { color: var(--spotify); }
+
+/* ── VENUE/ARTIST LIST ── */
+.list-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.list-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.72rem;
+}
+.list-item .li-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.list-item .li-dot.green { background: var(--spotify); }
+.list-item .li-dot.amber { background: var(--amber); }
+.list-item .li-dot.blue { background: var(--blue); }
+.list-item .li-name { color: #fff; font-weight: 600; }
+.list-item .li-desc { color: var(--text-dim); font-size: 0.65rem; margin-left: 4px; }
+
+/* ── FULL-WIDTH CALLOUT ── */
+.callout {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.callout .co-big {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+.callout .co-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+}
+.callout .co-desc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+
+/* ── FOOTER ── */
+.footer {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--text-ghost);
+}
+.footer .ft-line2 {
+    margin-top: 6px;
+    font-size: 0.42rem;
+    letter-spacing: 2px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+    .hero h1 { font-size: 1.8rem; }
+    .metric-grid, .metric-grid-4, .cost-grid, .list-grid { grid-template-columns: 1fr; }
+    .flow-strip { flex-direction: column; }
+    .flow-step { border-radius: 0 !important; }
+    .flow-step:first-child { border-radius: 12px 12px 0 0 !important; }
+    .flow-step:last-child { border-radius: 0 0 12px 12px !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- HERO -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="hero">
+    <div class="hero-badge">The Curriculum Nobody Published</div>
+    <h1>Build Your Own <span class="g">DSP</span><span class="dim">A Regional Music Distribution Platform for Destin, Florida</span></h1>
+    <p class="hero-sub">
+        Every major distributor started somewhere. DistroKid was <strong>one developer</strong> with a flat-fee idea.
+        CD Baby was <strong>an accident</strong> &mdash; Derek Sivers selling friends' CDs from his website.
+        Indies now control <span class="g">46.7%</span> of the global market. <strong>100,000 tracks</strong> upload daily.
+        The Gulf Coast has <strong>100+ artists across 60+ genres</strong> with no local platform to call home.
+        <br><br>This curriculum is the complete path &mdash; from zero to a working DSP that serves the Destin / Emerald Coast music scene.
+        <strong>Technical build + culture + community.</strong> Every claim sourced. Every step buildable.
+    </p>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 1: THE LANDSCAPE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot green"></div>
+    <div class="sec-title">The Landscape &mdash; Why This Matters Now</div>
+</div>
+<p class="sec-sub">The music industry split in half. Indies are winning. And nobody built a platform for the Gulf Coast.</p>
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <div class="mc-value green">46.7%</div>
+        <div class="mc-label">Global Market Share &mdash; Independent</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value amber">$4.5B</div>
+        <div class="mc-label">Indie Revenue on Spotify Alone</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value blue">100K</div>
+        <div class="mc-label">New Tracks Uploaded Daily</div>
+    </div>
+</div>
+
+<div class="quote-block">
+    "<strong>Music discovery has undergone a seismic shift</strong>, creating a more level playing field for independent artists."
+    &mdash; Billboard survey of 84 indie music executives, 2025.
+    <br><br>
+    "It's never been more important for artists to have <span class="g">direct, authentic connections</span> with their fans."
+</div>
+
+<div class="callout">
+    <div class="co-big" style="color: var(--red);">86%</div>
+    <div class="co-title">Songs Demonetized by Spotify in 2024</div>
+    <div class="co-desc">Spotify stopped paying royalties on tracks under 1,000 annual streams. $47M redirected from small artists to bigger ones. 80+ Chicago musicians signed a boycott letter. This is the gap a local DSP fills.</div>
+</div>
+
+<div class="src-bar">
+    <span class="src-dot"></span> Billboard Indie Exec Survey 2025 &bull; Spotify $47M Report (Disc Makers) &bull; TechCrunch Spotify Payouts 2025
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 2: THE CULTURE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot amber"></div>
+    <div class="sec-title">The Culture &mdash; What Artists Actually Want</div>
+</div>
+<p class="sec-sub">We studied every forum, every Reddit thread, every Discord. Here's what artists say when the cameras are off.</p>
+
+<div class="tier-card">
+    <div class="tier-head">
+        <div class="tier-num green">8</div>
+        <div class="tier-info">
+            <div class="ti-title">Principles of Artist-First DSP Design</div>
+            <div class="ti-sub">The non-negotiables that make artists actually WANT to use a platform</div>
+        </div>
+        <div class="tier-badge green">Verified</div>
+    </div>
+    <div class="tier-body">
+        <div class="pillar-row">
+            <div class="pillar-icon green">$</div>
+            <div class="pillar-text">
+                <div class="pt-title">1. Fair Compensation</div>
+                <div class="pt-desc">Tidal pays 4x Spotify. Bandcamp passes 82% to artists. SoundCloud's user-centric model gave artists 60% more. Artists are watching every number.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon amber">&#x1f50d;</div>
+            <div class="pillar-text">
+                <div class="pt-title">2. Transparency</div>
+                <div class="pt-desc">"Artists want transparent revenue splits instead of opaque contracts." DistroKid's auto-split is praised because everyone can SEE what they're getting.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon blue">&#x2728;</div>
+            <div class="pillar-text">
+                <div class="pt-title">3. Discovery That Doesn't Bury You</div>
+                <div class="pt-desc">Audiomack's "neutral approach" surfaces new voices. Bandcamp is "a messy record store where you stumble around and find what you like, not what AI guesses."</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon purple">&#x2764;</div>
+            <div class="pillar-text">
+                <div class="pt-title">4. Direct Fan Connection</div>
+                <div class="pt-desc">Bandcamp lets fans buy artists "some groceries or a beer or some time to make new art." Community features drive 30% of Bandcamp's monthly sales.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon cyan">&#x1f6aa;</div>
+            <div class="pillar-text">
+                <div class="pt-title">5. Zero Barrier to Entry</div>
+                <div class="pt-desc">The platforms that launched careers (SoundCloud, Audiomack, early Bandcamp) all started with "just put your music up." No label required.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon green">&#x1f511;</div>
+            <div class="pillar-text">
+                <div class="pt-title">6. Ownership Respected</div>
+                <div class="pt-desc">"A distributor should never take ownership of your masters" &mdash; the most repeated warning across all forums. This is the #1 non-negotiable.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon amber">&#x1f465;</div>
+            <div class="pillar-text">
+                <div class="pt-title">7. Community, Not Just a Storefront</div>
+                <div class="pt-desc">SoundCloud comments on timestamps. Bandcamp Clubs. IMF Discord live listening. Audiomack is "a cultural network and creative incubator."</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon blue">&#x1f4f1;</div>
+            <div class="pillar-text">
+                <div class="pt-title">8. Mobile-First, Lightweight, Works Everywhere</div>
+                <div class="pt-desc">Audiomack's offline playback. Amuse started mobile-first. LINE Music integrated into the messaging app 66% of Japan uses. Meet artists where they are.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="quote-block">
+    "<strong>Ownership over advance checks. Community over algorithms. Direct fan relationships over playlist placement.</strong>"
+    <br>&mdash; Compiled from r/WeAreTheMusicMakers, r/musicmarketing, Indie Music Feedback Discord
+</div>
+
+<div class="src-bar">
+    <span class="src-dot"></span> Tidal (HipHopDX) &bull; Bandcamp About Page &bull; SoundCloud Fan-Powered Royalties &bull; EUR Thesis on Streaming &bull; Reddit Distribution Opinions (Loop Fans)
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 3: THE GULF COAST SCENE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot blue"></div>
+    <div class="sec-title">The Gulf Coast &mdash; A Hidden Music Corridor</div>
+</div>
+<p class="sec-sub">From Pensacola to Port St. Joe, 100+ artists across 60+ genres with a festival circuit that's been running 42 years. No one built them a platform.</p>
+
+<div class="metric-grid-4">
+    <div class="metric-card">
+        <div class="mc-value green">42</div>
+        <div class="mc-label">Years &mdash; Frank Brown Festival</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value amber">17</div>
+        <div class="mc-label">Years &mdash; 30A Songwriters</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value blue">100+</div>
+        <div class="mc-label">Artists in Scene Directory</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value purple">60+</div>
+        <div class="mc-label">Genres Represented</div>
+    </div>
+</div>
+
+<div class="tier-card">
+    <div class="tier-head">
+        <div class="tier-num blue">&#x1f3b5;</div>
+        <div class="tier-info">
+            <div class="ti-title">The Festival Circuit &mdash; The Backbone</div>
+            <div class="ti-sub">This is where the scene lives. Songwriter-centric, intimate by design, tourism-powered but locally built.</div>
+        </div>
+    </div>
+    <div class="tier-body">
+        <div class="pillar-row">
+            <div class="pillar-icon green">1</div>
+            <div class="pillar-text">
+                <div class="pt-title">30A Songwriters Festival (January)</div>
+                <div class="pt-desc">17th year. Grew from 1,200 attendees to 4,000+. 175+ artists, 225 performances, 30 venues along Highway 30A. Past headliners: Mavis Staples, Blues Traveler, 10,000 Maniacs. Funds youth art scholarships + Underwater Museum of Art.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon amber">2</div>
+            <div class="pillar-text">
+                <div class="pt-title">Frank Brown International Songwriters' Festival (November)</div>
+                <div class="pt-desc">Founded 1984. 42nd annual in 2026. 200+ artists at 35+ venues across FL/AL Gulf Coast. Named after Frank Brown, the beloved Flora-Bama night watchman who worked there until age 91. Attendees from 44 states, $4M+ local economic impact.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon blue">3</div>
+            <div class="pillar-text">
+                <div class="pt-title">Blast on the Bay (October)</div>
+                <div class="pt-desc">15th anniversary 2025. Port St. Joe on Florida's "Forgotten Coast." 40+ musicians direct from Nashville &mdash; writers behind hits for Faith Hill, George Strait, Garth Brooks. Intimate small-venue format.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon purple">4</div>
+            <div class="pillar-text">
+                <div class="pt-title">Inaugural Destin Songwriter Festival (October 2025)</div>
+                <div class="pt-desc">BRAND NEW. Heron Harbor in Destin. Confirmed: James Otto, Kent Blazy, Andy Griggs. Signals Destin stepping up as a songwriter destination. This is the moment.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="quote-block">
+    "<strong>The Emerald Coast is packed with gifted singers, songwriters and musicians</strong>, though these talented artists often go undiscovered or forgotten without a place to showcase their talent."
+    <br><br>
+    Kyle LaMonica (Destin singer/songwriter, 12 years performing): "It's like <span class="g">Christmas for us local musicians.</span>"
+</div>
+
+<p class="sec-sub" style="margin-top: 20px; font-weight: 600; color: var(--text);">Named Local Artists &amp; Venues:</p>
+<div class="list-grid">
+    <div class="list-item"><div class="li-dot green"></div><span class="li-name">Club LA</span><span class="li-desc">&mdash; Destin's only original rock venue</span></div>
+    <div class="list-item"><div class="li-dot green"></div><span class="li-name">Williams Backyard Boogie</span><span class="li-desc">&mdash; Built by musicians for musicians</span></div>
+    <div class="list-item"><div class="li-dot amber"></div><span class="li-name">Central Square Records</span><span class="li-desc">&mdash; Seaside, record store + live</span></div>
+    <div class="list-item"><div class="li-dot amber"></div><span class="li-name">Beal Street Bottle Club</span><span class="li-desc">&mdash; All about fostering local talent</span></div>
+    <div class="list-item"><div class="li-dot blue"></div><span class="li-name">Kyle LaMonica</span><span class="li-desc">&mdash; Destin singer/songwriter</span></div>
+    <div class="list-item"><div class="li-dot blue"></div><span class="li-name">Nobius</span><span class="li-desc">&mdash; Pensacola, Best of Gulf Coast winner</span></div>
+    <div class="list-item"><div class="li-dot purple"></div><span class="li-name">Wayward Jones</span><span class="li-desc">&mdash; Blues, country, folk, rock duo</span></div>
+    <div class="list-item"><div class="li-dot purple"></div><span class="li-name">Gulf Coast Records</span><span class="li-desc">&mdash; 9x BMA winner Mike Zito's label</span></div>
+</div>
+
+<div class="src-bar">
+    <span class="src-dot"></span> 30A Festival &bull; Frank Brown Festival &bull; Blast on the Bay &bull; Scene Pensacola Directory &bull; Emerald Coast Magazine &bull; Gulf Coast Records
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 4: THE SEVEN PILLARS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot purple"></div>
+    <div class="sec-title">The Seven Pillars &mdash; What a DSP Actually Needs</div>
+</div>
+<p class="sec-sub">Every music DSP &mdash; from DistroKid to a local Destin platform &mdash; runs on these 7 systems. No shortcuts.</p>
+
+<div class="tier-card">
+    <div class="tier-head">
+        <div class="tier-num purple">7</div>
+        <div class="tier-info">
+            <div class="ti-title">Core Systems Architecture</div>
+            <div class="ti-sub">The seven pillars every DSP must build or buy</div>
+        </div>
+        <div class="tier-badge purple">Technical</div>
+    </div>
+    <div class="tier-body">
+        <div class="pillar-row">
+            <div class="pillar-icon green">&#x1f4e4;</div>
+            <div class="pillar-text">
+                <div class="pt-title">1. Content Ingestion Platform</div>
+                <div class="pt-desc">Web app for uploading audio + metadata. Audio validation (format, bitrate, stereo). Metadata intake (ISRC, UPC, genre, credits, lyrics). Cover art validation (3000x3000px min, RGB, no social handles). Async queue processing.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon amber">&#x1f3b5;</div>
+            <div class="pillar-text">
+                <div class="pt-title">2. Audio Transcoding Pipeline</div>
+                <div class="pt-desc">Convert master files to every store format. Spotify: FLAC 44.1kHz/24-bit. Apple: 24-bit/96kHz for Digital Masters. Amazon HD: up to 24-bit/192kHz. Stack: FFmpeg (open-source) or AWS MediaConvert (managed). Preserve original quality &mdash; stores handle final codec conversion.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon blue">&#x1f4c4;</div>
+            <div class="pillar-text">
+                <div class="pt-title">3. DDEX Metadata Compliance</div>
+                <div class="pt-desc">ERN 4.3 XML message generation. NewReleaseMessage with MessageHeader, ResourceList, ReleaseList, DealList. ISRC/UPC assignment. Territory/rights management. Free DDEX Implementation Licence + DPID registration.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon purple">&#x1f4e1;</div>
+            <div class="pillar-text">
+                <div class="pt-title">4. Store Delivery Network</div>
+                <div class="pt-desc">SFTP connections to each store (Spotify, Apple, Amazon, YouTube, TikTok, Deezer, Tidal, Pandora). Each has own endpoint, credentials, folder structure. Batch packaging: XML + audio + art. Delivery confirmation + retry logic.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon cyan">&#x1f4b0;</div>
+            <div class="pillar-text">
+                <div class="pt-title">5. Royalty Collection &amp; Accounting</div>
+                <div class="pt-desc">Ingest sales reports from every store (DDEX DSR + proprietary formats). Match streams to tracks/rights holders. Calculate splits. Currency conversion. Tax withholding (1099/W-8BEN). Generate statements. Process payments.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon green">&#x1f4ca;</div>
+            <div class="pillar-text">
+                <div class="pt-title">6. Analytics Dashboard</div>
+                <div class="pt-desc">Near-real-time streaming data. Per-track, per-album, per-territory breakdowns. Revenue tracking + projections. Playlist placement tracking. Demographic data where available.</div>
+            </div>
+        </div>
+        <div class="pillar-row">
+            <div class="pillar-icon red">&#x1f512;</div>
+            <div class="pillar-text">
+                <div class="pt-title">7. Rights &amp; Catalog Management</div>
+                <div class="pt-desc">Track ownership and splits. Publishing vs. master rights. Content ID reference files (YouTube). Takedown/update capabilities. Territory-specific availability. Catalog transfer between labels.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="src-bar">
+    <span class="src-dot"></span> DDEX.net Standards &bull; Spotify Audio Format Specs &bull; Apple Digital Masters &bull; AWS Media Services
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 5: THE PIPELINE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot cyan"></div>
+    <div class="sec-title">The Pipeline &mdash; Upload to Live on Stores</div>
+</div>
+<p class="sec-sub">This is the journey every track takes from an artist's hard drive to Spotify's catalog. 9 steps, no magic.</p>
+
+<div class="flow-strip">
+    <div class="flow-step">
+        <div class="fs-num green">Step 1</div>
+        <div class="fs-title">Ingestion</div>
+        <div class="fs-detail">WAV/FLAC + metadata + cover art uploaded to cloud</div>
+    </div>
+    <div class="flow-step">
+        <div class="fs-num green">Step 2</div>
+        <div class="fs-title">Validation</div>
+        <div class="fs-detail">Format, bitrate, ISRC, UPC, cover art checks</div>
+    </div>
+    <div class="flow-step">
+        <div class="fs-num green">Step 3</div>
+        <div class="fs-title">Transcode</div>
+        <div class="fs-detail">Convert to store-specific formats if needed</div>
+    </div>
+    <div class="flow-step">
+        <div class="fs-num amber">Step 4</div>
+        <div class="fs-title">DDEX XML</div>
+        <div class="fs-detail">Generate ERN 4.3 NewReleaseMessage per store</div>
+    </div>
+    <div class="flow-step">
+        <div class="fs-num amber">Step 5</div>
+        <div class="fs-title">Batch Pack</div>
+        <div class="fs-detail">Bundle XML + audio + art per store's spec</div>
+    </div>
+    <div class="flow-step">
+        <div class="fs-num blue">Step 6</div>
+        <div class="fs-title">SFTP Deliver</div>
+        <div class="fs-detail">Upload batch to store's inbox endpoint</div>
+    </div>
+    <div class="flow-step">
+        <div class="fs-num blue">Step 7</div>
+        <div class="fs-title">Store Process</div>
+        <div class="fs-detail">Store validates, ingests, converts to codec</div>
+    </div>
+    <div class="flow-step">
+        <div class="fs-num blue">Step 8</div>
+        <div class="fs-title">LIVE</div>
+        <div class="fs-detail">Track appears on stores, streams begin</div>
+    </div>
+    <div class="flow-step">
+        <div class="fs-num amber">Step 9</div>
+        <div class="fs-title">Royalties</div>
+        <div class="fs-detail">Reports arrive, match, split, pay artists</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 6: DDEX DEEP DIVE -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot red"></div>
+    <div class="sec-title">DDEX &mdash; The Standard Nobody Teaches You</div>
+</div>
+<p class="sec-sub">Digital Data Exchange is the XML standard for communicating music data between companies. Free to implement. Required by every store. Here's the breakdown.</p>
+
+<table class="data-table">
+    <tr><th>Standard</th><th>What It Does</th><th>Priority</th></tr>
+    <tr><td><span class="val">ERN 4.3</span></td><td>Release metadata + deal terms from distributor to store</td><td><span class="val">Critical</span></td></tr>
+    <tr><td><span class="val amber">DSR</span></td><td>How stores report streams/sales/revenue back to you</td><td><span class="val amber">Critical</span></td></tr>
+    <tr><td>MEAD</td><td>Rich metadata beyond core supply chain</td><td>Optional</td></tr>
+    <tr><td>PIE</td><td>Business party identification</td><td>Later</td></tr>
+    <tr><td>Catalogue Transfers</td><td>Moving catalog between partners</td><td>Later</td></tr>
+    <tr><td>Musical Work Data</td><td>Publishing/songwriting metadata</td><td>Phase 2</td></tr>
+</table>
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <div class="mc-value green">FREE</div>
+        <div class="mc-label">DDEX Implementation Licence</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value amber">DPID</div>
+        <div class="mc-label">Your Unique Company ID</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value blue">4.3.2</div>
+        <div class="mc-label">Current ERN Version</div>
+    </div>
+</div>
+
+<div class="src-bar">
+    <span class="src-dot"></span> ddex.net/standards &bull; DDEX Validator (ddex-validator.ddex.net) &bull; GitHub: ddexnet/ern-validator-api &bull; GitHub: ddexnet/dsrf (Python DSR parser)
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 7: STORE CONNECTIONS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot green"></div>
+    <div class="sec-title">Store Connections &mdash; The Truth They Don't Tell You</div>
+</div>
+<p class="sec-sub">Public APIs (Spotify Web API, Apple Music API) are CONSUMER-facing. Content delivery is private partner integrations. You must apply and get approved.</p>
+
+<table class="data-table">
+    <tr><th>Store</th><th>Delivery Method</th><th>Format</th><th>Approval</th></tr>
+    <tr><td><span class="val green">Spotify</span></td><td>SFTP (primary)</td><td>FLAC 44.1kHz/24-bit preferred</td><td><span class="val red">Hard</span></td></tr>
+    <tr><td><span class="val blue">Apple Music</span></td><td>Apple Transporter</td><td>24-bit/96kHz FLAC/WAV</td><td><span class="val red">Hard</span></td></tr>
+    <tr><td><span class="val amber">Amazon Music</span></td><td>SFTP + DDEX ERN</td><td>FLAC up to 24-bit/192kHz</td><td><span class="val amber">Medium</span></td></tr>
+    <tr><td><span class="val red">YouTube</span></td><td>Content ID + CMS</td><td>Reference audio + videos</td><td><span class="val amber">Medium</span></td></tr>
+    <tr><td>TikTok</td><td>Partner delivery</td><td>Via approved distributors</td><td><span class="val amber">Medium</span></td></tr>
+    <tr><td>Deezer / Tidal / Pandora</td><td>SFTP or API</td><td>DDEX ERN</td><td><span class="val green">Easier</span></td></tr>
+</table>
+
+<div class="quote-block">
+    "<strong>Critical Truth:</strong> Spotify closed its direct upload program. ALL music must come through <span class="g">approved distributors</span>.
+    Getting approved as a content provider can take <strong>months</strong>. Start early. Or use a <span class="g">white-label platform</span> that's already approved."
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 8: THE SHORTCUT -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot amber"></div>
+    <div class="sec-title">The Shortcut &mdash; White-Label Platforms</div>
+</div>
+<p class="sec-sub">You don't have to build every store connection from scratch. These platforms let you launch as a distributor on existing infrastructure.</p>
+
+<div class="cost-grid">
+    <div class="cost-card">
+        <div class="cc-label">Revelator</div>
+        <div class="cc-value">API-First <span class="g">White-Label</span></div>
+        <p style="font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; line-height: 1.6;">Spotify Platinum Preferred Provider. Merlin board member. Full catalog management, rights, delivery, royalty accounting, global payments. Build your own front-end on their infrastructure.</p>
+    </div>
+    <div class="cost-card">
+        <div class="cc-label">AudioSalad</div>
+        <div class="cc-value">Label-Proven <span class="g">Platform</span></div>
+        <p style="font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; line-height: 1.6;">SESAC company. Clients: Merge Records, ATO Records, Stones Throw. Delivers to all major stores. Full catalog + analytics + delivery.</p>
+    </div>
+    <div class="cost-card">
+        <div class="cc-label">Label Engine</div>
+        <div class="cc-value"><span class="g">26M+</span> Tracks Distributed</div>
+        <p style="font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; line-height: 1.6;">$1B+ in royalties processed. Point-and-click royalty management. Strong in electronic music (Beatport-focused).</p>
+    </div>
+    <div class="cost-card">
+        <div class="cc-label">FUGA (Downtown Music)</div>
+        <div class="cc-value">Enterprise <span class="g">B2B</span></div>
+        <p style="font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; line-height: 1.6;">Used by major independent labels worldwide. Distribution, marketing, audio-visual, neighbouring rights. White-label capabilities.</p>
+    </div>
+</div>
+
+<div class="src-bar">
+    <span class="src-dot"></span> Revelator.com &bull; AudioSalad.com &bull; Label-Engine.com &bull; FUGA/Downtown Music
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 9: THE BUILD LADDER -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot purple"></div>
+    <div class="sec-title">The Build Ladder &mdash; Zero to Working DSP</div>
+</div>
+<p class="sec-sub">Four tiers, each buildable. Each tier is a functioning product. You don't need Tier 4 to launch &mdash; Tier 1 already serves artists.</p>
+
+<div class="tier-card">
+    <div class="tier-head">
+        <div class="tier-num green">01</div>
+        <div class="tier-info">
+            <div class="ti-title">The Local Hub &mdash; Community Platform</div>
+            <div class="ti-sub">Month 1-2 &bull; $0 infrastructure &bull; Serves artists immediately</div>
+        </div>
+        <div class="tier-badge green">Start Here</div>
+    </div>
+    <div class="tier-body">
+        <div class="pillar-row"><div class="pillar-icon green">&#x2713;</div><div class="pillar-text"><div class="pt-title">Artist profiles with bio, photo, genre, links</div><div class="pt-desc">Every Gulf Coast artist gets a page. Embed Spotify/Apple/SoundCloud players. Local venue connections.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon green">&#x2713;</div><div class="pillar-text"><div class="pt-title">Festival integration &mdash; event calendar + lineup pages</div><div class="pt-desc">30A, Frank Brown, Blast on the Bay, Destin Songwriter Fest all featured. Artists tagged to events.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon green">&#x2713;</div><div class="pillar-text"><div class="pt-title">Venue directory with booking info</div><div class="pt-desc">Club LA, Williams Backyard, Central Square Records, LuLu's, Funky Blues Shack &mdash; all mapped and linked.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon green">&#x2713;</div><div class="pillar-text"><div class="pt-title">Community features: comments, follows, local playlists</div><div class="pt-desc">Let fans discover Gulf Coast artists by genre, city, or festival. "Who's playing near me this week?"</div></div></div>
+        <div class="src-bar"><span class="src-dot"></span> No external approvals needed &bull; Deploy on Vercel/Netlify for free &bull; PostgreSQL + Next.js or similar</div>
+    </div>
+</div>
+
+<div class="tier-card">
+    <div class="tier-head">
+        <div class="tier-num blue">02</div>
+        <div class="tier-info">
+            <div class="ti-title">The Upload Engine &mdash; Content Ingestion</div>
+            <div class="ti-sub">Month 2-4 &bull; ~$500/mo cloud &bull; Artists can upload music</div>
+        </div>
+        <div class="tier-badge blue">Foundation</div>
+    </div>
+    <div class="tier-body">
+        <div class="pillar-row"><div class="pillar-icon blue">&#x2713;</div><div class="pillar-text"><div class="pt-title">Upload portal: WAV/FLAC + metadata forms</div><div class="pt-desc">Audio validation (format, bitrate, stereo). Metadata: title, artist, ISRC, UPC, genre, credits, lyrics, release date.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon blue">&#x2713;</div><div class="pillar-text"><div class="pt-title">Cover art validation (3000x3000px min)</div><div class="pt-desc">RGB, JPEG/PNG, no URLs or social handles. Policy compliance checking.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon blue">&#x2713;</div><div class="pillar-text"><div class="pt-title">Cloud storage (AWS S3) + transcoding pipeline</div><div class="pt-desc">FFmpeg for format conversion. Async queue processing. Preview clip generation. Content-addressed file naming.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon blue">&#x2713;</div><div class="pillar-text"><div class="pt-title">ISRC + UPC assignment system</div><div class="pt-desc">Register as ISRC manager with RIAA. Purchase UPC barcodes in bulk ($250/100). Auto-assign to new releases.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon blue">&#x2713;</div><div class="pillar-text"><div class="pt-title">On-platform streaming</div><div class="pt-desc">Play uploaded tracks directly on the platform. Local artists can share links before store distribution. The Bandcamp model applied locally.</div></div></div>
+        <div class="src-bar"><span class="src-dot"></span> AWS S3 + SQS + Lambda or ECS &bull; FFmpeg (open-source) &bull; RIAA ISRC system &bull; GS1 for UPC barcodes</div>
+    </div>
+</div>
+
+<div class="tier-card">
+    <div class="tier-head">
+        <div class="tier-num amber">03</div>
+        <div class="tier-info">
+            <div class="ti-title">The Distribution Engine &mdash; Deliver to Stores</div>
+            <div class="ti-sub">Month 4-8 &bull; $2K-10K/mo (or white-label) &bull; Music goes global</div>
+        </div>
+        <div class="tier-badge amber">Distribution</div>
+    </div>
+    <div class="tier-body">
+        <div class="pillar-row"><div class="pillar-icon amber">&#x2713;</div><div class="pillar-text"><div class="pt-title">DDEX ERN 4.3 XML generation</div><div class="pt-desc">NewReleaseMessage with all 4 blocks: MessageHeader, ResourceList, ReleaseList, DealList. Validate with DDEX online validator.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon amber">&#x2713;</div><div class="pillar-text"><div class="pt-title">Store delivery pipeline (SFTP)</div><div class="pt-desc">Batch packaging per store spec. Connect to Deezer, Tidal, Pandora first (easier approval). Then Spotify, Apple, Amazon (harder, start applications early).</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon amber">&#x2713;</div><div class="pillar-text"><div class="pt-title">OR: White-label integration (Revelator / AudioSalad)</div><div class="pt-desc">Skip building DDEX + SFTP from scratch. API into an existing platform. Focus on your brand and artist experience. Already approved with all major stores.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon amber">&#x2713;</div><div class="pillar-text"><div class="pt-title">Delivery monitoring + retry logic</div><div class="pt-desc">Track batch status per store. Handle rejections (metadata errors, format issues). Auto-retry on transient failures. Email artist on success.</div></div></div>
+        <div class="src-bar"><span class="src-dot"></span> DDEX Implementation Licence (free) &bull; ddex-validator.ddex.net &bull; Revelator API docs &bull; AudioSalad</div>
+    </div>
+</div>
+
+<div class="tier-card">
+    <div class="tier-head">
+        <div class="tier-num purple">04</div>
+        <div class="tier-info">
+            <div class="ti-title">The Full Platform &mdash; Royalties, Analytics, Scale</div>
+            <div class="ti-sub">Month 8-12 &bull; $5K-50K/mo at scale &bull; Complete DSP</div>
+        </div>
+        <div class="tier-badge purple">Full DSP</div>
+    </div>
+    <div class="tier-body">
+        <div class="pillar-row"><div class="pillar-icon purple">&#x2713;</div><div class="pillar-text"><div class="pt-title">Royalty collection &amp; payment splitting</div><div class="pt-desc">Ingest DDEX DSR + proprietary reports. Match to catalog. Calculate splits per contract. Currency conversion. Tax withholding. Stripe Connect or PayPal Payouts for payments.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon purple">&#x2713;</div><div class="pillar-text"><div class="pt-title">Analytics dashboard</div><div class="pt-desc">Per-track streams, revenue, territory breakdown. Playlist tracking. Fan demographics. Trend projections. Mobile-responsive.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon purple">&#x2713;</div><div class="pillar-text"><div class="pt-title">Marketing tools</div><div class="pt-desc">Pre-save links. Smart links. Social share cards. Release scheduling. Email campaigns to fans. Integration with Spotify Campaign Kit data.</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon purple">&#x2713;</div><div class="pillar-text"><div class="pt-title">Mobile app</div><div class="pt-desc">Artist dashboard on mobile. Upload from phone (Amuse model). Push notifications for milestones. Fan-facing discovery app for Gulf Coast music.</div></div></div>
+        <div class="src-bar"><span class="src-dot"></span> GitHub: ddexnet/dsrf (Python DSR parser) &bull; Stripe Connect &bull; AWS RDS/Aurora &bull; React Native or Flutter</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 10: THE BUDGET -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot red"></div>
+    <div class="sec-title">The Budget &mdash; Real Numbers</div>
+</div>
+<p class="sec-sub">No inflated estimates. Here's what each tier actually costs to build and run.</p>
+
+<table class="data-table">
+    <tr><th>Component</th><th>Monthly (Starting)</th><th>At Scale</th></tr>
+    <tr><td>Cloud hosting (AWS)</td><td><span class="val green">$500-2,000</span></td><td>$5,000-50,000</td></tr>
+    <tr><td>SFTP infrastructure</td><td><span class="val green">$200-500</span></td><td>$1,000-5,000</td></tr>
+    <tr><td>Audio file storage</td><td><span class="val green">$100-500</span></td><td>$2,000-20,000</td></tr>
+    <tr><td>Payment processing</td><td>1-3% of payouts</td><td>1-3% of payouts</td></tr>
+    <tr><td>DDEX licence</td><td><span class="val green">FREE</span></td><td><span class="val green">FREE</span></td></tr>
+    <tr><td>ISRC registration</td><td><span class="val green">~$100 one-time</span></td><td>&mdash;</td></tr>
+    <tr><td>UPC barcodes</td><td><span class="val amber">$250+ (batch 100)</span></td><td>Volume pricing</td></tr>
+    <tr><td>White-label platform</td><td><span class="val amber">$2,000-10,000</span></td><td>Revenue share</td></tr>
+</table>
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <div class="mc-value green">$0</div>
+        <div class="mc-label">Tier 1 &mdash; Community Hub</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value blue">~$500/mo</div>
+        <div class="mc-label">Tier 2 &mdash; Upload Engine</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value amber">~$3K/mo</div>
+        <div class="mc-label">Tier 3 &mdash; Distribution</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 11: NICHE DSP SUCCESS STORIES -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot green"></div>
+    <div class="sec-title">Proof It Works &mdash; Niche DSP Success Stories</div>
+</div>
+<p class="sec-sub">Regional platforms aren't a theory. They're winning.</p>
+
+<div class="cost-grid">
+    <div class="cost-card">
+        <div class="cc-label">Audiomack + Africa</div>
+        <div class="cc-value"><span class="g">1B+</span> Streams</div>
+        <p style="font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; line-height: 1.6;">Opened Lagos office 2019. Burna Boy became first African artist to 1B streams. 10M daily active users. Top music app in 20+ countries. Free uploads = zero barrier.</p>
+    </div>
+    <div class="cost-card">
+        <div class="cc-label">PortalDisc + Chile</div>
+        <div class="cc-value"><span class="g">130K</span> Songs</div>
+        <p style="font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; line-height: 1.6;">7,000 artists, 300 labels. Organized by region AND historical era. Not just streaming &mdash; a cultural archive. National musical identity preserved.</p>
+    </div>
+    <div class="cost-card">
+        <div class="cc-label">Bandcamp</div>
+        <div class="cc-value"><span class="g">$1.68B</span> to Artists</div>
+        <p style="font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; line-height: 1.6;">82% pass-through to artists. Bandcamp Fridays: $150M+ raised. 30% of monthly sales from community features. "An ethical choice."</p>
+    </div>
+    <div class="cost-card">
+        <div class="cc-label">Gulf Coast Records</div>
+        <div class="cc-value">BMA <span class="g">Winner</span></div>
+        <p style="font-size: 0.68rem; color: var(--text-dim); margin-top: 6px; line-height: 1.6;">Nederland, TX. Mike Zito (9x BMA winner). 2024 Blues Rock Album of the Year. 2026: 9 singles in 9 days. Regional roots, global reach.</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- SECTION 12: DATA INTEGRITY -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">
+    <div class="sec-dot red"></div>
+    <div class="sec-title">Data Integrity Note</div>
+</div>
+
+<div class="tier-card">
+    <div class="tier-body">
+        <div class="pillar-row"><div class="pillar-icon green">&#x2713;</div><div class="pillar-text"><div class="pt-title">Verified</div><div class="pt-desc">Artist-first design principles (Bandcamp, Tidal, SoundCloud data). Festival details (official sites). DDEX standards (ddex.net). Store delivery specs (official docs). Cost estimates (industry surveys).</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon amber">&#x2248;</div><div class="pillar-text"><div class="pt-title">Derived / Estimated</div><div class="pt-desc">Build timelines (based on comparable indie DSP launches). White-label costs (ranges from vendor websites). Gulf Coast artist count (Scene Pensacola directory + festival lineups).</div></div></div>
+        <div class="pillar-row"><div class="pillar-icon red">&#x2605;</div><div class="pillar-text"><div class="pt-title">What Nobody Published</div><div class="pt-desc">The complete path from zero to a working regional DSP. How to combine community platform + distribution engine + Gulf Coast culture into one product. This curriculum fills that gap.</div></div></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TOTAL SUMMARY -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="callout" style="margin-top: 40px;">
+    <div class="co-big" style="color: var(--spotify);">4 TIERS</div>
+    <div class="co-title">Each One a Functioning Product</div>
+    <div class="co-desc">Tier 1 serves artists on day one. Tier 2 lets them upload. Tier 3 puts their music on every store. Tier 4 handles royalties, analytics, and scale. Build one tier at a time. Each one earns the right to build the next.</div>
+</div>
+
+<div class="metric-grid-4">
+    <div class="metric-card">
+        <div class="mc-value green">4</div>
+        <div class="mc-label">Build Tiers</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value amber">12</div>
+        <div class="mc-label">Months Full Build</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value blue">7</div>
+        <div class="mc-label">Core Systems</div>
+    </div>
+    <div class="metric-card">
+        <div class="mc-value purple">100+</div>
+        <div class="mc-label">Gulf Coast Artists to Serve</div>
+    </div>
+</div>
+
+</div><!-- end container -->
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- FOOTER -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="footer">
+    Anti Gravity &mdash; DSP Curriculum &mdash; Destin Florida &mdash; 2026
+    <div class="ft-line2">The curriculum nobody published. Built from real data, real communities, real artists.</div>
+</div>
+
+</body>
+</html>

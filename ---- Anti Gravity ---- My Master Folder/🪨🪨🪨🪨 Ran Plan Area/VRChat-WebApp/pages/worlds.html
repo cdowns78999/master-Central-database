@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>50 Worlds — VRChat Ultimate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    .filter-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 2rem; }
+    .world-card { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--card-radius); padding: var(--card-pad); cursor: pointer; transition: transform var(--transition), box-shadow var(--transition); }
+    .world-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+    .world-name { font-size: 1.05rem; font-weight: 700; color: var(--text-bright); margin-bottom: 0.3rem; }
+    .world-creator { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .world-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.6rem; }
+    .world-vibe { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: var(--badge-radius); background: rgba(189,147,249,0.15); color: var(--vrc-lavender); border: 1px solid rgba(189,147,249,0.2); }
+    .stat-banner { text-align: center; padding: 1.5rem; margin-bottom: 2rem; }
+    .stat-banner .big { font-size: 2rem; font-weight: 800; color: var(--vrc-lavender); }
+    .stat-banner .sub { font-size: 0.9rem; color: var(--text-muted); }
+
+    /* Modal detail card */
+    .modal-box.world-detail { max-width: 540px; }
+    .world-detail h2 { color: var(--vrc-lavender); margin-bottom: 0.5rem; }
+    .world-detail .detail-creator { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+    .world-detail .detail-desc { color: var(--text-dim); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.25rem; }
+    .world-detail .detail-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="sidebar-mount"></div>
+  <button id="hamburger" class="hamburger">&#9776;</button>
+
+  <main id="main-content">
+
+    <h1 class="section-title">Explore Worlds</h1>
+
+    <!-- Stat -->
+    <div class="stat-banner glass">
+      <div class="big">25,000+</div>
+      <div class="sub">Community-Created Worlds</div>
+    </div>
+
+    <!-- Category Filter Pills -->
+    <div class="filter-row" id="filterRow"></div>
+
+    <!-- World Grid -->
+    <div class="explorer-grid" id="worldGrid"></div>
+
+  </main>
+
+  <!-- Modal Overlay -->
+  <div class="modal-overlay" id="worldModal">
+    <div class="modal-box world-detail">
+      <button class="detail-close" id="modalClose">&times;</button>
+      <h2 id="modalName"></h2>
+      <div class="detail-creator" id="modalCreator"></div>
+      <div class="world-meta">
+        <span class="badge" id="modalCategory"></span>
+        <span class="world-vibe" id="modalVibe"></span>
+      </div>
+      <div class="detail-desc" id="modalDesc"></div>
+      <button class="btn btn-accent" onclick="document.getElementById('worldModal').classList.remove('visible')">Close</button>
+    </div>
+  </div>
+
+  <script src="../shared/nav.js"></script>
+  <script src="../shared/components.js"></script>
+  <script>
+    const WORLDS = [
+      { name: "The Black Cat", cat: "Social", creator: "spookyghostboo", vibe: "Chill Hangout", desc: "The most visited world in VRChat history. A cozy bar environment perfect for meeting new people. Multiple floors, outdoor patio, and mirror room. Always populated 24/7." },
+      { name: "Murder 4", cat: "Gaming", creator: "Jarri", vibe: "Competitive", desc: "Massive multiplayer murder mystery game. One killer, many innocents. Find clues, run from danger, and vote out the suspect. Supports up to 16 players." },
+      { name: "Avatar Museum", cat: "Avatar", creator: "Zoranner", vibe: "Browsing", desc: "Hundreds of free public avatars organized by category. Anime, furry, meme, realistic — browse shelves and click to clone. Updated regularly by the community." },
+      { name: "The Devouring", cat: "Horror", creator: "Darkwood Interactive", vibe: "Terrifying", desc: "Cooperative survival horror. Explore a procedurally arranged mansion while being hunted. One of the highest-rated horror experiences in VR." },
+      { name: "Tube VR", cat: "Music", creator: "Loner Online", vibe: "Concert Venue", desc: "The largest virtual nightclub. Multi-instance chain events with 7,000+ concurrent viewers. Professional lighting rigs and DJ booths." },
+      { name: "Tranquil Cove", cat: "Relaxation", creator: "MeowMeow", vibe: "Peaceful", desc: "Tropical island with ambient waves, hammocks, and sunset cycle. A go-to destress world with soft lighting and no mirrors." },
+      { name: "Star Wars Cantina RP", cat: "Roleplay", creator: "GalacticRP", vibe: "Immersive", desc: "Full roleplay environment set in the Star Wars universe. Custom alien avatars, scripted NPCs, and persistent factions." },
+      { name: "Udon Arts Studio", cat: "Creative", creator: "UdonArts", vibe: "Collaborative", desc: "Shared 3D painting canvas using Udon-powered brushes. Save and load artwork. Collaborative creation with up to 20 artists." },
+      { name: "Quantum Classroom", cat: "Educational", creator: "ScienceVR", vibe: "Learning", desc: "Interactive physics demonstrations. Manipulate atoms, observe wave-particle duality, and walk inside a black hole simulation." },
+      { name: "Neon Gallery", cat: "Art", creator: "PixelDrift", vibe: "Exhibition", desc: "Curated digital art gallery with glowing neon frames. Features rotate monthly. Community submissions accepted via Discord." },
+      { name: "Neo Tokyo", cat: "Cyberpunk", creator: "KaizenStudios", vibe: "Atmospheric", desc: "Rain-soaked cyberpunk cityscape. Rooftop bars, underground markets, neon signs in Japanese. One of the most visually impressive worlds." },
+      { name: "Crystal Caverns", cat: "Fantasy", creator: "AetherForge", vibe: "Mystical", desc: "Underground crystal cave system with bioluminescent plants. Hidden passages, riddles, and a dragon at the deepest level." },
+      { name: "Orbital Station 7", cat: "Sci-Fi", creator: "VoidArchitect", vibe: "Futuristic", desc: "Space station orbiting Earth. Functional airlocks, zero-G zones, and a glass observation deck with real star positions." },
+      { name: "Akihabara Nights", cat: "Japanese", creator: "TokyoVRC", vibe: "Cultural", desc: "Faithful recreation of Akihabara's Electric Town district. Arcade machines, maid cafes, and detailed storefronts." },
+      { name: "The Backrooms", cat: "Liminal", creator: "LiminalSpace", vibe: "Unsettling", desc: "Endless fluorescent-lit office spaces. Damp carpet, buzzing lights, no exit. Procedural generation creates unique experiences each visit." },
+      { name: "Meadow Walk", cat: "Nature", creator: "GreenThumb", vibe: "Serene", desc: "Rolling hills with wildflowers, a winding stream, and birdsong. Dynamic time of day. Perfect for photography and quiet conversation." },
+      { name: "Cosmos Planetarium", cat: "Space", creator: "StarMap", vibe: "Educational", desc: "Full planetarium with accurate star charts. Navigate the Milky Way, zoom into nebulae, and walk on the surface of Mars." },
+      { name: "Battle Disc Arena", cat: "Competitive", creator: "FrizBee", vibe: "Intense", desc: "Fast-paced disc throwing arena game. 1v1 or team matches. Ranked leaderboards and seasonal tournaments." },
+      { name: "Winter Wonderland", cat: "Seasonal", creator: "HolidayVRC", vibe: "Festive", desc: "Snow-covered village with ice skating, snowball fights, and a giant Christmas tree. Returns every December with new additions." },
+      { name: "Pool Parlor", cat: "Hidden Gems", creator: "indie_dev_42", vibe: "Underrated", desc: "Perfectly physics-simulated pool table in a cozy parlor. Low player count but incredibly polished. A hidden treasure for billiards fans." }
+    ];
+
+    const categories = ['All', ...new Set(WORLDS.map(w => w.cat))];
+    const filterRow = document.getElementById('filterRow');
+    const grid = document.getElementById('worldGrid');
+    const modal = document.getElementById('worldModal');
+
+    // Build filter pills
+    categories.forEach((cat, i) => {
+      const pill = document.createElement('button');
+      pill.className = 'filter-pill' + (i === 0 ? ' active' : '');
+      pill.dataset.cat = cat;
+      pill.textContent = cat;
+      pill.addEventListener('click', () => {
+        filterRow.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        renderWorlds(cat);
+      });
+      filterRow.appendChild(pill);
+    });
+
+    function renderWorlds(filter) {
+      grid.innerHTML = '';
+      const list = filter === 'All' ? WORLDS : WORLDS.filter(w => w.cat === filter);
+      list.forEach(w => {
+        const card = document.createElement('div');
+        card.className = 'world-card';
+        card.innerHTML = `
+          <div class="world-name">${w.name}</div>
+          <div class="world-creator">by ${w.creator}</div>
+          <div class="world-meta">
+            <span class="badge">${w.cat}</span>
+            <span class="world-vibe">${w.vibe}</span>
+          </div>
+          <button class="btn btn-ghost" style="font-size:0.8rem;padding:0.35rem 0.8rem;margin-top:auto;">Visit</button>
+        `;
+        card.addEventListener('click', () => openModal(w));
+        grid.appendChild(card);
+      });
+    }
+
+    function openModal(w) {
+      document.getElementById('modalName').textContent = w.name;
+      document.getElementById('modalCreator').textContent = 'by ' + w.creator;
+      document.getElementById('modalCategory').textContent = w.cat;
+      document.getElementById('modalVibe').textContent = w.vibe;
+      document.getElementById('modalDesc').textContent = w.desc;
+      modal.classList.add('visible');
+    }
+
+    document.getElementById('modalClose').addEventListener('click', () => modal.classList.remove('visible'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('visible'); });
+
+    renderWorlds('All');
+  </script>
+</body>
+</html>

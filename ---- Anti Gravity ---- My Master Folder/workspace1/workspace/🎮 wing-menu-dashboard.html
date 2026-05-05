@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wing Menu | Ahead Command Center</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════════
+           Phase 2 — App Shell + Layout Grid
+           Salt rock lamp palette from triple-brain
+           ══════════════════════════════════════════════ */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Theme-able palette */
+            --lamp-deep: #c2560a;
+            --lamp-mid: #e07b2e;
+            --lamp-warm: #f2a54a;
+            --lamp-soft: #f8c97d;
+            --lamp-glow: #fde8c8;
+            --white: #ffffff;
+            --text: #3b1a04;
+            --text-dim: rgba(59, 26, 4, 0.55);
+            --toolbar-bg: linear-gradient(180deg, #9a4208 0%, #7a3506 100%);
+            /* Background layers (theme-switched via JS) */
+            --bg-layer1: radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%);
+            --bg-layer2: radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%);
+            --bg-layer3: radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%);
+            --bg-base: linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%);
+            /* Layout */
+            --border-thick: 4px;
+            --radius: 16px;
+            --wing-width: 280px;
+            --toolbar-height: 60px;
+            --transition-slide: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            background: var(--bg-layer1), var(--bg-layer2), var(--bg-layer3), var(--bg-base);
+            transition: background 0.6s ease, color 0.4s ease;
+        }
+
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 3 — Wing Containers + Track Structure
+           Pattern: CodePen #3 (Suzannah) — overflow:hidden
+           on wrapper, translateX on track, each panel
+           scrolls independently
+           ══════════════════════════════════════════════ */
+
+        /* — Shared wing base — */
+        .wing {
+            position: fixed;
+            top: 0;
+            bottom: var(--toolbar-height);
+            width: var(--wing-width);
+            z-index: 10;
+            overflow: hidden;
+            /* CRITICAL: clips offscreen panels */
+            display: flex;
+            flex-direction: column;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .wing-left {
+            left: 0;
+        }
+
+        .wing-right {
+            right: 0;
+        }
+
+        /* — Wing header label — */
+        .wing-header {
+            padding: 14px 16px 8px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .wing-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--white);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .wing-page-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* — Track (flex row of section panels) — */
+        .wing-track {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            /* allow flex child to shrink */
+            transition: var(--transition-slide);
+        }
+
+        /* — Individual section panel — */
+        .wing-section {
+            min-width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            /* prevent scroll bleed */
+            padding: 4px 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Custom scrollbar for wing sections */
+        .wing-section::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .wing-section::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .wing-section::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 4 — Wing Navigation Controls
+           Pattern: radialMenu directional intent detection
+           ══════════════════════════════════════════════ */
+
+        /* — Arrow buttons — */
+        .wing-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 30;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 3px solid var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--lamp-deep);
+            font-weight: 800;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.06);
+            transition: opacity 0.25s ease, transform 0.2s ease;
+            opacity: 1;
+            user-select: none;
+        }
+
+        .wing-arrow:hover {
+            transform: translateY(-50%) translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .wing-arrow.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .wing-left .wing-arrow-prev {
+            left: 6px;
+        }
+
+        .wing-left .wing-arrow-next {
+            right: 6px;
+        }
+
+        .wing-right .wing-arrow-prev {
+            left: 6px;
+        }
+
+        .wing-right .wing-arrow-next {
+            right: 6px;
+        }
+
+        /* — Dot indicators — */
+        .wing-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 0 10px;
+            flex-shrink: 0;
+        }
+
+        .wing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: background 0.2s ease;
+        }
+
+        .wing-dot.active {
+            background: var(--white);
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 5 — Wing Section Content (Pill Buttons)
+           Pattern: vrc-ui Atomic Design — pills are
+           molecules (icon + label + chevron)
+           ══════════════════════════════════════════════ */
+
+        .section-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: rgba(255, 255, 255, 0.75);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            padding: 4px 4px 2px;
+        }
+
+        .pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .pill:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 16px rgba(0, 0, 0, 0.12),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+        }
+
+        .pill:active {
+            transform: translateY(0);
+        }
+
+        .pill-icon {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+        }
+
+        .pill-text {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .pill-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .pill-sub {
+            font-size: 0.58rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
+        }
+
+        .pill-chevron {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            font-weight: 700;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 6 — Center Launch Pad
+           Pattern: VRChat Launch Pad — banner + Quick
+           Links + Quick Actions, always default view
+           ══════════════════════════════════════════════ */
+
+        .center-pad {
+            position: fixed;
+            top: 0;
+            left: var(--wing-width);
+            right: var(--wing-width);
+            bottom: var(--toolbar-height);
+            z-index: 20;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .center-pad::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .center-pad::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .center-pad::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        /* — Top status bar — */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2px;
+        }
+
+        .status-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+
+        .status-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--white);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .status-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* — Banner card — */
+        .banner {
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+            padding: 20px 24px;
+            text-align: center;
+        }
+
+        .banner-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+
+        .banner-sub {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .banner-obsidian {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .banner-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 12px;
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            color: var(--lamp-deep);
+            border: 2px solid var(--white);
+        }
+
+        /* — Section headers in center — */
+        .center-section-header {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            color: var(--white);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 2px;
+        }
+
+        .center-section-header::before {
+            content: '';
+            width: var(--border-thick);
+            height: 16px;
+            background: var(--white);
+            border-radius: 2px;
+        }
+
+        /* — Tile grids — */
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .tile {
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+            padding: 16px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            text-align: center;
+        }
+
+        .tile:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 16px rgba(0, 0, 0, 0.12),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+        }
+
+        .tile:active {
+            transform: translateY(0);
+            border-color: var(--lamp-deep);
+        }
+
+        .tile-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--lamp-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+        }
+
+        .tile-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.01em;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 7 — Bottom Icon Toolbar
+           Pattern: VRChat bottom tab bar — always
+           visible, always accessible, z-index 100
+           ══════════════════════════════════════════════ */
+
+        .toolbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: var(--toolbar-height);
+            z-index: 100;
+            background: var(--toolbar-bg);
+            border-top: var(--border-thick) solid rgba(255, 255, 255, 0.25);
+            transition: background 0.6s ease;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 0 20px;
+        }
+
+        .toolbar-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: var(--border-thick) solid rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 800;
+            transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+            position: relative;
+        }
+
+        .toolbar-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .toolbar-btn.active {
+            background: var(--white);
+            color: var(--lamp-deep);
+            border-color: var(--white);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .toolbar-btn-label {
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.4rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+            color: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 8 — Polish + Transitions
+           No shimmer, no glow, no pulse — clean solid
+           transitions only
+           ══════════════════════════════════════════════ */
+
+        /* Focus states for keyboard accessibility */
+        .pill:focus-visible,
+        .tile:focus-visible,
+        .toolbar-btn:focus-visible,
+        .wing-arrow:focus-visible {
+            outline: 3px solid var(--lamp-deep);
+            outline-offset: 2px;
+        }
+
+        /* ══════════════════════════════════════════════
+           Phase 10 — Responsive + Edge Cases
+           ══════════════════════════════════════════════ */
+
+        /* < 1000px: collapse wings behind toggle buttons */
+        @media (max-width: 1000px) {
+            :root {
+                --wing-width: 0px;
+            }
+
+            .wing {
+                width: 280px;
+                transform: translateX(-100%);
+                transition: var(--transition-slide);
+                background: var(--bg-layer1), var(--bg-layer2), var(--bg-base);
+                z-index: 50;
+            }
+
+            .wing-right {
+                transform: translateX(100%);
+            }
+
+            .wing.wing-open {
+                transform: translateX(0);
+            }
+
+            .wing-toggle {
+                display: flex;
+            }
+
+            .center-pad {
+                left: 0;
+                right: 0;
+                padding: 16px;
+            }
+
+            .tile-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1001px) {
+            .wing-toggle {
+                display: none;
+            }
+        }
+
+        /* Wing toggle buttons (mobile/tablet) */
+        .wing-toggle {
+            position: fixed;
+            top: 12px;
+            z-index: 55;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid var(--white);
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .wing-toggle:hover {
+            transform: translateY(-2px);
+        }
+
+        .wing-toggle-left {
+            left: 12px;
+        }
+
+        .wing-toggle-right {
+            right: 12px;
+        }
+
+        /* Backdrop overlay when wing is open on mobile */
+        .wing-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(59, 26, 4, 0.4);
+            z-index: 45;
+        }
+
+        .wing-backdrop.show {
+            display: block;
+        }
+
+        /* ══════════════════════════════════════════════
+           Star Card System — Expanding detail card
+           Pokemon TCG card travel animation
+           ══════════════════════════════════════════════ */
+
+        /* Gold star button — always gold */
+        .toolbar-btn-gold {
+            color: #f59e0b !important;
+            border-color: rgba(245, 158, 11, 0.5) !important;
+        }
+
+        .toolbar-btn-gold:hover {
+            color: #f59e0b !important;
+            border-color: rgba(245, 158, 11, 0.7) !important;
+        }
+
+        .toolbar-btn-gold.active {
+            background: var(--white);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+        }
+
+        /* Star card — hidden default */
+        .star-card {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: scale(0.92) translateZ(0);
+            transform-style: preserve-3d;
+            perspective: 800px;
+            transition:
+                max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease,
+                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+            padding: 0 24px;
+        }
+
+        /* Star card — open */
+        .star-card.open {
+            max-height: 500px;
+            opacity: 1;
+            transform: scale(1) translateZ(0.1px);
+            padding: 20px 24px;
+        }
+
+        .star-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .star-card-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .star-card-sub {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .star-card-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: var(--lamp-glow);
+            border: 2px solid var(--white);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--lamp-deep);
+            transition: transform 0.2s ease;
+        }
+
+        .star-card-close:hover {
+            transform: scale(1.1);
+        }
+
+        .star-card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* Tile hide/show transitions */
+        .center-section-header,
+        .tile-grid {
+            max-height: 500px;
+            transition: opacity 0.25s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+        }
+
+        .tiles-hidden {
+            opacity: 0 !important;
+            max-height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Wing arrow buttons inside header */
+        .wing-header .wing-arrow {
+            position: static;
+            transform: none;
+            width: 24px;
+            height: 24px;
+            font-size: 0.55rem;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .wing-header .wing-arrow:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Wings default: pills non-interactive until star activated */
+        body:not(.star-active) .wing .pill {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        body.star-active .wing .pill {
+            pointer-events: auto;
+            opacity: 1;
+        }
+
+        /* Wing grow on star activation */
+        body.star-active {
+            --wing-width: 283px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+
+        <!-- ═══════ Wing Toggle Buttons (mobile only) ═══════ -->
+        <button class="wing-toggle wing-toggle-left" id="toggleLeft" title="Toggle left wing">◀</button>
+        <button class="wing-toggle wing-toggle-right" id="toggleRight" title="Toggle right wing">▶</button>
+        <div class="wing-backdrop" id="wingBackdrop"></div>
+
+        <!-- ═══════ LEFT WING ═══════ -->
+        <div class="wing wing-left" id="wingLeft">
+            <div class="wing-header">
+                <button class="wing-arrow wing-arrow-prev hidden" data-wing="left" data-dir="-1">◀</button>
+                <span class="wing-title">Library</span>
+                <span class="wing-page-label" id="leftPageLabel">1 / 4</span>
+                <button class="wing-arrow wing-arrow-next" data-wing="left" data-dir="1">▶</button>
+            </div>
+
+            <div class="wing-track" id="leftTrack">
+                <!-- Section 1: Clients -->
+                <div class="wing-section">
+                    <div class="section-label">Clients</div>
+                    <div class="pill">
+                        <div class="pill-icon">➤</div>
+                        <div class="pill-text">
+                            <div class="pill-label">View All Clients</div>
+                            <div class="pill-sub">Browse roster</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Starred Clients</div>
+                            <div class="pill-sub">Favorites</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">✓</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Active Projects</div>
+                            <div class="pill-sub">In progress</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↻</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Recent Activity</div>
+                            <div class="pill-sub">Last 7 days</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↵</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Follow-Ups Due</div>
+                            <div class="pill-sub">Needs attention</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇒</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Onboard New</div>
+                            <div class="pill-sub">Add client</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Suppliers -->
+                <div class="wing-section">
+                    <div class="section-label">Suppliers</div>
+                    <div class="pill">
+                        <div class="pill-icon">➤</div>
+                        <div class="pill-text">
+                            <div class="pill-label">View All Suppliers</div>
+                            <div class="pill-sub">Full list</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Top Suppliers</div>
+                            <div class="pill-sub">Highest volume</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇄</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Active Orders</div>
+                            <div class="pill-sub">In transit</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↻</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Order History</div>
+                            <div class="pill-sub">Past 30 days</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">✓</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Verified Partners</div>
+                            <div class="pill-sub">Trusted list</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇒</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Add Supplier</div>
+                            <div class="pill-sub">New partner</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Services -->
+                <div class="wing-section">
+                    <div class="section-label">Services</div>
+                    <div class="pill">
+                        <div class="pill-icon">➤</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Service Catalog</div>
+                            <div class="pill-sub">All offerings</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Popular Services</div>
+                            <div class="pill-sub">Most booked</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇄</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Active Campaigns</div>
+                            <div class="pill-sub">Running now</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↑</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Upsell Options</div>
+                            <div class="pill-sub">Upgrade paths</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↻</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Service History</div>
+                            <div class="pill-sub">Completed work</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇒</div>
+                        <div class="pill-text">
+                            <div class="pill-label">New Service</div>
+                            <div class="pill-sub">Create offering</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Prices -->
+                <div class="wing-section">
+                    <div class="section-label">Prices</div>
+                    <div class="pill">
+                        <div class="pill-icon">➤</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Price Sheets</div>
+                            <div class="pill-sub">All tiers</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Best Sellers</div>
+                            <div class="pill-sub">Top packages</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇅</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Compare Plans</div>
+                            <div class="pill-sub">Side by side</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">✓</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Custom Quotes</div>
+                            <div class="pill-sub">Client-specific</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↻</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Invoice History</div>
+                            <div class="pill-sub">Past billing</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇒</div>
+                        <div class="pill-text">
+                            <div class="pill-label">New Quote</div>
+                            <div class="pill-sub">Build pricing</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wing-dots" id="leftDots">
+                <div class="wing-dot active"></div>
+                <div class="wing-dot"></div>
+                <div class="wing-dot"></div>
+                <div class="wing-dot"></div>
+            </div>
+        </div>
+
+        <!-- ═══════ RIGHT WING ═══════ -->
+        <div class="wing wing-right" id="wingRight">
+            <div class="wing-header">
+                <button class="wing-arrow wing-arrow-prev hidden" data-wing="right" data-dir="-1">◀</button>
+                <span class="wing-title">Tools</span>
+                <span class="wing-page-label" id="rightPageLabel">1 / 4</span>
+                <button class="wing-arrow wing-arrow-next" data-wing="right" data-dir="1">▶</button>
+            </div>
+
+            <div class="wing-track" id="rightTrack">
+                <!-- Section 1: Actions -->
+                <div class="wing-section">
+                    <div class="section-label">Actions</div>
+                    <div class="pill">
+                        <div class="pill-icon">✓</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Set Goal</div>
+                            <div class="pill-sub">Define target</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">➤</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Phase Plan</div>
+                            <div class="pill-sub">Map timeline</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↵</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Contact</div>
+                            <div class="pill-sub">Send outreach</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇒</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Follow Up</div>
+                            <div class="pill-sub">Chase items</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Close Deal</div>
+                            <div class="pill-sub">Convert now</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇄</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Track Order</div>
+                            <div class="pill-sub">Monitor status</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Templates -->
+                <div class="wing-section">
+                    <div class="section-label">Templates</div>
+                    <div class="pill">
+                        <div class="pill-icon">➤</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Email Templates</div>
+                            <div class="pill-sub">Pre-built messages</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↵</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Recap Template</div>
+                            <div class="pill-sub">Post-call summary</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">✓</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Proposal Draft</div>
+                            <div class="pill-sub">Scope document</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Invoice Template</div>
+                            <div class="pill-sub">PayPal billing</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇒</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Onboard Checklist</div>
+                            <div class="pill-sub">New client intake</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↻</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Contract Base</div>
+                            <div class="pill-sub">Agreement terms</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+
+                <!-- Section 3: History -->
+                <div class="wing-section">
+                    <div class="section-label">History</div>
+                    <div class="pill">
+                        <div class="pill-icon">↻</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Recent Sessions</div>
+                            <div class="pill-sub">Last 5 chats</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">✓</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Completed Tasks</div>
+                            <div class="pill-sub">Done this week</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇄</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Order Log</div>
+                            <div class="pill-sub">All transactions</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↵</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Call Log</div>
+                            <div class="pill-sub">Past conversations</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇅</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Change Log</div>
+                            <div class="pill-sub">System updates</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Saved Items</div>
+                            <div class="pill-sub">Bookmarked</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Settings -->
+                <div class="wing-section">
+                    <div class="section-label">Settings</div>
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Preferences</div>
+                            <div class="pill-sub">Your config</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">✓</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Obsidian Vault</div>
+                            <div class="pill-sub">Vault settings</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇄</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Integrations</div>
+                            <div class="pill-sub">Connected apps</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↻</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Memory Engine</div>
+                            <div class="pill-sub">Read/write rules</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">➤</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Notifications</div>
+                            <div class="pill-sub">Alert prefs</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↵</div>
+                        <div class="pill-text">
+                            <div class="pill-label">About</div>
+                            <div class="pill-sub">Version info</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wing-dots" id="rightDots">
+                <div class="wing-dot active"></div>
+                <div class="wing-dot"></div>
+                <div class="wing-dot"></div>
+                <div class="wing-dot"></div>
+            </div>
+        </div>
+
+        <!-- ═══════ CENTER LAUNCH PAD ═══════ -->
+        <div class="center-pad" id="centerPad">
+
+            <!-- Status bar -->
+            <div class="status-bar">
+                <div class="status-user">
+                    <div class="status-dot"></div>
+                    <span class="status-name">Chad</span>
+                    <span class="status-label">Online</span>
+                </div>
+                <span class="status-time" id="statusTime"></span>
+            </div>
+
+            <!-- Banner -->
+            <div class="banner">
+                <div class="banner-title">Ahead Command Center</div>
+                <div class="banner-sub">Ahead Artist Solutions — Obsidian Memory System</div>
+                <div class="banner-obsidian">
+                    <span class="banner-tag">HTML Obsidian</span>
+                    <span class="banner-tag">Obsidian Vault</span>
+                </div>
+            </div>
+
+            <!-- Star Card (hidden by default, expands on ★ click) -->
+            <div class="star-card" id="starCard">
+                <div class="star-card-header">
+                    <div>
+                        <div class="star-card-title">★ Settings</div>
+                        <div class="star-card-sub">Configuration & Preferences</div>
+                    </div>
+                    <button class="star-card-close" id="starCardClose" title="Close">✕</button>
+                </div>
+                <div class="star-card-grid">
+                    <div class="pill">
+                        <div class="pill-icon">★</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Preferences</div>
+                            <div class="pill-sub">Your config</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">✓</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Obsidian Vault</div>
+                            <div class="pill-sub">Vault settings</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">⇄</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Integrations</div>
+                            <div class="pill-sub">Connected apps</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↻</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Memory Engine</div>
+                            <div class="pill-sub">Read/write rules</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">➤</div>
+                        <div class="pill-text">
+                            <div class="pill-label">Notifications</div>
+                            <div class="pill-sub">Alert prefs</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                    <div class="pill">
+                        <div class="pill-icon">↵</div>
+                        <div class="pill-text">
+                            <div class="pill-label">About</div>
+                            <div class="pill-sub">Version info</div>
+                        </div>
+                        <div class="pill-chevron">▶</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="center-section-header">Quick Links</div>
+            <div class="tile-grid">
+                <div class="tile" data-action="clients">
+                    <div class="tile-icon">➤</div>
+                    <div class="tile-label">Clients</div>
+                </div>
+                <div class="tile" data-action="suppliers">
+                    <div class="tile-icon">★</div>
+                    <div class="tile-label">Suppliers</div>
+                </div>
+                <div class="tile" data-action="services">
+                    <div class="tile-icon">↻</div>
+                    <div class="tile-label">Services</div>
+                </div>
+                <div class="tile" data-action="dashboard">
+                    <div class="tile-icon">▲</div>
+                    <div class="tile-label">Dashboard</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="center-section-header">Quick Actions</div>
+            <div class="tile-grid">
+                <div class="tile" data-action="home">
+                    <div class="tile-icon">▲</div>
+                    <div class="tile-label">Go Home</div>
+                </div>
+                <div class="tile" data-action="refresh">
+                    <div class="tile-icon">↻</div>
+                    <div class="tile-label">Refresh</div>
+                </div>
+                <div class="tile" data-action="select">
+                    <div class="tile-icon">✓</div>
+                    <div class="tile-label">Select Client</div>
+                </div>
+                <div class="tile" data-action="match">
+                    <div class="tile-icon">⇄</div>
+                    <div class="tile-label">Match Cards</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ═══════ BOTTOM TOOLBAR ═══════ -->
+        <div class="toolbar">
+            <button class="toolbar-btn" data-tool="mic" title="Microphone">●</button>
+            <button class="toolbar-btn active" data-tool="home" title="Home">▲</button>
+            <button class="toolbar-btn" data-tool="notifications" title="Notifications">▼</button>
+            <button class="toolbar-btn" data-tool="location" title="Here">◆</button>
+            <button class="toolbar-btn" data-tool="camera" title="Theme" id="themeBtn">■</button>
+            <button class="toolbar-btn" data-tool="audio" title="Audio">♦</button>
+            <button class="toolbar-btn toolbar-btn-gold" data-tool="settings" title="Settings" id="starBtn">★</button>
+        </div>
+
+    </div>
+
+    <script>
+        /* ══════════════════════════════════════════════
+           Wing Paging System
+           Pattern: CodePen #3 translateX paging +
+           radialMenu directional intent detection
+           ══════════════════════════════════════════════ */
+
+        const state = {
+            left: 0,
+            right: 0,
+            maxIndex: 3
+        };
+
+        const elements = {
+            leftTrack: document.getElementById('leftTrack'),
+            rightTrack: document.getElementById('rightTrack'),
+            leftDots: document.getElementById('leftDots'),
+            rightDots: document.getElementById('rightDots'),
+            leftPageLabel: document.getElementById('leftPageLabel'),
+            rightPageLabel: document.getElementById('rightPageLabel'),
+            wingLeft: document.getElementById('wingLeft'),
+            wingRight: document.getElementById('wingRight')
+        };
+
+        // Section names for each wing
+        const sectionNames = {
+            left: ['Clients', 'Suppliers', 'Services', 'Prices'],
+            right: ['Actions', 'Templates', 'History', 'Settings']
+        };
+
+        function goToSection(wing, index) {
+            // Clamp 0–3
+            index = Math.max(0, Math.min(state.maxIndex, index));
+            state[wing] = index;
+
+            // Update track transform
+            const track = elements[wing + 'Track'];
+            track.style.transform = `translateX(-${index * 100}%)`;
+
+            // Update page label
+            const label = elements[wing + 'PageLabel'];
+            label.textContent = `${index + 1} / 4`;
+
+            // Update dots
+            const dotsContainer = elements[wing + 'Dots'];
+            const dots = dotsContainer.querySelectorAll('.wing-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            // Update arrow visibility (opacity transition, not display toggle)
+            const wingEl = elements['wing' + wing.charAt(0).toUpperCase() + wing.slice(1)];
+            const prevArrow = wingEl.querySelector('.wing-arrow-prev');
+            const nextArrow = wingEl.querySelector('.wing-arrow-next');
+            prevArrow.classList.toggle('hidden', index === 0);
+            nextArrow.classList.toggle('hidden', index === state.maxIndex);
+
+            // Update wing header title to current section name
+            const title = wingEl.querySelector('.wing-title');
+            title.textContent = sectionNames[wing][index];
+        }
+
+        // Arrow button clicks
+        document.querySelectorAll('.wing-arrow').forEach(arrow => {
+            arrow.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const wing = arrow.dataset.wing;
+                const dir = parseInt(arrow.dataset.dir);
+                goToSection(wing, state[wing] + dir);
+            });
+        });
+
+        // Touch/pointer swipe detection
+        // Pattern: radialMenu directional intent — abs(deltaX) > abs(deltaY) * 1.5
+        function setupSwipe(wingEl, wingName) {
+            let startX = 0;
+            let startY = 0;
+            let tracking = false;
+
+            wingEl.addEventListener('pointerdown', (e) => {
+                // Only track on the wing track area, not arrows
+                if (e.target.closest('.wing-arrow')) return;
+                startX = e.clientX;
+                startY = e.clientY;
+                tracking = true;
+            });
+
+            wingEl.addEventListener('pointerup', (e) => {
+                if (!tracking) return;
+                tracking = false;
+
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                // Dead zone: 10px before deciding axis
+                if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) return;
+
+                // Horizontal intent: abs(deltaX) > abs(deltaY) * 1.5
+                if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && Math.abs(deltaX) > 50) {
+                    if (deltaX < 0) {
+                        goToSection(wingName, state[wingName] + 1);
+                    } else {
+                        goToSection(wingName, state[wingName] - 1);
+                    }
+                }
+            });
+
+            // Prevent text selection during swipe
+            wingEl.addEventListener('dragstart', (e) => e.preventDefault());
+        }
+
+        setupSwipe(elements.wingLeft, 'left');
+        setupSwipe(elements.wingRight, 'right');
+
+        /* ══════════════════════════════════════════════
+           Toolbar interaction
+           ══════════════════════════════════════════════ */
+
+        document.querySelectorAll('.toolbar-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.id === 'starBtn' || btn.id === 'themeBtn') return;
+                document.querySelectorAll('.toolbar-btn:not(#starBtn):not(#themeBtn)').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        /* ══════════════════════════════════════════════
+           Center tile Quick Links → navigate wings
+           ══════════════════════════════════════════════ */
+
+        document.querySelectorAll('.tile[data-action]').forEach(tile => {
+            tile.addEventListener('click', () => {
+                const action = tile.dataset.action;
+                switch (action) {
+                    case 'clients': goToSection('left', 0); break;
+                    case 'suppliers': goToSection('left', 1); break;
+                    case 'services': goToSection('left', 2); break;
+                    case 'dashboard': break; // already here
+                    case 'home': goToSection('left', 0); goToSection('right', 0); break;
+                    case 'refresh': location.reload(); break;
+                    case 'select': goToSection('left', 0); break;
+                    case 'match': goToSection('right', 0); break;
+                }
+            });
+        });
+
+        /* ══════════════════════════════════════════════
+           Status bar — current date/time
+           ══════════════════════════════════════════════ */
+
+        function updateTime() {
+            const now = new Date();
+            const opts = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('statusTime').textContent = now.toLocaleDateString('en-US', opts);
+        }
+        updateTime();
+        setInterval(updateTime, 60000);
+
+        /* ══════════════════════════════════════════════
+           Mobile wing toggle (< 1000px)
+           ══════════════════════════════════════════════ */
+
+        const backdrop = document.getElementById('wingBackdrop');
+
+        function closeAllWings() {
+            elements.wingLeft.classList.remove('wing-open');
+            elements.wingRight.classList.remove('wing-open');
+            backdrop.classList.remove('show');
+        }
+
+        document.getElementById('toggleLeft').addEventListener('click', () => {
+            const isOpen = elements.wingLeft.classList.contains('wing-open');
+            closeAllWings();
+            if (!isOpen) {
+                elements.wingLeft.classList.add('wing-open');
+                backdrop.classList.add('show');
+            }
+        });
+
+        document.getElementById('toggleRight').addEventListener('click', () => {
+            const isOpen = elements.wingRight.classList.contains('wing-open');
+            closeAllWings();
+            if (!isOpen) {
+                elements.wingRight.classList.add('wing-open');
+                backdrop.classList.add('show');
+            }
+        });
+
+        backdrop.addEventListener('click', closeAllWings);
+
+        /* ══════════════════════════════════════════════
+           Theme Cycler — ■ Square Button
+           4 gradient themes: Warm Sunset, Midnight Moon,
+           Forest Ember, Arctic Dawn
+           ══════════════════════════════════════════════ */
+
+        const themes = [
+            {
+                name: 'Warm Sunset',
+                deep: '#c2560a', mid: '#e07b2e', warm: '#f2a54a', soft: '#f8c97d', glow: '#fde8c8',
+                white: '#ffffff', text: '#3b1a04', textDim: 'rgba(59, 26, 4, 0.55)',
+                toolbarBg: 'linear-gradient(180deg, #9a4208 0%, #7a3506 100%)',
+                bgLayer1: 'radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%)',
+                bgLayer2: 'radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%)',
+                bgLayer3: 'radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%)',
+                bgBase: 'linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%)'
+            },
+            {
+                name: 'Midnight Moon',
+                deep: '#1e3a5f', mid: '#2d5a8e', warm: '#4a7fb5', soft: '#7bafd4', glow: '#c8dff0',
+                white: '#e8f0f8', text: '#0f1f33', textDim: 'rgba(15, 31, 51, 0.55)',
+                toolbarBg: 'linear-gradient(180deg, #1a2d4a 0%, #0f1b2d 100%)',
+                bgLayer1: 'radial-gradient(ellipse at 30% 20%, #4a7fb5 0%, transparent 50%)',
+                bgLayer2: 'radial-gradient(ellipse at 70% 80%, #2d5a8e 0%, transparent 50%)',
+                bgLayer3: 'radial-gradient(ellipse at 50% 50%, #1e3a5f 0%, transparent 60%)',
+                bgBase: 'linear-gradient(160deg, #c8dff0 0%, #4a7fb5 35%, #1e3a5f 65%, #0f1b2d 100%)'
+            },
+            {
+                name: 'Forest Ember',
+                deep: '#2d5016', mid: '#4a7a2e', warm: '#6ba342', soft: '#9cc878', glow: '#d4ebc4',
+                white: '#f0f8ea', text: '#1a2e0d', textDim: 'rgba(26, 46, 13, 0.55)',
+                toolbarBg: 'linear-gradient(180deg, #2d5016 0%, #1a3008 100%)',
+                bgLayer1: 'radial-gradient(ellipse at 30% 20%, #9cc878 0%, transparent 50%)',
+                bgLayer2: 'radial-gradient(ellipse at 70% 80%, #6ba342 0%, transparent 50%)',
+                bgLayer3: 'radial-gradient(ellipse at 50% 50%, #4a7a2e 0%, transparent 60%)',
+                bgBase: 'linear-gradient(160deg, #d4ebc4 0%, #6ba342 35%, #2d5016 65%, #1a3008 100%)'
+            },
+            {
+                name: 'Arctic Dawn',
+                deep: '#4a5568', mid: '#718096', warm: '#a0aec0', soft: '#cbd5e0', glow: '#edf2f7',
+                white: '#f7fafc', text: '#1a202c', textDim: 'rgba(26, 32, 44, 0.55)',
+                toolbarBg: 'linear-gradient(180deg, #4a5568 0%, #2d3748 100%)',
+                bgLayer1: 'radial-gradient(ellipse at 30% 20%, #cbd5e0 0%, transparent 50%)',
+                bgLayer2: 'radial-gradient(ellipse at 70% 80%, #a0aec0 0%, transparent 50%)',
+                bgLayer3: 'radial-gradient(ellipse at 50% 50%, #718096 0%, transparent 60%)',
+                bgBase: 'linear-gradient(160deg, #edf2f7 0%, #a0aec0 35%, #4a5568 65%, #2d3748 100%)'
+            }
+        ];
+
+        let currentTheme = 0;
+        const themeBtn = document.getElementById('themeBtn');
+
+        function applyTheme(index) {
+            const t = themes[index];
+            const r = document.documentElement.style;
+            r.setProperty('--lamp-deep', t.deep);
+            r.setProperty('--lamp-mid', t.mid);
+            r.setProperty('--lamp-warm', t.warm);
+            r.setProperty('--lamp-soft', t.soft);
+            r.setProperty('--lamp-glow', t.glow);
+            r.setProperty('--white', t.white);
+            r.setProperty('--text', t.text);
+            r.setProperty('--text-dim', t.textDim);
+            r.setProperty('--toolbar-bg', t.toolbarBg);
+            r.setProperty('--bg-layer1', t.bgLayer1);
+            r.setProperty('--bg-layer2', t.bgLayer2);
+            r.setProperty('--bg-layer3', t.bgLayer3);
+            r.setProperty('--bg-base', t.bgBase);
+        }
+
+        themeBtn.addEventListener('click', () => {
+            currentTheme = (currentTheme + 1) % themes.length;
+            applyTheme(currentTheme);
+        });
+
+        /* ══════════════════════════════════════════════
+           Star Card Toggle System
+           Pokemon TCG card travel animation
+           ══════════════════════════════════════════════ */
+
+        const starBtn = document.getElementById('starBtn');
+        const starCard = document.getElementById('starCard');
+        const starCardClose = document.getElementById('starCardClose');
+        let starOpen = false;
+
+        function toggleStar() {
+            starOpen = !starOpen;
+            const tileHeaders = document.querySelectorAll('.center-pad .center-section-header');
+            const tileGrids = document.querySelectorAll('.center-pad .tile-grid');
+
+            if (starOpen) {
+                // Hide tiles first
+                tileHeaders.forEach(el => el.classList.add('tiles-hidden'));
+                tileGrids.forEach(el => el.classList.add('tiles-hidden'));
+                // Open star card with rAF for smooth initial state registration
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        starCard.classList.add('open');
+                    });
+                });
+                // Activate wings
+                document.body.classList.add('star-active');
+                starBtn.classList.add('active');
+            } else {
+                // Close star card
+                starCard.classList.remove('open');
+                // Show tiles
+                tileHeaders.forEach(el => el.classList.remove('tiles-hidden'));
+                tileGrids.forEach(el => el.classList.remove('tiles-hidden'));
+                // Deactivate wings
+                document.body.classList.remove('star-active');
+                starBtn.classList.remove('active');
+            }
+        }
+
+        starBtn.addEventListener('click', () => {
+            toggleStar();
+        });
+
+        starCardClose.addEventListener('click', () => {
+            if (starOpen) toggleStar();
+        });
+
+        /* ══════════════════════════════════════════════
+           Initialize
+           ══════════════════════════════════════════════ */
+
+        // Set initial section names
+        goToSection('left', 0);
+        goToSection('right', 0);
+    </script>
+</body>
+
+</html>

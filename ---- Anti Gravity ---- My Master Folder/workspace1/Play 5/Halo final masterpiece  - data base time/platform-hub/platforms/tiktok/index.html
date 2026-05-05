@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Ads Intelligence Report — Anti Gravity</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════
+           CSS VARIABLES
+           ═══════════════════════════════════════════ */
+        :root {
+            --bg: #0a0a0a;
+            --bg-elevated: #141414;
+            --bg-float: #1a1a1a;
+            --bg-hover: #222;
+            --border: rgba(255,255,255,0.06);
+            --border-hover: rgba(0,242,234,0.25);
+            --text: #e8e8e8;
+            --text-dim: rgba(255,255,255,0.45);
+            --text-ghost: rgba(255,255,255,0.25);
+            --platform: #00f2ea;
+            --platform-dim: rgba(0,242,234,0.15);
+            --platform-ghost: rgba(0,242,234,0.06);
+            --platform-alt: #ff0050;
+            --platform-alt-dim: rgba(255,0,80,0.15);
+            --amber: #f59e0b;
+            --amber-dim: rgba(245,158,11,0.15);
+            --blue: #3b82f6;
+            --blue-dim: rgba(59,130,246,0.12);
+            --purple: #a855f7;
+            --purple-dim: rgba(168,85,247,0.12);
+        }
+
+        /* ═══════════════════════════════════════════
+           RESET & BASE
+           ═══════════════════════════════════════════ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ═══════════════════════════════════════════
+           SKELETON SHIMMER
+           ═══════════════════════════════════════════ */
+        .skeleton-pulse {
+            position: relative;
+            overflow: hidden;
+        }
+        .skeleton-pulse::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+            animation: skeletonShimmer 2s infinite;
+        }
+        @keyframes skeletonShimmer {
+            to { left: 100%; }
+        }
+
+        /* ═══════════════════════════════════════════
+           LAYOUT
+           ═══════════════════════════════════════════ */
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        section {
+            padding: 80px 0;
+        }
+
+        section + section {
+            border-top: 1px solid var(--border);
+        }
+
+        /* ═══════════════════════════════════════════
+           TYPOGRAPHY
+           ═══════════════════════════════════════════ */
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+        }
+
+        h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); }
+        h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
+        h3 { font-size: 1.15rem; font-weight: 600; }
+
+        h1 strong, h2 strong {
+            background: linear-gradient(135deg, var(--platform), var(--platform-alt));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ═══════════════════════════════════════════
+           SHARED COMPONENTS
+           ═══════════════════════════════════════════ */
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: var(--platform-dim);
+            color: var(--platform);
+            border: 1px solid rgba(0,242,234,0.2);
+            margin-bottom: 20px;
+        }
+
+        .badge--alt {
+            background: var(--platform-alt-dim);
+            color: var(--platform-alt);
+            border-color: rgba(255,0,80,0.2);
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: border-color 0.25s ease, background 0.25s ease;
+        }
+        .card:hover {
+            border-color: var(--border-hover);
+        }
+
+        /* Subtitle */
+        .subtitle {
+            color: var(--text-dim);
+            font-size: 1.05rem;
+            max-width: 640px;
+            line-height: 1.7;
+        }
+
+        /* Section header */
+        .section-header {
+            margin-bottom: 48px;
+        }
+        .section-header h2 {
+            margin-bottom: 12px;
+        }
+
+        /* Grids */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        /* Skeleton text bars */
+        .skel-bar {
+            height: 12px;
+            border-radius: 6px;
+            background: var(--bg-hover);
+        }
+        .skel-bar--short { width: 60%; }
+        .skel-bar--med { width: 80%; }
+        .skel-bar--full { width: 100%; }
+        .skel-bar + .skel-bar { margin-top: 8px; }
+
+        /* ═══════════════════════════════════════════
+           1. HERO
+           ═══════════════════════════════════════════ */
+        .hero {
+            position: relative;
+            padding: 120px 0 100px;
+            text-align: center;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(0,242,234,0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero .container {
+            position: relative;
+            z-index: 1;
+        }
+        .hero h1 {
+            margin-bottom: 20px;
+        }
+        .hero .subtitle {
+            margin: 0 auto;
+            font-size: 1.1rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           2. VERIFIED CONVERSION BENCHMARKS
+           ═══════════════════════════════════════════ */
+        .metric-card {
+            text-align: center;
+        }
+        .metric-card .metric-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: var(--platform);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .metric-card .metric-label {
+            font-size: 0.9rem;
+            color: var(--text);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .metric-card .metric-source {
+            font-size: 0.72rem;
+            color: var(--text-ghost);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .benchmarks-secondary {
+            margin-top: 20px;
+        }
+        .benchmarks-secondary .metric-value {
+            font-size: 2rem;
+            color: var(--platform-alt);
+        }
+
+        .multiplier-card {
+            margin-top: 20px;
+            text-align: center;
+            background: var(--bg-float);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 36px 28px;
+        }
+        .multiplier-card .metric-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--platform), var(--platform-alt));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .multiplier-card .metric-label {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           3. BENCHMARK TABLE
+           ═══════════════════════════════════════════ */
+        .benchmark-table-wrap {
+            overflow-x: auto;
+        }
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .benchmark-table thead th {
+            text-align: left;
+            padding: 14px 20px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-elevated);
+        }
+        .benchmark-table thead th:first-child {
+            border-radius: 12px 0 0 0;
+        }
+        .benchmark-table thead th:last-child {
+            border-radius: 0 12px 0 0;
+        }
+        .benchmark-table tbody td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        .benchmark-table tbody tr:hover {
+            background: var(--bg-hover);
+        }
+        .benchmark-table .val {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            color: var(--platform);
+        }
+        .benchmark-table .source-cell {
+            color: var(--text-ghost);
+            font-size: 0.78rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           4. OPTIMAL CAMPAIGN SEQUENCE
+           ═══════════════════════════════════════════ */
+        .sequence-flow {
+            display: flex;
+            gap: 0;
+            position: relative;
+        }
+        .sequence-step {
+            flex: 1;
+            position: relative;
+            padding: 28px 24px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: border-color 0.25s ease;
+        }
+        .sequence-step:first-child {
+            border-radius: 16px 0 0 16px;
+        }
+        .sequence-step:last-child {
+            border-radius: 0 16px 16px 0;
+        }
+        .sequence-step:hover {
+            border-color: var(--border-hover);
+        }
+        .sequence-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -1px;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 10px solid var(--platform);
+            z-index: 2;
+            opacity: 0.4;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--platform-dim);
+            color: var(--platform);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+        .step-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+        .step-meta {
+            font-size: 0.75rem;
+            color: var(--text-ghost);
+            line-height: 1.5;
+        }
+        .step-meta span {
+            display: block;
+        }
+        .step-lift {
+            margin-top: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--platform);
+        }
+
+        /* ═══════════════════════════════════════════
+           5. ANALYSIS GRID
+           ═══════════════════════════════════════════ */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .analysis-card .analysis-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--platform-dim);
+            color: var(--platform);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+        }
+        .analysis-card h3 {
+            margin-bottom: 10px;
+        }
+        .analysis-card p {
+            color: var(--text-dim);
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+
+        /* ═══════════════════════════════════════════
+           6. CAREER PATHS GRID
+           ═══════════════════════════════════════════ */
+        .career-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .career-card .career-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+        .career-card .career-desc {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .career-card .skel-bar {
+            margin-top: 14px;
+        }
+
+        /* ═══════════════════════════════════════════
+           7. CAMPAIGN GENERATOR
+           ═══════════════════════════════════════════ */
+        .generator {
+            text-align: center;
+        }
+        .generator-placeholder {
+            margin-top: 40px;
+            padding: 60px 40px;
+            border-radius: 20px;
+            border: 2px dashed rgba(0,242,234,0.15);
+            background: var(--platform-ghost);
+            color: var(--text-dim);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 0.02em;
+        }
+
+        /* ═══════════════════════════════════════════
+           8. FOOTER
+           ═══════════════════════════════════════════ */
+        footer {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        footer p {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--text-ghost);
+        }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════ */
+        @media (max-width: 900px) {
+            .grid-3, .career-grid { grid-template-columns: 1fr 1fr; }
+            .sequence-flow { flex-direction: column; gap: 12px; }
+            .sequence-step { border-radius: 16px !important; }
+            .sequence-step:not(:last-child)::after { display: none; }
+        }
+        @media (max-width: 600px) {
+            .grid-3, .grid-2, .career-grid { grid-template-columns: 1fr; }
+            section { padding: 56px 0; }
+            .hero { padding: 80px 0 64px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ════════════════════════════════════════════════
+         1. HERO
+         ════════════════════════════════════════════════ -->
+    <section class="hero">
+        <div class="container">
+            <div class="badge">Coming Soon</div>
+            <h1>TikTok Ads <strong>Intelligence Report</strong></h1>
+            <p class="subtitle">
+                Verified conversion benchmarks for TikTok Promote, Spark Ads, and organic reach strategies — built from first-party data and platform-confirmed metrics.
+            </p>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════
+         2. VERIFIED CONVERSION BENCHMARKS
+         ════════════════════════════════════════════════ -->
+    <section id="benchmarks">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge">Benchmarks</div>
+                <h2>Verified Conversion <strong>Benchmarks</strong></h2>
+                <p class="subtitle">Platform-verified performance metrics pending data injection.</p>
+            </div>
+
+            <!-- Primary 3-card grid -->
+            <div class="grid-3">
+                <div class="card metric-card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+                <div class="card metric-card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+                <div class="card metric-card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+            </div>
+
+            <!-- Secondary 3-card grid -->
+            <div class="grid-3 benchmarks-secondary">
+                <div class="card metric-card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+                <div class="card metric-card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+                <div class="card metric-card skeleton-pulse">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Metric Placeholder</div>
+                    <div class="metric-source">Source pending verification</div>
+                </div>
+            </div>
+
+            <!-- Full-width multiplier card -->
+            <div class="multiplier-card skeleton-pulse">
+                <div class="metric-value">--x</div>
+                <div class="metric-label">Multiplier Metric — Source pending verification</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════
+         3. COMPLETE BENCHMARK TABLE
+         ════════════════════════════════════════════════ -->
+    <section id="benchmark-table">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge">Data</div>
+                <h2>Complete Benchmark <strong>Table</strong></h2>
+                <p class="subtitle">Full metric breakdown with verified sources.</p>
+            </div>
+
+            <div class="benchmark-table-wrap">
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="skeleton-pulse">
+                            <td>Spark Ads avg. CTR</td>
+                            <td class="val">&mdash;</td>
+                            <td class="source-cell">Source pending verification</td>
+                        </tr>
+                        <tr class="skeleton-pulse">
+                            <td>Promote avg. CPM</td>
+                            <td class="val">&mdash;</td>
+                            <td class="source-cell">Source pending verification</td>
+                        </tr>
+                        <tr class="skeleton-pulse">
+                            <td>Organic reach multiplier</td>
+                            <td class="val">&mdash;</td>
+                            <td class="source-cell">Source pending verification</td>
+                        </tr>
+                        <tr class="skeleton-pulse">
+                            <td>Conversion rate (Promote &rarr; stream)</td>
+                            <td class="val">&mdash;</td>
+                            <td class="source-cell">Source pending verification</td>
+                        </tr>
+                        <tr class="skeleton-pulse">
+                            <td>Avg. engagement rate (Spark)</td>
+                            <td class="val">&mdash;</td>
+                            <td class="source-cell">Source pending verification</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════
+         4. OPTIMAL CAMPAIGN SEQUENCE
+         ════════════════════════════════════════════════ -->
+    <section id="campaign-sequence">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge badge--alt">Strategy</div>
+                <h2>Optimal Campaign <strong>Sequence</strong></h2>
+                <p class="subtitle">Five-phase execution framework for maximum TikTok campaign impact.</p>
+            </div>
+
+            <div class="sequence-flow">
+                <div class="sequence-step skeleton-pulse">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Pre-Release</div>
+                    <div class="step-meta">
+                        <span>Tools: TBD</span>
+                        <span>Audience: TBD</span>
+                    </div>
+                    <div class="step-lift">--</div>
+                </div>
+                <div class="sequence-step skeleton-pulse">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Spark Ads</div>
+                    <div class="step-meta">
+                        <span>Tools: TBD</span>
+                        <span>Audience: TBD</span>
+                    </div>
+                    <div class="step-lift">--</div>
+                </div>
+                <div class="sequence-step skeleton-pulse">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Launch Push</div>
+                    <div class="step-meta">
+                        <span>Tools: TBD</span>
+                        <span>Audience: TBD</span>
+                    </div>
+                    <div class="step-lift">--</div>
+                </div>
+                <div class="sequence-step skeleton-pulse">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Promote Boost</div>
+                    <div class="step-meta">
+                        <span>Tools: TBD</span>
+                        <span>Audience: TBD</span>
+                    </div>
+                    <div class="step-lift">--</div>
+                </div>
+                <div class="sequence-step skeleton-pulse">
+                    <div class="step-number">5</div>
+                    <div class="step-title">Sustain</div>
+                    <div class="step-meta">
+                        <span>Tools: TBD</span>
+                        <span>Audience: TBD</span>
+                    </div>
+                    <div class="step-lift">--</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════
+         5. ANALYSIS GRID
+         ════════════════════════════════════════════════ -->
+    <section id="analysis">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge">Analysis</div>
+                <h2>Platform <strong>Analysis</strong></h2>
+                <p class="subtitle">Deep-dive sections on TikTok promotion effectiveness, pending research completion.</p>
+            </div>
+
+            <div class="analysis-grid">
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 1</h3>
+                    <p>Placeholder analysis on TikTok promotion effectiveness. Data and insights will be injected once verified benchmarks are finalized.</p>
+                </div>
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 2</h3>
+                    <p>Placeholder analysis on Spark Ads performance patterns and optimal creative strategies for music promotion campaigns.</p>
+                </div>
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 3</h3>
+                    <p>Placeholder analysis on organic reach amplification and how Promote interacts with algorithmic distribution on TikTok.</p>
+                </div>
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 4</h3>
+                    <p>Placeholder analysis on audience segmentation and targeting efficiency across different TikTok ad formats and objectives.</p>
+                </div>
+                <div class="card analysis-card skeleton-pulse">
+                    <div class="analysis-icon">?</div>
+                    <h3>Analysis Section 5</h3>
+                    <p>Placeholder analysis on campaign timing, frequency capping, and budget allocation strategies for sustained TikTok growth.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════
+         6. CAREER PATHS GRID
+         ════════════════════════════════════════════════ -->
+    <section id="career-paths">
+        <div class="container">
+            <div class="section-header">
+                <div class="badge">Paths</div>
+                <h2>Career <strong>Paths</strong></h2>
+                <p class="subtitle">Strategic growth trajectories powered by TikTok campaign intelligence.</p>
+            </div>
+
+            <div class="career-grid">
+                <div class="card career-card skeleton-pulse">
+                    <div class="career-title">Path Placeholder 1</div>
+                    <div class="career-desc">Skeleton description for career path entry. Content will be populated from campaign intelligence data.</div>
+                    <div class="skel-bar skel-bar--med"></div>
+                    <div class="skel-bar skel-bar--short"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="career-title">Path Placeholder 2</div>
+                    <div class="career-desc">Skeleton description for career path entry. Content will be populated from campaign intelligence data.</div>
+                    <div class="skel-bar skel-bar--full"></div>
+                    <div class="skel-bar skel-bar--short"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="career-title">Path Placeholder 3</div>
+                    <div class="career-desc">Skeleton description for career path entry. Content will be populated from campaign intelligence data.</div>
+                    <div class="skel-bar skel-bar--med"></div>
+                    <div class="skel-bar skel-bar--short"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="career-title">Path Placeholder 4</div>
+                    <div class="career-desc">Skeleton description for career path entry. Content will be populated from campaign intelligence data.</div>
+                    <div class="skel-bar skel-bar--full"></div>
+                    <div class="skel-bar skel-bar--med"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="career-title">Path Placeholder 5</div>
+                    <div class="career-desc">Skeleton description for career path entry. Content will be populated from campaign intelligence data.</div>
+                    <div class="skel-bar skel-bar--short"></div>
+                    <div class="skel-bar skel-bar--short"></div>
+                </div>
+                <div class="card career-card skeleton-pulse">
+                    <div class="career-title">Path Placeholder 6</div>
+                    <div class="career-desc">Skeleton description for career path entry. Content will be populated from campaign intelligence data.</div>
+                    <div class="skel-bar skel-bar--med"></div>
+                    <div class="skel-bar skel-bar--short"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════
+         7. CAMPAIGN GENERATOR
+         ════════════════════════════════════════════════ -->
+    <section id="generator">
+        <div class="container generator">
+            <div class="badge badge--alt">Campaign Generator</div>
+            <h2>Build Your <strong>TikTok Campaign</strong></h2>
+            <p class="subtitle" style="margin: 12px auto 0;">Generator coming soon</p>
+            <div class="generator-placeholder skeleton-pulse">
+                Generator Under Development
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════
+         8. FOOTER
+         ════════════════════════════════════════════════ -->
+    <footer>
+        <div class="container">
+            <p>ANTI GRAVITY &mdash; TIKTOK CAMPAIGN INTELLIGENCE &mdash; SKELETON TEMPLATE &mdash; 2026</p>
+        </div>
+    </footer>
+
+</body>
+</html>

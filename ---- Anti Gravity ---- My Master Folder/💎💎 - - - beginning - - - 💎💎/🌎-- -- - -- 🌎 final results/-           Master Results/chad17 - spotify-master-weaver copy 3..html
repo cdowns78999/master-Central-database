@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Strategic Weaver | Final Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #08090d;
+            --panel: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --neon-blue: #00d4ff;
+            --neon-purple: #bd00ff;
+            --neon-green: #00ff85;
+            --text: #e1e1e6;
+            --text-dim: #8892b0;
+            --spotify: #1db954;
+        }
+
+        * {
+            margin: 0;
+            t padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            background-image:
+                linear-gradient(rgba(29, 185, 84, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(29, 185, 84, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* TECHNICAL OVERLAY */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 50% 50%, transparent 0%, var(--bg) 90%),
+                repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.01) 0px, rgba(255, 255, 255, 0.01) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .glow-sphere {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(29, 185, 84, 0.05) 0%, transparent 70%);
+            z-index: -1;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 240px 40px 40px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* PROGRESS ARCHITECTURE */
+        .progress-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            opacity: 0;
+            transition: 0.8s;
+        }
+
+        .progress-container.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+        }
+
+        .progress-label.active {
+            color: var(--spotify);
+            font-weight: 800;
+        }
+
+        .progress-bar-bg {
+            height: 4px;
+            background: var(--panel);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--spotify), var(--neon-blue));
+            border-radius: 10px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 15px var(--spotify);
+        }
+
+        /* SUB-PROGRESS LINE SYSTEM */
+        .sub-progress-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .sub-step-line {
+            height: 2px;
+            background: var(--panel);
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .micro-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 50%;
+            transition: 0.4s;
+        }
+
+        .micro-dot.active {
+            background: var(--spotify);
+            box-shadow: 0 0 8px var(--spotify);
+            transform: scale(1.5);
+        }
+
+        /* CIRCULAR CONNECTORS */
+        .loop-connector {
+            font-size: 0.65rem;
+            color: var(--spotify);
+            background: rgba(29, 185, 84, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: inline-block;
+            border: 1px solid rgba(29, 185, 84, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .loop-arrow {
+            color: var(--text-dim);
+            margin: 0 5px;
+            opacity: 0.5;
+        }
+
+        /* BENCHMARK STRIP */
+        .benchmark-strip {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 180px;
+            margin-bottom: 60px;
+            width: 100%;
+        }
+
+        .bench-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            transition: 0.3s;
+            position: relative;
+            cursor: help;
+        }
+
+        .bench-item:hover {
+            border-color: var(--spotify);
+            background: rgba(29, 185, 84, 0.05);
+            transform: translateY(-2px);
+        }
+
+        /* COMIC WORD BUBBLE */
+        .bench-bubble {
+            position: absolute;
+            bottom: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            width: 280px;
+            background: #121318;
+            border: 2px solid var(--spotify);
+            border-radius: 18px;
+            padding: 18px;
+            opacity: 0;
+            pointer-events: auto;
+            /* ENABLE HOVER ON BUBBLE */
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(29, 185, 84, 0.2);
+            z-index: 3000;
+        }
+
+        /* BRIDGE TO PREVENT HOVER FLICKER */
+        .bench-bubble::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: transparent;
+        }
+
+        .bench-bubble::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid var(--spotify);
+        }
+
+        .bench-item:hover .bench-bubble {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .bubble-title {
+            color: var(--spotify);
+            font-family: 'Outfit';
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
+            border-bottom: 1px solid rgba(29, 185, 84, 0.2);
+            padding-bottom: 5px;
+        }
+
+        .bubble-proof {
+            font-size: 0.75rem;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .bubble-proof li {
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .bubble-proof li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--spotify);
+        }
+
+        .bubble-link {
+            display: inline-block;
+            color: var(--spotify);
+            text-decoration: none;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid var(--spotify);
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: 0.3s;
+            width: 100%;
+            text-align: center;
+        }
+
+        .bubble-link:hover {
+            background: var(--spotify);
+            color: #000;
+        }
+
+        /* ... existing styles ... */
+        .bench-val {
+            color: var(--spotify);
+            font-weight: 800;
+            font-family: 'Outfit';
+        }
+
+        .bench-desc {
+            opacity: 0.7;
+        }
+
+        .sub-label {
+            position: absolute;
+            top: 8px;
+            left: 0;
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            opacity: 0.6;
+        }
+
+        /* DROP ZONE */
+        .drop-zone {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--spotify);
+            border-radius: 4px;
+            padding: 50px;
+            text-align: center;
+            backdrop-filter: blur(24px);
+            margin-bottom: 40px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        /* INDUSTRIAL CORNER ACCENTS */
+        .drop-zone::before,
+        .drop-zone::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border: 2px solid var(--spotify);
+            opacity: 0.3;
+        }
+
+        .drop-zone::before {
+            top: 10px;
+            left: 10px;
+            border-right: 0;
+            border-bottom: 0;
+        }
+
+        .drop-zone::after {
+            bottom: 10px;
+            right: 10px;
+            border-left: 0;
+            border-top: 0;
+        }
+
+        .drop-zone.active {
+            border-color: var(--spotify);
+            background: rgba(29, 185, 84, 0.01);
+            transform: translateY(-5px);
+        }
+
+        .drop-zone h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+            color: var(--spotify);
+            font-weight: 900;
+        }
+
+        .drop-zone input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 18px 30px;
+            width: 90%;
+            max-width: 650px;
+            color: #fff;
+            text-align: center;
+            font-size: 0.9rem;
+            font-family: monospace;
+            outline: none;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        .drop-zone input:focus {
+            border-color: var(--spotify);
+            box-shadow: 0 0 30px rgba(29, 185, 84, 0.1);
+        }
+
+        /* STAGE */
+        .stage {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transition: 0.8s ease;
+        }
+
+        .stage.visible {
+            display: flex;
+            opacity: 1;
+        }
+
+        .stage-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 40px;
+            width: 100%;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 40px;
+            height: fit-content;
+        }
+
+        /* CARDS & BUTTONS */
+        .q-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            transition: 0.3s;
+            position: relative;
+            display: none;
+        }
+
+        .q-card.revealed {
+            display: block;
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .q-card h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .btn-option {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: #fff;
+            text-align: left;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .btn-option:hover {
+            background: var(--spotify);
+            border-color: var(--spotify);
+            color: #000;
+            font-weight: 700;
+        }
+
+        .btn-highlight {
+            border-color: var(--spotify) !important;
+            box-shadow: 0 0 25px rgba(29, 185, 84, 0.5);
+            background: rgba(29, 185, 84, 0.1) !important;
+            transform: scale(1.02);
+            font-weight: 800;
+        }
+
+        /* TOOLTIPS */
+        .suggestion {
+            position: absolute;
+            left: calc(100% + 15px);
+            top: 50%;
+            transform: translateY(-50%) translateX(10px);
+            width: 260px;
+            background: #15161c;
+            border: 1px solid var(--spotify);
+            padding: 18px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0;
+            pointer-events: auto;
+            /* ENABLE HOVER ON SUGGESTION */
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            z-index: 1000;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            line-height: 1.5;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-option:hover .suggestion {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .suggestion b {
+            color: var(--spotify);
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        /* TIMELINE STREAM */
+        .timeline-stream {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 100px;
+        }
+
+        /* REDESIGNED TIMELINE TILES */
+        .timeline-block {
+            width: 100%;
+            max-width: 680px;
+            background: rgba(13, 14, 18, 0.9);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--border);
+            /* Default left border */
+            border-radius: 2px;
+            /* Industrial Sharpness */
+            padding: 0;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        .timeline-block.slid-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tile-header {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .tile-header::after {
+            content: 'FIELD_DESIGN_REV_04';
+            position: absolute;
+            right: 20px;
+            bottom: -8px;
+            font-size: 0.5rem;
+            color: var(--spotify);
+            background: var(--bg);
+            padding: 0 5px;
+            font-family: monospace;
+            opacity: 0.5;
+        }
+
+        .tile-body {
+            padding: 25px;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: var(--border);
+            margin: 20px 0;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .field-cell {
+            background: rgba(8, 9, 13, 0.6);
+            padding: 12px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--spotify);
+            opacity: 0.8;
+            font-weight: 800;
+        }
+
+        .field-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .status-strip {
+            height: 2px;
+            width: 100%;
+            background: var(--border);
+            position: relative;
+        }
+
+        .status-fill {
+            height: 100%;
+            background: var(--spotify);
+            width: 100%;
+            box-shadow: 0 0 10px var(--spotify);
+        }
+
+        .impact-badge {
+            background: rgba(29, 185, 84, 0.1);
+            border: 1px solid var(--spotify);
+            color: var(--spotify);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* INDUSTRIAL BRACKETS FOR TILES */
+        .timeline-block::before,
+        .timeline-block::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 1px solid var(--spotify);
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        .timeline-block::before {
+            top: 5px;
+            left: 5px;
+            border-right: 0;
+            border-bottom: 0;
+        }
+
+        .timeline-block::after {
+            bottom: 5px;
+            right: 5px;
+            border-left: 0;
+            border-top: 0;
+        }
+
+        .timeline-block::after {
+            /* Second after for the line connector - handled by separate element if needed */
+        }
+
+        .timeline-block::after {
+            content: '';
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--border), transparent);
+        }
+
+        .timeline-block:last-child::after {
+            display: none;
+        }
+
+        .block-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .block-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .block-title {
+            font-weight: 800;
+            font-family: 'Outfit';
+            font-size: 1.2rem;
+        }
+
+        .block-desc {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* GUIDES */
+        .guide-container {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 360px;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .guide-card {
+            background: rgba(20, 21, 26, 0.98);
+            border-left: 4px solid var(--spotify);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(30px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: 0.5s;
+            pointer-events: auto;
+            margin-top: 20px;
+        }
+
+        .guide-card.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .guide-card h4 {
+            font-family: 'Outfit', sans-serif;
+            color: var(--spotify);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .guide-close {
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.3s;
+        }
+
+        .guide-close:hover {
+            opacity: 1;
+        }
+
+        /* BUDGET SLIDER */
+        .budget-control {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .budget-val-display {
+            color: var(--spotify);
+            font-family: 'Outfit';
+            font-weight: 900;
+        }
+
+        input[type=range].budget-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range].budget-slider::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        input[type=range].budget-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: var(--spotify);
+            cursor: pointer;
+            margin-top: -7px;
+            box-shadow: 0 0 10px var(--spotify);
+        }
+
+        .theme-purple {
+            border-left: 4px solid var(--neon-purple);
+        }
+
+        .theme-blue {
+            border-left: 4px solid var(--neon-blue);
+        }
+
+        .theme-green {
+            border-left: 4px solid var(--neon-green);
+        }
+
+        @media (max-width: 1200px) {
+            .stage-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="glow-sphere"></div>
+
+    <div class="container">
+        <!-- GUIDES -->
+        <div class="guide-container" id="guideContainer">
+            <div class="guide-card active" id="guide-welcome">
+                <h4>System Ready <span class="guide-close" onclick="closeAllGuides()">×</span></h4>
+                <div class="guide-content">Paste your Spotify song link below to begin your tailored strategy alignment.
+                </div>
+            </div>
+            <div class="guide-card" id="guide-step1">
+                <h4>Strategic Context <span class="guide-close" onclick="closeAllGuides()">×</span></h4>
+                <div class="guide-content">Hover over the choices to see specific tool recommendations based on your
+                    track's age.</div>
+            </div>
+        </div>
+
+        <!-- SEED BOX -->
+        <div class="drop-zone" id="dropZone">
+            <h1 id="dropText">Spotify Strategy Weaver Master</h1>
+            <input type="text" id="spotifyLink" placeholder="Paste song link here..." autocomplete="off">
+        </div>
+
+        <div class="benchmark-strip">
+            <div class="bench-item" onmouseenter="hint('btn-marquee')">
+                <span class="bench-val">3X</span>
+                <span class="bench-desc">Listener Intent Lift</span>
+                <div class="bench-bubble">
+                    <span class="bubble-title">Case Study: The thuy Effect</span>
+                    <ul class="bubble-proof">
+                        <li>3x more likely to stream release intentionally.</li>
+                        <li>Significant lift in "Release Radar" baseline.</li>
+                        <li>Direct pull from passive Discovery mode.</li>
+                    </ul>
+                    <a href="https://artists.spotify.com/en-US/news-and-insights/thuy-marquee-case-study/"
+                        target="_blank" class="bubble-link">Official thuy Case Study</a>
+                </div>
+            </div>
+            <div class="bench-item" onmouseenter="hint('btn-showcase')">
+                <span class="bench-val">31X</span>
+                <span class="bench-desc">Avg. Depth / Listener</span>
+                <div class="bench-bubble">
+                    <span class="bubble-title">Report: Showcase Impact</span>
+                    <ul class="bubble-proof">
+                        <li>31 streams per listener on Home placement.</li>
+                        <li>20% higher conversion than social banners.</li>
+                        <li>Stabilizes core active fan clusters.</li>
+                        <li>High catalog deepening yield.</li>
+                    </ul>
+                    <a href="https://artists.spotify.com/en-US/news-and-insights/reaching-listeners-at-scale-with-showcase/"
+                        target="_blank" class="bubble-link">Showcase Insight Data</a>
+                </div>
+            </div>
+            <div class="bench-item" onmouseenter="hint('btn-discovery')">
+                <span class="bench-val">35%</span>
+                <span class="bench-desc">Fan Re-Entry Rate</span>
+                <div class="bench-bubble">
+                    <span class="bubble-title">Case Study: Lecrae Recovery</span>
+                    <ul class="bubble-proof">
+                        <li>35% of lapsed fans successfully reactivated.</li>
+                        <li>80k unique saves/adds for legacy tracks.</li>
+                        <li>Heals "Previously Active" churn segments.</li>
+                    </ul>
+                    <a href="https://artists.spotify.com/blog/how-lecrae-used-marquee-to-bring-lapsed-listeners-back-into-his-music"
+                        target="_blank" class="bubble-link">Lecrae Recovery Report</a>
+                </div>
+            </div>
+            <div class="bench-item" onmouseenter="hint('btn-discovery')"> <!-- Shared for Discovery Adset -->
+                <span class="bench-val">∞</span>
+                <span class="bench-desc">Perpetual Algo Yield</span>
+                <div class="bench-bubble">
+                    <span class="bubble-title">Global Discovery Loop</span>
+                    <ul class="bubble-proof">
+                        <li>Constant "cold-to-warm" seed generation.</li>
+                        <li>Zero upfront cost for Radio/Autoplay.</li>
+                        <li>Feeds the Marquee intake automatically.</li>
+                    </ul>
+                    <a href="https://artists.spotify.com/en-US/news-and-insights/discovery-mode-results/"
+                        target="_blank" class="bubble-link">Discovery Loop Analysis</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="stage" id="stage">
+            <!-- PROGRESS ARCHITECTURE -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-labels">
+                    <span class="progress-label active" id="lab1">Discovery Intake</span>
+                    <span class="progress-label" id="lab2">Intentional Warm-up</span>
+                    <span class="progress-label" id="lab3">Deepening Helix</span>
+                    <span class="progress-label" id="lab4">Perpetual Loop</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="pBar"></div>
+                </div>
+
+                <!-- NEW SUB-PROGRESS LINE SYSTEM -->
+                <div class="sub-progress-grid" id="subProgressGrid">
+                    <div class="sub-step-line" id="subLine-1">
+                        <div class="micro-dot"></div>
+                        <div class="micro-dot"></div>
+                        <div class="micro-dot"></div><span class="sub-label">...</span>
+                    </div>
+                    <div class="sub-step-line" id="subLine-2">
+                        <div class="micro-dot"></div>
+                        <div class="micro-dot"></div>
+                        <div class="micro-dot"></div><span class="sub-label">...</span>
+                    </div>
+                    <div class="sub-step-line" id="subLine-3">
+                        <div class="micro-dot"></div>
+                        <div class="micro-dot"></div>
+                        <div class="micro-dot"></div><span class="sub-label">...</span>
+                    </div>
+                    <div class="sub-step-line" id="subLine-4">
+                        <div class="micro-dot"></div>
+                        <div class="micro-dot"></div>
+                        <div class="micro-dot"></div><span class="sub-label">...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stage-grid">
+                <!-- SIDEBAR LEFT -->
+                <div class="sidebar" id="leftSide">
+                    <div class="q-card" id="q-duration">
+                        <h3>How Long? (Duration)</h3>
+                        <button class="btn-option" onclick="weave('duration', 'short')">
+                            14 Day Pulse
+                            <span class="suggestion"><b>Short Bursts</b>Ideal for new release spikes and quick
+                                intentional conversion.</span>
+                        </button>
+                        <button class="btn-option" onclick="weave('duration', 'medium')">
+                            30 Day Growth
+                            <span class="suggestion"><b>Standard Cycle</b>The benchmark for building listener depth and
+                                "Library Save" density.</span>
+                        </button>
+                        <button class="btn-option" onclick="weave('duration', 'long')">
+                            Perpetual (Ongoing)
+                            <span class="suggestion"><b>Always-On</b>For legacy tracks or algorithmic seeds that don't
+                                sleep.</span>
+                        </button>
+                    </div>
+
+                    <div class="q-card" id="q-runtime">
+                        <h3>What Run Time? (Scheduling)</h3>
+                        <button class="btn-option" onclick="weave('runtime', 'immediate')">Immediate Strike</button>
+                        <button class="btn-option" onclick="weave('runtime', 'scheduled')">Scheduled Loop</button>
+                        <button class="btn-option" onclick="weave('runtime', 'post')">Post-Drop Burn</button>
+                    </div>
+                </div>
+
+                <!-- CENTER TIMELINE -->
+                <div class="timeline-stream" id="timeline"></div>
+
+                <!-- SIDEBAR RIGHT -->
+                <div class="sidebar" id="rightSide">
+                    <div class="q-card" id="q-adset">
+                        <h3>What Adset? (Tool)</h3>
+                        <button class="btn-option" id="btn-marquee" onclick="weave('adset', 'marquee')">Marquee
+                            Adset</button>
+                        <button class="btn-option" id="btn-showcase" onclick="weave('adset', 'showcase')">Showcase
+                            Adset</button>
+                        <button class="btn-option" id="btn-discovery" onclick="weave('adset', 'discovery')">Discovery
+                            Adset</button>
+                    </div>
+
+                    <div class="q-card" id="q-budget">
+                        <h3>What Budget? (Scale)</h3>
+                        <div class="budget-control">
+                            <div class="budget-header">
+                                <span class="field-label">Daily Yield</span>
+                                <span class="budget-val-display" id="budgetDisplay">$500</span>
+                            </div>
+                            <input type="range" min="100" max="10000" step="100" value="500" class="budget-slider"
+                                id="budgetSlider" oninput="updateBudgetDisplay(this.value)">
+                        </div>
+                        <button class="btn-option"
+                            style="margin-top:20px; background:var(--spotify); color:#000; text-align:center; font-weight:800;"
+                            onclick="weave('budget', 'scale')">
+                            LOCK SCALE & DEPLOY
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('spotifyLink');
+        const dropZone = document.getElementById('dropZone');
+        const stage = document.getElementById('stage');
+        const timeline = document.getElementById('timeline');
+        const progressContainer = document.getElementById('progressContainer');
+        const pBar = document.getElementById('pBar');
+
+        const paths = {
+            short: {
+                main: ["Intake Strike", "Warm-up Loop", "Conversion Peak", "Retain Lock"],
+                subs: ["Immediate Discovery", "Active Listeners", "Library saves", "Next drop seed"]
+            },
+            medium: {
+                main: ["Audience Build", "Engagement Helix", "Depth Deepening", "Fan Loyalty"],
+                subs: ["Global coverage", "Repeat streamers", "Per-user yield", "Super-fan growth"]
+            },
+            long: {
+                main: ["Algo Feeding", "Passive Seeding", "Circular Reach", "Perpetual Growth"],
+                subs: ["Discovery mode", "Radio/Autoplay", "Stranger conversion", "Evergreen yield"]
+            }
+        };
+
+        const blocks = {
+            duration: {
+                short: {
+                    t: "Duration: 14-Day Pulse Strike",
+                    d: "Executing a high-velocity, short-term burst to maximize visibility during a critical release window.",
+                    tool: "Pulse Protocol",
+                    audience: "Recent Interest",
+                    action: "Velocity Strike",
+                    role: "Spike: Creates a critical mass of activity to trigger algorithmic momentum.",
+                    feeds: "Warm-up Phase",
+                    impact: "3x INTENT LIFT",
+                    l: "theme-purple", i: "⏱️"
+                },
+                medium: {
+                    t: "Duration: 30-Day Mid-Cycle Helix",
+                    d: "A balanced deployment period designed to transition temporary interest into recurring habit.",
+                    tool: "Nurture Protocol",
+                    audience: "Developing Fans",
+                    action: "Active Deepening",
+                    role: "Sustain: Anchors the track in daily listener rotations for maximum LTV.",
+                    feeds: "Deepening Helix",
+                    impact: "31x DEPTH PEAK",
+                    l: "theme-blue", i: "⏳"
+                },
+                long: {
+                    t: "Duration: Perpetual Evergreen Loop",
+                    d: "Activating an always-on strategy that ensures zero dormancy in your catalog's reach.",
+                    tool: "Continuum Protocol",
+                    audience: "Global Strangers",
+                    action: "Passive Seeding",
+                    role: "Evergreen: Provides a constant floor of algorithmic yield and discovery.",
+                    feeds: "Circular Path",
+                    impact: "∞ ALGO YIELD",
+                    l: "theme-green", i: "🔄"
+                }
+            },
+            adset: {
+                marquee: {
+                    t: "Adset: Marquee Industrial Intake",
+                    d: "Deploying full-screen Marquee units to recent and lapsed listeners to force intentional re-entry.",
+                    tool: "Marquee (Desktop/Mobile)",
+                    audience: "Warm Segments",
+                    action: "Intentional Strike",
+                    role: "Intake: Captures high-intent fans at the precise moment of discovery.",
+                    feeds: "Active Helix",
+                    impact: "3x SAVE RATE",
+                    l: "theme-purple", i: "🎯"
+                },
+                showcase: {
+                    t: "Adset: Showcase Visual Deepening",
+                    d: "Utilizing Home screen and Search placements to deepen engagement with your most active fan clusters.",
+                    tool: "Showcase (Global Scale)",
+                    audience: "Active Listeners",
+                    action: "Depth Deepening",
+                    role: "Engage: Pulls catalog listeners into a repeat streaming loop.",
+                    feeds: "Retention Orbit",
+                    impact: "31x AVG DEPTH",
+                    l: "theme-blue", i: "🌊"
+                },
+                discovery: {
+                    t: "Adset: Discovery Mode Algorithmic",
+                    d: "Tapping into Radio and Autoplay surfaces to seed your music to similar artist clusters at zero cost.",
+                    tool: "Discovery Mode",
+                    audience: "Passive Strangers",
+                    action: "Seed Generation",
+                    role: "Discovery: Feeds the top-of-funnel with a constant stream of cold leads.",
+                    feeds: "Warm Pulse",
+                    impact: "EXPONENTIAL REACH",
+                    l: "theme-green", i: "🌱"
+                }
+            },
+            runtime: {
+                immediate: {
+                    t: "Runtime: Immediate High-Impact Strike",
+                    d: "Executing deployment within the first 24-48 hours of selection to capture peak relevance.",
+                    tool: "Immediate Strike",
+                    audience: "Early Adopters",
+                    action: "Momentum Capture",
+                    role: "Ignite: Forces a visibility spike when the track's competitive score is highest.",
+                    feeds: "Spike Cycle",
+                    impact: "15% VELOCITY LIFT",
+                    l: "theme-purple", i: "⚡"
+                },
+                scheduled: {
+                    t: "Runtime: Strategic Interval Sequencing",
+                    d: "Spacing out deployments to ensure a smoother, more sustainable growth curve across the month.",
+                    tool: "Level Sequence",
+                    audience: "Time-Shifted Fans",
+                    action: "Rhythm Build",
+                    role: "Scale: Prevents audience fatigue by alternating tool intensity.",
+                    feeds: "Stability Helix",
+                    impact: "CONSISTENT GROWTH",
+                    l: "theme-blue", i: "📅"
+                },
+                post: {
+                    t: "Runtime: Post-Drop Algorithmic Burn",
+                    d: "Focusing on the long-tail recovery of a release after the initial hype window has closed.",
+                    tool: "Recovery Protocol",
+                    audience: "Lapsed Interest",
+                    action: "Recall Sync",
+                    role: "Retain: Re-activates listeners who missed the initial release drop.",
+                    feeds: "Re-entry Loop",
+                    impact: "35% RE-ENTRY RATE",
+                    l: "theme-green", i: "�"
+                }
+            },
+            budget: {
+                scale: {
+                    t: "Scale: Final Financial Synchronization",
+                    d: "Locked in deployment scale. Finalizing daily yields and total market reach projections.",
+                    tool: "Global Sync",
+                    audience: "Total Market",
+                    action: "Budget Scaling",
+                    role: "Deploy: Finalizing the capital-to-fan conversion engine.",
+                    feeds: "Final Deployment",
+                    impact: "LOCKED AT ", // Dynamically updated
+                    l: "theme-green", i: "💎"
+                }
+            }
+        };
+
+        input.addEventListener('input', (e) => {
+            if (e.target.value.includes('spotify.com')) activateMasterStage();
+        });
+
+        function activateMasterStage() {
+            dropZone.classList.add('active');
+            input.disabled = true;
+            stage.style.display = 'flex';
+            setTimeout(() => {
+                stage.classList.add('visible');
+                progressContainer.classList.add('visible');
+                updateProgressUI(1);
+                showGuide('guide-step1');
+                revealQ('q-duration');
+            }, 500);
+        }
+
+        let currentStepNum = 0;
+        const workflow = ['q-duration', 'q-adset', 'q-runtime', 'q-budget']; // Logistical sequence
+
+        function updateBudgetDisplay(val) {
+            const display = document.getElementById('budgetDisplay');
+            display.innerText = '$' + parseInt(val).toLocaleString();
+        }
+
+        function weave(type, choice) {
+            let data = JSON.parse(JSON.stringify(blocks[type][choice]));
+
+            // Set Path Labels on Duration click
+            if (type === 'duration') {
+                const path = paths[choice];
+                for (let i = 0; i < 4; i++) {
+                    const lab = document.getElementById(`lab${i + 1}`);
+                    const sub = document.querySelector(`#subLine-${i + 1} .sub-label`);
+                    if (lab) lab.innerText = path.main[i];
+                    if (sub) sub.innerText = path.subs[i];
+                }
+            }
+
+            // Handle Budget Scaling
+            if (type === 'budget') {
+                const budgetVal = document.getElementById('budgetSlider').value;
+                data.impact = data.impact + '$' + parseInt(budgetVal).toLocaleString();
+                data.d = `Deployment capital locked at ${data.impact}. Allocating resources across selected logistical axes for maximum listener acquisition velocity.`;
+            }
+
+            const block = document.createElement('div');
+            block.className = `timeline-block ${data.l}`;
+            // INCREMENTAL Z-INDEX FOR STACKING
+            block.style.zIndex = 100 + currentStepNum;
+
+            block.innerHTML = `
+                <div class="tile-header">
+                    <div class="block-header" style="margin-bottom:0;">
+                        <div class="block-icon">${data.i}</div>
+                        <div>
+                            <div class="block-title">${data.t}</div>
+                            <div class="blueprint-tag">STRAT-PROC // ${Math.random().toString(36).substr(2, 9).toUpperCase()}</div>
+                        </div>
+                    </div>
+                    <div class="impact-badge" style="position:static;">${data.impact}</div>
+                </div>
+                <div class="tile-body">
+                    <div class="block-desc" style="margin-bottom: 20px; font-style: italic; color: var(--spotify); font-size: 0.7rem; letter-spacing: 1px;">
+                        >> SYSTEM_STATUS: [DESTRUCTION_PROTOCOL] DEPLOYING ${data.tool.toUpperCase()}...
+                    </div>
+                    <div class="block-desc">${data.d}</div>
+                    
+                    <div class="field-grid">
+                        <div class="field-cell">
+                            <span class="field-label">Primary Unit</span>
+                            <div class="field-value">${data.tool}</div>
+                        </div>
+                        <div class="field-cell">
+                            <span class="field-label">Target Area</span>
+                            <div class="field-value">${data.audience}</div>
+                        </div>
+                        <div class="field-cell">
+                            <span class="field-label">Deployment</span>
+                            <div class="field-value">${data.action}</div>
+                        </div>
+                        <div class="field-cell">
+                            <span class="field-label">Yield Metric</span>
+                            <div class="field-value">${data.impact}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:flex-end;">
+                        <div class="loop-connector" style="margin-top:0; font-family: monospace;">
+                            ${currentStepNum > 0 ? workflow[currentStepNum - 1].split('-')[1].toUpperCase() : 'INIT'} 
+                            <span class="loop-arrow">→</span> 
+                            ${data.feeds.toUpperCase()}
+                        </div>
+                        <div class="blueprint-tag" style="font-size:0.5rem;">CORE_SYNC_REV2026</div>
+                    </div>
+                </div>
+                <div class="status-strip"><div class="status-fill"></div></div>
+            `;
+            timeline.appendChild(block);
+            setTimeout(() => block.classList.add('slid-in'), 50);
+
+            hideQ(workflow[currentStepNum]);
+
+            // Activate micro-dots for the current phase
+            const currentLine = document.getElementById(`subLine-${currentStepNum + 1}`);
+            if (currentLine) {
+                const dots = currentLine.querySelectorAll('.micro-dot');
+                dots.forEach((dot, idx) => {
+                    setTimeout(() => dot.classList.add('active'), idx * 100);
+                });
+            }
+
+            currentStepNum++;
+            updateProgressUI(currentStepNum + 1);
+
+            if (currentStepNum < workflow.length) {
+                revealQ(workflow[currentStepNum]);
+            } else {
+                finishStrategy();
+            }
+            block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function updateProgressUI(step) {
+            pBar.style.width = (step / 4) * 100 + '%';
+            for (let i = 1; i <= 4; i++) {
+                const l = document.getElementById(`lab${i}`);
+                if (i <= step) l.classList.add('active');
+                else l.classList.remove('active');
+            }
+        }
+
+        function revealQ(id) {
+            const c = document.getElementById(id);
+            c.style.display = 'block';
+            setTimeout(() => c.classList.add('revealed'), 10);
+        }
+
+        function hideQ(id) {
+            const c = document.getElementById(id);
+            c.classList.remove('revealed');
+            setTimeout(() => c.style.display = 'none', 500);
+        }
+
+        function showGuide(id) {
+            closeAllGuides();
+            const g = document.getElementById(id);
+            if (g) { g.style.display = 'block'; setTimeout(() => g.classList.add('active'), 10); }
+        }
+
+        function closeAllGuides() {
+            document.querySelectorAll('.guide-card').forEach(g => {
+                g.classList.remove('active');
+                setTimeout(() => g.style.display = 'none', 500);
+            });
+        }
+
+        function finishStrategy() {
+            const final = document.createElement('div');
+            final.className = 'timeline-block theme-green';
+            final.innerHTML = `<div class="block-header"><div class="block-icon">✓</div><div class="block-title">Master Plan Locked</div></div><button class="btn-option" style="background:var(--spotify); color:#000; text-align:center;" onclick="location.reload()">Build Another Plan</button>`;
+            timeline.appendChild(final);
+            setTimeout(() => final.classList.add('slid-in'), 200);
+        }
+        function hint(id) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.classList.add('btn-highlight');
+            setTimeout(() => btn.classList.remove('btn-highlight'), 1200);
+
+            // If the card is hidden, briefly flash the sidebar to draw attention
+            const card = btn.closest('.q-card');
+            if (window.getComputedStyle(card).display === 'none') {
+                card.style.display = 'block';
+                card.style.opacity = '0.3';
+                setTimeout(() => {
+                    card.style.display = 'none';
+                    card.style.opacity = '1';
+                }, 1200);
+            }
+        }
+    </script>
+</body>
+
+</html>

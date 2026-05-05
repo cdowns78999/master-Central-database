@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Now Playing Rail</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --pane: #ffffff;
+    --line: #e3e6ec;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --accent: #4a6da7;
+    --accent-soft: #eaf0fa;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    padding: 26px 32px 140px;
+  }
+  .back {
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 12px;
+    margin-bottom: 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .back:hover { text-decoration: underline; }
+  h1 {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-weight: 300;
+    font-size: 26px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .lede {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 22px;
+    max-width: 640px;
+    line-height: 1.5;
+  }
+  .queue {
+    background: var(--pane);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 720px;
+  }
+  .queue h2 {
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: linear-gradient(180deg,#fbfcfd,#eef0f4);
+    border-bottom: 1px solid var(--line);
+    font-weight: 500;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 32px 1fr 80px 60px;
+    gap: 12px;
+    padding: 10px 16px;
+    align-items: center;
+    border-bottom: 1px solid #f1f3f7;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: #f9fbfe; }
+  .row.active { background: var(--accent-soft); }
+  .row.active .num { color: var(--accent); font-weight: 700; }
+  .row .num {
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11.5px;
+    text-align: center;
+  }
+  .row .name { font-weight: 500; }
+  .row .name .artist { color: var(--muted); font-weight: 400; font-size: 11.5px; margin-left: 6px; }
+  .row .album { color: var(--muted); font-size: 11.5px; }
+  .row .dur {
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 11.5px;
+    text-align: right;
+  }
+  .equalizer {
+    display: inline-flex;
+    gap: 2px;
+    height: 12px;
+    align-items: flex-end;
+    margin-right: 6px;
+    visibility: hidden;
+  }
+  .row.active.playing .equalizer { visibility: visible; }
+  .equalizer span {
+    width: 3px;
+    background: var(--accent);
+    animation: eq 0.9s ease-in-out infinite;
+  }
+  .equalizer span:nth-child(1) { height: 70%; animation-delay: 0s; }
+  .equalizer span:nth-child(2) { height: 100%; animation-delay: 0.15s; }
+  .equalizer span:nth-child(3) { height: 50%; animation-delay: 0.3s; }
+  @keyframes eq {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1); }
+  }
+
+  /* Sticky now-playing rail */
+  .rail {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg,#fbfcfd,#eef0f4);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -2px 12px rgba(20,30,50,0.06);
+    padding: 12px 22px;
+    display: grid;
+    grid-template-columns: 240px 1fr 200px;
+    align-items: center;
+    gap: 24px;
+    height: 96px;
+  }
+  .rail .now {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .rail .art {
+    width: 56px; height: 56px;
+    border-radius: 4px;
+    background: linear-gradient(135deg,var(--accent),#2a3f6b);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    flex-shrink: 0;
+  }
+  .rail .info .t { font-weight: 600; font-size: 13px; }
+  .rail .info .a { color: var(--muted); font-size: 11.5px; }
+
+  .rail .center { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .controls { display: flex; gap: 18px; align-items: center; }
+  .controls button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 16px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s;
+  }
+  .controls button:hover { background: rgba(74,109,167,0.1); }
+  .controls .play {
+    background: var(--accent);
+    color: #fff;
+    width: 38px; height: 38px;
+    font-size: 14px;
+  }
+  .controls .play:hover { background: #3d5d92; }
+
+  .progress-wrap {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .time {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+    min-width: 36px;
+  }
+  .progress {
+    flex: 1;
+    height: 4px;
+    background: #d8dde6;
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+  }
+  .progress .fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.2s linear;
+  }
+  .progress .knob {
+    position: absolute;
+    top: 50%;
+    width: 10px; height: 10px;
+    background: #fff;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    left: 0%;
+    transition: left 0.2s linear;
+    opacity: 0;
+  }
+  .progress:hover .knob { opacity: 1; }
+
+  .rail .right { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
+  .vol { display: flex; align-items: center; gap: 8px; }
+  .vol .icon { color: var(--muted); }
+  .vol input { width: 90px; accent-color: var(--accent); }
+</style>
+</head>
+<body>
+  <a class="back" href="../index.html">← back to pack</a>
+  <h1>Now Playing Rail</h1>
+  <p class="lede">A working iTunes-style sticky now-playing rail. Click any track in the queue to switch, hit play/pause/skip, watch the progress bar animate. (sourced via dribbble.com)</p>
+
+  <div class="queue">
+    <h2>Queue · "Lantern Hours" — Mira Wells</h2>
+    <div id="rows"></div>
+  </div>
+
+  <div class="rail">
+    <div class="now">
+      <div class="art" id="railArt"></div>
+      <div class="info">
+        <div class="t" id="railTitle">—</div>
+        <div class="a" id="railArtist">—</div>
+      </div>
+    </div>
+    <div class="center">
+      <div class="controls">
+        <button id="prevBtn" title="Previous">⏮</button>
+        <button class="play" id="playBtn" title="Play/Pause">▶</button>
+        <button id="nextBtn" title="Next">⏭</button>
+      </div>
+      <div class="progress-wrap">
+        <span class="time" id="cur">0:00</span>
+        <div class="progress" id="prog">
+          <div class="fill" id="fill"></div>
+          <div class="knob" id="knob"></div>
+        </div>
+        <span class="time" id="dur">0:00</span>
+      </div>
+    </div>
+    <div class="right">
+      <div class="vol">
+        <span class="icon">🔊</span>
+        <input type="range" min="0" max="100" value="68">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tracks = [
+      { n: 1, title: "Coastline", artist: "Mira Wells", album: "Lantern Hours", dur: 222 },
+      { n: 2, title: "Birdsong Letter", artist: "Mira Wells", album: "Lantern Hours", dur: 251 },
+      { n: 3, title: "Lantern Hours", artist: "Mira Wells", album: "Lantern Hours", dur: 308 },
+      { n: 4, title: "Quiet Engine", artist: "Mira Wells", album: "Lantern Hours", dur: 235 },
+      { n: 5, title: "Slow Returning", artist: "Mira Wells", album: "Lantern Hours", dur: 278 },
+      { n: 6, title: "Lighthouse", artist: "Mira Wells", album: "Lantern Hours", dur: 362 }
+    ];
+
+    let current = 0;
+    let playing = false;
+    let elapsed = 0;
+    let timer = null;
+
+    const rowsEl = document.getElementById('rows');
+    const playBtn = document.getElementById('playBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const railTitle = document.getElementById('railTitle');
+    const railArtist = document.getElementById('railArtist');
+    const fill = document.getElementById('fill');
+    const knob = document.getElementById('knob');
+    const cur = document.getElementById('cur');
+    const dur = document.getElementById('dur');
+    const prog = document.getElementById('prog');
+
+    function fmt(s) {
+      s = Math.max(0, Math.floor(s));
+      const m = Math.floor(s / 60);
+      const r = (s % 60).toString().padStart(2, '0');
+      return `${m}:${r}`;
+    }
+
+    function renderRows() {
+      rowsEl.innerHTML = tracks.map((t, i) => `
+        <div class="row ${i === current ? 'active' : ''} ${i === current && playing ? 'playing' : ''}" data-i="${i}">
+          <div class="num">
+            ${i === current && playing
+              ? '<div class="equalizer"><span></span><span></span><span></span></div>'
+              : t.n}
+          </div>
+          <div class="name">${t.title}<span class="artist">${t.artist}</span></div>
+          <div class="album">${t.album}</div>
+          <div class="dur">${fmt(t.dur)}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderRail() {
+      const t = tracks[current];
+      railTitle.textContent = t.title;
+      railArtist.textContent = `${t.artist} · ${t.album}`;
+      dur.textContent = fmt(t.dur);
+      cur.textContent = fmt(elapsed);
+      const pct = (elapsed / t.dur) * 100;
+      fill.style.width = pct + '%';
+      knob.style.left = pct + '%';
+      playBtn.textContent = playing ? '⏸' : '▶';
+    }
+
+    function tick() {
+      elapsed += 1;
+      const t = tracks[current];
+      if (elapsed >= t.dur) {
+        next();
+        return;
+      }
+      renderRail();
+    }
+
+    function play() {
+      playing = true;
+      if (timer) clearInterval(timer);
+      timer = setInterval(tick, 1000);
+      renderRows();
+      renderRail();
+    }
+    function pause() {
+      playing = false;
+      if (timer) clearInterval(timer);
+      timer = null;
+      renderRows();
+      renderRail();
+    }
+    function toggle() { playing ? pause() : play(); }
+    function next() { current = (current + 1) % tracks.length; elapsed = 0; renderRows(); renderRail(); if (playing) play(); }
+    function prev() {
+      if (elapsed > 3) { elapsed = 0; renderRail(); return; }
+      current = (current - 1 + tracks.length) % tracks.length; elapsed = 0; renderRows(); renderRail();
+      if (playing) play();
+    }
+    function pickRow(i) { current = i; elapsed = 0; play(); }
+
+    rowsEl.addEventListener('click', e => {
+      const r = e.target.closest('.row');
+      if (!r) return;
+      pickRow(parseInt(r.dataset.i));
+    });
+    playBtn.addEventListener('click', toggle);
+    nextBtn.addEventListener('click', next);
+    prevBtn.addEventListener('click', prev);
+    prog.addEventListener('click', e => {
+      const rect = prog.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
+      elapsed = Math.floor(tracks[current].dur * ratio);
+      renderRail();
+    });
+
+    renderRows();
+    renderRail();
+  </script>
+</body>
+</html>

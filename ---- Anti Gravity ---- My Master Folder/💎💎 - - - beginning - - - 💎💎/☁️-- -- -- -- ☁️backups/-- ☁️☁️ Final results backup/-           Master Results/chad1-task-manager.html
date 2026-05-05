@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Manager Simple Daily Operations and Automations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            min-height: 100vh;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header Title */
+        .dashboard-header {
+            width: 100%;
+            text-align: center;
+            padding: 40px 20px 20px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dashboard-title {
+            font-size: 42px;
+            font-weight: 200;
+            background: linear-gradient(135deg, #ffffff 0%, #0a84ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .header-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .dashboard-subtitle {
+
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .canvas {
+            position: relative;
+            width: 100%;
+            min-height: calc(100vh - 140px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 60px 40px 40px;
+        }
+
+        .tile-container {
+            position: absolute;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tile-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Diamond frame */
+        .diamond-container {
+            width: 250px;
+            height: 250px;
+            background: rgba(28, 28, 30, 0.75);
+            border: none;
+            transform: rotate(45deg);
+            border-radius: 32px;
+            box-shadow:
+                0 10px 35px rgba(0, 0, 0, 0.6),
+                inset 0 1px 2px rgba(255, 255, 255, 0.02);
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .diamond-container:hover {
+            transform: rotate(45deg) scale(1.02);
+            box-shadow:
+                0 12px 40px rgba(0, 0, 0, 0.7),
+                inset 0 1px 3px rgba(255, 255, 255, 0.04);
+        }
+
+        /* Tile with sophisticated gradient border */
+        .tile {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            border-radius: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+            /* No padding here, move to glass */
+
+            /* External Shadows Only */
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.7),
+                0 0 30px rgba(255, 255, 255, 0.05);
+            background: transparent;
+            z-index: 1;
+        }
+
+        .tile-glass {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: rgba(20, 20, 22, 0.9);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+
+            box-shadow:
+                inset 0 0 15px rgba(255, 255, 255, 0.03),
+                0 0 45px rgba(255, 255, 255, 0.15);
+            animation: angelic-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes angelic-glow {
+
+            0%,
+            100% {
+                box-shadow:
+                    inset 0 0 15px rgba(255, 255, 255, 0.03),
+                    inset 0 0 35px rgba(255, 255, 255, 0.08);
+            }
+
+            50% {
+                box-shadow:
+                    inset 0 0 25px rgba(255, 255, 255, 0.05),
+                    inset 0 0 75px rgba(255, 255, 255, 0.22);
+            }
+        }
+
+
+        /* Content inside tile - Clean and minimal */
+        .tile-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-weight: 300;
+            font-size: 18px;
+            color: transparent;
+            /* Hidden but preserved in DOM */
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .tile:hover {
+            transform: translate(-50%, -50%) rotate(-45deg) scale(1.02);
+            box-shadow:
+                0 12px 35px rgba(0, 0, 0, 0.6),
+                inset 0 2px 4px rgba(255, 255, 255, 0.12);
+        }
+
+        /* Plus button - no border, increases on hover */
+        .global-plus-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 26px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 200;
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            margin-top: 15px;
+        }
+
+        .global-plus-button:hover {
+            transform: rotate(90deg) scale(1.5);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .global-plus-button:active {
+            transform: rotate(90deg) scale(1.3);
+        }
+
+        /* Angelic Strings Effect - Moved to glass for cropping */
+        .tile-glass::after {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: -100px;
+            right: -100px;
+            bottom: -100px;
+            background: repeating-linear-gradient(90deg,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.05) 2%,
+                    transparent 4%,
+                    rgba(255, 255, 255, 0.03) 6%,
+                    transparent 8%);
+            mask-image: radial-gradient(circle at center, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle at center, black 30%, transparent 70%);
+            z-index: -1;
+            opacity: 0.5;
+            animation: strings-shimmer 8s linear infinite;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        @keyframes strings-shimmer {
+            0% {
+                transform: rotate(0deg) scale(1);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: rotate(5deg) scale(1.1);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: rotate(0deg) scale(1);
+                opacity: 0.3;
+            }
+        }
+
+        /* Dedicated Drag Handles - Symmetrical and Static */
+        .drag-handle {
+            position: absolute;
+            top: -30px;
+            width: 12px;
+            /* Thicker pill */
+            height: 40px;
+            background: transparent;
+            z-index: 106;
+            transition: all 0.3s ease;
+            cursor: grab;
+        }
+
+        .drag-handle:hover {
+            opacity: 1;
+            filter: brightness(1.5);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .drag-handle.left:hover {
+            transform: rotate(45deg) scale(1.1);
+        }
+
+        .drag-handle.right:hover {
+            transform: rotate(-45deg) scale(1.1);
+        }
+
+        .drag-handle.left {
+            left: 20px;
+            transform: rotate(45deg);
+            border-left: 4px solid rgba(255, 255, 255, 0.4);
+            border-radius: 100% 0 0 100% / 50%;
+            /* Concave towards tile */
+        }
+
+        .drag-handle.right {
+            right: 20px;
+            transform: rotate(-45deg);
+            border-right: 4px solid rgba(255, 255, 255, 0.4);
+            border-radius: 0 100% 100% 0 / 50%;
+            /* Concave towards tile */
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .tile-container.dragging {
+            z-index: 1000;
+        }
+
+        .tile-container.dragging .tile {
+            transform: translate(-50%, -50%) rotate(-45deg) scale(1.03);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+            cursor: grabbing;
+        }
+
+
+        /* CSS variables for dynamic font sizing */
+        :root {
+            --front-facing-font-size: 12px;
+        }
+
+        /* Action buttons - positioned below diamond */
+        .button-group {
+            position: absolute;
+            bottom: -90px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        /* Font size slider - subtle and minimal */
+        .font-size-slider-container {
+            position: absolute;
+            bottom: -130px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .font-size-slider {
+            width: 120px;
+            height: 3px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            outline: none;
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+
+        .font-size-slider:hover {
+            opacity: 0.7;
+        }
+
+        .font-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .font-size-slider::-webkit-slider-thumb:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: scale(1.2);
+        }
+
+        .font-size-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .font-size-slider::-moz-range-thumb:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: scale(1.2);
+        }
+
+        .slider-label {
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Direction dot - positioned below font slider */
+        .direction-dot {
+            position: absolute;
+            top: -78px;
+            /* Moved to the former plus button position */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            /* Increased slightly for triangle visibility */
+            height: 20px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .direction-dot svg {
+            width: 100%;
+            height: 100%;
+            fill: rgba(28, 28, 30, 0.8);
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-width: 1.2;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .direction-dot:hover svg {
+            fill: rgba(45, 45, 48, 0.9);
+            stroke: rgba(255, 255, 255, 0.4);
+            transform: scale(1.15);
+        }
+
+        /* Arrow selector container */
+        .direction-arrows {
+            position: absolute;
+            top: -78px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            z-index: 101;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            /* Wait for the arrows to finish their staggered exit before hiding the container */
+            transition: visibility 0s linear 0.8s, opacity 0.5s ease 0.4s;
+        }
+
+        .direction-arrows.active {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity 0.4s ease 0s;
+        }
+
+        /* Individual arrow buttons - Transparent mode - Twice as large */
+        .arrow-button {
+            position: absolute;
+            width: 44px;
+            /* Substantial target */
+            height: 44px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.0);
+            /* Start transparent */
+            font-size: 34px;
+            /* Premium large Font */
+            transition:
+                opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.4s ease,
+                filter 0.8s ease;
+            filter: blur(12px);
+            z-index: 102;
+            pointer-events: none;
+        }
+
+        .direction-arrows.active .arrow-button {
+            opacity: 1;
+            color: rgba(255, 255, 255, 0.4);
+            filter: blur(0);
+            pointer-events: auto;
+        }
+
+        /* Staggered Entrance Delays - Graceful 1 by 1 */
+        .direction-arrows.active .arrow-left {
+            transition-delay: 0.05s;
+        }
+
+        .direction-arrows.active .arrow-up {
+            transition-delay: 0.20s;
+        }
+
+        .direction-arrows.active .arrow-right {
+            transition-delay: 0.35s;
+        }
+
+        /* Staggered Exit Delays - Slower return */
+        .direction-arrows:not(.active) .arrow-right {
+            transition-delay: 0.0s;
+        }
+
+        .direction-arrows:not(.active) .arrow-up {
+            transition-delay: 0.15s;
+        }
+
+        .direction-arrows:not(.active) .arrow-left {
+            transition-delay: 0.30s;
+        }
+
+        .arrow-button:hover {
+            color: rgba(255, 255, 255, 1);
+            /* Zoom moved to individual classes to preserve translations */
+        }
+
+        .arrow-up:hover {
+            transform: translateX(-50%) scale(1.08);
+        }
+
+        .arrow-left:hover {
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        .arrow-right:hover {
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        /* Fan positioning around the dot - Tight 10px gap */
+        .arrow-up {
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%) translateY(10px) scale(0.6);
+        }
+
+        .direction-arrows.active .arrow-up {
+            transform: translateX(-50%) translateY(0) scale(1);
+        }
+
+        .arrow-left {
+            top: 50%;
+            right: calc(100% + 10px);
+            transform: translateY(-50%) translateX(10px) scale(0.6);
+        }
+
+        .direction-arrows.active .arrow-left {
+            transform: translateY(-50%) translateX(0) scale(1);
+        }
+
+        .arrow-right {
+            top: 50%;
+            left: calc(100% + 10px);
+            transform: translateY(-50%) translateX(-10px) scale(0.6);
+        }
+
+        .direction-arrows.active .arrow-right {
+            transform: translateY(-50%) translateX(0) scale(1);
+        }
+
+        /* Direction text indicator around tile - Modern SVG Arrow Style */
+        .direction-text {
+            position: absolute;
+            pointer-events: auto;
+            /* Enabled for double-click delete */
+            cursor: pointer;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 0 12px rgba(255, 214, 10, 0.6));
+            /* Yellow Glow */
+            opacity: 0;
+            /* Hidden by default for transition */
+            transition: opacity 0.3s ease, transform 0.2s cubic-bezier(0.17, 0.89, 0.32, 1.49);
+        }
+
+        .direction-text:hover {
+            transform: scale(1.1);
+        }
+
+        .direction-text.appear {
+            opacity: 1;
+        }
+
+        .direction-text.appear .arrow-svg {
+            animation:
+                arrow-pop 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.49) forwards,
+                arrow-float 2s ease-in-out infinite 0.5s;
+        }
+
+        .arrow-svg {
+            width: 40px;
+            height: 40px;
+            fill: #ffd60a;
+            /* Solid Yellow */
+            stroke: none;
+            transform: scale(0);
+            /* Start scaled down for pop */
+        }
+
+        @keyframes arrow-pop {
+            0% {
+                transform: scale(0);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes arrow-float {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+
+            50% {
+                transform: scale(1.08);
+                opacity: 1;
+            }
+        }
+
+        @keyframes arrow-leave {
+            0% {
+                transform: scale(1);
+                filter: blur(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.2) translateY(30px);
+                filter: blur(20px);
+                opacity: 0;
+            }
+        }
+
+        .direction-text.leaving {
+            pointer-events: none;
+        }
+
+        .direction-text.leaving .arrow-svg {
+            animation: arrow-leave 1s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        }
+
+        /* Positioning for each direction - Outside the tile as requested */
+        .direction-text.up {
+            top: -140px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .direction-text.left {
+            left: -150px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        .direction-text.right {
+            right: -150px;
+            top: 50%;
+            transform: translateY(-50%) rotate(90deg);
+        }
+
+        .action-button {
+            padding: 8px 14px;
+            background: rgba(28, 28, 30, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 9px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            font-weight: 600;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .action-button.has-data {
+            border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .action-button:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* Floating Link Style */
+        #floating-task-link {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            padding: 14px 28px;
+            background: rgba(28, 28, 30, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            z-index: 10000;
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        }
+
+        #floating-task-link:hover {
+            background: rgba(40, 40, 42, 0.8);
+            border-color: rgba(10, 132, 255, 0.5);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow:
+                0 20px 45px rgba(0, 0, 0, 0.6),
+                0 0 20px rgba(10, 132, 255, 0.2);
+            color: #0a84ff;
+        }
+
+        #floating-task-link .dot {
+            width: 8px;
+            height: 8px;
+            background: #0a84ff;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #0a84ff;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+            z-index: 99;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Action Overlay for Webhook Execution */
+        .action-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .action-overlay.active {
+            display: flex;
+        }
+
+        .action-message {
+            background: linear-gradient(135deg, rgba(10, 132, 255, 0.2) 0%, rgba(10, 132, 255, 0.1) 100%);
+            border: 2px solid rgba(10, 132, 255, 0.5);
+            border-radius: 24px;
+            padding: 40px 60px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(10, 132, 255, 0.3);
+        }
+
+        .action-message h2 {
+            font-size: 32px;
+            font-weight: 200;
+            color: #0a84ff;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .action-message p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .action-message::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(10, 132, 255, 0.5);
+            border-radius: 24px;
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        /* Split-screen door animation with grey blending */
+        @keyframes door-left {
+            0% {
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+                opacity: 1;
+            }
+
+            100% {
+                clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes door-right {
+            0% {
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+                opacity: 1;
+            }
+
+            100% {
+                clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+                opacity: 0;
+            }
+        }
+
+        /* Door closing animation for transitions */
+        @keyframes door-left-close {
+            0% {
+                clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+                opacity: 0;
+            }
+
+            100% {
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+                opacity: 1;
+            }
+        }
+
+        @keyframes door-right-close {
+            0% {
+                clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+                opacity: 0;
+            }
+
+            100% {
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+                opacity: 1;
+            }
+        }
+
+        @keyframes modal-reveal {
+            0% {
+                opacity: 0;
+                transform: scale(0.85);
+                filter: blur(8px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes door-edge-glow {
+            0% {
+                box-shadow: inset 2px 0 8px rgba(255, 255, 255, 0);
+            }
+
+            50% {
+                box-shadow: inset 2px 0 8px rgba(255, 255, 255, 0.2);
+            }
+
+            100% {
+                box-shadow: inset 2px 0 8px rgba(255, 255, 255, 0);
+            }
+        }
+
+        .tile.door-opening .tile-content::before,
+        .tile.door-transitioning .tile-content::before,
+        .tile.door-closing .tile-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50.5%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    rgba(20, 20, 22, 0.98) 0%,
+                    rgba(30, 30, 32, 0.95) 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset -2px 0 10px rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            border-radius: 50px 0 0 50px;
+        }
+
+        .tile.door-opening .tile-content::after,
+        .tile.door-transitioning .tile-content::after,
+        .tile.door-closing .tile-content::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50.5%;
+            height: 100%;
+            background: linear-gradient(-90deg,
+                    rgba(20, 20, 22, 0.98) 0%,
+                    rgba(30, 30, 32, 0.95) 100%);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 2px 0 10px rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            border-radius: 0 50px 50px 0;
+        }
+
+        .tile.door-opening .tile-content::before {
+            animation: door-left 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        }
+
+        .tile.door-opening .tile-content::after {
+            animation: door-right 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        }
+
+        .tile.door-closing .tile-content::before {
+            animation: door-left-close 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        }
+
+        .tile.door-closing .tile-content::after {
+            animation: door-right-close 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+        }
+
+        /* Back-facing view - editing mode */
+        .tile-back-facing {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg,
+                    rgba(20, 20, 22, 0.98) 0%,
+                    rgba(28, 28, 30, 0.96) 50%,
+                    rgba(36, 36, 38, 0.98) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 50px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+            box-shadow:
+                inset 0 1px 2px rgba(255, 255, 255, 0.08),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+        }
+
+        .tile-back-facing.active {
+            display: flex;
+            animation: modal-reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+        }
+
+        .tile-back-facing h3 {
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .tile-back-facing input,
+        .tile-back-facing textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 8px 0;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 12px;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 10px;
+            margin-top: -10px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .tile-back-facing input:focus,
+        .tile-back-facing textarea:focus {
+            outline: none;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .tile-back-facing input::placeholder,
+        .tile-back-facing textarea::placeholder {
+            color: rgba(255, 255, 255, 0.1);
+            font-style: italic;
+        }
+
+        .tile-back-facing textarea {
+            flex: 1;
+            width: 100%;
+            min-height: 120px;
+            resize: none;
+            border: none;
+            background: transparent;
+            padding: 12px;
+            border-radius: 0;
+            margin-bottom: 0;
+            margin-top: -10px;
+            /* Shifted up 10px as requested */
+            color: rgba(255, 255, 255, 0.15);
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .tile-back-facing textarea:focus {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Front-facing view - display mode */
+        .tile-front-facing {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 50px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+            box-shadow: none;
+        }
+
+        .tile-front-facing.active {
+            display: flex;
+            animation: modal-reveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+        }
+
+        .tile-front-facing h2 {
+            font-size: var(--front-facing-font-size);
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .tile-front-facing p {
+            font-size: var(--front-facing-font-size);
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 300;
+            text-align: center;
+            word-break: break-all;
+        }
+
+        .tile-front-facing .front-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .tile-modal-buttons {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+            margin-top: 22px;
+        }
+
+        .tile-modal-btn {
+            flex: 1;
+            padding: 8px 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.1);
+            letter-spacing: 0.5px;
+        }
+
+        .tile-modal-btn:hover {
+            color: rgba(255, 255, 255, 0.3);
+            background: transparent;
+        }
+
+        .tile-modal-btn.primary {
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+        .tile-modal-btn.primary:hover {
+            color: rgba(255, 255, 255, 0.3);
+            transform: none;
+        }
+
+        .tile-modal-btn.danger:hover {
+            color: rgba(255, 69, 58, 0.5);
+            background: transparent;
+        }
+
+        .tile-action-message {
+            text-align: center;
+        }
+
+        .tile-front-facing .front-script-view {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 4px;
+            cursor: pointer;
+        }
+
+        .front-script-view .script-display {
+            flex: 1;
+            font-size: var(--front-facing-font-size);
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Outfit', sans-serif;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-bottom: 8px;
+            line-height: 1.6;
+            padding: 22px 22px 22px 10px;
+            /* Tighter on the left side as requested */
+            background: transparent;
+            border-radius: 40px;
+            border: none;
+            text-align: left;
+            scrollbar-width: none;
+            /* Hide for Firefox */
+            -ms-overflow-style: none;
+            /* Hide for IE/Edge */
+            margin-top: -10px;
+        }
+
+        .front-script-view .script-display::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Subtle cursor icon to edit - replaces Edit button */
+        .cursor-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 16px;
+            opacity: 0.15;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+            z-index: 101;
+        }
+
+        .cursor-hint:hover {
+            opacity: 0.4;
+        }
+
+        .front-run-btn {
+            position: absolute;
+            bottom: 157px;
+            left: calc(50% - 1px);
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.15);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 101;
+            background: transparent;
+            border: none;
+            padding: 4px;
+        }
+
+        .front-run-btn:hover {
+            color: #0a84ff;
+            opacity: 0.8;
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        .floating-feedback {
+            position: fixed;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 18px;
+            font-family: 'Outfit', sans-serif;
+            pointer-events: none;
+            z-index: 1000;
+            animation: float-up-fade 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes float-up-fade {
+            0% {
+                transform: translateY(0);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-40px);
+                opacity: 0;
+            }
+        }
+
+        .front-script-view .ghost-edit-trigger {
+            position: absolute;
+            bottom: 4px;
+            right: 81px;
+            padding: 8px 6px;
+            font-size: 10px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: none;
+            transition: all 0.2s ease;
+            z-index: 105;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            background: transparent;
+        }
+
+        .front-script-view:hover .ghost-edit-trigger {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .front-script-view .ghost-edit-trigger:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background: transparent;
+        }
+
+        .tile-action-message {
+            text-align: center;
+        }
+
+        .tile-action-message h2 {
+            font-size: 18px;
+            font-weight: 300;
+            color: #0a84ff;
+            margin-bottom: 6px;
+        }
+
+        .tile-action-message p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 300;
+        }
+
+        .action-button.has-data {
+            background: rgba(10, 132, 255, 0.15);
+            border-color: rgba(10, 132, 255, 0.3);
+        }
+
+        /* Spawn animation */
+        @keyframes spawn-in {
+            0% {
+                transform: rotate(45deg) scale(0.3);
+                opacity: 0;
+                filter: blur(10px);
+            }
+
+            60% {
+                transform: rotate(45deg) scale(1.08);
+                opacity: 1;
+                filter: blur(0);
+            }
+
+            100% {
+                transform: rotate(45deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .spawning .diamond-container {
+            animation: spawn-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Delete button for tiles */
+        .tile-delete-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .tile-delete-btn:hover {
+            background: rgba(255, 69, 58, 0.8);
+            color: #fff;
+            border-color: rgba(255, 69, 58, 0.9);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">Task Manager</h1>
+        <p class="dashboard-subtitle">Workflow Dashboard</p>
+        <div class="header-controls">
+            <button class="header-btn" onclick="exportState()">Export JSON</button>
+            <button class="header-btn" onclick="document.getElementById('importFile').click()">Import JSON</button>
+            <input type="file" id="importFile" style="display: none" accept=".json" onchange="importState(event)">
+        </div>
+        <button class="global-plus-button" id="spawnTileBtn">+</button>
+    </div>
+
+
+    <!-- Action Overlay for Webhook Execution -->
+    <div class="action-overlay" id="actionOverlay">
+        <div class="action-message">
+            <h2>Running Webhook...</h2>
+            <p>Please wait</p>
+        </div>
+    </div>
+
+
+
+    <div class="overlay" id="overlay"></div>
+    <div class="canvas" id="canvas">
+        <div class="tile-container" style="left: 50%; top: 150px; transform: translateX(-50%);" data-tile-id="1">
+            <button class="tile-delete-btn" onclick="deleteTile('1')" title="Delete tile">×</button>
+            <div class="tile-wrapper">
+                <div class="drag-handle left"></div>
+                <div class="drag-handle right"></div>
+                <div class="diamond-container">
+                    <div class="tile">
+                        <div class="tile-glass">
+                            <div class="tile-content">Tile 1</div>
+                            <!-- Back-facing: edit mode -->
+                            <div class="tile-back-facing" id="tileBack-1">
+                                <h3 id="tileBackTitle-1">Enter URL</h3>
+                                <input type="text" id="tileBackName-1" placeholder="link name..." style="display:none;">
+                                <input type="text" id="tileBackInput-1" placeholder="Enter value...">
+                                <div class="tile-modal-buttons" id="tileBackButtons-1"></div>
+                            </div>
+                            <!-- Front-facing: display mode -->
+                            <div class="tile-front-facing" id="tileFront-1">
+                                <h2 id="tileFrontTitle-1">Link</h2>
+                                <p id="tileFrontValue-1">No data</p>
+                                <div class="front-actions">
+                                    <button class="tile-modal-btn danger" onclick="deleteTileData('1')">Delete</button>
+                                    <button class="tile-modal-btn secondary" onclick="editTileData('1')">Edit</button>
+                                    <button class="tile-modal-btn primary" onclick="executeTileAction('1')">Run</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="action-button step">STEP</button>
+                    <button class="action-button open-link" style="padding: 10px 10px;">Link</button>
+                    <button class="action-button webhook" style="padding: 10px 10px;">Webhook</button>
+                    <button class="action-button copy-script" style="padding: 10px 10px;">Script</button>
+                </div>
+                <div class="font-size-slider-container">
+                    <input type="range" min="10" max="28" value="12" step="1" class="font-size-slider"
+                        id="fontSizeSlider-1">
+                </div>
+                <div class="direction-dot" data-tile-id="1">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M12 2c1.5 0 2.5 1 3.5 3l6 12c1 2 0 4.5-2.5 5.5-1 .5-2 .5-3.5 .5h-7c-1.5 0-2.5 0-3.5-.5-2.5-1-3.5-3.5-2.5-5.5l6-12c1-2 2-3 3.5-3z"
+                            stroke-linejoin="round"></path>
+                    </svg>
+                </div>
+                <div class="direction-arrows" id="directionArrows-1">
+                    <div class="arrow-button arrow-left" data-direction="left">←</div>
+                    <div class="arrow-button arrow-up" data-direction="up">↑</div>
+                    <div class="arrow-button arrow-right" data-direction="right">→</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tileCounter = 1;
+        let tileData = {}; // Store data for each tile: { tileId: { link: '', webhook: '', script: '' } }
+        let currentModalContext = null; // { tileId, type }
+        let tileDirections = {}; // Store direction indicators: { tileId: { up: false, down: false, left: false, right: false } }
+
+        const canvas = document.getElementById('canvas');
+        const actionOverlay = document.getElementById('actionOverlay');
+
+        // Font size slider handler - add to all sliders
+        function addFontSizeSliderListener(slider) {
+            if (slider) {
+                slider.addEventListener('input', (e) => {
+                    const fontSize = e.target.value + 'px';
+                    document.documentElement.style.setProperty('--front-facing-font-size', fontSize);
+                });
+            }
+        }
+
+        // Add to initial slider
+        const initialSlider = document.getElementById('fontSizeSlider-1');
+        addFontSizeSliderListener(initialSlider);
+
+        // Direction dot and arrow interaction handlers
+        canvas.addEventListener('click', (e) => {
+            const dot = e.target.closest('.direction-dot');
+            // Toggle direction arrow selector
+            if (dot) {
+                const tileId = dot.dataset.tileId;
+                const arrowContainer = document.getElementById(`directionArrows-${tileId}`);
+
+                // Simple click: toggle or open
+                if (!arrowContainer.classList.contains('active')) {
+                    arrowContainer.classList.add('active');
+                } else {
+                    // It's already active, we'll let handle clicks elsewhere or stop propagation
+                }
+
+                // Close all other arrow selectors
+                document.querySelectorAll('.direction-arrows').forEach(arrows => {
+                    if (arrows.id !== `directionArrows-${tileId}`) {
+                        arrows.classList.remove('active');
+                    }
+                });
+
+                e.stopPropagation();
+            }
+
+            // Handle arrow button clicks
+            if (e.target.classList.contains('arrow-button')) {
+                const direction = e.target.dataset.direction;
+                const arrowContainer = e.target.closest('.direction-arrows');
+                const tileId = arrowContainer.id.replace('directionArrows-', '');
+
+                placeDirectionText(tileId, direction);
+
+                // Hide arrow selector smoothly
+                arrowContainer.classList.remove('active');
+
+                e.stopPropagation();
+            }
+        });
+
+        // Double-click on dot to close menu
+        canvas.addEventListener('dblclick', (e) => {
+            const dot = e.target.closest('.direction-dot');
+            if (dot) {
+                const tileId = dot.dataset.tileId;
+                const arrowContainer = document.getElementById(`directionArrows-${tileId}`);
+                arrowContainer.classList.remove('active');
+                e.stopPropagation();
+            }
+        });
+
+        // Helper to generate consistent tile HTML
+        function getTileTemplate(id, data = { link: '', linkName: '', webhook: '', script: '', step: '' }) {
+            return `
+                <button class="tile-delete-btn" onclick="deleteTile('${id}')" title="Delete tile">×</button>
+                <div class="tile-wrapper">
+                    <div class="drag-handle left"></div>
+                    <div class="drag-handle right"></div>
+                <div class="diamond-container">
+                        <div class="tile">
+                            <div class="tile-content">Tile ${id}</div>
+                            <!-- Back-facing: edit mode -->
+                            <div class="tile-back-facing" id="tileBack-${id}">
+                                <h3 id="tileBackTitle-${id}">Enter URL</h3>
+                                <input type="text" id="tileBackName-${id}" placeholder="Link name..." style="display:none;">
+                                <input type="text" id="tileBackInput-${id}" placeholder="Enter value...">
+                                <div class="tile-modal-buttons" id="tileBackButtons-${id}"></div>
+                            </div>
+                            <!-- Front-facing: display mode -->
+                            <div class="tile-front-facing" id="tileFront-${id}">
+                                <h2 id="tileFrontTitle-${id}">Link</h2>
+                                <p id="tileFrontValue-${id}">No data</p>
+                                <div class="front-actions">
+                                    <button class="tile-modal-btn danger" onclick="deleteTileData('${id}')">Delete</button>
+                                    <button class="tile-modal-btn secondary" onclick="editTileData('${id}')">Edit</button>
+                                    <button class="tile-modal-btn primary" onclick="executeTileAction('${id}')">Run</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="action-button step ${data.step ? 'has-data' : ''}">STEP</button>
+                        <button class="action-button open-link ${data.link ? 'has-data' : ''}" style="padding: 10px 10px;">Link</button>
+                        <button class="action-button webhook ${data.webhook ? 'has-data' : ''}" style="padding: 10px 10px;">Webhook</button>
+                        <button class="action-button copy-script ${data.script ? 'has-data' : ''}" style="padding: 10px 10px;">Script</button>
+                    </div>
+                    <div class="font-size-slider-container">
+                        <input type="range" min="10" max="28" value="12" step="1" class="font-size-slider"
+                            id="fontSizeSlider-${id}">
+                    </div>
+                    <div class="direction-dot" data-tile-id="${id}">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2c1.5 0 2.5 1 3.5 3l6 12c1 2 0 4.5-2.5 5.5-1 .5-2 .5-3.5 .5h-7c-1.5 0-2.5 0-3.5-.5-2.5-1-3.5-3.5-2.5-5.5l6-12c1-2 2-3 3.5-3z" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="direction-arrows" id="directionArrows-${id}">
+                        <div class="arrow-button arrow-left" data-direction="left">←</div>
+                        <div class="arrow-button arrow-up" data-direction="up">↑</div>
+                        <div class="arrow-button arrow-right" data-direction="right">→</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Close arrow selector when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.direction-arrows') && !e.target.classList.contains('direction-dot')) {
+                document.querySelectorAll('.direction-arrows.active').forEach(arrows => {
+                    arrows.classList.remove('active');
+                });
+            }
+        });
+
+        // Simple tile counter for positioning
+        let lastLeft = 50; // percentage
+        let lastTop = 150; // pixels
+
+        // Handle global plus button clicks
+        const spawnBtn = document.getElementById('spawnTileBtn');
+        if (spawnBtn) {
+            spawnBtn.addEventListener('click', () => {
+                // Calculate new position (spawn to the right, wrapping down)
+                lastLeft += 30;
+                if (lastLeft > 80) {
+                    lastLeft = 20;
+                    lastTop += 400;
+                }
+                createTile(lastLeft + '%', lastTop);
+            });
+        }
+
+        function createTile(left, top) {
+            tileCounter++;
+
+            const tileContainer = document.createElement('div');
+            tileContainer.className = 'tile-container spawning';
+            tileContainer.style.left = left;
+            tileContainer.style.top = top + 'px';
+
+            // Remove translateX if not centered
+            if (left !== '50%') {
+                tileContainer.style.transform = 'none';
+            } else {
+                tileContainer.style.transform = 'translateX(-50%)';
+            }
+
+            tileContainer.dataset.tileId = tileCounter;
+
+            tileData[tileCounter] = { link: '', linkName: '', webhook: '', script: '', step: '' };
+
+            tileContainer.innerHTML = getTileTemplate(tileCounter);
+
+            canvas.appendChild(tileContainer);
+
+            // Add font size slider listener
+            const slider = tileContainer.querySelector('.font-size-slider');
+            addFontSizeSliderListener(slider);
+
+            // Remove spawning class after animation
+            setTimeout(() => {
+                tileContainer.classList.remove('spawning');
+            }, 800);
+
+            // Default to 'step' edit mode for new tiles
+            setTimeout(() => {
+                openTileLayer(tileCounter, 'step');
+            }, 100);
+
+            // Add drag functionality
+            makeDraggable(tileContainer);
+        }
+
+        function makeDraggable(element) {
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
+            let velocityX = 0, velocityY = 0;
+            let lastX = 0, lastY = 0;
+            let lastTime = 0;
+            let animationFrame = null;
+            const handles = element.querySelectorAll('.drag-handle');
+
+            handles.forEach(handle => {
+                handle.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    element.classList.add('dragging');
+
+                    // Cancel any ongoing inertia animation
+                    if (animationFrame) {
+                        cancelAnimationFrame(animationFrame);
+                        animationFrame = null;
+                    }
+
+                    // Calculate visual position relative to parent immediately
+                    const rect = element.getBoundingClientRect();
+                    const parentRect = element.offsetParent.getBoundingClientRect();
+
+                    initialX = rect.left - parentRect.left;
+                    initialY = rect.top - parentRect.top;
+
+                    // Stabilize position: set absolute coordinates and remove transform BEFORE movement
+                    element.style.left = initialX + 'px';
+                    element.style.top = initialY + 'px';
+                    element.style.transform = 'none';
+                    element.style.margin = '0';
+                    element.style.position = 'absolute';
+
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    lastTime = Date.now();
+                    velocityX = 0;
+                    velocityY = 0;
+
+                    e.stopPropagation();
+                });
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                // Calculate velocity for inertia
+                const now = Date.now();
+                const dt = now - lastTime;
+                if (dt > 0) {
+                    velocityX = (e.clientX - lastX) / dt * 16; // Normalize to ~60fps
+                    velocityY = (e.clientY - lastY) / dt * 16;
+                }
+                lastX = e.clientX;
+                lastY = e.clientY;
+                lastTime = now;
+
+                // Move from stabilized initial position
+                const newLeft = initialX + dx;
+                const newTop = initialY + dy;
+
+                element.style.left = newLeft + 'px';
+                // Constrain top position to prevent going too high (under header)
+                element.style.top = Math.max(140, newTop) + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    element.classList.remove('dragging');
+
+                    // Apply inertia animation
+                    const friction = 0.92; // Higher = more inertia
+                    const threshold = 0.5; // Minimum velocity to continue animation
+
+                    let currentLeft = parseFloat(element.style.left);
+                    let currentTop = parseFloat(element.style.top);
+                    let velX = velocityX;
+                    let velY = velocityY;
+
+                    const animate = () => {
+                        // Apply friction
+                        velX *= friction;
+                        velY *= friction;
+
+                        // Update position
+                        currentLeft += velX;
+                        currentTop += velY;
+
+                        element.style.left = currentLeft + 'px';
+                        element.style.top = currentTop + 'px';
+
+                        // Continue animation if velocity is above threshold
+                        if (Math.abs(velX) > threshold || Math.abs(velY) > threshold) {
+                            animationFrame = requestAnimationFrame(animate);
+                        } else {
+                            animationFrame = null;
+                        }
+                    };
+
+                    // Start inertia animation if there's enough velocity
+                    if (Math.abs(velocityX) > threshold || Math.abs(velocityY) > threshold) {
+                        animationFrame = requestAnimationFrame(animate);
+                    }
+                }
+            });
+        }
+
+        // Make initial tile draggable
+        const initialTile = document.querySelector('.tile-container');
+        makeDraggable(initialTile);
+
+        // Initialize tile data for tile 1
+        tileData['1'] = { link: '', linkName: '', webhook: '', script: '', step: '' };
+
+        // Default Tile 1 to 'step' view on load
+        setTimeout(() => {
+            openTileLayer('1', 'step');
+        }, 1000); // Give it a moment to finish initial animations if any
+
+        // Place direction text function
+        function placeDirectionText(tileId, direction) {
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const wrapper = tileContainer.querySelector('.tile-wrapper');
+
+            // Initialize direction tracking for this tile
+            if (!tileDirections[tileId]) {
+                tileDirections[tileId] = { up: false, down: false, left: false, right: false };
+            }
+
+            // Remove existing direction text if present (toggle off)
+            const existingText = wrapper.querySelector(`.direction-text.${direction}`);
+            if (existingText) {
+                if (existingText.classList.contains('leaving')) return;
+                existingText.classList.add('leaving');
+                tileDirections[tileId][direction] = false;
+                setTimeout(() => {
+                    existingText.remove();
+                }, 1000); // Wait for graceful animation
+                return;
+            }
+
+            // Create new direction text (Modern Solid Arrow SVG)
+            const directionText = document.createElement('div');
+            directionText.className = `direction-text ${direction} appear`;
+            directionText.innerHTML = `
+                <svg class="arrow-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4L4 12L6 14L11 9V20H13V9L18 14L20 12L12 4Z" />
+                </svg>
+            `;
+
+            directionText.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                if (directionText.classList.contains('leaving')) return;
+                directionText.classList.add('leaving');
+                tileDirections[tileId][direction] = false;
+                setTimeout(() => {
+                    directionText.remove();
+                    // Capture state after deletion
+                    exportState(true);
+                }, 1000); // Wait for graceful animation
+            });
+
+            wrapper.appendChild(directionText);
+            tileDirections[tileId][direction] = true;
+        }
+
+        // ===== TILE LAYER MANAGEMENT =====
+        function closeAllModals() {
+            document.querySelectorAll('.tile-container').forEach(container => {
+                const tileId = container.dataset.tileId;
+                const back = container.querySelector(`#tileBack-${tileId}`);
+                const front = container.querySelector(`#tileFront-${tileId}`);
+                if (back.classList.contains('active') || front.classList.contains('active')) {
+                    hideAllLayers(tileId);
+                }
+            });
+            currentModalContext = null;
+        }
+
+        function openTileLayer(tileId, type) {
+            currentModalContext = { tileId, type };
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const tile = tileContainer.querySelector('.tile');
+            const data = tileData[tileId] || { link: '', linkName: '', webhook: '', script: '', step: '' };
+            const hasData = data[type] && data[type].length > 0;
+
+            // Step 1: Trigger door closing if something else is open or just start transition
+            tile.classList.add('door-transitioning');
+            tile.classList.add('door-closing');
+
+            setTimeout(() => {
+                // Step 2: Swap content while doors are closed
+                hideAllLayers(tileId);
+
+                if (hasData) {
+                    showFrontLayer(tileId, type, data);
+                } else {
+                    showBackLayer(tileId, type, data);
+                }
+
+                // Step 3: Open doors to reveal new layer
+                tile.classList.remove('door-closing');
+                tile.classList.add('door-opening');
+
+                setTimeout(() => {
+                    tile.classList.remove('door-opening');
+                    tile.classList.remove('door-transitioning');
+                }, 800);
+            }, 500);
+
+            // Add click outside to close
+            setupClickOutside(tileId);
+        }
+
+        function hideAllLayers(tileId) {
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            tileContainer.querySelector(`#tileBack-${tileId}`).classList.remove('active');
+            tileContainer.querySelector(`#tileFront-${tileId}`).classList.remove('active');
+        }
+
+        function showBackLayer(tileId, type, data) {
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const backLayer = tileContainer.querySelector(`#tileBack-${tileId}`);
+            const title = tileContainer.querySelector(`#tileBackTitle-${tileId}`);
+            const nameInput = tileContainer.querySelector(`#tileBackName-${tileId}`);
+            let input = tileContainer.querySelector(`#tileBackInput-${tileId}`);
+            const buttons = tileContainer.querySelector(`#tileBackButtons-${tileId}`);
+
+            // Special handling for Script/Step: swap input for textarea if needed
+            if ((type === 'script' || type === 'step') && input.tagName === 'TEXTAREA') {
+                // Keep textarea
+            } else if ((type === 'script' || type === 'step') && input.tagName !== 'TEXTAREA') {
+                const textarea = document.createElement('textarea');
+                textarea.id = input.id;
+                textarea.placeholder = type === 'script' ? 'Drop your script here...' : 'Write a step...';
+                input.parentNode.replaceChild(textarea, input);
+                input = textarea;
+            } else if (type !== 'script' && type !== 'step' && input.tagName === 'TEXTAREA') {
+                const newInput = document.createElement('input');
+                newInput.type = 'text';
+                newInput.id = input.id;
+                input.parentNode.replaceChild(newInput, input);
+                input = newInput;
+            }
+
+            // Configure - all minimal design, no buttons
+            if (type === 'link') {
+                title.style.display = 'none';
+                nameInput.style.display = 'block';
+                nameInput.value = data.linkName || '';
+                input.placeholder = 'enter link';
+                input.value = data.link || '';
+                buttons.innerHTML = '';
+            } else if (type === 'webhook') {
+                title.style.display = 'none';
+                nameInput.style.display = 'block';
+                nameInput.value = data.webhookName || '';
+                nameInput.placeholder = 'Webhook name...';
+                input.placeholder = 'https://hook...';
+                input.value = data[type] || '';
+                buttons.innerHTML = '';
+            } else if (type === 'script') {
+                title.style.display = 'none';
+                nameInput.style.display = 'none';
+                input.placeholder = 'Drop your script here...';
+                input.value = data[type] || '';
+                buttons.innerHTML = '';
+            } else if (type === 'step') {
+                title.style.display = 'none';
+                nameInput.style.display = 'none';
+                input.placeholder = 'Write a step...';
+                input.value = data[type] || '';
+                buttons.innerHTML = '';
+            }
+
+            backLayer.classList.add('active');
+            input.focus();
+
+            // Saving Logic for Script or regular
+            const handleEnter = (e) => {
+                // Audio request: hit enter to save and go to front facing
+                // For scripts, we permit Enter to save, but Shift+Enter can be for new lines if they really need it.
+                // However, the user specifically said "hit enter... it brings us to the front facing".
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveData(tileId);
+                }
+            };
+            input.onkeypress = handleEnter;
+            if (nameInput) nameInput.onkeypress = handleEnter;
+        }
+
+        function showFrontLayer(tileId, type, data) {
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const frontLayer = tileContainer.querySelector(`#tileFront-${tileId}`);
+
+            if (type === 'script') {
+                frontLayer.innerHTML = `
+                    <svg class="cursor-hint" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onclick="editTileData('${tileId}')">
+                        <path d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/>
+                    </svg>
+                    <div class="front-script-view">
+                        <div class="script-display">${data[type]}</div>
+                    </div>
+                `;
+            } else if (type === 'step') {
+                frontLayer.innerHTML = `
+                    <svg class="cursor-hint" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onclick="editTileData('${tileId}')">
+                        <path d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/>
+                    </svg>
+                    <div class="front-script-view">
+                        <div class="script-display" style="text-align: center; padding: 30px; display:flex; align-items:center; justify-content:center;">${data[type]}</div>
+                    </div>
+                `;
+            } else if (type === 'webhook') {
+                frontLayer.innerHTML = `
+                    <svg class="cursor-hint" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onclick="editTileData('${tileId}')">
+                        <path d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/>
+                    </svg>
+                    <h2 id="tileFrontTitle-${tileId}">${data.webhookName || 'Webhook'}</h2>
+                    <p id="tileFrontValue-${tileId}">${data.webhook}</p>
+                    <div class="front-run-btn" onclick="executeTileAction('${tileId}')">RUN</div>
+                `;
+            } else {
+                frontLayer.innerHTML = `
+                    <svg class="cursor-hint" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onclick="editTileData('${tileId}')">
+                        <path d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.1)"/>
+                    </svg>
+                    <h2 id="tileFrontTitle-${tileId}">${type === 'link' ? (data.linkName || 'Link') : (type.charAt(0).toUpperCase() + type.slice(1))}</h2>
+                    <p id="tileFrontValue-${tileId}">${data[type]}</p>
+                `;
+            }
+
+            frontLayer.classList.add('active');
+        }
+
+        function closeLayer(tileId) {
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const tile = tileContainer.querySelector('.tile');
+
+            tile.classList.add('door-transitioning');
+            tile.classList.add('door-closing');
+
+            setTimeout(() => {
+                hideAllLayers(tileId);
+                tile.classList.remove('door-closing');
+                tile.classList.add('door-opening');
+
+                setTimeout(() => {
+                    tile.classList.remove('door-opening');
+                    tile.classList.remove('door-transitioning');
+                }, 800);
+            }, 500);
+
+            currentModalContext = null;
+        }
+
+        function saveData(tileId) {
+            if (!currentModalContext) return;
+            const { type } = currentModalContext;
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const input = tileContainer.querySelector(`#tileBackInput-${tileId}`);
+            const val = input.value.trim();
+
+            if (!val) {
+                // Audio request: deleting everything and hitting enter = delete
+                deleteTileData(tileId);
+                return;
+            }
+
+            if (type === 'link') {
+                const nameInput = tileContainer.querySelector(`#tileBackName-${tileId}`);
+                tileData[tileId].linkName = nameInput.value.trim();
+                tileData[tileId].link = val;
+            } else if (type === 'webhook') {
+                const nameInput = tileContainer.querySelector(`#tileBackName-${tileId}`);
+                tileData[tileId].webhookName = nameInput.value.trim();
+                tileData[tileId].webhook = val;
+            } else {
+                tileData[tileId][type] = val;
+            }
+
+            // Update button
+            const btn = tileContainer.querySelector(`.${type === 'link' ? 'open-link' : type === 'webhook' ? 'webhook' : type === 'script' ? 'copy-script' : 'step'}`);
+            btn.classList.add('has-data');
+
+            // Transition to front facing
+            openTileLayer(tileId, type);
+        }
+
+        function editTileData(tileId) {
+            if (!currentModalContext) return;
+            const { type } = currentModalContext;
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const tile = tileContainer.querySelector('.tile');
+
+            tile.classList.add('door-transitioning');
+            tile.classList.add('door-closing');
+
+            setTimeout(() => {
+                hideAllLayers(tileId);
+                showBackLayer(tileId, type, tileData[tileId]);
+
+                tile.classList.remove('door-closing');
+                tile.classList.add('door-opening');
+                setTimeout(() => {
+                    tile.classList.remove('door-opening');
+                    tile.classList.remove('door-transitioning');
+                }, 800);
+            }, 500);
+        }
+
+        function deleteTileData(tileId) {
+            if (!currentModalContext) return;
+            const { type } = currentModalContext;
+
+            tileData[tileId][type] = '';
+            if (type === 'link') tileData[tileId].linkName = '';
+
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const btn = tileContainer.querySelector(`.${type === 'link' ? 'open-link' : type === 'webhook' ? 'webhook' : type === 'script' ? 'copy-script' : 'step'}`);
+            btn.classList.remove('has-data');
+
+            closeLayer(tileId);
+        }
+
+        function executeTileAction(tileId) {
+            if (!currentModalContext) return;
+            const { type } = currentModalContext;
+
+            if (type === 'link') {
+                const url = tileData[tileId].link;
+                window.open(url.startsWith('http') ? url : 'https://' + url, '_blank');
+            } else if (type === 'webhook') {
+                runWebhook(tileId);
+            } else if (type === 'script') {
+                copyScript(tileId);
+            } else if (type === 'step') {
+                copyStep(tileId);
+            }
+        }
+
+        function copyStep(tileId) {
+            const stepText = tileData[tileId].step;
+            navigator.clipboard.writeText(stepText).then(() => {
+                // Background copy
+            });
+        }
+
+        function runWebhook(tileId) {
+            const url = tileData[tileId].webhook;
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            const frontLayer = tileContainer.querySelector(`#tileFront-${tileId}`);
+
+            const originalContent = frontLayer.innerHTML;
+            frontLayer.innerHTML = `<div class="tile-action-message"><h2>Running...</h2><p>Please wait</p></div>`;
+
+            fetch(url, { method: 'POST', mode: 'no-cors' })
+                .then(() => {
+                    frontLayer.innerHTML = `<div class="tile-action-message"><h2>Success!</h2><p>Webhook triggered</p></div>`;
+                    setTimeout(() => { frontLayer.innerHTML = originalContent; closeLayer(tileId); }, 1500);
+                })
+                .catch(() => {
+                    frontLayer.innerHTML = `<div class="tile-action-message"><h2 style="color:#ff453a;">Error!</h2><p>Failed to trigger</p></div>`;
+                    setTimeout(() => { frontLayer.innerHTML = originalContent; }, 1500);
+                });
+        }
+
+        function copyScriptWithFeedback(tileId, event) {
+            const script = tileData[tileId].script;
+            navigator.clipboard.writeText(script).then(() => {
+                // Spawn floating C feedback
+                const feedback = document.createElement('div');
+                feedback.className = 'floating-feedback';
+                feedback.textContent = 'C';
+                feedback.style.left = `${event.clientX}px`;
+                feedback.style.top = `${event.clientY}px`;
+                document.body.appendChild(feedback);
+
+                // Cleanup
+                setTimeout(() => feedback.remove(), 1000);
+            });
+        }
+
+        function copyScript(tileId) {
+            const script = tileData[tileId].script;
+            navigator.clipboard.writeText(script).then(() => {
+                // Background copy, feedback handled via gesture if possible
+                // Otherwise silent success
+            });
+        }
+
+        function deleteTile(tileId) {
+            const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+            if (tileContainer) {
+                tileContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                tileContainer.style.opacity = '0';
+                tileContainer.style.transform = 'translateX(-50%) scale(0.8)';
+                
+                setTimeout(() => {
+                    tileContainer.remove();
+                    delete tileData[tileId];
+                    delete tileDirections[tileId];
+                }, 300);
+            }
+        }
+
+        function setupClickOutside(tileId) {
+            setTimeout(() => {
+                const handleOut = (e) => {
+                    const tileContainer = document.querySelector(`[data-tile-id="${tileId}"]`);
+                    const back = tileContainer.querySelector(`#tileBack-${tileId}`);
+                    const front = tileContainer.querySelector(`#tileFront-${tileId}`);
+
+                    if (!back.contains(e.target) && !front.contains(e.target) && !e.target.closest('.button-group') && !e.target.closest('.dashboard-header') && !e.target.closest('.font-size-slider-container') && !e.target.closest('.tile-container')) {
+                        if (back.classList.contains('active')) {
+                            const { type } = currentModalContext || {};
+                            if (type === 'script') {
+                                saveData(tileId);
+                            } else {
+                                closeLayer(tileId);
+                            }
+                            document.removeEventListener('click', handleOut);
+                        } else if (front.classList.contains('active')) {
+                            closeLayer(tileId);
+                            document.removeEventListener('click', handleOut);
+                        }
+                    }
+                };
+                document.addEventListener('click', handleOut);
+            }, 100);
+        }
+
+        // ===== BUTTON CLICK HANDLERS =====
+        canvas.addEventListener('click', (e) => {
+            if (e.target.classList.contains('open-link')) {
+                const tileContainer = e.target.closest('.tile-container');
+                const tileId = tileContainer.dataset.tileId;
+                openTileLayer(tileId, 'link');
+            } else if (e.target.classList.contains('webhook')) {
+                const tileContainer = e.target.closest('.tile-container');
+                const tileId = tileContainer.dataset.tileId;
+                openTileLayer(tileId, 'webhook');
+            } else if (e.target.classList.contains('copy-script')) {
+                const tileContainer = e.target.closest('.tile-container');
+                const tileId = tileContainer.dataset.tileId;
+                openTileLayer(tileId, 'script');
+            } else if (e.target.classList.contains('step')) {
+                const tileContainer = e.target.closest('.tile-container');
+                const tileId = tileContainer.dataset.tileId;
+                openTileLayer(tileId, 'step');
+            }
+        });
+
+        // ===== JSON STATE MANAGEMENT =====
+        function exportState(isAuto = false) {
+            const tiles = Array.from(document.querySelectorAll('.tile-container')).map(container => {
+                const id = container.dataset.tileId;
+                return {
+                    id: id,
+                    left: container.style.left,
+                    top: container.style.top,
+                    data: tileData[id]
+                };
+            });
+
+            const state = {
+                tileCounter,
+                tiles,
+                directions: tileDirections,
+                fontSize: document.documentElement.style.getPropertyValue('--front-facing-font-size') || '12px'
+            };
+
+            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const filename = isAuto ? `AUTO-BACKUP-task-manager-${new Date().getTime()}.json` : `task-manager-state-${new Date().toISOString().slice(0, 10)}.json`;
+            a.download = filename;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
+
+        function importState(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const state = JSON.parse(e.target.result);
+
+                    // Clear current canvas
+                    canvas.innerHTML = '';
+                    tileData = {};
+
+                    // Restore counter
+                    tileCounter = state.tileCounter || 0;
+
+                    // Restore directions
+                    tileDirections = state.directions || {};
+
+                    // Recreate tiles
+                    state.tiles.forEach(tile => {
+                        tileData[tile.id] = tile.data;
+                        recreateTile(tile);
+
+                        // Restore direction indicators
+                        if (tileDirections[tile.id]) {
+                            Object.keys(tileDirections[tile.id]).forEach(direction => {
+                                if (tileDirections[tile.id][direction]) {
+                                    placeDirectionText(tile.id, direction);
+                                }
+                            });
+                        }
+                    });
+
+                    // Restore global settings
+                    if (state.fontSize) {
+                        const fontSize = state.fontSize;
+                        document.documentElement.style.setProperty('--front-facing-font-size', fontSize);
+
+                        // Sync all sliders
+                        document.querySelectorAll('.font-size-slider').forEach(slider => {
+                            slider.value = parseInt(fontSize);
+                        });
+                    }
+
+                    console.log('State imported successfully');
+                    // Reset input
+                    event.target.value = '';
+                } catch (err) {
+                    console.error('Failed to import state:', err);
+                    alert('Invalid JSON file. Please ensure it is a valid Task Manager state file.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function recreateTile(tileConfig) {
+            const tileContainer = document.createElement('div');
+            tileContainer.className = 'tile-container';
+            tileContainer.style.left = tileConfig.left;
+            tileContainer.style.top = tileConfig.top;
+            tileContainer.style.transform = 'none';
+            tileContainer.dataset.tileId = tileConfig.id;
+
+            const data = tileConfig.data || { link: '', linkName: '', webhook: '', script: '', step: '' };
+
+            tileContainer.innerHTML = getTileTemplate(tileConfig.id, data);
+
+            canvas.appendChild(tileContainer);
+
+            // Add font size slider listener
+            const slider = tileContainer.querySelector('.font-size-slider');
+            addFontSizeSliderListener(slider);
+
+            makeDraggable(tileContainer);
+        }
+
+        // Emergency Backup & Exit Confirmation
+        window.addEventListener('beforeunload', (e) => {
+            // Trigger auto-export
+            exportState(true);
+
+            // Standard browser confirmation
+            e.preventDefault();
+            e.returnValue = '';
+        });
+    </script>
+    <a href="https://chad1-task-manager.tiiny.site" target="_blank" id="floating-task-link">
+        <div class="dot"></div>
+        <span>Task Manager</span>
+    </a>
+
+
+</body>
+
+</html>

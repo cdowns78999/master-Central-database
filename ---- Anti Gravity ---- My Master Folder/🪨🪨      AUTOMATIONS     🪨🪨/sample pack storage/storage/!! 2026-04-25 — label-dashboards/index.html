@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<!--
+  /samplepack — Label Dashboards & Cataloging Patterns
+  Cloned from template/template.html on 2026-04-25.
+  Each tile opens a fully operational sub-app via overlay.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sample Pack — Label Dashboards & Cataloging Patterns</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --pane: #ffffff;
+    --line: #e3e6ec;
+    --line-soft: #eef0f4;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --accent: #4a6da7;
+    --accent-soft: #eaf0fa;
+    --tile: #ffffff;
+    --hover: #f9fbfe;
+    --shadow: 0 1px 2px rgba(20,30,50,0.04), 0 8px 24px rgba(20,30,50,0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .app {
+    display: grid;
+    grid-template-rows: 56px 1fr 28px;
+    height: 100vh;
+  }
+
+  header.top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 22px;
+    background: linear-gradient(180deg,#fbfcfd 0%,#eef0f4 100%);
+    border-bottom: 1px solid var(--line);
+  }
+  header.top .traffic { display: flex; gap: 6px; }
+  header.top .traffic span {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #d8dbe1; border: 1px solid #b9bdc6;
+  }
+  header.top .traffic span:nth-child(1) { background: #ff5f57; border-color: #e04a45; }
+  header.top .traffic span:nth-child(2) { background: #ffbd2e; border-color: #dfa122; }
+  header.top .traffic span:nth-child(3) { background: #28c940; border-color: #1ea832; }
+  header.top h1 {
+    margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.01em;
+    color: #4a5060;
+  }
+  header.top .sub { color: var(--muted); font-size: 12px; }
+  header.top .spacer { flex: 1; }
+  header.top .meta { color: var(--muted); font-size: 11.5px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  main {
+    overflow: auto;
+    padding: 24px 28px 32px;
+  }
+  .pack-head {
+    margin: 0 0 22px;
+    max-width: 720px;
+  }
+  .pack-head .title {
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+  }
+  .pack-head .lede {
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+    max-width: 1280px;
+  }
+  .tile {
+    background: var(--tile);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+    display: flex; flex-direction: column;
+    min-height: 220px;
+  }
+  .tile:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: var(--accent);
+  }
+  .tile .stage {
+    flex: 1;
+    background: linear-gradient(135deg,#f0f3f8 0%, #e2e7f1 100%);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    color: #8893a8;
+    font-size: 28px;
+    font-weight: 200;
+    letter-spacing: 0.02em;
+    position: relative;
+    overflow: hidden;
+  }
+  .tile .stage::after {
+    content: "▶";
+    position: absolute;
+    top: 10px; right: 12px;
+    font-size: 11px;
+    color: rgba(74,109,167,0.6);
+  }
+  .tile .meta {
+    padding: 10px 12px 12px;
+  }
+  .tile .meta .name {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0 0 3px;
+    color: var(--ink);
+  }
+  .tile .meta .sub {
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .tile .meta .src {
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: var(--accent);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    text-transform: lowercase;
+  }
+
+  footer.status {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    background: linear-gradient(180deg,#f5f6f9 0%, #e9ecf1 100%);
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 11px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer.status .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,20,35,0.55);
+    display: none;
+    align-items: stretch; justify-content: stretch;
+    z-index: 100;
+  }
+  .overlay.open { display: flex; }
+  .overlay .frame-wrap {
+    position: relative;
+    margin: 28px;
+    width: calc(100% - 56px);
+    height: calc(100% - 56px);
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+  }
+  .overlay iframe {
+    width: 100%; height: 100%;
+    border: 0;
+  }
+  .overlay .close {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #1f2430;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+  .overlay .close:hover { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="traffic"><span></span><span></span><span></span></div>
+      <h1>Sample Pack</h1>
+      <span class="sub">· First sample pack · curated UI ideas for Sharon</span>
+      <div class="spacer"></div>
+      <div class="meta">2026-04-25 · 4 tiles</div>
+    </header>
+
+    <main>
+      <div class="pack-head">
+        <h2 class="title">Label Dashboards & Cataloging Patterns</h2>
+        <p class="lede">Four fully working UI patterns sourced from CodePen, GitHub, Dribbble, and Awwwards. Click any tile to launch the live sub-app in an overlay.</p>
+      </div>
+
+      <div class="grid" id="grid">
+        <div class="tile" data-target="tiles/tile1-album-grid-flip.html">
+          <div class="stage">A</div>
+          <div class="meta">
+            <div class="name">Album Grid Flip</div>
+            <div class="sub">Click any cover to flip and reveal its tracklist — CSS 3D transforms.</div>
+            <div class="src">codepen.io</div>
+          </div>
+        </div>
+
+        <div class="tile" data-target="tiles/tile2-now-playing-rail.html">
+          <div class="stage">B</div>
+          <div class="meta">
+            <div class="name">Now Playing Rail</div>
+            <div class="sub">Sticky iTunes-style rail — play/pause/skip, animated progress, clickable queue.</div>
+            <div class="src">dribbble.com</div>
+          </div>
+        </div>
+
+        <div class="tile" data-target="tiles/tile3-royalty-flow-visual.html">
+          <div class="stage">C</div>
+          <div class="meta">
+            <div class="name">Royalty Flow Visual</div>
+            <div class="sub">Statement → points lookup → ledger. Animated SVG arrows, re-triggerable flow.</div>
+            <div class="src">github.com</div>
+          </div>
+        </div>
+
+        <div class="tile" data-target="tiles/tile4-tour-routing-map.html">
+          <div class="stage">D</div>
+          <div class="meta">
+            <div class="name">Tour Routing Map</div>
+            <div class="sub">SVG US map with 8 pins, click for venue card, hover legs for distance.</div>
+            <div class="src">awwwards.com</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="status">
+      <span><span class="dot"></span>Sample Pack · label-dashboards</span>
+      <span>·</span>
+      <span>click any tile — opens fully operational web app</span>
+    </footer>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="frame-wrap">
+      <button class="close" id="closeBtn" title="Close">✕</button>
+      <iframe id="frame" src="about:blank"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('overlay');
+    const frame = document.getElementById('frame');
+    const closeBtn = document.getElementById('closeBtn');
+
+    document.querySelectorAll('.tile').forEach(t => {
+      t.addEventListener('click', () => {
+        const target = t.getAttribute('data-target');
+        if (!target) return;
+        frame.src = target;
+        overlay.classList.add('open');
+      });
+    });
+    closeBtn.addEventListener('click', () => {
+      overlay.classList.remove('open');
+      frame.src = 'about:blank';
+    });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.classList.remove('open');
+        frame.src = 'about:blank';
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('open')) {
+        overlay.classList.remove('open');
+        frame.src = 'about:blank';
+      }
+    });
+  </script>
+</body>
+</html>

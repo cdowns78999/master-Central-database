@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equilibrium Predictor V2 | Advanced Strategic Forecasting</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="equilibrium_mapping_db.js"></script>
+    <style>
+        :root {
+            --bg: #0c0c0c;
+            --bg-elevated: #161616;
+            --bg-float: #1e1e1e;
+            --spotify: #1db954;
+            --spotify-bright: #1ed760;
+            --spotify-dim: #1aa34a;
+            --spotify-subtle: rgba(29, 185, 84, 0.15);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text: #ffffff;
+            --text-dim: #b3b3b3;
+            --text-ghost: #666666;
+            --accent: #7c4dff;
+            --theme-teal: #2de2e6;
+            --theme-orange: #ffa31a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .predictor-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        /* SIDEBAR CONFIG */
+        .sidebar {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .btn-inject {
+            width: 100%;
+            height: 54px;
+            background: rgba(30, 215, 96, 0.1);
+            border: 2px dashed var(--spotify);
+            border-radius: 16px;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .btn-inject:hover {
+            background: rgba(30, 215, 96, 0.2);
+            border-style: solid;
+            transform: translateY(-2px);
+        }
+
+        .config-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .label {
+            font-size: 0.6rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--spotify-bright);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-currency {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: 800;
+            color: var(--text-ghost);
+        }
+
+        .budget-input {
+            width: 100%;
+            background: var(--bg-float);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 14px 14px 30px;
+            color: #fff;
+            font-family: 'Outfit';
+            font-size: 1.2rem;
+            font-weight: 800;
+            outline: none;
+            margin-bottom: 10px;
+        }
+
+        .budget-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--bg-float);
+            border-radius: 10px;
+            outline: none;
+            margin: 10px 0;
+            border: 1px solid var(--border);
+        }
+
+        .budget-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--spotify-bright);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--spotify-subtle);
+            border: 3px solid var(--bg-elevated);
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: var(--bg-float);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--text-dim);
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .mode-btn.active {
+            background: var(--bg-elevated);
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .seg-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+
+        .seg-item {
+            padding: 10px 14px;
+            background: var(--bg-float);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .seg-item.active {
+            background: var(--spotify-subtle);
+            border-color: var(--spotify);
+            color: var(--spotify-bright);
+        }
+
+        .btn-analyze {
+            width: 100%;
+            background: var(--spotify);
+            color: #000;
+            border: none;
+            border-radius: 14px;
+            padding: 18px;
+            font-family: 'Outfit';
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* SCENARIO TILES */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .scenario-tile {
+            background: var(--bg-float);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .scenario-tile:hover {
+            border-color: var(--spotify-dim);
+            background: var(--spotify-whisper);
+        }
+
+        .scenario-tile .tile-label {
+            display: block;
+            font-size: 0.5rem;
+            color: var(--text-ghost);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .scenario-tile .tile-value {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-mid);
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .main-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .header-card {
+            background: linear-gradient(135deg, var(--bg-elevated) 0%, #000 100%);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-group h1 {
+            font-family: 'Outfit';
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff 0%, var(--spotify-bright) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .metrics-secondary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-value {
+            display: block;
+            font-family: 'Outfit';
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .metric-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            font-weight: 800;
+            margin-top: 5px;
+        }
+
+        .workflow-summary-card {
+            background: rgba(124, 77, 255, 0.05);
+            border: 1px solid rgba(124, 77, 255, 0.2);
+            border-radius: 24px;
+            padding: 25px;
+            border-left: 6px solid var(--accent);
+        }
+
+        .summary-text {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .summary-text b {
+            color: var(--spotify-bright);
+            font-weight: 800;
+        }
+
+        .funnel-box {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 25px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+        }
+
+        .chart-area {
+            height: 160px;
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bar {
+            flex: 1;
+            background: var(--spotify-subtle);
+            border-radius: 6px 6px 0 0;
+            position: relative;
+            transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bar::after {
+            content: attr(data-name);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--text-ghost);
+            white-space: nowrap;
+        }
+
+        /* DATA TABLES GRID */
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .data-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 25px;
+        }
+
+        .table-premium {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .table-premium th {
+            text-align: left;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-ghost);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-premium td {
+            padding: 14px 0;
+            font-size: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: var(--bg-float);
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .analyzing {
+            animation: pulse 1.5s infinite;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="predictor-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <button class="btn-inject" onclick="injectData()">
+                <span>💉</span> INJECT SELECTED PLAN
+            </button>
+
+            <div class="config-section">
+                <span class="label">Campaign Budget</span>
+                <div class="input-wrapper">
+                    <span class="input-currency">$</span>
+                    <input type="number" id="budgetInput" class="budget-input" value="1500" oninput="syncSlider()">
+                    <input type="range" id="budgetSlider" class="budget-slider" min="100" max="10000" step="50"
+                        value="1500" oninput="syncInput()">
+                </div>
+            </div>
+
+            <div class="config-section">
+                <span class="label">Placement Mode</span>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="modeMarquee" onclick="setMode('marquee')">MARQUEE</button>
+                    <button class="mode-btn" id="modeShowcase" onclick="setMode('showcase')">SHOWCASE</button>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <span class="label">Target Segments</span>
+                <div class="seg-list" id="segList"></div>
+            </div>
+
+            <button class="btn-analyze" id="runBtn" onclick="runAnalysis()">Run Forecast Engine</button>
+
+            <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <span class="label" style="opacity: 0.6;">Compare Segments</span>
+                <p style="font-size: 0.6rem; color: var(--text-ghost); margin-top: 4px;">Run through 1 of the other 6
+                    segment options:</p>
+                <div class="scenario-grid" id="scenarioGrid">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <span class="label" style="opacity: 0.6;">Workflow Presets</span>
+                <p style="font-size: 0.6rem; color: var(--text-ghost); margin-top: 4px;">Plug in 1 of our 6 workflow
+                    options:</p>
+                <div class="scenario-grid" id="workflowGrid">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main-content">
+            <div class="header-card">
+                <div class="title-group">
+                    <p class="label" style="color: var(--accent);">Strategic Analysis Engine</p>
+                    <h1>Performance Forecast</h1>
+                </div>
+                <div style="text-align: right; opacity: 0.5; font-size: 0.6rem; letter-spacing: 1px; font-weight: 800;">
+                    STUDY-BASED MODELING<br>HIGH-FIDELITY PREDICTION
+                </div>
+            </div>
+
+            <!-- WORKFLOW SUMMARY -->
+            <div class="workflow-summary-card">
+                <span class="label" style="color: var(--accent); margin-bottom: 15px; display: block;">Executive
+                    Strategy Overview</span>
+                <p class="summary-text" id="summaryText">
+                    Based on your <b>current workflow schedule</b>, the system predicts a high-efficiency conversion
+                    path. Inject your plan to generate detailed song-to-song performance forecasts.
+                </p>
+            </div>
+
+            <!-- METRICS -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-value" id="valReach">0</span>
+                    <span class="metric-label">Estimated Reach</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value" id="valListeners">0</span>
+                    <span class="metric-label">Converted Listeners</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value" id="valStreams" style="color: var(--spotify-bright);">0</span>
+                    <span class="metric-label">Projected Yield</span>
+                </div>
+            </div>
+
+            <div class="metrics-secondary-grid">
+                <div class="metric-card">
+                    <span class="metric-value" id="valIntent" style="color: var(--theme-teal);">0%</span>
+                    <span class="metric-label">Collective Intent Rate</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value" id="valSaves" style="color: var(--accent);">0</span>
+                    <span class="metric-label">Projected Saves</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-value" id="valPlaylistAdds" style="color: var(--theme-orange);">0</span>
+                    <span class="metric-label">Playlist Adds</span>
+                </div>
+            </div>
+
+            <!-- FUNNEL -->
+            <div class="funnel-box">
+                <div class="funnel-main">
+                    <span class="label">Conversion Velocity Path</span>
+                    <div class="chart-area" id="funnelChart">
+                        <div class="bar" style="height: 10%" data-name="Cold"></div>
+                        <div class="bar" style="height: 10%" data-name="Warm"></div>
+                        <div class="bar" style="height: 10%" data-name="Reacted"></div>
+                        <div class="bar" style="height: 10%" data-name="Super"></div>
+                        <div class="bar" style="height: 10%" data-name="Potential"></div>
+                    </div>
+                </div>
+                <div
+                    style="background: var(--bg-float); border-radius: 16px; padding: 20px; border-left: 4px solid var(--border);">
+                    <span class="label">System Insight</span>
+                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 15px; line-height: 1.6;"
+                        id="systemInsight">
+                        Waiting for data analysis...
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLES -->
+            <div class="data-grid">
+                <div class="data-card">
+                    <span class="label">Phase-by-Phase Results</span>
+                    <table class="table-premium" id="phaseTable">
+                        <thead>
+                            <tr>
+                                <th>Workflow Phase</th>
+                                <th>Reach</th>
+                                <th>Yield</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--text-ghost); padding: 40px 0;">
+                                    Inject plan to view phase results</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="data-card">
+                    <span class="label">Song-to-Song Yield</span>
+                    <table class="table-premium" id="trackTable">
+                        <thead>
+                            <tr>
+                                <th>Metadata Track</th>
+                                <th>Projected Streams</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="2" style="text-align: center; color: var(--text-ghost); padding: 40px 0;">
+                                    Inject plan to view track results</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // High-Fidelity Benchmarks from Study Files
+        const MODELLING = {
+            marquee: {
+                cpl: 0.60,
+                intentRate: 0.15,
+                saveRate: 0.12,
+                playlistRate: 0.05,
+                streamYield: 1.4,
+                reachMultiplier: 40.0
+            },
+            showcase: {
+                cpl: 0.50,
+                intentRate: 0.17,
+                saveRate: 0.129, // From Sleeponana study
+                playlistRate: 0.069, // From Sleeponana study
+                streamYield: 6.15,
+                reachMultiplier: 81.46
+            }
+        };
+
+        const SEGMENTS = {
+            'Super Listeners': { conv: 1.5, streams: 2.0, reach: 0.4 },
+            'Moderate Listeners': { conv: 1.2, streams: 1.3, reach: 0.7 },
+            'Light Listeners': { conv: 1.0, streams: 1.0, reach: 1.0 },
+            'Previously Active': { conv: 0.8, streams: 0.8, reach: 1.2 },
+            'Programmed': { conv: 0.5, streams: 0.6, reach: 2.0 },
+            'Potential': { conv: 0.3, streams: 0.5, reach: 3.0 }
+        };
+
+        let activeMode = 'marquee';
+        let activeSegs = ['Moderate Listeners'];
+        let cachedData = null;
+
+        // Init UI
+        function init() {
+            const list = document.getElementById('segList');
+            const grid = document.getElementById('scenarioGrid');
+            const wGrid = document.getElementById('workflowGrid');
+
+            // Populate Segment Pills & Tiles
+            Object.keys(SEGMENTS).forEach(s => {
+                const div = document.createElement('div');
+                div.className = `seg-item ${activeSegs.includes(s) ? 'active' : ''}`;
+                div.innerHTML = `<span>${s}</span> ${activeSegs.includes(s) ? '✓' : ''}`;
+                div.onclick = () => toggleSeg(s);
+                list.appendChild(div);
+
+                const tile = document.createElement('div');
+                tile.className = 'scenario-tile';
+                tile.innerHTML = `
+                    <span class="tile-label">Target</span>
+                    <span class="tile-value">${s.split(' ')[0]}</span>
+                `;
+                tile.onclick = () => runScenario(s);
+                grid.appendChild(tile);
+            });
+
+            // Populate Workflow Tiles (6 options)
+            const workflowOptions = [
+                { id: 'marquee_large', name: 'MQ Large' },
+                { id: 'marquee_original', name: 'MQ Balanced' },
+                { id: 'marquee_micro', name: 'MQ Micro' },
+                { id: 'showcase_large', name: 'SC Large' },
+                { id: 'showcase_original', name: 'SC Balanced' },
+                { id: 'showcase_micro', name: 'SC Micro' }
+            ];
+
+            workflowOptions.forEach(opt => {
+                const tile = document.createElement('div');
+                tile.className = 'scenario-tile';
+                tile.innerHTML = `
+                    <span class="tile-label">Workflow</span>
+                    <span class="tile-value">${opt.name}</span>
+                `;
+                tile.onclick = () => runWorkflowScenario(opt.id);
+                wGrid.appendChild(tile);
+            });
+        }
+
+        function runWorkflowScenario(planId) {
+            const plan = EQUILIBRIUM_DB.plans[planId];
+            if (!plan) return;
+
+            // Map plan phases to timeline structure
+            const timeline = plan.phases.map(p => ({
+                phase: p.phase || p.title,
+                tool: p.tool,
+                target: p.target,
+                songName: "Preset Track", // Placeholder for preset
+                budget: (p.budgetRange[0] + p.budgetRange[1]) / 2
+            }));
+
+            const totalBudget = timeline.reduce((acc, curr) => acc + curr.budget, 0);
+
+            cachedData = {
+                timeline: timeline,
+                totalBudget: totalBudget
+            };
+
+            document.getElementById('budgetInput').value = totalBudget;
+
+            // Update Summary
+            document.getElementById('summaryText').innerHTML = `Simulating <b>${plan.name}</b> workflow. This ${timeline.length}-phase strategy is optimized for ${plan.category} results.`;
+
+            setMode(plan.category.toLowerCase().includes('showcase') ? 'showcase' : 'marquee');
+            runAnalysis();
+        }
+
+        function runScenario(s) {
+            activeSegs = [s];
+            updateSegUI();
+            runAnalysis();
+        }
+
+        function toggleSeg(s) {
+            if (activeSegs.includes(s)) { if (activeSegs.length > 1) activeSegs = activeSegs.filter(x => x !== s); }
+            else { activeSegs.push(s); }
+            updateSegUI();
+        }
+
+        function updateSegUI() {
+            document.querySelectorAll('.seg-item').forEach(item => {
+                const name = item.querySelector('span').textContent;
+                const isActive = activeSegs.includes(name);
+                item.classList.toggle('active', isActive);
+                item.innerHTML = `<span>${name}</span> ${isActive ? '✓' : ''}`;
+            });
+        }
+
+        function setMode(m) {
+            activeMode = m;
+            document.getElementById('modeMarquee').classList.toggle('active', m === 'marquee');
+            document.getElementById('modeShowcase').classList.toggle('active', m === 'showcase');
+        }
+
+        function syncSlider() {
+            const val = document.getElementById('budgetInput').value;
+            document.getElementById('budgetSlider').value = val;
+            runAnalysis();
+        }
+
+        function syncInput() {
+            const val = document.getElementById('budgetSlider').value;
+            document.getElementById('budgetInput').value = val;
+            runAnalysis();
+        }
+
+        function calculateCore(budget, mode, segments) {
+            const model = MODELLING[mode];
+            let cF = 0, sF = 0, rF = 0;
+            segments.forEach(s => {
+                const f = SEGMENTS[s] || SEGMENTS['Light Listeners'];
+                cF += f.conv; sF += f.streams; rF += f.reach;
+            });
+            cF /= segments.length; sF /= segments.length; rF /= segments.length;
+
+            const reach = Math.round(budget * model.reachMultiplier * rF);
+            const listeners = Math.round(budget / model.cpl * cF);
+            const streams = Math.round(listeners * model.streamYield * sF);
+            const intent = Math.round(model.intentRate * 100);
+            const saves = Math.round(listeners * model.saveRate);
+            const adds = Math.round(listeners * model.playlistRate);
+
+            return { reach, listeners, streams, intent, saves, adds };
+        }
+
+        function runAnalysis() {
+            const btn = document.getElementById('runBtn');
+            const budget = parseFloat(document.getElementById('budgetInput').value) || 0;
+            if (budget <= 0) return;
+
+            btn.classList.add('analyzing');
+            btn.textContent = "Processing Study Patterns...";
+
+            setTimeout(() => {
+                const res = calculateCore(budget, activeMode, activeSegs);
+                document.getElementById('valReach').textContent = res.reach.toLocaleString();
+                document.getElementById('valListeners').textContent = res.listeners.toLocaleString();
+                document.getElementById('valStreams').textContent = res.streams.toLocaleString();
+                document.getElementById('valIntent').textContent = res.intent + "%";
+                document.getElementById('valSaves').textContent = res.saves.toLocaleString();
+                document.getElementById('valPlaylistAdds').textContent = res.adds.toLocaleString();
+
+                document.querySelectorAll('.bar').forEach(b => b.style.height = (20 + Math.random() * 60) + '%');
+
+                // System Insight based on Study findings
+                document.getElementById('systemInsight').innerHTML = activeMode === 'marquee' ?
+                    "<b>Marquee Efficiency Node:</b> High-intent conversion detected. This strategy eliminates off-platform friction, capturing fans when their mindset is already focused on listening." :
+                    "<b>Showcase Reach Node:</b> Persistence mode active. Study data shows Showcase contributes to discovery at a higher velocity, though yield-per-listener can vary by catalogue depth.";
+
+                if (cachedData) renderBreakdowns(budget);
+                btn.classList.remove('analyzing');
+                btn.textContent = "Run Forecast Engine";
+            }, 800);
+        }
+
+        function injectData() {
+            if (!window.parent || typeof window.parent.collectCampaignData !== 'function') { alert("Workflow context not found."); return; }
+            const data = window.parent.collectCampaignData();
+            cachedData = data;
+
+            if (data.totalBudget) document.getElementById('budgetInput').value = data.totalBudget;
+
+            let tool = 'marquee'; let segs = new Set();
+            data.timeline.forEach(b => {
+                if ((b.tool || "").toUpperCase().includes('SHOWCASE')) tool = 'showcase';
+                Object.keys(SEGMENTS).forEach(s => { if ((b.target || "").includes(s)) segs.add(s); });
+            });
+            setMode(tool);
+            if (segs.size > 0) { activeSegs = Array.from(segs); updateSegUI(); }
+
+            // Narrative Summary
+            const phaseCount = data.timeline.length;
+            const uniqueTracks = new Set(data.timeline.map(b => b.songName)).size;
+            document.getElementById('summaryText').innerHTML = `If you go with this <b>${phaseCount}-phase workflow schedule</b>, you can expect highly optimized results. Your plan for <b>${uniqueTracks} track(s)</b> leverages the "listeners-per-dollar" advantage, scaling your reach per-song in a structured, song-to-song progression.`;
+
+            runAnalysis();
+        }
+
+        function renderBreakdowns(totalBudget) {
+            if (!cachedData || !cachedData.timeline) return;
+            const phaseTable = document.querySelector('#phaseTable tbody');
+            const trackTable = document.querySelector('#trackTable tbody');
+            phaseTable.innerHTML = ''; trackTable.innerHTML = '';
+
+            const blocks = cachedData.timeline;
+            const budgetPerBlock = totalBudget / blocks.length;
+            const tracks = {};
+
+            blocks.forEach(b => {
+                const bResult = calculateCore(budgetPerBlock, (b.tool || "").toLowerCase().includes('showcase') ? 'showcase' : 'marquee', [b.target || 'Light Listeners']);
+
+                phaseTable.insertAdjacentHTML('beforeend', `<tr>
+                    <td style="font-weight: 700; color: #fff;">${b.phase || 'N/A'}</td>
+                    <td>${bResult.reach.toLocaleString()}</td>
+                    <td style="color: var(--spotify-bright); font-weight: 700;">${bResult.streams.toLocaleString()}</td>
+                </tr>`);
+
+                const t = b.songName || "Global Campaign";
+                tracks[t] = (tracks[t] || 0) + bResult.streams;
+            });
+
+            Object.keys(tracks).forEach(t => {
+                trackTable.insertAdjacentHTML('beforeend', `<tr>
+                    <td><span class="pill">🎵 ${t}</span></td>
+                    <td style="color: var(--theme-teal); font-weight: 700;">${tracks[t].toLocaleString()}</td>
+                </tr>`);
+            });
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

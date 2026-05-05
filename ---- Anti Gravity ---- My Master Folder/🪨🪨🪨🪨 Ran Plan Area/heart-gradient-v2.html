@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gradient of Hearts</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  .top-tag {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1.4rem;
+    color: #ff6eb4;
+    letter-spacing: 3px;
+    text-shadow: 0 0 12px rgba(255,110,180,0.6);
+    z-index: 999;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow: hidden;
+    background: #0d0b1a;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(90, 20, 80, 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 30%, rgba(20, 30, 90, 0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 80%, rgba(120, 30, 60, 0.2) 0%, transparent 50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  svg.heart-shape {
+    position: absolute;
+    filter: drop-shadow(0 0 6px var(--glow));
+    animation: float var(--dur) ease-in-out infinite alternate;
+    opacity: 0;
+    animation-delay: var(--delay);
+  }
+
+  @keyframes float {
+    0%   { transform: translateY(0) rotate(var(--rot-start)) scale(var(--sc)); opacity: 0.7; }
+    50%  { opacity: 0.95; }
+    100% { transform: translateY(var(--drift)) rotate(var(--rot-end)) scale(var(--sc)); opacity: 0.7; }
+  }
+
+  /* Color wave animation on each heart's fill */
+  @keyframes hueShift {
+    0%   { filter: hue-rotate(0deg)   drop-shadow(0 0 8px var(--glow)); }
+    50%  { filter: hue-rotate(25deg)  drop-shadow(0 0 14px var(--glow)); }
+    100% { filter: hue-rotate(0deg)   drop-shadow(0 0 8px var(--glow)); }
+  }
+
+  svg.heart-shape.live {
+    opacity: 1;
+    animation:
+      float var(--dur) ease-in-out infinite alternate,
+      hueShift var(--hue-dur) ease-in-out infinite;
+  }
+
+  /* Soft vignette overlay */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(5,3,15,0.6) 100%);
+    z-index: 10;
+  }
+
+  /* Tiny sparkle particles */
+  .sparkle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: white;
+    opacity: 0;
+    animation: twinkle var(--tw-dur) ease-in-out infinite;
+    animation-delay: var(--tw-delay);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50%      { opacity: 0.6; transform: scale(1.2); }
+  }
+</style>
+</head>
+<body>
+<div class="top-tag">comingforya1</div>
+
+<div class="canvas" id="canvas"></div>
+<div class="vignette"></div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const W = window.innerWidth;
+const H = window.innerHeight;
+
+// Color palette — gradient wave from warm to cool
+const palette = [
+  // Row 0-1: warm pinks / reds
+  { fill: '#ff6b9d', glow: 'rgba(255,107,157,0.5)' },
+  { fill: '#ff4d8d', glow: 'rgba(255,77,141,0.5)' },
+  { fill: '#ff3a7e', glow: 'rgba(255,58,126,0.5)' },
+  // Row 2-3: magentas / hot pinks
+  { fill: '#e84393', glow: 'rgba(232,67,147,0.5)' },
+  { fill: '#d63384', glow: 'rgba(214,51,132,0.5)' },
+  { fill: '#c0392b', glow: 'rgba(192,57,43,0.4)' },
+  // Row 4-5: purples
+  { fill: '#a855f7', glow: 'rgba(168,85,247,0.5)' },
+  { fill: '#8b5cf6', glow: 'rgba(139,92,246,0.5)' },
+  { fill: '#7c3aed', glow: 'rgba(124,58,237,0.5)' },
+  // Row 6-7: indigos / blues
+  { fill: '#6366f1', glow: 'rgba(99,102,241,0.5)' },
+  { fill: '#818cf8', glow: 'rgba(129,140,248,0.5)' },
+  { fill: '#60a5fa', glow: 'rgba(96,165,250,0.5)' },
+  // Row 8: teals
+  { fill: '#34d399', glow: 'rgba(52,211,153,0.4)' },
+  { fill: '#2dd4bf', glow: 'rgba(45,212,191,0.4)' },
+  // Row 9: soft lavender / peach accents
+  { fill: '#f9a8d4', glow: 'rgba(249,168,212,0.4)' },
+  { fill: '#fda4af', glow: 'rgba(253,164,175,0.4)' },
+];
+
+// Heart SVG path
+const heartPath = 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
+
+// Grid-ish layout with jitter
+const cols = 14;
+const rows = 10;
+const cellW = W / cols;
+const cellH = H / rows;
+
+for (let row = 0; row < rows; row++) {
+  for (let col = 0; col < cols; col++) {
+    // Position with jitter
+    const jx = (Math.random() - 0.5) * cellW * 0.6;
+    const jy = (Math.random() - 0.5) * cellH * 0.5;
+    const x = col * cellW + cellW / 2 + jx;
+    const y = row * cellH + cellH / 2 + jy;
+
+    // Color based on diagonal gradient position
+    const t = (col / cols + row / rows) / 2; // 0..1 diagonal
+    const idx = Math.floor(t * (palette.length - 1));
+    const color = palette[idx];
+
+    // Random properties
+    const size = 18 + Math.random() * 16;
+    const dur = 3 + Math.random() * 4;
+    const delay = Math.random() * 3;
+    const drift = -8 - Math.random() * 14;
+    const rotStart = -10 + Math.random() * 20;
+    const rotEnd = -10 + Math.random() * 20;
+    const sc = 0.8 + Math.random() * 0.4;
+    const hueDur = 5 + Math.random() * 6;
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'heart-shape');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', size);
+    svg.setAttribute('height', size);
+    svg.style.left = x + 'px';
+    svg.style.top = y + 'px';
+    svg.style.setProperty('--glow', color.glow);
+    svg.style.setProperty('--dur', dur + 's');
+    svg.style.setProperty('--delay', delay + 's');
+    svg.style.setProperty('--drift', drift + 'px');
+    svg.style.setProperty('--rot-start', rotStart + 'deg');
+    svg.style.setProperty('--rot-end', rotEnd + 'deg');
+    svg.style.setProperty('--sc', sc);
+    svg.style.setProperty('--hue-dur', hueDur + 's');
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', heartPath);
+    path.setAttribute('fill', color.fill);
+    svg.appendChild(path);
+
+    canvas.appendChild(svg);
+
+    // Stagger entrance
+    setTimeout(() => svg.classList.add('live'), delay * 1000 + 100);
+  }
+}
+
+// Sparkles
+for (let i = 0; i < 60; i++) {
+  const sp = document.createElement('div');
+  sp.className = 'sparkle';
+  sp.style.left = Math.random() * W + 'px';
+  sp.style.top = Math.random() * H + 'px';
+  sp.style.setProperty('--tw-dur', (2 + Math.random() * 4) + 's');
+  sp.style.setProperty('--tw-delay', (Math.random() * 5) + 's');
+  sp.style.width = (2 + Math.random() * 2) + 'px';
+  sp.style.height = sp.style.width;
+  canvas.appendChild(sp);
+}
+</script>
+</body>
+</html>

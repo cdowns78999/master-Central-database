@@ -1,0 +1,866 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railroad Control Panel | Digital Coms</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --lamp-deep: #c2560a;
+            --lamp-mid: #e07b2e;
+            --lamp-warm: #f2a54a;
+            --lamp-soft: #f8c97d;
+            --lamp-glow: #fde8c8;
+            --white: #ffffff;
+            --text: #3b1a04;
+            --text-dim: rgba(59, 26, 4, 0.55);
+            --border-thick: 4px;
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow: hidden;
+            background:
+                radial-gradient(ellipse at 30% 20%, #f8c97d 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, #f2a54a 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, #e8944a 0%, transparent 60%),
+                linear-gradient(160deg, #fde8c8 0%, #f2a54a 35%, #d4700f 65%, #a84e08 100%);
+        }
+
+        /* ══════════════════════════════════════
+           3-Zone Grid Layout
+           ══════════════════════════════════════ */
+        .railroad-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "left registry"
+                "left output"
+                "left questions";
+            height: 100vh;
+            gap: 12px;
+            padding: 16px;
+        }
+
+        /* ── BOTTOM RIGHT ZONE — Questions ── */
+        .zone-questions {
+            grid-area: questions;
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-height: 25vh;
+        }
+
+        .zone-questions-header {
+            padding: 0.8rem 1.4rem 0.5rem;
+            border-bottom: 2px solid rgba(194,86,10,0.1);
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .zone-questions-header .zqh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.25em; color: var(--lamp-deep);
+        }
+
+        .zone-questions-header .zqh-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem; font-weight: 700; color: var(--lamp-mid);
+            background: var(--lamp-glow); padding: 2px 8px; border-radius: 6px;
+        }
+
+        .zone-questions-body {
+            flex: 1; overflow-y: auto; padding: 0.6rem 1.2rem;
+        }
+
+        .question-row {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(194,86,10,0.06);
+            font-size: 0.72rem; color: var(--text); line-height: 1.5;
+        }
+
+        .question-row .qr-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem; font-weight: 700; color: var(--white);
+            background: var(--lamp-deep); padding: 2px 6px; border-radius: 4px;
+            flex-shrink: 0; margin-top: 2px;
+        }
+
+        .question-row .qr-text { flex: 1; }
+
+        .question-row .qr-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.45rem; font-weight: 700; flex-shrink: 0;
+            padding: 2px 6px; border-radius: 4px; margin-top: 2px;
+        }
+
+        .question-row .qr-status.open { background: #fef3c7; color: #92400e; }
+        .question-row .qr-status.answered { background: #d1fae5; color: #065f46; }
+
+        /* ── LEFT ZONE — Current Step ── */
+        .zone-left {
+            grid-area: left;
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .zone-left-header {
+            padding: 1.4rem 1.6rem 1rem;
+            border-bottom: 2px solid rgba(194,86,10,0.1);
+            flex-shrink: 0;
+        }
+
+        .zone-left-header .zlh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.25em; color: var(--lamp-deep); margin-bottom: 0.5rem;
+        }
+
+        .zone-left-header .zlh-title {
+            font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em;
+            color: var(--text);
+        }
+
+        .zone-left-header .zlh-section-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 8px;
+            background: var(--lamp-glow); border: 2px solid var(--white);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem; font-weight: 700; color: var(--lamp-deep);
+            margin-bottom: 0.6rem;
+        }
+
+        .zone-left-header .zlh-section-badge .badge-dot {
+            width: 6px; height: 6px; border-radius: 50%; background: var(--lamp-deep);
+        }
+
+        .zone-left-body {
+            flex: 1; overflow-y: auto; padding: 1.2rem 1.6rem;
+        }
+
+        .step-card {
+            padding: 1rem 1.2rem; border-radius: 12px;
+            background: var(--lamp-glow); border: 2px solid var(--white);
+            margin-bottom: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        .step-card .sc-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; color: var(--lamp-deep);
+            text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 0.3rem;
+        }
+
+        .step-card .sc-title {
+            font-size: 0.85rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem;
+        }
+
+        .step-card .sc-sub {
+            font-size: 0.72rem; color: var(--text-dim); line-height: 1.6;
+            padding-left: 0.8rem; position: relative;
+        }
+
+        .step-card .sc-sub::before {
+            content: ''; position: absolute; left: 0.2rem; top: 0.4em;
+            width: 4px; height: 4px; border-radius: 50%;
+            background: var(--lamp-mid); opacity: 0.7;
+        }
+
+        .step-card.active-step {
+            background: var(--lamp-warm);
+            border-color: var(--lamp-deep);
+            box-shadow: 0 0 0 2px var(--lamp-deep), 0 4px 12px rgba(194,86,10,0.2);
+        }
+
+        .step-card.completed-step {
+            opacity: 0.55;
+            background: rgba(255,255,255,0.5);
+        }
+
+        .step-card.completed-step::after {
+            content: ' \2713'; color: #10b981; font-weight: 800;
+        }
+
+        /* Status pill */
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.15em; margin-top: 0.5rem;
+        }
+
+        .status-pill.status-active { background: var(--lamp-warm); color: var(--text); }
+        .status-pill.status-done { background: #d1fae5; color: #065f46; }
+        .status-pill.status-waiting { background: #fef3c7; color: #92400e; }
+        .status-pill.status-skipped { background: #f3f4f6; color: #6b7280; }
+
+        .status-pill .sp-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+        }
+
+        .status-pill.status-active .sp-dot { background: var(--lamp-deep); }
+        .status-pill.status-done .sp-dot { background: #10b981; }
+        .status-pill.status-waiting .sp-dot { background: #f59e0b; }
+
+        /* Progress bar */
+        .progress-bar-wrap {
+            padding: 1rem 1.6rem;
+            border-top: 2px solid rgba(194,86,10,0.1);
+            flex-shrink: 0;
+        }
+
+        .progress-bar-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; color: var(--lamp-deep);
+            margin-bottom: 0.4rem; display: flex; justify-content: space-between;
+        }
+
+        .progress-bar-track {
+            width: 100%; height: 8px; border-radius: 4px;
+            background: rgba(194,86,10,0.12);
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%; border-radius: 4px;
+            background: linear-gradient(90deg, var(--lamp-deep), var(--lamp-warm));
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        /* ── UPPER RIGHT ZONE — Registry Log ── */
+        .zone-registry {
+            grid-area: registry;
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-height: 45vh;
+        }
+
+        .zone-registry-header {
+            padding: 1rem 1.4rem 0.6rem;
+            border-bottom: 2px solid rgba(194,86,10,0.1);
+            flex-shrink: 0;
+        }
+
+        .zone-registry-header .zrh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.25em; color: var(--lamp-deep);
+        }
+
+        .zone-registry-body {
+            flex: 1; overflow-y: auto; padding: 0.8rem 1.2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem; line-height: 1.9;
+            color: var(--text);
+        }
+
+        .registry-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(194,86,10,0.06);
+        }
+
+        .registry-row .rr-time {
+            color: var(--text-dim); min-width: 40px; flex-shrink: 0;
+        }
+
+        .registry-row .rr-section {
+            color: var(--lamp-deep); font-weight: 700; min-width: 65px; flex-shrink: 0;
+        }
+
+        .registry-row .rr-desc {
+            flex: 1; color: var(--text);
+        }
+
+        .registry-row .rr-status {
+            font-weight: 700; flex-shrink: 0;
+        }
+
+        .registry-row .rr-status.done { color: #10b981; }
+        .registry-row .rr-status.active { color: var(--lamp-deep); }
+        .registry-row .rr-status.skipped { color: #6b7280; }
+
+        /* ── LOWER RIGHT ZONE — Output ── */
+        .zone-output {
+            grid-area: output;
+            background: rgba(255,255,255,0.92);
+            border: var(--border-thick) solid var(--white);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .zone-output-header {
+            padding: 1rem 1.4rem 0.6rem;
+            border-bottom: 2px solid rgba(194,86,10,0.1);
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .zone-output-header .zoh-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.25em; color: var(--lamp-deep);
+        }
+
+        .zone-output-header .zoh-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .zoh-badge.verified { background: #d1fae5; color: #065f46; }
+        .zoh-badge.pending { background: #fef3c7; color: #92400e; }
+        .zoh-badge.error { background: #fee2e2; color: #991b1b; }
+
+        .zone-output-body {
+            flex: 1; overflow-y: auto; padding: 1.2rem 1.4rem;
+        }
+
+        .output-block {
+            padding: 1rem 1.2rem; border-radius: 12px;
+            background: var(--lamp-glow); border: 2px solid var(--white);
+            margin-bottom: 0.8rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        .output-block .ob-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.2em; color: var(--lamp-deep); margin-bottom: 0.4rem;
+        }
+
+        .output-block .ob-content {
+            font-size: 0.78rem; color: var(--text); line-height: 1.7;
+        }
+
+        .output-block .ob-content pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem; line-height: 1.8; white-space: pre-wrap;
+            color: var(--text); margin: 0;
+        }
+
+        .output-empty {
+            text-align: center; padding: 3rem 1rem;
+            color: var(--text-dim); font-size: 0.8rem;
+        }
+
+        .output-empty .oe-icon {
+            font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.3;
+        }
+
+        /* ── Completion Banner ── */
+        .completion-banner {
+            display: none;
+            padding: 1.2rem 1.6rem; border-radius: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            border: 2px solid var(--white); color: #fff;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(16,185,129,0.35);
+        }
+
+        .completion-banner.show { display: block; }
+
+        .completion-banner .cb-title {
+            font-size: 1.1rem; font-weight: 800; margin-bottom: 0.3rem;
+        }
+
+        .completion-banner .cb-sub {
+            font-size: 0.72rem; opacity: 0.9;
+        }
+
+        /* ── Scrollbar styling ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(194,86,10,0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(194,86,10,0.35); }
+
+        /* ══════════════════════════════════════
+           VIDEO GAME AESTHETIC LAYER
+           ══════════════════════════════════════ */
+
+        /* XP Level badge — top left corner */
+        .game-hud {
+            position: fixed; top: 12px; left: 12px; z-index: 50;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .game-level {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.5rem; color: var(--lamp-glow);
+            background: var(--lamp-deep); padding: 6px 12px;
+            border-radius: 6px; border: 2px solid var(--lamp-warm);
+            box-shadow: 0 0 12px rgba(194,86,10,0.4), inset 0 -2px 0 rgba(0,0,0,0.2);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            letter-spacing: 0.05em;
+        }
+
+        .game-xp-bar {
+            width: 120px; height: 10px; border-radius: 5px;
+            background: rgba(0,0,0,0.2); border: 2px solid var(--lamp-warm);
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .game-xp-fill {
+            height: 100%; border-radius: 3px;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            box-shadow: 0 0 6px rgba(16,185,129,0.5);
+            transition: width 0.6s ease;
+        }
+
+        /* Train track connector between steps */
+        .track-connector {
+            display: flex; align-items: center; justify-content: center;
+            padding: 4px 0; color: var(--lamp-mid); font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace; opacity: 0.5;
+        }
+
+        .track-connector.active-track {
+            opacity: 1; color: var(--lamp-deep);
+            animation: trackPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes trackPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Train emoji row — shows between completed outputs */
+        .train-row {
+            text-align: center; padding: 4px 0;
+            font-size: 0.7rem; letter-spacing: 2px;
+            animation: trainSlide 0.8s ease-out;
+        }
+
+        @keyframes trainSlide {
+            0% { transform: translateX(-20px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Pixel-style section badge override */
+        .zone-left-header .zlh-section-badge {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.45rem; letter-spacing: 0.1em;
+            background: var(--lamp-deep); color: var(--lamp-glow);
+            border-color: var(--lamp-warm);
+            box-shadow: 0 0 8px rgba(194,86,10,0.3);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+        }
+
+        .zone-left-header .zlh-section-badge .badge-dot {
+            background: #10b981;
+            box-shadow: 0 0 4px rgba(16,185,129,0.6);
+        }
+
+        /* Registry header game style */
+        .zone-registry-header .zrh-label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.4rem; color: var(--lamp-deep);
+        }
+
+        /* Output header game style */
+        .zone-output-header .zoh-label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.4rem;
+        }
+
+        /* Progress bar game override — chunky pixel feel */
+        .progress-bar-track {
+            border: 2px solid var(--lamp-warm);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 40%, #6ee7b7 100%);
+            box-shadow: 0 0 8px rgba(16,185,129,0.4);
+            background-size: 20px 20px;
+            background-image: linear-gradient(
+                45deg,
+                rgba(255,255,255,0.15) 25%, transparent 25%,
+                transparent 50%, rgba(255,255,255,0.15) 50%,
+                rgba(255,255,255,0.15) 75%, transparent 75%
+            );
+            animation: progressStripe 1s linear infinite;
+        }
+
+        @keyframes progressStripe {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 0; }
+        }
+
+        .progress-bar-label {
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.35rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Game HUD -->
+    <div class="game-hud">
+        <div class="game-level" id="gameLevel">LV 1 — S1 MANIS</div>
+        <div class="game-xp-bar"><div class="game-xp-fill" id="gameXpFill" style="width:0%;"></div></div>
+    </div>
+
+    <div class="railroad-grid">
+
+        <!-- ═══ LEFT ZONE — Current Step ═══ -->
+        <div class="zone-left">
+            <div class="zone-left-header">
+                <div class="zlh-label">Current Step</div>
+                <div class="zlh-section-badge" id="sectionBadge">
+                    <span class="badge-dot"></span>
+                    <span id="sectionBadgeText">S1-MANIS</span>
+                </div>
+                <div class="zlh-title" id="stepTitle">Create Manis Account</div>
+            </div>
+
+            <div class="zone-left-body" id="stepBody">
+                <div class="step-card active-step">
+                    <div class="sc-num">Step 1</div>
+                    <div class="sc-title">Create Manis Account</div>
+                    <div class="sc-sub">Go to Manis &#8594; Sign up + complete onboarding</div>
+                    <div class="sc-sub">Verify email &#8594; Access the lead generation dashboard</div>
+                    <div class="status-pill status-active"><span class="sp-dot"></span> ACTIVE</div>
+                </div>
+                <div class="track-connector active-track">&#9473;&#9473; &#128642; &#9473;&#9473;&#9473;&#9473; &#128642; &#9473;&#9473;</div>
+                <div class="step-card">
+                    <div class="sc-num">Step 2</div>
+                    <div class="sc-title">Define Lead Criteria</div>
+                    <div class="sc-sub">Set ideal client profile: industry, size, location, revenue</div>
+                    <div class="sc-sub">Add job title filters + company type + tech stack</div>
+                    <div class="status-pill status-waiting"><span class="sp-dot"></span> QUEUED</div>
+                </div>
+                <div class="track-connector">&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;</div>
+                <div class="step-card">
+                    <div class="sc-num">Step 3</div>
+                    <div class="sc-title">Generate First Batch</div>
+                    <div class="sc-sub">Configure first batch: 100 leads to start</div>
+                    <div class="sc-sub">Review quality &#8594; set monthly delivery schedule</div>
+                    <div class="status-pill status-waiting"><span class="sp-dot"></span> QUEUED</div>
+                </div>
+            </div>
+
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-label">
+                    <span>Progress</span>
+                    <span id="progressCount">0 / 111</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="progressFill" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ UPPER RIGHT ZONE — Registry Log ═══ -->
+        <div class="zone-registry">
+            <div class="zone-registry-header">
+                <div class="zrh-label">Registry Log</div>
+            </div>
+            <div class="zone-registry-body" id="registryBody">
+                <!-- Registry rows get appended here by the skill -->
+                <!-- Format:
+                <div class="registry-row">
+                    <span class="rr-time">14:32</span>
+                    <span class="rr-section">S1-MANIS</span>
+                    <span class="rr-desc">Step 1 — Create Account</span>
+                    <span class="rr-status done">&#10003; DONE</span>
+                </div>
+                -->
+            </div>
+        </div>
+
+        <!-- ═══ LOWER RIGHT ZONE — Output ═══ -->
+        <div class="zone-output">
+            <div class="zone-output-header">
+                <div class="zoh-label">Job Output</div>
+                <div class="zoh-badge pending" id="outputBadge">Standby</div>
+            </div>
+            <div class="zone-output-body" id="outputBody">
+                <div class="output-empty">
+                    <div class="oe-icon">&#9997;</div>
+                    <div>Output will appear here as steps complete</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ BOTTOM RIGHT ZONE — Questions ═══ -->
+        <div class="zone-questions">
+            <div class="zone-questions-header">
+                <div class="zqh-label">Questions for Chad</div>
+                <div class="zqh-count" id="questionCount">0 open</div>
+            </div>
+            <div class="zone-questions-body" id="questionsBody">
+                <!-- Question rows get appended here by the skill -->
+                <!-- Format:
+                <div class="question-row">
+                    <span class="qr-badge">Q1</span>
+                    <span class="qr-text">What are we doing here?</span>
+                    <span class="qr-status open">OPEN</span>
+                </div>
+                -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ══════════════════════════════════════════════
+           Railroad State — read/written by c9-3-railroad skill
+           ══════════════════════════════════════════════ */
+
+        const railroadState = {
+            currentSection: null,       // e.g. "s1", "gmail", "alley"
+            currentStep: null,          // e.g. 0, 1, 2 (index within section)
+            completedSteps: [],         // e.g. ["s1-0", "s1-1", "gmail-3"]
+            skippedSteps: [],           // e.g. ["s2-1"]
+            registry: [],               // array of {time, section, desc, status}
+            lastOutput: null,           // {label, content, badge}
+            totalSteps: 111,
+            mode: null,                 // "main" | "platform" | "full" | "resume"
+            activePlatforms: [],        // which platforms selected for platform mode
+            sessionStarted: null,       // ISO timestamp
+            questions: [],              // array of {id, text, status, answer, step}
+        };
+
+        /* ── Step Data (mirrored from build-digital-coms.html) ── */
+
+        const stepData = {
+            s1: [
+                { title: 'Create Manis Account', subs: ['Go to Manis \u2192 Sign up + complete onboarding', 'Verify email \u2192 Access the lead generation dashboard'], type: 'chad' },
+                { title: 'Define Lead Criteria', subs: ['Set ideal client profile: industry, size, location, revenue', 'Add job title filters + company type + tech stack'], type: 'chad' },
+                { title: 'Generate First Batch', subs: ['Configure first batch: 100 leads to start', 'Review quality \u2192 set monthly delivery schedule'], type: 'chad' },
+            ],
+            s2: [
+                { title: 'Connect Social Accounts', subs: ['Link LinkedIn, Instagram, Twitter/X, email', 'Import calendar contacts for meeting history'], type: 'chad' },
+                { title: 'Run Contact Enrichment', subs: ['Trigger initial contact database scan', 'Review enriched profiles for accuracy \u2192 approve'], type: 'chad' },
+                { title: 'Configure Search + Reports', subs: ['Set up "Who do I know" query templates', 'Configure monthly relationship reports'], type: 'chad' },
+            ],
+            s3: [
+                { title: 'Connect All Inboxes', subs: ['Link Instagram DMs, Messenger, Twitter/X DMs', 'Add Gmail + WhatsApp Business if available'], type: 'chad' },
+                { title: 'Set Up Routing Rules', subs: ['Create rules: leads vs support vs general', 'Configure conversation labels and tags'], type: 'chad' },
+                { title: 'Test Auto-Responses', subs: ['Create after-hours templates + common query responses', 'Send test messages across all platforms'], type: 'chad' },
+            ],
+            s4: [
+                { title: 'Install Alley Pixel', subs: ['Get tracking pixel code from Alley dashboard', 'Add to all website pages in header \u2192 verify firing'], type: 'chad' },
+                { title: 'Configure Alerts', subs: ['Set rules: repeat visitors, high-intent pages', 'Configure lead export format + webhook'], type: 'claude' },
+                { title: 'Review First Visitors', subs: ['Monitor first identified visitors in Alley dashboard', 'Check identification accuracy \u2192 refine thresholds'], type: 'chad' },
+            ],
+            s5: [
+                { title: 'Update Wing pillData', subs: ['Add coms pills to all 7 wing sections in dashboard code', 'Map: Clients / Pricing / Projects / Pipeline / Suppliers / Services / Inventory'], type: 'claude' },
+                { title: 'Test Star Card Drop Zone', subs: ['Drag coms pills to star card \u2192 verify detail view loads', 'Check platform stats, cost breakdown, quick actions'], type: 'chad' },
+                { title: 'Verify Pre-fill', subs: ['Open coms overlay \u2192 complete all 4 steps \u2192 close', 'Confirm all wings populated with new pills'], type: 'chad' },
+            ],
+        };
+
+        const platformData = {
+            gmail: {
+                name: 'Gmail', sectionCode: 'GMAIL', steps: [
+                    { title: 'Create or designate business Gmail account', type: 'chad' },
+                    { title: 'Enable Gmail API in Google Cloud Console', type: 'chad' },
+                    { title: 'Create OAuth2 credentials for app access', type: 'chad' },
+                    { title: 'Set up professional email signature', type: 'claude' },
+                    { title: 'Create label structure: Leads / Clients / Suppliers', type: 'chad' },
+                    { title: 'Configure filters for auto-sorting', type: 'claude' },
+                    { title: 'Connect to Revio for unified inbox', type: 'chad' },
+                    { title: 'Load email templates for outreach', type: 'claude' },
+                ]
+            },
+            whatsapp: {
+                name: 'WhatsApp', sectionCode: 'WHATSAPP', steps: [
+                    { title: 'Download WhatsApp Business app', type: 'chad' },
+                    { title: 'Set up business profile (name, hours, description)', type: 'chad' },
+                    { title: 'Create quick reply templates', type: 'claude' },
+                    { title: 'Set up auto-greeting and away messages', type: 'claude' },
+                    { title: 'Create broadcast lists: Clients / Suppliers / Prospects', type: 'chad' },
+                    { title: 'Configure conversation labels', type: 'chad' },
+                    { title: 'Connect to Revio for unified inbox', type: 'chad' },
+                    { title: 'Set up catalog for service listings', type: 'chad' },
+                ]
+            },
+            imessage: {
+                name: 'iMessage', sectionCode: 'IMESSAGE', steps: [
+                    { title: 'Organize threads by pinning key clients', type: 'chad' },
+                    { title: 'Create contact groups in macOS Contacts', type: 'chad' },
+                    { title: 'Set up Focus modes for business hours', type: 'chad' },
+                    { title: 'Establish naming convention for group chats', type: 'claude' },
+                    { title: 'Document key conversations in Obsidian vault', type: 'chad' },
+                    { title: 'Set reminder system for follow-ups', type: 'chad' },
+                    { title: 'Use Shortcuts app for message templates', type: 'chad' },
+                    { title: 'Log important conversations in dashboard', type: 'claude' },
+                ]
+            },
+            messenger: {
+                name: 'Messenger', sectionCode: 'MESSENGER', steps: [
+                    { title: 'Ensure Facebook Business Page is active', type: 'chad' },
+                    { title: 'Enable Messenger for business page', type: 'chad' },
+                    { title: 'Set up instant replies and greeting', type: 'claude' },
+                    { title: 'Create FAQ auto-responses', type: 'claude' },
+                    { title: 'Configure lead gen through Messenger ads', type: 'chad' },
+                    { title: 'Connect to Revio for unified inbox', type: 'chad' },
+                    { title: 'Set up conversation labels/tags', type: 'chad' },
+                    { title: 'Create response templates', type: 'claude' },
+                ]
+            },
+            discord: {
+                name: 'Discord', sectionCode: 'DISCORD', steps: [
+                    { title: 'Create Ahead Artist Solutions server', type: 'chad' },
+                    { title: 'Set up roles: Admin / Team / Clients / Artists', type: 'claude' },
+                    { title: 'Create channel categories: General / Projects / Support', type: 'claude' },
+                    { title: 'Configure permissions per role', type: 'claude' },
+                    { title: 'Set up welcome channel with onboarding', type: 'claude' },
+                    { title: 'Add utility bots (MEE6 or Carl-bot)', type: 'chad' },
+                    { title: 'Create webhook for dashboard notifications', type: 'claude' },
+                    { title: 'Set up thread system for projects', type: 'claude' },
+                ]
+            },
+            vrchat: {
+                name: 'VRChat', sectionCode: 'VRCHAT', steps: [
+                    { title: 'Create or verify VRChat account', type: 'chad' },
+                    { title: 'Identify or create branded meeting world', type: 'chad' },
+                    { title: 'Set up friends list with clients', type: 'chad' },
+                    { title: 'Create event calendar for VR meetups', type: 'claude' },
+                    { title: 'Document world IDs in Obsidian vault', type: 'chad' },
+                    { title: 'Set up recording workflow for meetings', type: 'chad' },
+                    { title: 'Create follow-up templates for post-VR', type: 'claude' },
+                    { title: 'Log VRChat sessions in dashboard', type: 'claude' },
+                ]
+            },
+            local: {
+                name: 'Local', sectionCode: 'LOCAL', steps: [
+                    { title: 'Compile local business directory', type: 'claude' },
+                    { title: 'Identify recurring networking events', type: 'claude' },
+                    { title: 'Create contact cards / QR code', type: 'chad' },
+                    { title: 'Set up event calendar with local meetups', type: 'claude' },
+                    { title: 'Create follow-up workflow: event \u2192 connect \u2192 pipeline', type: 'claude' },
+                    { title: 'Track local referrals in Obsidian vault', type: 'chad' },
+                    { title: 'Document in-person meeting notes', type: 'chad' },
+                    { title: 'Log local leads into dashboard pipeline', type: 'claude' },
+                ]
+            },
+            manis: {
+                name: 'Manis', sectionCode: 'MANIS', steps: [
+                    { title: 'Create Manis account and complete onboarding', type: 'chad' },
+                    { title: 'Define ideal client profile (ICP)', type: 'chad' },
+                    { title: 'Set lead criteria filters', type: 'chad' },
+                    { title: 'Configure first batch: 100 leads', type: 'chad' },
+                    { title: 'Review and approve first batch quality', type: 'chad' },
+                    { title: 'Set up monthly delivery schedule', type: 'chad' },
+                    { title: 'Export format: CSV with full contact data', type: 'claude' },
+                    { title: 'Import leads into dashboard pipeline', type: 'claude' },
+                    { title: 'Create follow-up sequence templates', type: 'claude' },
+                    { title: 'Set up lead scoring rules', type: 'claude' },
+                ]
+            },
+            socialsweep: {
+                name: 'Social Sweep', sectionCode: 'SSWEEP', steps: [
+                    { title: 'Create Social Sweep account', type: 'chad' },
+                    { title: 'Connect social accounts: LinkedIn, Instagram, email', type: 'chad' },
+                    { title: 'Import calendar contacts', type: 'chad' },
+                    { title: 'Run initial contact scan and enrichment', type: 'chad' },
+                    { title: 'Review enriched profiles for accuracy', type: 'chad' },
+                    { title: 'Set up "Who do I know" search queries', type: 'chad' },
+                    { title: 'Create introduction request workflows', type: 'claude' },
+                    { title: 'Configure monthly relationship reports', type: 'chad' },
+                    { title: 'Set up opportunity alerts', type: 'chad' },
+                    { title: 'Export key contacts to dashboard', type: 'claude' },
+                ]
+            },
+            revio: {
+                name: 'Revio', sectionCode: 'REVIO', steps: [
+                    { title: 'Create Revio account and complete setup', type: 'chad' },
+                    { title: 'Connect Instagram DMs, Messenger, Twitter/X', type: 'chad' },
+                    { title: 'Connect email inboxes (Gmail, Outlook)', type: 'chad' },
+                    { title: 'Connect WhatsApp Business', type: 'chad' },
+                    { title: 'Set up routing rules: leads vs support', type: 'claude' },
+                    { title: 'Create auto-response templates', type: 'claude' },
+                    { title: 'Configure conversation labels and tags', type: 'claude' },
+                    { title: 'Set up team assignment rules', type: 'claude' },
+                    { title: 'Enable conversation analytics', type: 'chad' },
+                    { title: 'Test inbound across all platforms', type: 'chad' },
+                ]
+            },
+            alley: {
+                name: 'Alley', sectionCode: 'ALLEY', steps: [
+                    { title: 'Create Alley account and get pixel code', type: 'chad' },
+                    { title: 'Install pixel on all website pages', type: 'chad' },
+                    { title: 'Verify pixel is firing correctly', type: 'chad' },
+                    { title: 'Configure visitor ID thresholds', type: 'chad' },
+                    { title: 'Set up alert rules for repeat visitors', type: 'claude' },
+                    { title: 'Configure lead export format and webhook', type: 'claude' },
+                    { title: 'Set up follow-up sequences', type: 'claude' },
+                    { title: 'Set up weekly visitor report', type: 'claude' },
+                    { title: 'Monitor and refine identification', type: 'chad' },
+                    { title: 'Review first 500 visitor IDs', type: 'chad' },
+                ]
+            }
+        };
+
+        /* ── Section name mapping ── */
+        const sectionNames = {
+            s1: 'S1-MANIS', s2: 'S2-SSWEEP', s3: 'S3-REVIO', s4: 'S4-ALLEY', s5: 'S5-INTEG',
+            gmail: 'GMAIL', whatsapp: 'WHATSAPP', imessage: 'IMESSAGE', messenger: 'MESSENGER',
+            discord: 'DISCORD', vrchat: 'VRCHAT', local: 'LOCAL',
+            manis: 'MANIS', socialsweep: 'SSWEEP', revio: 'REVIO', alley: 'ALLEY'
+        };
+
+        /* ── Helper: get steps for a section key ── */
+        function getSteps(sectionKey) {
+            if (stepData[sectionKey]) return stepData[sectionKey];
+            if (platformData[sectionKey]) return platformData[sectionKey].steps.map(s => ({
+                title: s.title, subs: [], type: s.type
+            }));
+            return [];
+        }
+
+        /* ── Helper: count total completed ── */
+        function countCompleted() {
+            return railroadState.completedSteps.length;
+        }
+
+        /* ── Helper: update progress bar ── */
+        function updateProgress() {
+            const done = countCompleted();
+            const total = railroadState.totalSteps;
+            const pct = Math.round((done / total) * 100);
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressCount').textContent = done + ' / ' + total;
+        }
+
+        /* Initial render */
+        updateProgress();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Album Grid Flip</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --pane: #ffffff;
+    --line: #e3e6ec;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --accent: #4a6da7;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100vh; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    padding: 26px 32px 60px;
+  }
+  .back {
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 12px;
+    margin-bottom: 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .back:hover { text-decoration: underline; }
+  h1 {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-weight: 300;
+    font-size: 26px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .lede {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 26px;
+    max-width: 640px;
+    line-height: 1.5;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 22px;
+    max-width: 1100px;
+  }
+  .card {
+    perspective: 1000px;
+    aspect-ratio: 1;
+    cursor: pointer;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.7s cubic-bezier(.22,.9,.32,1.2);
+    transform-style: preserve-3d;
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(20,30,50,0.12);
+    border: 1px solid var(--line);
+  }
+  .front {
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+    color: #fff;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .back-face {
+    background: var(--pane);
+    transform: rotateY(180deg);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    color: var(--ink);
+  }
+  .back-face .album-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin: 0 0 2px;
+  }
+  .back-face .artist {
+    color: var(--muted);
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  .tracklist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    font-size: 11.5px;
+    flex: 1;
+  }
+  .tracklist li {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid #f1f3f7;
+  }
+  .tracklist li span:last-child {
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 10.5px;
+  }
+  .meta-row {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-top: 1px solid var(--line);
+    padding-top: 6px;
+  }
+  .label {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .label .sub {
+    display: block;
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .a1 { background: linear-gradient(135deg,#3a4a6b,#1f2430); }
+  .a2 { background: linear-gradient(135deg,#c97f4a,#8a4a2a); }
+  .a3 { background: linear-gradient(135deg,#5b8c6b,#2e4a38); }
+  .a4 { background: linear-gradient(135deg,#a44b6e,#5a2640); }
+  .a5 { background: linear-gradient(135deg,#d4b04a,#8a6a1e); }
+  .a6 { background: linear-gradient(135deg,#4a6da7,#2a3f6b); }
+</style>
+</head>
+<body>
+  <a class="back" href="../index.html">← back to pack</a>
+  <h1>Album Grid Flip</h1>
+  <p class="lede">Click any album to flip and reveal the tracklist. CSS 3D transforms with backface-visibility — common pattern in indie label catalog browsers (sourced via codepen.io).</p>
+
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const albums = [
+      { id: 1, title: "Lantern Hours", artist: "Mira Wells", year: 2024, label: "Northpath", cls: "a1",
+        tracks: [
+          ["1. Coastline", "3:42"], ["2. Birdsong Letter", "4:11"], ["3. Lantern Hours", "5:08"],
+          ["4. Quiet Engine", "3:55"], ["5. Slow Returning", "4:38"], ["6. Lighthouse", "6:02"]
+        ]},
+      { id: 2, title: "Ferment", artist: "Oak & Iron", year: 2023, label: "Backroom Tapes", cls: "a2",
+        tracks: [
+          ["1. Kiln", "2:48"], ["2. Heavy Tin", "4:22"], ["3. Yeast", "3:31"],
+          ["4. Ferment", "5:17"], ["5. Dirt Road Stomp", "3:09"], ["6. Cellar", "4:55"]
+        ]},
+      { id: 3, title: "Garden Theory", artist: "Iris Bloom", year: 2025, label: "Greenhouse", cls: "a3",
+        tracks: [
+          ["1. Mulch", "3:21"], ["2. Apricot Sky", "4:08"], ["3. Garden Theory", "5:41"],
+          ["4. Hyacinth", "3:17"], ["5. Spade", "4:02"], ["6. Bloom", "6:33"]
+        ]},
+      { id: 4, title: "Velvet Static", artist: "The Tape Hiss", year: 2024, label: "Backroom Tapes", cls: "a4",
+        tracks: [
+          ["1. Static Drift", "4:19"], ["2. Velvet", "3:48"], ["3. Cassette Sun", "5:12"],
+          ["4. Wow & Flutter", "4:04"], ["5. Reel Burn", "3:36"], ["6. Stop", "5:50"]
+        ]},
+      { id: 5, title: "Honey for Coyotes", artist: "Saguaro Heart", year: 2022, label: "Sun Run", cls: "a5",
+        tracks: [
+          ["1. Mesa", "4:17"], ["2. Honey for Coyotes", "5:24"], ["3. Dust Bowl", "3:48"],
+          ["4. Saguaro", "4:39"], ["5. Coyote Tooth", "3:11"], ["6. Sundown", "5:55"]
+        ]},
+      { id: 6, title: "Riverwork", artist: "Field & Form", year: 2025, label: "Northpath", cls: "a6",
+        tracks: [
+          ["1. Riverwork", "3:55"], ["2. Bridge Stones", "4:26"], ["3. Eddy", "3:07"],
+          ["4. Slow Crossing", "5:11"], ["5. Riffle", "4:33"], ["6. Estuary", "6:14"]
+        ]}
+    ];
+
+    const grid = document.getElementById('grid');
+    albums.forEach(a => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `
+        <div class="card" data-id="${a.id}">
+          <div class="card-inner">
+            <div class="face front ${a.cls}">${a.title}</div>
+            <div class="face back-face">
+              <div class="album-title">${a.title}</div>
+              <div class="artist">${a.artist}</div>
+              <ul class="tracklist">
+                ${a.tracks.map(t => `<li><span>${t[0]}</span><span>${t[1]}</span></li>`).join('')}
+              </ul>
+              <div class="meta-row"><span>${a.year}</span><span>${a.label}</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="label">${a.title}<span class="sub">${a.artist}</span></div>
+      `;
+      grid.appendChild(wrap);
+    });
+
+    grid.addEventListener('click', (e) => {
+      const card = e.target.closest('.card');
+      if (!card) return;
+      card.classList.toggle('flipped');
+    });
+  </script>
+</body>
+</html>

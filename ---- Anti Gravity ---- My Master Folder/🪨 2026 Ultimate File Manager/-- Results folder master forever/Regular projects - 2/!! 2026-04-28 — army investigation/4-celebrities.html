@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Famous Army Alumni</title>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/army-modern.css" />
+</head>
+<body class="subpage">
+  <header class="topbar">
+    <a class="back-link" href="index.html">&larr; Back to Index</a>
+    <h1 class="page-title">Famous Army Alumni</h1>
+  </header>
+
+  <main class="page-main">
+    <div class="page-note">
+      Public figures who served in the U.S. Army. Each card shows the service strip, what they did after, and a verbatim quote with the original source.
+    </div>
+
+    <div id="celeb-mount">
+      <div class="loading">Loading alumni…</div>
+    </div>
+
+    <section class="sources-foot" id="sources-foot" hidden>
+      <h4>Sources</h4>
+      <ul id="sources-list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const mountEl = document.getElementById('celeb-mount');
+    const footEl = document.getElementById('sources-foot');
+    const sourcesList = document.getElementById('sources-list');
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function initials(name) {
+      return String(name || '?')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(p => p[0])
+        .join('')
+        .toUpperCase();
+    }
+
+    function renderEmpty() {
+      mountEl.innerHTML = `
+        <div class="empty-state">
+          <strong>Data not yet loaded</strong>
+          data/celebrities.json is missing or empty. Drop it in to populate this page.
+        </div>`;
+    }
+
+    function renderCelebs(list) {
+      if (!Array.isArray(list) || list.length === 0) {
+        renderEmpty();
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'celeb-grid';
+
+      list.forEach(c => {
+        const card = document.createElement('article');
+        card.className = 'celeb-card';
+
+        const name = escapeHtml(c.name || 'Unnamed');
+        const photo = c.photo || c.image || c.img || '';
+        const branch = c.branch || 'Army';
+        const unit   = c.unit || '';
+        const years  = c.years || c.service_years || '';
+        const stripBits = [branch, unit, years].filter(Boolean).map(escapeHtml).join(' · ');
+        const summary = escapeHtml(c.summary || c.post_army || '');
+        const quote = escapeHtml(c.quote || '');
+        const attr = escapeHtml(c.attribution || c.quote_source || '');
+        const sourceUrl = c.source || c.source_url || c.link || '';
+
+        const photoBlock = photo
+          ? `<img class="celeb-photo" src="${escapeHtml(photo)}" alt="${name}" onerror="this.outerHTML='<div class=\\'celeb-photo-fallback\\'>${initials(c.name)}</div>'" />`
+          : `<div class="celeb-photo-fallback">${initials(c.name)}</div>`;
+
+        card.innerHTML = `
+          ${photoBlock}
+          <div class="celeb-body">
+            <h2 class="celeb-name">${name}</h2>
+            ${stripBits ? `<div class="celeb-strip">${stripBits}</div>` : ''}
+            ${summary ? `<p class="celeb-summary">${summary}</p>` : ''}
+            ${quote ? `<blockquote class="celeb-quote">${quote}</blockquote>` : ''}
+            ${(attr || sourceUrl)
+              ? `<div class="celeb-attr">${attr ? `&mdash; ${attr}` : ''}${sourceUrl ? ` &middot; <a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener">source</a>` : ''}</div>`
+              : ''}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      mountEl.innerHTML = '';
+      mountEl.appendChild(grid);
+
+      const urls = new Set();
+      list.forEach(c => {
+        const u = c.source || c.source_url || c.link;
+        if (u) urls.add(u);
+      });
+      if (urls.size > 0) {
+        sourcesList.innerHTML = '';
+        [...urls].forEach(u => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${u}" target="_blank" rel="noopener">${u}</a>`;
+          sourcesList.appendChild(li);
+        });
+        footEl.hidden = false;
+      }
+    }
+
+    fetch('data/celebrities.json')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(json => {
+        const list = Array.isArray(json) ? json : (json.items || json.celebrities || json.people || []);
+        renderCelebs(list);
+      })
+      .catch(renderEmpty);
+  </script>
+</body>
+</html>

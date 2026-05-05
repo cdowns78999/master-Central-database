@@ -1,0 +1,1990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Label Generator</title>
+    <style>
+        /* ══════════════════════════════════════════════════
+           iOS DESIGN SYSTEM — GLOBAL TOKENS
+           ══════════════════════════════════════════════════ */
+        :root {
+            /* Backgrounds */
+            --bg-primary: #000000;
+            --bg-secondary: #1C1C1E;
+            --bg-tertiary: #2C2C2E;
+            --bg-quaternary: #3A3A3C;
+            --bg-elevated-5: #48484A;
+
+            /* Labels */
+            --label-primary: #FFFFFF;
+            --label-secondary: rgba(235,235,245,0.6);
+            --label-tertiary: rgba(235,235,245,0.3);
+            --label-quaternary: rgba(235,235,245,0.18);
+
+            /* Fills */
+            --fill-primary: rgba(120,120,128,0.36);
+            --fill-secondary: rgba(120,120,128,0.32);
+            --fill-tertiary: rgba(118,118,128,0.24);
+
+            /* Separators */
+            --separator: rgba(84,84,88,0.6);
+            --separator-opaque: #38383A;
+
+            /* System Colors */
+            --system-blue: #0A84FF;
+            --system-green: #30D158;
+            --system-red: #FF453A;
+            --system-orange: #FF9F0A;
+            --system-yellow: #FFD60A;
+            --system-purple: #BF5AF2;
+            --system-teal: #64D2FF;
+            --system-indigo: #5E5CE6;
+            --system-pink: #FF375F;
+
+            /* Grays */
+            --gray: #8E8E93;
+            --gray2: #636366;
+            --gray3: #48484A;
+            --gray4: #3A3A3C;
+            --gray5: #2C2C2E;
+            --gray6: #1C1C1E;
+
+            /* Animation */
+            --ios-ease: cubic-bezier(0.25, 0.1, 0.25, 1.0);
+            --ios-spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            --ios-spring-soft: cubic-bezier(0.23, 1, 0.32, 1);
+            --ios-duration: 0.35s;
+
+            /* Safe Areas */
+            --safe-top: env(safe-area-inset-top, 44px);
+            --safe-bottom: env(safe-area-inset-bottom, 34px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+        }
+
+        /* ══════════════════════════════════════════════════
+           GLOBAL RESETS
+           ══════════════════════════════════════════════════ */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            color: var(--label-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 17px;
+            font-weight: 400;
+            letter-spacing: -0.41px;
+            line-height: 22px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: none;
+            overflow: hidden;
+        }
+        input, textarea {
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
+        input, textarea, select, button {
+            -webkit-appearance: none;
+            appearance: none;
+            font-family: inherit;
+        }
+        ::-webkit-scrollbar { display: none; }
+        ::selection { background: rgba(10,132,255,0.3); }
+        a { color: var(--system-blue); text-decoration: none; }
+
+        /* ══════════════════════════════════════════════════
+           APP SHELL
+           ══════════════════════════════════════════════════ */
+        .app-shell {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* ── iOS Navigation Bar (Top) ── */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: var(--safe-top) 16px 0;
+            background: rgba(0,0,0,0.72);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid var(--separator);
+            flex-shrink: 0;
+        }
+        .app-header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+            position: relative;
+        }
+        .app-title-inline {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.41px;
+            color: var(--label-primary);
+            text-align: center;
+        }
+        .app-large-title {
+            padding: 0 16px 8px;
+        }
+        .app-large-title-text {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 0.37px;
+            line-height: 41px;
+            color: var(--label-primary);
+        }
+        .app-subtitle {
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: -0.08px;
+            line-height: 18px;
+            color: var(--label-secondary);
+            margin-top: 2px;
+        }
+
+        /* ── App Body ── */
+        .app-body {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        .app-view {
+            position: absolute;
+            inset: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px 16px 20px;
+            display: none;
+            opacity: 0;
+            transition: opacity var(--ios-duration) var(--ios-ease);
+        }
+        .app-view.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* ── iOS Tab Bar (Bottom) ── */
+        .app-tab-bar {
+            position: relative;
+            z-index: 100;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-around;
+            padding: 6px 0 0;
+            padding-bottom: max(6px, var(--safe-bottom));
+            background: rgba(0,0,0,0.72);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-top: 0.5px solid var(--separator);
+            flex-shrink: 0;
+            min-height: 49px;
+        }
+        .app-tab-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            padding: 2px 20px;
+            min-width: 64px;
+            min-height: 44px;
+            transition: color var(--ios-duration) var(--ios-ease);
+        }
+        .app-tab-btn:active { opacity: 0.7; }
+        .app-tab-btn.active { color: var(--system-blue); }
+        .app-tab-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .app-tab-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+        .app-tab-label {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0;
+            line-height: 12px;
+        }
+
+        /* ══════════════════════════════════════════════════
+           iOS SEGMENTED CONTROL
+           ══════════════════════════════════════════════════ */
+        .ios-segmented-control {
+            display: flex;
+            background: var(--fill-tertiary);
+            border-radius: 8px;
+            padding: 2px;
+            position: relative;
+            margin: 0 auto 20px;
+            max-width: 300px;
+        }
+        .ios-segment {
+            flex: 1;
+            padding: 7px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: -0.08px;
+            color: var(--label-primary);
+            text-align: center;
+            cursor: pointer;
+            border-radius: 7px;
+            position: relative;
+            z-index: 1;
+            transition: color var(--ios-duration) var(--ios-ease);
+            background: none;
+            border: none;
+        }
+        .ios-segment:active { opacity: 0.7; }
+        .ios-segment.active {
+            background: var(--bg-tertiary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* ══════════════════════════════════════════════════
+           iOS SEARCH BAR
+           ══════════════════════════════════════════════════ */
+        .ios-search-wrap {
+            position: relative;
+            margin: 0 0 20px;
+        }
+        .ios-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--label-tertiary);
+            pointer-events: none;
+            z-index: 1;
+        }
+        .ios-search-bar {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px 0 32px;
+            background: var(--fill-tertiary);
+            border: none;
+            border-radius: 10px;
+            color: var(--label-primary);
+            font-size: 17px;
+            font-weight: 400;
+            letter-spacing: -0.41px;
+            outline: none;
+            caret-color: var(--system-blue);
+            transition: background var(--ios-duration) var(--ios-ease);
+        }
+        .ios-search-bar::placeholder {
+            color: var(--label-tertiary);
+            font-size: 17px;
+        }
+        .ios-search-bar:focus {
+            background: rgba(118,118,128,0.32);
+        }
+
+        /* ── Search Suggestions (iOS dropdown) ── */
+        .ios-suggestions {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 200;
+            display: none;
+        }
+        .ios-suggestions.open { display: block; }
+        .ios-suggestion-item {
+            padding: 11px 16px;
+            font-size: 17px;
+            color: var(--label-primary);
+            cursor: pointer;
+            transition: background 0.15s var(--ios-ease);
+            border-bottom: 0.5px solid var(--separator);
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .ios-suggestion-item:last-child { border-bottom: none; }
+        .ios-suggestion-item:active { background: var(--fill-tertiary); }
+        .ios-suggestion-item .lg-match { color: var(--system-blue); font-weight: 600; }
+        .ios-suggestion-item .la-sug-match { color: var(--system-blue); font-weight: 600; }
+        .ios-suggestion-sub {
+            font-size: 13px;
+            color: var(--label-tertiary);
+            letter-spacing: -0.08px;
+        }
+
+        /* ══════════════════════════════════════════════════
+           VIEW 1: LABEL DATABASE
+           ══════════════════════════════════════════════════ */
+
+        /* Sub-views */
+        .lg-view { transition: opacity 0.25s var(--ios-ease); }
+        .lg-view.hidden { display: none; opacity: 0; }
+        .lg-view.visible { display: block; opacity: 1; }
+
+        /* ── Label Cards Grid ── */
+        .lg-label-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+            padding-bottom: 20px;
+        }
+        .lg-label-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            transition: opacity var(--ios-duration) var(--ios-ease);
+            cursor: default;
+        }
+        .lg-label-card:active { opacity: 0.7; }
+        .lg-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .lg-card-name {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.41px;
+            color: var(--label-primary);
+            line-height: 22px;
+        }
+        .lg-card-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 6px;
+        }
+        .lg-card-status.active { background: var(--system-green); }
+        .lg-card-status.inactive { background: var(--system-red); }
+        .lg-card-status.pending { background: var(--system-orange); }
+
+        /* ── Card Tags (iOS pills) ── */
+        .lg-card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .lg-card-tag {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            letter-spacing: 0;
+            line-height: 16px;
+        }
+        .lg-card-tag.genre {
+            background: rgba(10,132,255,0.15);
+            color: var(--system-blue);
+        }
+        .lg-card-tag.sub {
+            background: var(--fill-tertiary);
+            color: var(--label-secondary);
+        }
+
+        /* ── Card Stats (iOS list-cell style) ── */
+        .lg-card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 12px;
+        }
+        .lg-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+        .lg-stat-label {
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: -0.08px;
+            color: var(--label-secondary);
+        }
+        .lg-stat-value {
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.24px;
+            color: var(--label-primary);
+        }
+
+        /* ── Empty State ── */
+        .lg-empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            grid-column: 1 / -1;
+        }
+        .lg-empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        .lg-empty-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--label-secondary);
+            margin-bottom: 6px;
+        }
+        .lg-empty-sub {
+            font-size: 15px;
+            color: var(--label-tertiary);
+            letter-spacing: -0.24px;
+        }
+
+        /* ══════════════════════════════════════════════════
+           BRACKET VIEW
+           ══════════════════════════════════════════════════ */
+        .lg-bracket-filters {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .lg-gen-pill {
+            font-size: 13px;
+            font-weight: 500;
+            padding: 7px 16px;
+            border-radius: 9999px;
+            border: none;
+            background: var(--fill-tertiary);
+            color: var(--label-secondary);
+            cursor: pointer;
+            transition: all 0.2s var(--ios-ease);
+            letter-spacing: -0.08px;
+            min-height: 32px;
+        }
+        .lg-gen-pill:active { opacity: 0.7; }
+        .lg-gen-pill.active {
+            background: rgba(10,132,255,0.18);
+            color: var(--system-blue);
+        }
+
+        .lg-bracket-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding-bottom: 20px;
+        }
+        .lg-bracket-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .lg-bracket-header {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .lg-bracket-header.edm { background: rgba(10,132,255,0.15); color: var(--system-blue); }
+        .lg-bracket-header.bass { background: rgba(255,69,58,0.15); color: var(--system-red); }
+        .lg-bracket-header.techhouse { background: rgba(48,209,88,0.15); color: var(--system-green); }
+        .lg-bracket-header.dubstep { background: rgba(255,159,10,0.15); color: var(--system-orange); }
+        .lg-bracket-header.techno { background: rgba(191,90,242,0.15); color: var(--system-purple); }
+
+        .lg-bracket-nodes {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-left: 0;
+        }
+        .lg-bracket-node {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 4px 12px;
+            transition: opacity var(--ios-duration) var(--ios-ease);
+        }
+        .lg-bracket-node:active { opacity: 0.7; }
+        .lg-node-name {
+            grid-column: 1 / -1;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--label-primary);
+            letter-spacing: -0.24px;
+            margin-bottom: 4px;
+        }
+        .lg-node-stat { display: flex; flex-direction: column; gap: 1px; }
+        .lg-node-stat-label {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.07px;
+            color: var(--label-tertiary);
+        }
+        .lg-node-stat-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--label-secondary);
+            letter-spacing: -0.24px;
+        }
+        .lg-bracket-empty {
+            padding: 32px 16px;
+            text-align: center;
+            color: var(--label-tertiary);
+            font-size: 15px;
+        }
+
+        /* ══════════════════════════════════════════════════
+           VIEW 2: LABEL ANALYZER
+           ══════════════════════════════════════════════════ */
+        .la-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* ── Section Headers ── */
+        .la-section { margin-bottom: 28px; }
+        .la-section-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .la-section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--label-primary);
+            letter-spacing: 0.35px;
+            line-height: 28px;
+            margin: 0;
+        }
+        .la-section-subtitle {
+            font-size: 13px;
+            color: var(--label-tertiary);
+            letter-spacing: -0.08px;
+        }
+
+        /* ── Analyzer Search ── */
+        .la-search-bar-wrap {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .la-search-input-wrap {
+            flex: 1;
+            position: relative;
+        }
+        .la-search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--label-tertiary);
+            pointer-events: none;
+            z-index: 1;
+        }
+        .la-search-input-wrap input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px 0 32px;
+            background: var(--fill-tertiary);
+            border: none;
+            border-radius: 10px;
+            color: var(--label-primary);
+            font-size: 17px;
+            font-weight: 400;
+            letter-spacing: -0.41px;
+            outline: none;
+            caret-color: var(--system-blue);
+        }
+        .la-search-input-wrap input::placeholder {
+            color: var(--label-tertiary);
+            font-size: 17px;
+        }
+        .la-search-input-wrap input:focus {
+            background: rgba(118,118,128,0.32);
+        }
+        .la-search-suggestions {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 200;
+            display: none;
+        }
+        .la-search-suggestions.open { display: block; }
+        .la-search-suggestions .la-sug-item {
+            padding: 11px 16px;
+            font-size: 17px;
+            color: var(--label-primary);
+            cursor: pointer;
+            transition: background 0.15s var(--ios-ease);
+            border-bottom: 0.5px solid var(--separator);
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .la-search-suggestions .la-sug-item:last-child { border-bottom: none; }
+        .la-search-suggestions .la-sug-item:active { background: var(--fill-tertiary); }
+
+        /* ── iOS Blue Button ── */
+        .la-verify-btn {
+            background: var(--system-blue);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 0 20px;
+            height: 36px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.24px;
+            cursor: pointer;
+            transition: opacity var(--ios-duration) var(--ios-ease);
+            flex-shrink: 0;
+        }
+        .la-verify-btn:active { opacity: 0.7; }
+        .la-verify-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* ── Platform Scan Cards (iOS grouped inset list) ── */
+        .la-channels-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .la-channel-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: background var(--ios-duration) var(--ios-ease);
+        }
+        .la-channel-card[data-state="idle"] { opacity: 0.5; }
+        .la-channel-card[data-state="searching"] {
+            opacity: 1;
+            animation: iosCardPulse 1.4s ease-in-out infinite;
+        }
+        .la-channel-card[data-state="found"] {
+            background: rgba(48,209,88,0.08);
+            opacity: 1;
+        }
+        @keyframes iosCardPulse {
+            0%, 100% { background: var(--bg-secondary); }
+            50% { background: rgba(10,132,255,0.08); }
+        }
+        .la-channel-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            user-select: none;
+            min-height: 44px;
+        }
+        .la-channel-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .la-channel-icon.la-bp { background: rgba(48,209,88,0.15); }
+        .la-channel-icon.la-sp { background: rgba(48,209,88,0.15); }
+        .la-channel-icon.la-sc { background: rgba(255,159,10,0.15); }
+        .la-channel-icon.la-bc { background: rgba(10,132,255,0.15); }
+        .la-channel-info { flex: 1; min-width: 0; }
+        .la-channel-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--label-primary);
+            letter-spacing: -0.24px;
+            line-height: 20px;
+        }
+        .la-channel-card[data-state="found"] .la-channel-name { color: var(--label-primary); }
+        .la-channel-status {
+            font-size: 12px;
+            color: var(--label-tertiary);
+            letter-spacing: 0;
+            transition: color 0.3s var(--ios-ease);
+            margin-top: 1px;
+        }
+        .la-channel-card[data-state="searching"] .la-channel-status { color: var(--system-blue); }
+        .la-channel-card[data-state="found"] .la-channel-status { color: var(--system-green); }
+        .la-channel-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--fill-primary);
+            flex-shrink: 0;
+            transition: background 0.3s var(--ios-ease);
+        }
+        .la-channel-card[data-state="searching"] .la-channel-status-dot { background: var(--system-blue); }
+        .la-channel-card[data-state="found"] .la-channel-status-dot { background: var(--system-green); }
+        .la-channel-chevron {
+            font-size: 10px;
+            color: var(--label-tertiary);
+            transition: transform 0.3s var(--ios-ease);
+            flex-shrink: 0;
+        }
+        .la-channel-card.la-expanded .la-channel-chevron { transform: rotate(180deg); }
+        .la-channel-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s var(--ios-ease);
+            padding: 0 16px;
+        }
+        .la-channel-card.la-expanded .la-channel-details {
+            max-height: 200px;
+            padding: 0 16px 12px;
+        }
+        .la-channel-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 0.5px solid var(--separator);
+        }
+        .la-channel-detail-row:last-child { border-bottom: none; }
+        .la-channel-detail-label {
+            font-size: 15px;
+            color: var(--label-secondary);
+            letter-spacing: -0.24px;
+        }
+        .la-channel-detail-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--label-primary);
+            letter-spacing: -0.24px;
+        }
+
+        /* ── Hero Report Cards (iOS stat cards) ── */
+        .la-report-section {
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s var(--ios-ease), transform 0.5s var(--ios-ease);
+        }
+        .la-report-section.la-visible {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .la-hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .la-hero-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .la-hero-card::before { display: none; }
+        .la-hero-label {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--label-tertiary);
+            letter-spacing: -0.08px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .la-hero-value {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 0.37px;
+            line-height: 41px;
+            margin-bottom: 8px;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: unset;
+            background: none;
+            background-clip: unset;
+        }
+        .la-hero-card:nth-child(1) .la-hero-value { color: var(--system-blue); }
+        .la-hero-card:nth-child(2) .la-hero-value { color: var(--system-green); }
+        .la-hero-card:nth-child(3) .la-hero-value { color: var(--system-orange); }
+        .la-hero-card:nth-child(4) .la-hero-value { color: var(--system-purple); }
+
+        .la-heat-bar-container {
+            width: 100%;
+            height: 4px;
+            background: var(--fill-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .la-heat-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.8s var(--ios-ease);
+        }
+        .la-heat-bar-fill.la-score-high { background: var(--system-blue); }
+        .la-heat-bar-fill.la-score-mid { background: var(--system-orange); }
+        .la-hero-sublabel {
+            font-size: 12px;
+            color: var(--label-tertiary);
+            margin-top: 6px;
+        }
+
+        /* ── Rankings Table (iOS plain list) ── */
+        .la-rankings-wrap { margin-top: 4px; }
+        .la-sort-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .la-sort-btn {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--label-secondary);
+            background: var(--fill-tertiary);
+            border: none;
+            border-radius: 9999px;
+            padding: 6px 14px;
+            cursor: pointer;
+            transition: all 0.2s var(--ios-ease);
+            letter-spacing: -0.08px;
+        }
+        .la-sort-btn:active { opacity: 0.7; }
+        .la-sort-btn.la-sort-active {
+            background: rgba(10,132,255,0.18);
+            color: var(--system-blue);
+        }
+        .la-rankings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+        .la-rankings-table thead th {
+            text-align: left;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--label-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0;
+            border-bottom: 0.5px solid var(--separator);
+        }
+        .la-rankings-table tbody tr {
+            cursor: pointer;
+            transition: background 0.2s var(--ios-ease);
+        }
+        .la-rankings-table tbody tr:active { background: var(--fill-tertiary); }
+        .la-rankings-table td {
+            padding: 11px 10px;
+            color: var(--label-primary);
+            border-bottom: 0.5px solid var(--separator);
+            vertical-align: middle;
+            font-size: 15px;
+            letter-spacing: -0.24px;
+        }
+        .la-platform-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .la-platform-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .la-expanded-row { display: none; }
+        .la-expanded-row.la-visible { display: table-row; }
+        .la-expanded-row td {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 0.5px solid var(--separator);
+        }
+        .la-expanded-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .la-stat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            background: var(--fill-tertiary);
+            font-size: 13px;
+            color: var(--label-primary);
+        }
+        .la-stat-pill-label {
+            color: var(--label-tertiary);
+            letter-spacing: -0.08px;
+        }
+        .la-stat-pill-value { font-weight: 600; }
+        .la-trend-up { color: var(--system-green); }
+        .la-trend-down { color: var(--system-red); }
+        .la-trend-steady { color: var(--system-orange); }
+
+        /* ── Quick Actions (iOS tinted buttons) ── */
+        .la-actions-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.5s var(--ios-ease), transform 0.5s var(--ios-ease);
+        }
+        .la-actions-section.la-visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .la-actions-grid {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .la-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 20px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(10,132,255,0.15);
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--system-blue);
+            cursor: pointer;
+            transition: opacity var(--ios-duration) var(--ios-ease);
+            letter-spacing: -0.24px;
+            min-height: 44px;
+        }
+        .la-action-btn:active { opacity: 0.7; }
+        .la-action-icon { font-size: 17px; }
+
+        /* ══════════════════════════════════════════════════
+           CHART REFERENCE GRID (bottom panel)
+           ══════════════════════════════════════════════════ */
+        .chart-ref-panel {
+            border-top: 0.5px solid var(--separator);
+            flex-shrink: 0;
+            max-height: 38vh;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0,0,0,0.72);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+        }
+        .chart-ref-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            user-select: none;
+            min-height: 44px;
+            transition: opacity var(--ios-duration) var(--ios-ease);
+        }
+        .chart-ref-header:active { opacity: 0.7; }
+        .chart-ref-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--label-primary);
+            letter-spacing: -0.24px;
+        }
+        .chart-ref-count {
+            font-size: 13px;
+            color: var(--system-blue);
+            background: rgba(10,132,255,0.12);
+            padding: 3px 10px;
+            border-radius: 9999px;
+            letter-spacing: -0.08px;
+            font-weight: 500;
+        }
+        .chart-ref-chevron {
+            font-size: 10px;
+            color: var(--label-tertiary);
+            transition: transform 0.3s var(--ios-ease);
+        }
+        .chart-ref-panel.open .chart-ref-chevron { transform: rotate(180deg); }
+        .chart-ref-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s var(--ios-ease);
+        }
+        .chart-ref-panel.open .chart-ref-body {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .chart-ref-search {
+            padding: 8px 16px;
+            position: sticky;
+            top: 0;
+            background: rgba(0,0,0,0.72);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+            z-index: 2;
+        }
+        .chart-ref-search input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px 0 12px;
+            background: var(--fill-tertiary);
+            border: none;
+            border-radius: 10px;
+            color: var(--label-primary);
+            font-size: 15px;
+            font-weight: 400;
+            letter-spacing: -0.24px;
+            outline: none;
+            caret-color: var(--system-blue);
+        }
+        .chart-ref-search input::placeholder { color: var(--label-tertiary); }
+        .chart-ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .chart-ref-table thead th {
+            position: sticky;
+            top: 52px;
+            background: var(--bg-primary);
+            text-align: left;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--label-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.07px;
+            border-bottom: 0.5px solid var(--separator);
+            z-index: 1;
+        }
+        .chart-ref-table tbody tr {
+            transition: background 0.15s var(--ios-ease);
+        }
+        .chart-ref-table tbody tr:active { background: var(--fill-tertiary); }
+        .chart-ref-table td {
+            padding: 10px 12px;
+            color: var(--label-secondary);
+            border-bottom: 0.5px solid var(--separator);
+            vertical-align: middle;
+            white-space: nowrap;
+            font-size: 13px;
+            letter-spacing: -0.08px;
+        }
+        .chart-ref-table td:first-child {
+            color: var(--label-primary);
+            font-weight: 500;
+        }
+        .chart-ref-table .cr-subgenre {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            background: rgba(10,132,255,0.12);
+            color: var(--system-blue);
+        }
+        .chart-ref-table .cr-social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: var(--fill-tertiary);
+            color: var(--label-tertiary);
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 4px;
+            transition: background 0.15s var(--ios-ease), color 0.15s var(--ios-ease);
+            min-height: 24px;
+        }
+        .chart-ref-table .cr-social-link:active {
+            background: rgba(10,132,255,0.2);
+            color: var(--system-blue);
+        }
+
+        /* ══════════════════════════════════════════════════
+           RESPONSIVE
+           ══════════════════════════════════════════════════ */
+        @media (max-width: 700px) {
+            .lg-label-grid { grid-template-columns: 1fr; }
+            .la-channels-grid { grid-template-columns: 1fr; }
+            .la-hero-grid { grid-template-columns: 1fr 1fr; }
+            .lg-bracket-container { grid-template-columns: 1fr; }
+        }
+        @media (min-width: 414px) {
+            .app-view { padding: 16px 20px 20px; }
+        }
+        @media (min-width: 768px) {
+            .la-hero-grid { grid-template-columns: repeat(4, 1fr); }
+            .lg-label-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (min-width: 1024px) {
+            .lg-label-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <!-- ═══ iOS NAVIGATION BAR ═══ -->
+        <div class="app-header">
+            <div class="app-header-inner">
+                <span class="app-title-inline">Label Generator</span>
+            </div>
+            <div class="app-large-title">
+                <div class="app-large-title-text">Labels</div>
+                <div class="app-subtitle">Bass / Dubstep / Tech / Tech House / Chart</div>
+            </div>
+        </div>
+
+        <div class="app-body">
+
+            <!-- ═══ VIEW 1: DATABASE ═══ -->
+            <div class="app-view active" id="viewDatabase">
+                <!-- iOS Segmented Control -->
+                <div class="ios-segmented-control">
+                    <button class="ios-segment active" id="lgToggleSearch">Search</button>
+                    <button class="ios-segment" id="lgToggleBracket">Bracket</button>
+                </div>
+
+                <!-- Search sub-view -->
+                <div class="lg-view visible" id="lgSearchView">
+                    <div class="ios-search-wrap">
+                        <svg class="ios-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" class="ios-search-bar" id="lgSearchInput" placeholder="Search labels..." autocomplete="off">
+                        <div class="ios-suggestions" id="lgSuggestions"></div>
+                    </div>
+                    <div class="lg-label-grid" id="lgLabelGrid"></div>
+                </div>
+
+                <!-- Bracket sub-view -->
+                <div class="lg-view hidden" id="lgBracketView">
+                    <div class="lg-bracket-filters">
+                        <button class="lg-gen-pill active" data-lg-filter="all">All</button>
+                        <button class="lg-gen-pill" data-lg-filter="bass">Bass / Dubstep</button>
+                        <button class="lg-gen-pill" data-lg-filter="tech">Tech / Tech House</button>
+                        <button class="lg-gen-pill" data-lg-filter="chart">Chart Labels</button>
+                    </div>
+                    <div class="lg-bracket-container" id="lgBracketContainer"></div>
+                </div>
+            </div>
+
+            <!-- ═══ VIEW 2: ANALYZER ═══ -->
+            <div class="app-view" id="viewAnalyzer">
+                <div class="la-wrap">
+                    <!-- S1: Search -->
+                    <div class="la-section">
+                        <div class="la-section-header">
+                            <h2 class="la-section-title">Label Lookup</h2>
+                            <span class="la-section-subtitle">Search &amp; Analyze</span>
+                        </div>
+                        <div class="la-search-bar-wrap">
+                            <div class="la-search-input-wrap">
+                                <svg class="la-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <input type="text" id="laSearchInput" placeholder="Enter label name..." />
+                                <div class="la-search-suggestions" id="laSuggestions"></div>
+                            </div>
+                            <button class="la-verify-btn" id="laGoBtn">Analyze</button>
+                        </div>
+                    </div>
+
+                    <!-- S2: Platform Scan -->
+                    <div class="la-section">
+                        <div class="la-section-header">
+                            <h2 class="la-section-title">Platform Scan</h2>
+                            <span class="la-section-subtitle">4 platforms</span>
+                        </div>
+                        <div class="la-channels-grid" id="laChannelsGrid">
+                            <div class="la-channel-card" id="laChBP" data-channel="beatport" data-state="idle">
+                                <div class="la-channel-card-header" onclick="laToggleCard('laChBP')">
+                                    <div class="la-channel-icon la-bp">&#127925;</div>
+                                    <div class="la-channel-info"><div class="la-channel-name">Beatport</div><div class="la-channel-status">waiting</div></div>
+                                    <div class="la-channel-status-dot"></div>
+                                    <div class="la-channel-chevron">&#9660;</div>
+                                </div>
+                                <div class="la-channel-details"></div>
+                            </div>
+                            <div class="la-channel-card" id="laChSP" data-channel="spotify" data-state="idle">
+                                <div class="la-channel-card-header" onclick="laToggleCard('laChSP')">
+                                    <div class="la-channel-icon la-sp">&#127911;</div>
+                                    <div class="la-channel-info"><div class="la-channel-name">Spotify</div><div class="la-channel-status">waiting</div></div>
+                                    <div class="la-channel-status-dot"></div>
+                                    <div class="la-channel-chevron">&#9660;</div>
+                                </div>
+                                <div class="la-channel-details"></div>
+                            </div>
+                            <div class="la-channel-card" id="laChSC" data-channel="soundcloud" data-state="idle">
+                                <div class="la-channel-card-header" onclick="laToggleCard('laChSC')">
+                                    <div class="la-channel-icon la-sc">&#9729;</div>
+                                    <div class="la-channel-info"><div class="la-channel-name">SoundCloud</div><div class="la-channel-status">waiting</div></div>
+                                    <div class="la-channel-status-dot"></div>
+                                    <div class="la-channel-chevron">&#9660;</div>
+                                </div>
+                                <div class="la-channel-details"></div>
+                            </div>
+                            <div class="la-channel-card" id="laChBC" data-channel="bandcamp" data-state="idle">
+                                <div class="la-channel-card-header" onclick="laToggleCard('laChBC')">
+                                    <div class="la-channel-icon la-bc">&#128191;</div>
+                                    <div class="la-channel-info"><div class="la-channel-name">Bandcamp</div><div class="la-channel-status">waiting</div></div>
+                                    <div class="la-channel-status-dot"></div>
+                                    <div class="la-channel-chevron">&#9660;</div>
+                                </div>
+                                <div class="la-channel-details"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- S3: Report Dashboard -->
+                    <div class="la-section la-report-section" id="laReportSection">
+                        <div class="la-section-header">
+                            <h2 class="la-section-title">Label Report</h2>
+                            <span class="la-section-subtitle">Cross-Platform Analysis</span>
+                        </div>
+                        <div class="la-hero-grid" id="laHeroGrid">
+                            <div class="la-hero-card"><div class="la-hero-label">Total Artists</div><div class="la-hero-value" id="laHeroArtists">&mdash;</div><div class="la-heat-bar-container"><div class="la-heat-bar-fill la-score-high" style="width:0%"></div></div><div class="la-hero-sublabel">roster size</div></div>
+                            <div class="la-hero-card"><div class="la-hero-label">Avg Releases</div><div class="la-hero-value" id="laHeroReleases">&mdash;</div><div class="la-heat-bar-container"><div class="la-heat-bar-fill la-score-mid" style="width:0%"></div></div><div class="la-hero-sublabel">per year (est.)</div></div>
+                            <div class="la-hero-card"><div class="la-hero-label">Label Score</div><div class="la-hero-value" id="laHeroScore">&mdash;</div><div class="la-heat-bar-container"><div class="la-heat-bar-fill la-score-high" style="width:0%"></div></div><div class="la-hero-sublabel">presence rating</div></div>
+                            <div class="la-hero-card"><div class="la-hero-label">Activity Level</div><div class="la-hero-value" id="laHeroActivity">&mdash;</div><div class="la-heat-bar-container"><div class="la-heat-bar-fill la-score-mid" style="width:0%"></div></div><div class="la-hero-sublabel">release frequency</div></div>
+                        </div>
+                        <div class="la-rankings-wrap">
+                            <div class="la-sort-bar">
+                                <button class="la-sort-btn la-sort-active" data-sort="releases">Releases</button>
+                                <button class="la-sort-btn" data-sort="followers">Followers</button>
+                                <button class="la-sort-btn" data-sort="alpha">A&ndash;Z</button>
+                            </div>
+                            <table class="la-rankings-table">
+                                <thead><tr><th>Platform</th><th>Handle</th><th>Releases</th><th>Followers</th><th>Engagement</th><th>Trend</th></tr></thead>
+                                <tbody id="laRankingsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- S4: Quick Actions -->
+                    <div class="la-section la-actions-section" id="laActionsSection">
+                        <div class="la-section-header">
+                            <h2 class="la-section-title">Quick Actions</h2>
+                        </div>
+                        <div class="la-actions-grid">
+                            <button class="la-action-btn" id="laOpenAll"><span class="la-action-icon">&#128279;</span> Open All Profiles</button>
+                            <button class="la-action-btn" id="laExport"><span class="la-action-icon">&#128196;</span> Export Report</button>
+                            <button class="la-action-btn" id="laNewLookup"><span class="la-action-icon">&#128269;</span> New Lookup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ CHART REFERENCE GRID (collapsible bottom panel) ═══ -->
+        <div class="chart-ref-panel open" id="chartRefPanel">
+            <div class="chart-ref-header" id="chartRefToggle">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span class="chart-ref-title">Chart Reference Grid</span>
+                    <span class="chart-ref-count" id="chartRefCount">0 labels</span>
+                </div>
+                <span class="chart-ref-chevron">&#9660;</span>
+            </div>
+            <div class="chart-ref-body">
+                <div class="chart-ref-search">
+                    <input type="text" id="chartRefSearch" placeholder="Filter chart labels..." />
+                </div>
+                <table class="chart-ref-table">
+                    <thead><tr><th>Label</th><th>Source Track</th><th>Chart</th><th>Sub-Genre</th><th>Country</th><th>Socials</th></tr></thead>
+                    <tbody id="chartRefBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ iOS TAB BAR ═══ -->
+        <div class="app-tab-bar">
+            <button class="app-tab-btn active" data-view="database">
+                <div class="app-tab-icon">
+                    <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/></svg>
+                </div>
+                <span class="app-tab-label">Database</span>
+            </button>
+            <button class="app-tab-btn" data-view="analyzer">
+                <div class="app-tab-icon">
+                    <svg viewBox="0 0 24 24"><path d="M2 12h2v7H2v-7zm4-3h2v10H6V9zm4-4h2v14h-2V5zm4 6h2v8h-2v-8zm4-2h2v10h-2V9z"/></svg>
+                </div>
+                <span class="app-tab-label">Analyzer</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+    /* ═══════════════════════════════════════════════════════════════
+       LABEL DATABASE — 15 Bass/Dubstep + 15 Tech/Tech House + 50 Chart
+       ═══════════════════════════════════════════════════════════════ */
+    var BASS_LABELS = [
+        { name: "Never Say Die", genre: "EDM", subGenre: "Bass / Dubstep", status: "active", founded: 2009, roster: 50, country: "United Kingdom", tags: ["dubstep", "bass", "heavy"] },
+        { name: "Disciple", genre: "EDM", subGenre: "Dubstep", status: "active", founded: 2014, roster: 30, country: "United States", tags: ["dubstep", "riddim", "heavy"] },
+        { name: "Subsidia", genre: "EDM", subGenre: "Bass", status: "active", founded: 2020, roster: 80, country: "United States", tags: ["bass", "dubstep", "excision"] },
+        { name: "Deadbeats", genre: "EDM", subGenre: "Bass", status: "active", founded: 2016, roster: 35, country: "Canada", tags: ["bass", "experimental", "zeds dead"] },
+        { name: "WAKAAN", genre: "EDM", subGenre: "Experimental Bass", status: "active", founded: 2015, roster: 40, country: "United States", tags: ["experimental", "bass", "weird"] },
+        { name: "Circus Records", genre: "EDM", subGenre: "Bass / Dubstep", status: "active", founded: 2010, roster: 45, country: "United Kingdom", tags: ["dubstep", "bass", "doctor p"] },
+        { name: "Deep Dark & Dangerous", genre: "EDM", subGenre: "Deep Dubstep", status: "active", founded: 2014, roster: 20, country: "United Kingdom", tags: ["deep dubstep", "140", "dark"] },
+        { name: "Bassrush", genre: "EDM", subGenre: "Bass", status: "active", founded: 2001, roster: 60, country: "United States", tags: ["bass", "dubstep", "insomniac"] },
+        { name: "Rottun Recordings", genre: "EDM", subGenre: "Dubstep", status: "active", founded: 2009, roster: 25, country: "United States", tags: ["dubstep", "heavy", "excision"] },
+        { name: "Kannibalen Records", genre: "EDM", subGenre: "Bass / Electro", status: "active", founded: 2011, roster: 30, country: "Canada", tags: ["bass", "electro", "dark"] },
+        { name: "Dim Mak Records", genre: "EDM", subGenre: "Bass / Electro", status: "active", founded: 1996, roster: 100, country: "United States", tags: ["bass", "electro", "steve aoki"] },
+        { name: "Monstercat", genre: "EDM", subGenre: "Bass / Multi-genre", status: "active", founded: 2011, roster: 200, country: "Canada", tags: ["bass", "dubstep", "diverse"] },
+        { name: "UKF", genre: "EDM", subGenre: "Drum & Bass / Dubstep", status: "active", founded: 2009, roster: 50, country: "United Kingdom", tags: ["dnb", "dubstep", "media"] },
+        { name: "Gud Vibrations", genre: "EDM", subGenre: "Bass", status: "active", founded: 2017, roster: 25, country: "United States", tags: ["bass", "nghtmre", "slander"] },
+        { name: "Ophelia Records", genre: "EDM", subGenre: "Melodic Bass", status: "active", founded: 2018, roster: 20, country: "United States", tags: ["melodic", "bass", "seven lions"] }
+    ];
+
+    var TECH_LABELS = [
+        { name: "Drumcode", genre: "EDM", subGenre: "Techno", status: "active", founded: 1996, roster: 40, country: "Sweden", tags: ["techno", "dark", "adam beyer"] },
+        { name: "Toolroom Records", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2003, roster: 60, country: "United Kingdom", tags: ["tech house", "house", "mark knight"] },
+        { name: "Dirtybird", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2005, roster: 40, country: "United States", tags: ["tech house", "booty", "claude vonstroke"] },
+        { name: "Defected Records", genre: "EDM", subGenre: "House / Tech House", status: "active", founded: 1999, roster: 80, country: "United Kingdom", tags: ["house", "tech house", "classic"] },
+        { name: "Relief Records", genre: "EDM", subGenre: "Tech House", status: "active", founded: 1996, roster: 30, country: "United States", tags: ["tech house", "chicago", "green velvet"] },
+        { name: "Truesoul", genre: "EDM", subGenre: "Techno", status: "active", founded: 2004, roster: 25, country: "Sweden", tags: ["techno", "deep", "adam beyer"] },
+        { name: "Afterlife", genre: "EDM", subGenre: "Melodic Techno", status: "active", founded: 2016, roster: 30, country: "Italy", tags: ["melodic techno", "progressive", "tale of us"] },
+        { name: "Kompakt", genre: "EDM", subGenre: "Minimal / Techno", status: "active", founded: 1998, roster: 50, country: "Germany", tags: ["minimal", "techno", "cologne"] },
+        { name: "Turbo Recordings", genre: "EDM", subGenre: "Tech House / Techno", status: "active", founded: 1998, roster: 35, country: "Canada", tags: ["tech house", "techno", "tiga"] },
+        { name: "Hot Creations", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2010, roster: 30, country: "United Kingdom", tags: ["tech house", "groovy", "jamie jones"] },
+        { name: "Knee Deep In Sound", genre: "EDM", subGenre: "Tech House / Techno", status: "active", founded: 2014, roster: 20, country: "United States", tags: ["tech house", "techno", "hot since 82"] },
+        { name: "Terminal M", genre: "EDM", subGenre: "Techno", status: "active", founded: 2008, roster: 25, country: "Germany", tags: ["techno", "peak time", "monika kruse"] },
+        { name: "Suara", genre: "EDM", subGenre: "Tech House / Techno", status: "active", founded: 2007, roster: 45, country: "Spain", tags: ["tech house", "techno", "coyu"] },
+        { name: "Sola", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2016, roster: 35, country: "United Kingdom", tags: ["tech house", "underground", "solardo"] },
+        { name: "Repopulate Mars", genre: "EDM", subGenre: "Tech House", status: "active", founded: 2017, roster: 25, country: "United States", tags: ["tech house", "funky", "lee foss"] }
+    ];
+
+    /* ═══════════════════════════════════════════════════════
+       CHART LABELS — 50 labels sourced from US electronic charts
+       ═══════════════════════════════════════════════════════ */
+    var CHART_LABELS = [
+        { name: "Spinnin' Records", genre: "EDM", subGenre: "Dance / House", status: "active", founded: 1999, roster: 300, country: "Netherlands", tags: ["dance", "house", "mainstream"], sourceTrack: "Tattoo", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "spinninrecords", spotify: "spotify:label:Spinnin%27+Records", soundcloud: "spinninrecords", twitter: "SpinninRecords" }, followers: 12000000 },
+        { name: "Armada Music", genre: "EDM", subGenre: "Trance / Progressive", status: "active", founded: 2003, roster: 200, country: "Netherlands", tags: ["trance", "progressive", "armin"], sourceTrack: "Blah Blah Blah", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "armadamusic", spotify: "spotify:label:Armada+Music", soundcloud: "armadamusic", twitter: "armaborism" }, followers: 8500000 },
+        { name: "Ultra Records", genre: "EDM", subGenre: "Dance / Electronic", status: "active", founded: 1995, roster: 150, country: "United States", tags: ["dance", "electronic", "major"], sourceTrack: "Body", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "ultrarecords", spotify: "spotify:label:Ultra+Records", soundcloud: "ultrarecords", twitter: "UltraRecords" }, followers: 3200000 },
+        { name: "Astralwerks", genre: "EDM", subGenre: "Electronic / Indie Dance", status: "active", founded: 1993, roster: 80, country: "United States", tags: ["electronic", "indie", "capitol"], sourceTrack: "Clarity", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "astralwerks", spotify: "spotify:label:Astralwerks", soundcloud: "astralwerks", twitter: "Astralwerks" }, followers: 950000 },
+        { name: "STMPD RCRDS", genre: "EDM", subGenre: "Progressive House", status: "active", founded: 2016, roster: 45, country: "Netherlands", tags: ["progressive", "big room", "martin garrix"], sourceTrack: "In The Name Of Love", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "staborecords", spotify: "spotify:label:STMPD+RCRDS", soundcloud: "stmpdrcrds", twitter: "STMPDRCRDS" }, followers: 2800000 },
+        { name: "Musical Freedom", genre: "EDM", subGenre: "Progressive / Electro", status: "active", founded: 2009, roster: 35, country: "Netherlands", tags: ["progressive", "electro", "tiesto"], sourceTrack: "The Business", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "musicalfreedom", spotify: "spotify:label:Musical+Freedom", soundcloud: "musicalfreedom", twitter: "musabordom" }, followers: 1500000 },
+        { name: "Revealed Recordings", genre: "EDM", subGenre: "Big Room / Progressive", status: "active", founded: 2010, roster: 50, country: "Netherlands", tags: ["big room", "progressive", "hardwell"], sourceTrack: "Spaceman", sourceChart: "Beatport Top 100", socials: { instagram: "revealedrecordings", spotify: "spotify:label:Revealed+Recordings", soundcloud: "revealed", twitter: "RevealedRec" }, followers: 4200000 },
+        { name: "mau5trap", genre: "EDM", subGenre: "Progressive / Electro", status: "active", founded: 2007, roster: 30, country: "Canada", tags: ["progressive", "electro", "deadmau5"], sourceTrack: "Strobe", sourceChart: "Beatport Top 100", socials: { instagram: "mau5trap", spotify: "spotify:label:mau5trap", soundcloud: "maborap", twitter: "mau5trap" }, followers: 1800000 },
+        { name: "Anjunabeats", genre: "EDM", subGenre: "Trance / Progressive", status: "active", founded: 2000, roster: 40, country: "United Kingdom", tags: ["trance", "progressive", "above & beyond"], sourceTrack: "Sun & Moon", sourceChart: "Beatport Top 100", socials: { instagram: "anjunabeats", spotify: "spotify:label:Anjunabeats", soundcloud: "anjunabeats", twitter: "Anjunabeats" }, followers: 2100000 },
+        { name: "Anjunadeep", genre: "EDM", subGenre: "Deep House / Organic", status: "active", founded: 2005, roster: 35, country: "United Kingdom", tags: ["deep house", "organic", "melodic"], sourceTrack: "Northern Soul", sourceChart: "Beatport Top 100", socials: { instagram: "anjunadeep", spotify: "spotify:label:Anjunadeep", soundcloud: "anjunadeep", twitter: "Anjunadeep" }, followers: 1900000 },
+        { name: "Protocol Recordings", genre: "EDM", subGenre: "Progressive House", status: "active", founded: 2012, roster: 30, country: "Netherlands", tags: ["progressive", "electro", "nicky romero"], sourceTrack: "Toulouse", sourceChart: "Beatport Top 100", socials: { instagram: "protocolrecordings", spotify: "spotify:label:Protocol+Recordings", soundcloud: "protocolrecordings", twitter: "ProtocolRec" }, followers: 1200000 },
+        { name: "Owsla", genre: "EDM", subGenre: "Bass / Electronic", status: "active", founded: 2011, roster: 25, country: "United States", tags: ["bass", "electronic", "skrillex"], sourceTrack: "Bangarang", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "owsla", spotify: "spotify:label:OWSLA", soundcloud: "owsla", twitter: "OWSLA" }, followers: 2400000 },
+        { name: "Mad Decent", genre: "EDM", subGenre: "Bass / Trap", status: "active", founded: 2006, roster: 60, country: "United States", tags: ["bass", "trap", "diplo"], sourceTrack: "Lean On", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "maddecent", spotify: "spotify:label:Mad+Decent", soundcloud: "maddecent", twitter: "maborecent" }, followers: 3500000 },
+        { name: "Monstercat", genre: "EDM", subGenre: "Multi-Genre", status: "active", founded: 2011, roster: 200, country: "Canada", tags: ["diverse", "indie", "community"], sourceTrack: "Alone", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "monstercat", spotify: "spotify:label:Monstercat", soundcloud: "monstercat", twitter: "Monstercat" }, followers: 9500000 },
+        { name: "Hexagon", genre: "EDM", subGenre: "Future House", status: "active", founded: 2015, roster: 25, country: "Netherlands", tags: ["future house", "bass house", "don diablo"], sourceTrack: "On My Mind", sourceChart: "Beatport Top 100", socials: { instagram: "hexaborecords", spotify: "spotify:label:Hexagon", soundcloud: "hexaborecords", twitter: "hexaborecords" }, followers: 800000 },
+        { name: "Confession", genre: "EDM", subGenre: "Bass House", status: "active", founded: 2016, roster: 20, country: "United States", tags: ["bass house", "tech house", "tchami"], sourceTrack: "Adieu", sourceChart: "Beatport Top 100", socials: { instagram: "confessionlabel", spotify: "spotify:label:Confession", soundcloud: "confession", twitter: "confaborabel" }, followers: 450000 },
+        { name: "Heldeep Records", genre: "EDM", subGenre: "Future House / House", status: "active", founded: 2015, roster: 30, country: "Netherlands", tags: ["future house", "groovy", "oliver heldens"], sourceTrack: "Gecko", sourceChart: "Shazam Electronic Top 200", socials: { instagram: "heldeeprecords", spotify: "spotify:label:Heldeep+Records", soundcloud: "heldeeprecords", twitter: "HeldeepRecords" }, followers: 700000 },
+        { name: "Dharma Worldwide", genre: "EDM", subGenre: "Big Room / Electro", status: "active", founded: 2017, roster: 20, country: "Netherlands", tags: ["big room", "electro", "kshmr"], sourceTrack: "Secrets", sourceChart: "Beatport Top 100", socials: { instagram: "dharmaworldwide", spotify: "spotify:label:Dharma+Worldwide", soundcloud: "dharmaworldwide", twitter: "DharmaWW" }, followers: 600000 },
+        { name: "Enhanced Music", genre: "EDM", subGenre: "Trance / Progressive", status: "active", founded: 2008, roster: 35, country: "United Kingdom", tags: ["trance", "progressive", "tritonal"], sourceTrack: "Now Or Never", sourceChart: "Beatport Top 100", socials: { instagram: "enhancedmusic", spotify: "spotify:label:Enhanced+Music", soundcloud: "enhancedmusic", twitter: "EnhancedMusic" }, followers: 500000 },
+        { name: "Insomniac Records", genre: "EDM", subGenre: "House / Techno", status: "active", founded: 2014, roster: 40, country: "United States", tags: ["house", "techno", "insomniac"], sourceTrack: "Losing It", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "insomniacrecords", spotify: "spotify:label:Insomniac+Records", soundcloud: "insomniacrecords", twitter: "InsomniacRecs" }, followers: 1200000 },
+        { name: "Sony Music / RCA", genre: "EDM", subGenre: "Dance Pop", status: "active", founded: 1900, roster: 500, country: "United States", tags: ["pop", "dance", "major"], sourceTrack: "Don't You Worry Child", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "sonymusic", spotify: "spotify:label:RCA+Records", soundcloud: "sonymusic", twitter: "SonyMusic" }, followers: 15000000 },
+        { name: "Atlantic Records", genre: "EDM", subGenre: "Dance / Pop", status: "active", founded: 1947, roster: 400, country: "United States", tags: ["pop", "dance", "major"], sourceTrack: "Happier", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "atlanticrecords", spotify: "spotify:label:Atlantic+Records", soundcloud: "atlanticrecords", twitter: "AtlanticRecords" }, followers: 8000000 },
+        { name: "Interscope Records", genre: "EDM", subGenre: "Dance / Electronic", status: "active", founded: 1990, roster: 350, country: "United States", tags: ["electronic", "pop", "major"], sourceTrack: "Scary Monsters and Nice Sprites", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "interscope", spotify: "spotify:label:Interscope+Records", soundcloud: "interscope", twitter: "Interscope" }, followers: 6500000 },
+        { name: "Columbia Records", genre: "EDM", subGenre: "Dance Pop", status: "active", founded: 1887, roster: 400, country: "United States", tags: ["pop", "dance", "legacy"], sourceTrack: "Electricity", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "columbiarecords", spotify: "spotify:label:Columbia+Records", soundcloud: "columbiarecords", twitter: "ColumbiaRecords" }, followers: 7000000 },
+        { name: "Big Beat Records", genre: "EDM", subGenre: "Electronic / Dance", status: "active", founded: 1987, roster: 30, country: "United States", tags: ["electronic", "dance", "atlantic"], sourceTrack: "Something Just Like This", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "bigbeatrecords", spotify: "spotify:label:Big+Beat+Records", soundcloud: "bigbeatrecords", twitter: "BigBeat" }, followers: 500000 },
+        { name: "Black Hole Recordings", genre: "EDM", subGenre: "Trance", status: "active", founded: 1997, roster: 60, country: "Netherlands", tags: ["trance", "uplifting", "classic"], sourceTrack: "Adagio For Strings", sourceChart: "Beatport Top 100", socials: { instagram: "blackholerecordings", spotify: "spotify:label:Black+Hole+Recordings", soundcloud: "blackholerecordings", twitter: "BlackHoleRec" }, followers: 400000 },
+        { name: "Axtone", genre: "EDM", subGenre: "Progressive House", status: "active", founded: 2005, roster: 25, country: "Sweden", tags: ["progressive", "house", "axwell"], sourceTrack: "Barricade", sourceChart: "Beatport Top 100", socials: { instagram: "axtone", spotify: "spotify:label:Axtone", soundcloud: "axtone", twitter: "Axtone" }, followers: 350000 },
+        { name: "SIZE Records", genre: "EDM", subGenre: "Progressive / Tech", status: "active", founded: 2003, roster: 20, country: "Sweden", tags: ["progressive", "tech", "steve angello"], sourceTrack: "Yeah", sourceChart: "Beatport Top 100", socials: { instagram: "sizerecords", spotify: "spotify:label:SIZE+Records", soundcloud: "sizerecords", twitter: "SIZERecords" }, followers: 300000 },
+        { name: "Proximity", genre: "EDM", subGenre: "Future Bass / Electronic", status: "active", founded: 2012, roster: 40, country: "United States", tags: ["future bass", "chill", "youtube"], sourceTrack: "Faded", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "proximity", spotify: "spotify:label:Proximity", soundcloud: "proximity", twitter: "ProximityM" }, followers: 15000000 },
+        { name: "NCS (NoCopyrightSounds)", genre: "EDM", subGenre: "Multi-Genre", status: "active", founded: 2011, roster: 100, country: "United Kingdom", tags: ["free", "diverse", "youtube"], sourceTrack: "Fade", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "nocopyrightsounds", spotify: "spotify:label:NCS", soundcloud: "nocopyrightsounds", twitter: "NCSounds" }, followers: 35000000 },
+        { name: "Trap Nation", genre: "EDM", subGenre: "Trap / Bass", status: "active", founded: 2012, roster: 30, country: "United States", tags: ["trap", "bass", "youtube"], sourceTrack: "Roses", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "trapnation", spotify: "spotify:label:Trap+Nation", soundcloud: "alltrapnation", twitter: "TrapNation" }, followers: 20000000 },
+        { name: "Lowly", genre: "EDM", subGenre: "Chill / Electronic", status: "active", founded: 2016, roster: 25, country: "United States", tags: ["chill", "lo-fi", "electronic"], sourceTrack: "Are We Still Friends", sourceChart: "Apple Music Electronic Top 100", socials: { instagram: "lowly", spotify: "spotify:label:Lowly", soundcloud: "lowly", twitter: "LowlyPalace" }, followers: 3000000 },
+        { name: "Dim Mak Records", genre: "EDM", subGenre: "Electro / Bass", status: "active", founded: 1996, roster: 100, country: "United States", tags: ["electro", "bass", "steve aoki"], sourceTrack: "Turbulence", sourceChart: "Beatport Top 100", socials: { instagram: "dimmak", spotify: "spotify:label:Dim+Mak", soundcloud: "dimmak", twitter: "dimmak" }, followers: 2500000 },
+        { name: "KSHMR Records / Dharma", genre: "EDM", subGenre: "Big Room", status: "active", founded: 2017, roster: 15, country: "United States", tags: ["big room", "indian", "kshmr"], sourceTrack: "Power", sourceChart: "1001Tracklists Top Tracks", socials: { instagram: "kshmr", spotify: "spotify:label:Dharma+Worldwide", soundcloud: "kshmr", twitter: "KSHMRmusic" }, followers: 4000000 },
+        { name: "Ophelia Records", genre: "EDM", subGenre: "Melodic Bass", status: "active", founded: 2018, roster: 20, country: "United States", tags: ["melodic", "bass", "seven lions"], sourceTrack: "Rush Over Me", sourceChart: "Beatport Top 100", socials: { instagram: "opheliarecords", spotify: "spotify:label:Ophelia+Records", soundcloud: "opheliarecords", twitter: "OpheliaRecs" }, followers: 600000 },
+        { name: "Seeking Blue", genre: "EDM", subGenre: "Melodic / Progressive", status: "active", founded: 2020, roster: 15, country: "United States", tags: ["melodic", "progressive", "jason ross"], sourceTrack: "Only For You", sourceChart: "Beatport Top 100", socials: { instagram: "seekingblue", spotify: "spotify:label:Seeking+Blue", soundcloud: "seekingblue", twitter: "SeekingBlue" }, followers: 150000 },
+        { name: "Elliptical Sun", genre: "EDM", subGenre: "Progressive Trance", status: "active", founded: 2013, roster: 20, country: "United States", tags: ["progressive", "trance", "melodic"], sourceTrack: "Parallels", sourceChart: "Beatport Top 100", socials: { instagram: "ellipticalsun", spotify: "spotify:label:Elliptical+Sun", soundcloud: "ellipticalsunrecordings", twitter: "EllipticalSun" }, followers: 80000 },
+        { name: "Future House Music", genre: "EDM", subGenre: "Future House", status: "active", founded: 2014, roster: 20, country: "Netherlands", tags: ["future house", "bass house", "groovy"], sourceTrack: "Badam", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "futurehousemusic", spotify: "spotify:label:Future+House+Music", soundcloud: "futurehousemusic", twitter: "FutureHouseMusic" }, followers: 4500000 },
+        { name: "Tomorrowland Music", genre: "EDM", subGenre: "Multi-Genre", status: "active", founded: 2021, roster: 30, country: "Belgium", tags: ["festival", "mainstream", "diverse"], sourceTrack: "The Hymn", sourceChart: "1001Tracklists Top Tracks", socials: { instagram: "tomorrowland", spotify: "spotify:label:Tomorrowland+Music", soundcloud: "tomorrowland", twitter: "tomorrowland" }, followers: 18000000 },
+        { name: "Ultra Music", genre: "EDM", subGenre: "Dance / Pop", status: "active", founded: 1995, roster: 100, country: "United States", tags: ["dance", "pop", "crossover"], sourceTrack: "Titanium", sourceChart: "Billboard Hot Dance/Electronic", socials: { instagram: "ultramusic", spotify: "spotify:label:Ultra+Music", soundcloud: "ultramusic", twitter: "UltraMusic" }, followers: 4000000 },
+        { name: "Armind", genre: "EDM", subGenre: "Trance", status: "active", founded: 2003, roster: 20, country: "Netherlands", tags: ["trance", "uplifting", "armin"], sourceTrack: "This Is What It Feels Like", sourceChart: "Beatport Top 100", socials: { instagram: "armindrecordings", spotify: "spotify:label:Armind", soundcloud: "armind", twitter: "Armind" }, followers: 300000 },
+        { name: "Statement!", genre: "EDM", subGenre: "Trance / Progressive", status: "active", founded: 2017, roster: 15, country: "Netherlands", tags: ["trance", "progressive", "armin"], sourceTrack: "Wild Wild Son", sourceChart: "1001Tracklists Top Tracks", socials: { instagram: "statementmusic", spotify: "spotify:label:Statement", soundcloud: "statementmusic", twitter: "STATEMENT_HQ" }, followers: 100000 },
+        { name: "Bitbird", genre: "EDM", subGenre: "Future Bass / Organic", status: "active", founded: 2016, roster: 20, country: "Netherlands", tags: ["future bass", "organic", "san holo"], sourceTrack: "Light", sourceChart: "Spotify Viral 50 Global", socials: { instagram: "bitbird", spotify: "spotify:label:bitbird", soundcloud: "bitbird", twitter: "bitabordsongs" }, followers: 600000 },
+        { name: "Foreign Family Collective", genre: "EDM", subGenre: "Chill / Electronic", status: "active", founded: 2015, roster: 20, country: "United States", tags: ["chill", "electronic", "odesza"], sourceTrack: "A Moment Apart", sourceChart: "Apple Music Electronic Top 100", socials: { instagram: "foreignfamilycollective", spotify: "spotify:label:Foreign+Family+Collective", soundcloud: "foreignfamilycollective", twitter: "ffcollective" }, followers: 500000 },
+        { name: "Counter Records", genre: "EDM", subGenre: "Organic / Downtempo", status: "active", founded: 2016, roster: 15, country: "United Kingdom", tags: ["organic", "downtempo", "ninja tune"], sourceTrack: "Dissolve", sourceChart: "Apple Music Electronic Top 100", socials: { instagram: "counterrecords", spotify: "spotify:label:Counter+Records", soundcloud: "counterrecords", twitter: "CounterRecords" }, followers: 200000 },
+        { name: "Silk Music", genre: "EDM", subGenre: "Progressive / Deep", status: "active", founded: 2008, roster: 30, country: "United States", tags: ["progressive", "deep", "melodic"], sourceTrack: "Waterfall", sourceChart: "Beatport Hype Top 100", socials: { instagram: "silkmusic", spotify: "spotify:label:Silk+Music", soundcloud: "silkmusic", twitter: "SilkMusic" }, followers: 150000 },
+        { name: "Zerothree", genre: "EDM", subGenre: "Progressive House", status: "active", founded: 2013, roster: 15, country: "United States", tags: ["progressive", "house", "lane 8"], sourceTrack: "Rise", sourceChart: "Beatport Top 100", socials: { instagram: "zerothreemusic", spotify: "spotify:label:Zerothree", soundcloud: "zerothreemusic", twitter: "Zerothree" }, followers: 120000 },
+        { name: "Colorize", genre: "EDM", subGenre: "Progressive / Deep", status: "active", founded: 2013, roster: 20, country: "United Kingdom", tags: ["progressive", "deep", "enhanced"], sourceTrack: "Afterglow", sourceChart: "Beatport Hype Top 100", socials: { instagram: "colorizemusic", spotify: "spotify:label:Colorize", soundcloud: "colorizemusic", twitter: "ColorizeMusic" }, followers: 90000 },
+        { name: "Pandra", genre: "EDM", subGenre: "Melodic House", status: "active", founded: 2019, roster: 10, country: "Germany", tags: ["melodic", "house", "indie"], sourceTrack: "Echoes", sourceChart: "Beatport Hype Top 100", socials: { instagram: "pandramusic", spotify: "spotify:label:Pandra", soundcloud: "pandramusic", twitter: "pandramusic" }, followers: 40000 },
+        { name: "Gemstone Records", genre: "EDM", subGenre: "Future Rave / House", status: "active", founded: 2022, roster: 10, country: "Netherlands", tags: ["future rave", "big room", "morten"], sourceTrack: "Element", sourceChart: "1001Tracklists Top Tracks", socials: { instagram: "gemstonerecords", spotify: "spotify:label:Gemstone+Records", soundcloud: "gemstonerecords", twitter: "GemstoneRec" }, followers: 200000 }
+    ];
+
+    var LG_LABELS = BASS_LABELS.concat(TECH_LABELS).concat(CHART_LABELS);
+
+    /* ═══════════════════════════════════
+       NAV — Tab Bar View Switching
+       ═══════════════════════════════════ */
+    (function() {
+        var navBtns = document.querySelectorAll('.app-tab-btn');
+        var views = document.querySelectorAll('.app-view');
+        navBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var target = btn.dataset.view;
+                navBtns.forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                views.forEach(function(v) { v.classList.remove('active'); });
+                document.getElementById('view' + target.charAt(0).toUpperCase() + target.slice(1)).classList.add('active');
+            });
+        });
+    })();
+
+    /* ═══════════════════════════════════
+       VIEW 1: LABEL DATABASE
+       ═══════════════════════════════════ */
+    (function() {
+        var lgIsBracketView = false;
+        var lgSearchQuery = '';
+        var lgBracketFilter = 'all';
+
+        var lgSearchView = document.getElementById('lgSearchView');
+        var lgBracketViewEl = document.getElementById('lgBracketView');
+        var lgToggleSearchLabel = document.getElementById('lgToggleSearch');
+        var lgToggleBracketLabel = document.getElementById('lgToggleBracket');
+        var lgSearchInput = document.getElementById('lgSearchInput');
+        var lgSuggestionsEl = document.getElementById('lgSuggestions');
+        var lgLabelGrid = document.getElementById('lgLabelGrid');
+        var lgBracketContainer = document.getElementById('lgBracketContainer');
+
+        function lgApplyView() {
+            lgToggleSearchLabel.classList.toggle('active', !lgIsBracketView);
+            lgToggleBracketLabel.classList.toggle('active', lgIsBracketView);
+            if (lgIsBracketView) {
+                lgSearchView.classList.remove('visible'); lgSearchView.classList.add('hidden');
+                lgBracketViewEl.classList.remove('hidden'); lgBracketViewEl.classList.add('visible');
+            } else {
+                lgBracketViewEl.classList.remove('visible'); lgBracketViewEl.classList.add('hidden');
+                lgSearchView.classList.remove('hidden'); lgSearchView.classList.add('visible');
+            }
+        }
+
+        lgToggleSearchLabel.addEventListener('click', function() { lgIsBracketView = false; lgApplyView(); });
+        lgToggleBracketLabel.addEventListener('click', function() { lgIsBracketView = true; lgApplyView(); });
+
+        function lgFilterLabels(q) {
+            if (!q) return LG_LABELS;
+            var lower = q.toLowerCase();
+            return LG_LABELS.filter(function(l) {
+                return l.name.toLowerCase().includes(lower) || l.genre.toLowerCase().includes(lower) ||
+                    l.subGenre.toLowerCase().includes(lower) || l.tags.some(function(t) { return t.toLowerCase().includes(lower); }) ||
+                    l.country.toLowerCase().includes(lower);
+            });
+        }
+
+        function lgRenderSuggestions(q) {
+            if (!q || LG_LABELS.length === 0) { lgSuggestionsEl.classList.remove('open'); return; }
+            var matches = lgFilterLabels(q).slice(0, 6);
+            if (matches.length === 0) { lgSuggestionsEl.classList.remove('open'); return; }
+            var lower = q.toLowerCase();
+            lgSuggestionsEl.innerHTML = matches.map(function(l) {
+                var idx = l.name.toLowerCase().indexOf(lower);
+                var display = l.name;
+                if (idx > -1) {
+                    display = l.name.slice(0, idx) + '<span class="lg-match">' + l.name.slice(idx, idx + q.length) + '</span>' + l.name.slice(idx + q.length);
+                }
+                return '<div class="ios-suggestion-item" data-name="' + l.name + '">' + display +
+                    ' <span class="ios-suggestion-sub">' + l.subGenre + '</span></div>';
+            }).join('');
+            lgSuggestionsEl.classList.add('open');
+            lgSuggestionsEl.querySelectorAll('.ios-suggestion-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    lgSearchInput.value = item.dataset.name;
+                    lgSearchQuery = item.dataset.name;
+                    lgSuggestionsEl.classList.remove('open');
+                    lgRenderCards(lgFilterLabels(lgSearchQuery));
+                });
+            });
+        }
+
+        lgSearchInput.addEventListener('input', function(e) {
+            lgSearchQuery = e.target.value.trim();
+            lgRenderSuggestions(lgSearchQuery);
+            lgRenderCards(lgFilterLabels(lgSearchQuery));
+        });
+        lgSearchInput.addEventListener('focus', function() { if (lgSearchQuery) lgRenderSuggestions(lgSearchQuery); });
+        document.addEventListener('click', function(e) { if (!e.target.closest('.ios-search-wrap')) lgSuggestionsEl.classList.remove('open'); });
+
+        function lgStatusClass(s) { return s === 'active' ? 'active' : s === 'inactive' ? 'inactive' : 'pending'; }
+
+        function lgRenderCards(labels) {
+            if (labels.length === 0) {
+                lgLabelGrid.innerHTML = '<div class="lg-empty-state"><div class="lg-empty-icon">&#9835;</div>' +
+                    '<div class="lg-empty-title">No results found</div>' +
+                    '<div class="lg-empty-sub">Try a different search term</div></div>';
+                return;
+            }
+            lgLabelGrid.innerHTML = labels.map(function(l) {
+                return '<div class="lg-label-card"><div class="lg-card-header"><div class="lg-card-name">' + l.name +
+                    '</div><div class="lg-card-status ' + lgStatusClass(l.status) + '" title="' + l.status + '"></div></div>' +
+                    '<div class="lg-card-tags"><span class="lg-card-tag genre">' + l.genre + '</span>' +
+                    (l.subGenre ? '<span class="lg-card-tag sub">' + l.subGenre + '</span>' : '') +
+                    l.tags.slice(0, 2).map(function(t) { return '<span class="lg-card-tag sub">' + t + '</span>'; }).join('') +
+                    '</div><div class="lg-card-stats">' +
+                    '<div class="lg-stat"><span class="lg-stat-label">Roster</span><span class="lg-stat-value">' + (l.roster > 0 ? l.roster : '\u2014') + '</span></div>' +
+                    '<div class="lg-stat"><span class="lg-stat-label">Founded</span><span class="lg-stat-value">' + (l.founded || '\u2014') + '</span></div>' +
+                    '<div class="lg-stat"><span class="lg-stat-label">Country</span><span class="lg-stat-value">' + (l.country || '\u2014') + '</span></div>' +
+                    '<div class="lg-stat"><span class="lg-stat-label">Status</span><span class="lg-stat-value" style="text-transform:capitalize">' + l.status + '</span></div>' +
+                    '</div></div>';
+            }).join('');
+        }
+
+        /* Bracket grouping by subGenre category */
+        var BRACKET_GROUPS = [
+            { key: 'bass', label: 'Bass / Dubstep', cls: 'bass', filter: function(l) { return BASS_LABELS.indexOf(l) > -1; } },
+            { key: 'tech', label: 'Tech / Tech House', cls: 'techhouse', filter: function(l) { return TECH_LABELS.indexOf(l) > -1; } },
+            { key: 'chart', label: 'Chart Labels', cls: 'edm', filter: function(l) { return CHART_LABELS.indexOf(l) > -1; } }
+        ];
+
+        function lgRenderBrackets() {
+            var groups = BRACKET_GROUPS;
+            if (lgBracketFilter === 'bass') groups = [BRACKET_GROUPS[0]];
+            if (lgBracketFilter === 'tech') groups = [BRACKET_GROUPS[1]];
+            if (lgBracketFilter === 'chart') groups = [BRACKET_GROUPS[2]];
+
+            lgBracketContainer.innerHTML = groups.map(function(g) {
+                var labels = LG_LABELS.filter(g.filter);
+                var nodesHtml = labels.length > 0
+                    ? labels.map(function(l) {
+                        return '<div class="lg-bracket-node"><div class="lg-node-name">' + l.name + '</div>' +
+                            '<div class="lg-node-stat"><span class="lg-node-stat-label">Roster</span><span class="lg-node-stat-value">' + (l.roster > 0 ? l.roster : '\u2014') + '</span></div>' +
+                            '<div class="lg-node-stat"><span class="lg-node-stat-label">Founded</span><span class="lg-node-stat-value">' + (l.founded || '\u2014') + '</span></div>' +
+                            '<div class="lg-node-stat"><span class="lg-node-stat-label">Country</span><span class="lg-node-stat-value">' + (l.country || '\u2014') + '</span></div></div>';
+                    }).join('')
+                    : '<div class="lg-bracket-empty">No labels yet</div>';
+                return '<div class="lg-bracket-column"><div class="lg-bracket-header ' + g.cls + '">' + g.label +
+                    '</div><div class="lg-bracket-nodes">' + nodesHtml + '</div></div>';
+            }).join('');
+        }
+
+        document.querySelectorAll('.lg-gen-pill').forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                document.querySelectorAll('.lg-gen-pill').forEach(function(p) { p.classList.remove('active'); });
+                pill.classList.add('active');
+                lgBracketFilter = pill.dataset.lgFilter;
+                lgRenderBrackets();
+            });
+        });
+
+        lgApplyView();
+        lgRenderCards(LG_LABELS);
+        lgRenderBrackets();
+    })();
+
+    /* ═══════════════════════════════════
+       VIEW 2: LABEL ANALYZER
+       ═══════════════════════════════════ */
+    (function() {
+        'use strict';
+
+        var searchInput = document.getElementById('laSearchInput');
+        var goBtn = document.getElementById('laGoBtn');
+        var suggestionsEl = document.getElementById('laSuggestions');
+        var reportSection = document.getElementById('laReportSection');
+        var heroGrid = document.getElementById('laHeroGrid');
+        var rankingsBody = document.getElementById('laRankingsBody');
+        var actionsSection = document.getElementById('laActionsSection');
+        var openAllBtn = document.getElementById('laOpenAll');
+        var exportBtn = document.getElementById('laExport');
+        var newLookupBtn = document.getElementById('laNewLookup');
+
+        /* Platform channels — for labels */
+        var channels = [
+            { id: 'laChBP', key: 'beatport', icon: '\ud83c\udfb5', name: 'Beatport',
+              color: '#00d26e', dotClass: 'la-bp',
+              searchUrl: function(n) { return 'https://www.beatport.com/search?q=' + encodeURIComponent(n); },
+              demo: { handle: '{slug}', releases: '342', releasesNum: 342, followers: '18.2K', followersNum: 18200, engagement: '4.1%', engNum: 4.1, growth: '+3.2%', trend: 'up' } },
+            { id: 'laChSP', key: 'spotify', icon: '\ud83c\udfa7', name: 'Spotify',
+              color: '#1ed760', dotClass: 'la-sp',
+              searchUrl: function(n) { return 'https://open.spotify.com/search/' + encodeURIComponent(n); },
+              demo: { handle: '{name}', releases: '287', releasesNum: 287, followers: '45.6K', followersNum: 45600, engagement: '2.8%', engNum: 2.8, growth: '+5.1%', trend: 'up' } },
+            { id: 'laChSC', key: 'soundcloud', icon: '\u2601', name: 'SoundCloud',
+              color: '#ff5500', dotClass: 'la-sc',
+              searchUrl: function(n) { return 'https://soundcloud.com/search?q=' + encodeURIComponent(n); },
+              demo: { handle: '{slug}', releases: '512', releasesNum: 512, followers: '28.3K', followersNum: 28300, engagement: '3.5%', engNum: 3.5, growth: '+1.8%', trend: 'steady' } },
+            { id: 'laChBC', key: 'bandcamp', icon: '\ud83d\udcbf', name: 'Bandcamp',
+              color: '#1da1f2', dotClass: 'la-bc',
+              searchUrl: function(n) { return 'https://bandcamp.com/search?q=' + encodeURIComponent(n); },
+              demo: { handle: '{slug}', releases: '156', releasesNum: 156, followers: '8.4K', followersNum: 8400, engagement: '5.2%', engNum: 5.2, growth: '+0.9%', trend: 'steady' } }
+        ];
+
+        var laCurrentSort = 'releases';
+        var laLastName = '';
+        var laLastLabel = null;
+
+        /* Suggestions with autocomplete from database */
+        function laRenderSuggestions(q) {
+            if (!q) { suggestionsEl.classList.remove('open'); return; }
+            var lower = q.toLowerCase();
+            var matches = LG_LABELS.filter(function(l) {
+                return l.name.toLowerCase().includes(lower) || l.subGenre.toLowerCase().includes(lower) ||
+                    l.tags.some(function(t) { return t.toLowerCase().includes(lower); });
+            }).slice(0, 6);
+            if (matches.length === 0) { suggestionsEl.classList.remove('open'); return; }
+            suggestionsEl.innerHTML = matches.map(function(l) {
+                var idx = l.name.toLowerCase().indexOf(lower);
+                var display = l.name;
+                if (idx > -1) display = l.name.slice(0, idx) + '<span class="la-sug-match">' + l.name.slice(idx, idx + q.length) + '</span>' + l.name.slice(idx + q.length);
+                return '<div class="la-sug-item" data-name="' + l.name + '">' + display +
+                    ' <span style="color:var(--label-tertiary);font-size:13px;margin-left:6px">' + l.subGenre + '</span></div>';
+            }).join('');
+            suggestionsEl.classList.add('open');
+            suggestionsEl.querySelectorAll('.la-sug-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    searchInput.value = item.dataset.name;
+                    suggestionsEl.classList.remove('open');
+                });
+            });
+        }
+
+        searchInput.addEventListener('input', function() { laRenderSuggestions(searchInput.value.trim()); });
+        searchInput.addEventListener('focus', function() { if (searchInput.value.trim()) laRenderSuggestions(searchInput.value.trim()); });
+        document.addEventListener('click', function(e) { if (!e.target.closest('.la-search-input-wrap')) suggestionsEl.classList.remove('open'); });
+
+        /* Helpers */
+        function slugify(name) { return name.replace(/\s+/g, '').toLowerCase(); }
+        function setCardState(card, state) { card.setAttribute('data-state', state); }
+        function getTrendHTML(trend) {
+            if (trend === 'up') return '<span class="la-trend-up">\u2191</span>';
+            if (trend === 'down') return '<span class="la-trend-down">\u2193</span>';
+            return '<span class="la-trend-steady">\u2194</span>';
+        }
+        function formatNum(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return String(n);
+        }
+
+        window.laToggleCard = function(cardId) {
+            var card = document.getElementById(cardId);
+            if (card) card.classList.toggle('la-expanded');
+        };
+
+        function fillCardDetails(card, ch, name) {
+            var slug = slugify(name);
+            var handle = ch.demo.handle.replace('{slug}', slug).replace('{name}', name);
+            var details = card.querySelector('.la-channel-details');
+            details.innerHTML =
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Handle</span><span class="la-channel-detail-value">' + handle + '</span></div>' +
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Releases</span><span class="la-channel-detail-value">' + ch.demo.releases + '</span></div>' +
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Followers</span><span class="la-channel-detail-value">' + ch.demo.followers + '</span></div>' +
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Engagement</span><span class="la-channel-detail-value">' + ch.demo.engagement + '</span></div>' +
+                '<div class="la-channel-detail-row"><span class="la-channel-detail-label">Growth</span><span class="la-channel-detail-value">' + ch.demo.growth + '</span></div>';
+        }
+
+        function fillCard(card, ch, name) {
+            card.querySelector('.la-channel-status').textContent = 'found \u2713';
+            setCardState(card, 'found');
+            fillCardDetails(card, ch, name);
+        }
+
+        /* Analyze flow */
+        function runAnalyze() {
+            var name = searchInput.value.trim();
+            if (!name) return;
+            laLastName = name;
+            laLastLabel = LG_LABELS.find(function(l) { return l.name.toLowerCase() === name.toLowerCase(); }) || null;
+            suggestionsEl.classList.remove('open');
+
+            goBtn.disabled = true;
+            searchInput.disabled = true;
+
+            /* Reset */
+            channels.forEach(function(ch) {
+                var card = document.getElementById(ch.id);
+                setCardState(card, 'idle');
+                card.classList.remove('la-expanded');
+                card.querySelector('.la-channel-status').textContent = 'waiting';
+                card.querySelector('.la-channel-details').innerHTML = '';
+            });
+            reportSection.classList.remove('la-visible');
+            actionsSection.classList.remove('la-visible');
+
+            /* Stagger scan */
+            channels.forEach(function(ch, idx) {
+                var card = document.getElementById(ch.id);
+                var searchDelay = idx * 700;
+                var foundDelay = searchDelay + 1200 + Math.random() * 800;
+                setTimeout(function() {
+                    setCardState(card, 'searching');
+                    card.querySelector('.la-channel-status').textContent = 'scanning...';
+                }, searchDelay);
+                setTimeout(function() {
+                    fillCard(card, ch, name);
+                    if (idx === channels.length - 1) {
+                        setTimeout(function() { showResults(name); }, 400);
+                    }
+                }, foundDelay);
+            });
+        }
+
+        /* Hero cards */
+        function populateHeroCards(name) {
+            var label = laLastLabel;
+            var totalArtists = label ? label.roster : 35;
+            var totalReleases = 0;
+            var totalEng = 0;
+            channels.forEach(function(ch) {
+                totalReleases += ch.demo.releasesNum;
+                totalEng += ch.demo.engNum;
+            });
+            var avgReleases = Math.round(totalReleases / channels.length);
+            var score = Math.min(100, Math.round((totalArtists * 0.5) + (avgReleases * 0.1) + (totalEng * 5)));
+            var activity = avgReleases > 250 ? 'High' : avgReleases > 150 ? 'Medium' : 'Low';
+
+            document.getElementById('laHeroArtists').textContent = totalArtists;
+            document.getElementById('laHeroReleases').textContent = avgReleases;
+            document.getElementById('laHeroScore').textContent = score + '/100';
+            document.getElementById('laHeroActivity').textContent = activity;
+
+            var bars = heroGrid.querySelectorAll('.la-heat-bar-fill');
+            var widths = [
+                Math.min(100, (totalArtists / 100) * 100),
+                Math.min(100, (avgReleases / 500) * 100),
+                score,
+                avgReleases > 250 ? 90 : avgReleases > 150 ? 60 : 30
+            ];
+            bars.forEach(function(bar, i) {
+                setTimeout(function() { bar.style.width = widths[i] + '%'; }, i * 150);
+            });
+        }
+
+        /* Rankings */
+        function getSortedChannels() {
+            var arr = channels.slice();
+            if (laCurrentSort === 'releases') arr.sort(function(a, b) { return b.demo.releasesNum - a.demo.releasesNum; });
+            else if (laCurrentSort === 'followers') arr.sort(function(a, b) { return b.demo.followersNum - a.demo.followersNum; });
+            else arr.sort(function(a, b) { return a.name.localeCompare(b.name); });
+            return arr;
+        }
+
+        function laRenderRankings(name) {
+            var sorted = getSortedChannels();
+            var slug = slugify(name);
+            var html = '';
+            sorted.forEach(function(ch, idx) {
+                var handle = ch.demo.handle.replace('{slug}', slug).replace('{name}', name);
+                html += '<tr onclick="window.laToggleExpand(' + idx + ')">' +
+                    '<td><div class="la-platform-cell"><span class="la-platform-dot" style="background:' + ch.color + '"></span>' + ch.name + '</div></td>' +
+                    '<td>' + handle + '</td>' +
+                    '<td>' + ch.demo.releases + '</td>' +
+                    '<td>' + ch.demo.followers + '</td>' +
+                    '<td>' + ch.demo.engagement + '</td>' +
+                    '<td>' + getTrendHTML(ch.demo.trend) + '</td></tr>';
+                html += '<tr class="la-expanded-row" id="laExpRow' + idx + '"><td colspan="6"><div class="la-expanded-content">' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Handle</span><span class="la-stat-pill-value">' + handle + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Releases</span><span class="la-stat-pill-value">' + ch.demo.releases + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Followers</span><span class="la-stat-pill-value">' + ch.demo.followers + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Engagement</span><span class="la-stat-pill-value">' + ch.demo.engagement + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Growth</span><span class="la-stat-pill-value">' + ch.demo.growth + '</span></span>' +
+                    '<span class="la-stat-pill"><span class="la-stat-pill-label">Trend</span><span class="la-stat-pill-value">' + getTrendHTML(ch.demo.trend) + '</span></span>' +
+                    '</div></td></tr>';
+            });
+            rankingsBody.innerHTML = html;
+        }
+
+        window.laToggleExpand = function(idx) {
+            var row = document.getElementById('laExpRow' + idx);
+            if (row) row.classList.toggle('la-visible');
+        };
+
+        /* Sort buttons */
+        var sortBtns = document.querySelectorAll('.la-sort-btn');
+        sortBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                laCurrentSort = btn.dataset.sort;
+                sortBtns.forEach(function(b) { b.classList.remove('la-sort-active'); });
+                btn.classList.add('la-sort-active');
+                if (laLastName) laRenderRankings(laLastName);
+            });
+        });
+
+        /* Show results */
+        function showResults(name) {
+            populateHeroCards(name);
+            laRenderRankings(name);
+            reportSection.classList.add('la-visible');
+            setTimeout(function() { actionsSection.classList.add('la-visible'); }, 300);
+            goBtn.disabled = false;
+            searchInput.disabled = false;
+        }
+
+        /* Reset */
+        function resetAnalyzer() {
+            searchInput.value = '';
+            searchInput.disabled = false;
+            goBtn.disabled = false;
+            laLastName = '';
+            laLastLabel = null;
+            channels.forEach(function(ch) {
+                var card = document.getElementById(ch.id);
+                setCardState(card, 'idle');
+                card.classList.remove('la-expanded');
+                card.querySelector('.la-channel-status').textContent = 'waiting';
+                card.querySelector('.la-channel-details').innerHTML = '';
+            });
+            reportSection.classList.remove('la-visible');
+            actionsSection.classList.remove('la-visible');
+            rankingsBody.innerHTML = '';
+            document.getElementById('laHeroArtists').textContent = '\u2014';
+            document.getElementById('laHeroReleases').textContent = '\u2014';
+            document.getElementById('laHeroScore').textContent = '\u2014';
+            document.getElementById('laHeroActivity').textContent = '\u2014';
+            heroGrid.querySelectorAll('.la-heat-bar-fill').forEach(function(bar) { bar.style.width = '0%'; });
+            searchInput.focus();
+        }
+
+        /* Quick actions */
+        if (openAllBtn) openAllBtn.addEventListener('click', function() {
+            if (!laLastName) return;
+            /* Open real social URLs if available from database */
+            if (laLastLabel && laLastLabel.socials) {
+                var bases = { instagram: 'https://instagram.com/', spotify: 'https://open.spotify.com/search/', soundcloud: 'https://soundcloud.com/', twitter: 'https://twitter.com/', beatport: 'https://www.beatport.com/search?q=' };
+                Object.keys(laLastLabel.socials).forEach(function(p) {
+                    var handle = laLastLabel.socials[p];
+                    if (handle) {
+                        var url = handle.startsWith('http') ? handle : (bases[p] || '') + handle;
+                        window.open(url, '_blank');
+                    }
+                });
+            } else {
+                channels.forEach(function(ch) { window.open(ch.searchUrl(laLastName), '_blank'); });
+            }
+        });
+        if (exportBtn) exportBtn.addEventListener('click', function() {
+            if (!laLastName) return;
+            var slug = slugify(laLastName);
+            var lines = ['Label Analysis Report: ' + laLastName, '========================', ''];
+            if (laLastLabel) {
+                lines.push('Genre: ' + laLastLabel.genre + ' / ' + laLastLabel.subGenre);
+                lines.push('Founded: ' + laLastLabel.founded);
+                lines.push('Country: ' + laLastLabel.country);
+                lines.push('Roster: ' + laLastLabel.roster + ' artists');
+                lines.push('');
+            }
+            channels.forEach(function(ch) {
+                var handle = ch.demo.handle.replace('{slug}', slug).replace('{name}', laLastName);
+                lines.push(ch.name + ': ' + handle);
+                lines.push('  Releases: ' + ch.demo.releases);
+                lines.push('  Followers: ' + ch.demo.followers);
+                lines.push('  Engagement: ' + ch.demo.engagement);
+                lines.push('  Growth: ' + ch.demo.growth);
+                lines.push('');
+            });
+            var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'label-report-' + slug + '.txt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+        if (newLookupBtn) newLookupBtn.addEventListener('click', resetAnalyzer);
+
+        /* Events */
+        goBtn.addEventListener('click', runAnalyze);
+        searchInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') runAnalyze(); });
+
+        console.log('[LA] Label Analyzer ready — ' + LG_LABELS.length + ' labels in database');
+    })();
+
+    /* ═══════════════════════════════════
+       CHART REFERENCE GRID
+       ═══════════════════════════════════ */
+    (function() {
+        var panel = document.getElementById('chartRefPanel');
+        var toggle = document.getElementById('chartRefToggle');
+        var body = document.getElementById('chartRefBody');
+        var countEl = document.getElementById('chartRefCount');
+        var searchInput = document.getElementById('chartRefSearch');
+
+        if (!panel || !toggle || !body) return;
+
+        toggle.addEventListener('click', function() { panel.classList.toggle('open'); });
+
+        function socialIcon(platform) {
+            var icons = { instagram: 'IG', spotify: 'SP', soundcloud: 'SC', twitter: 'TW', beatport: 'BP' };
+            return icons[platform] || platform.charAt(0).toUpperCase();
+        }
+
+        function socialUrl(platform, handle) {
+            if (!handle) return '';
+            if (handle.startsWith('http')) return handle;
+            var bases = {
+                instagram: 'https://instagram.com/',
+                spotify: 'https://open.spotify.com/search/',
+                soundcloud: 'https://soundcloud.com/',
+                twitter: 'https://twitter.com/',
+                beatport: 'https://www.beatport.com/search?q='
+            };
+            return (bases[platform] || '') + handle;
+        }
+
+        function renderGrid(filter) {
+            var labels = CHART_LABELS;
+            if (filter) {
+                var lower = filter.toLowerCase();
+                labels = labels.filter(function(l) {
+                    return l.name.toLowerCase().includes(lower) ||
+                        l.subGenre.toLowerCase().includes(lower) ||
+                        (l.sourceTrack && l.sourceTrack.toLowerCase().includes(lower)) ||
+                        (l.sourceChart && l.sourceChart.toLowerCase().includes(lower)) ||
+                        l.country.toLowerCase().includes(lower);
+                });
+            }
+            countEl.textContent = labels.length + ' labels';
+            body.innerHTML = labels.map(function(l) {
+                var socialsHtml = '';
+                if (l.socials) {
+                    Object.keys(l.socials).forEach(function(platform) {
+                        var url = socialUrl(platform, l.socials[platform]);
+                        if (url) socialsHtml += '<a class="cr-social-link" href="' + url + '" target="_blank" title="' + platform + '">' + socialIcon(platform) + '</a>';
+                    });
+                }
+                return '<tr>' +
+                    '<td>' + l.name + '</td>' +
+                    '<td>' + (l.sourceTrack || '\u2014') + '</td>' +
+                    '<td>' + (l.sourceChart || '\u2014') + '</td>' +
+                    '<td><span class="cr-subgenre">' + l.subGenre + '</span></td>' +
+                    '<td>' + l.country + '</td>' +
+                    '<td>' + (socialsHtml || '\u2014') + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        searchInput.addEventListener('input', function() { renderGrid(searchInput.value.trim()); });
+        renderGrid('');
+        console.log('[CRG] Chart Reference Grid ready — ' + CHART_LABELS.length + ' chart labels');
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MASTER REPLICATION | SLOT 6</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=Inter:wght@400;600;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .app-frame {
+            height: 100dvh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #screen-mount {
+            flex: 1;
+            padding: 0 20px;
+            overflow-y: auto;
+            padding-top: var(--safe-top);
+            padding-bottom: 160px;
+        }
+
+        .tab-bar-container {
+            position: absolute;
+            bottom: calc(env(safe-area-inset-bottom, 15px) + 12px);
+            left: 20px;
+            right: 20px;
+            height: 85px;
+            background: rgba(11, 1, 29, 0.7);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-radius: 35px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 9999;
+        }
+
+        .tab-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-ghost);
+            c cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-cyan);
+        }
+
+        .tab-btn.center-island {
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, var(--primary), #6e48aa);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -55px;
+            box-shadow: 0 15px 30px var(--primary-glow);
+            border: 4px solid var(--bg-void);
+            color: white;
+        }
+
+        .icon {
+            width: 26px;
+            height: 26px;
+            stroke-width: 2.5;
+        }
+
+        /* 🎟️ OVERLAY SYSTEM */
+        .overlay-container {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: flex-end;
+            visibility: hidden;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .overlay-container.active {
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .overlay-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(11, 1, 29, 0.6);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .overlay-container.active .overlay-backdrop {
+            opacity: 1;
+        }
+
+        .overlay-card {
+            position: relative;
+            width: 100%;
+            height: 85vh;
+            background: rgba(255, 255, 255, 0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 45px 45px 0 0;
+            padding: 30px 20px;
+            transform: translateY(100%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+        }
+
+        .overlay-container.active .overlay-card {
+            transform: translateY(0);
+        }
+
+        .drag-handle {
+            width: 45px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 0 auto 30px;
+        }
+
+        /* 📋 DREAM FOCUS TASKS */
+        .tasks-expand-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-top: 0;
+        }
+
+        .tasks-expand-container.open {
+            max-height: 500px;
+            margin-top: 20px;
+        }
+
+        .task-row {
+            opacity: 0;
+            transform: translateY(10px);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 12px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .tasks-expand-container.open .task-row {
+            animation: taskFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .task-row input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Outfit';
+            font-size: 0.95rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .task-row input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .task-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-cyan);
+        }
+
+        @keyframes taskFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 🗓️ RECAP DATE SLOTS - FIELD 1 VISIBLE, 2-4 HIDDEN UNTIL TRIGGERED */
+        .recap-dates-container {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .recap-date-slot {
+            flex: 1;
+            min-width: 55px;
+            height: 30px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            transform: translateY(6px);
+            pointer-events: none;
+        }
+
+        /* FIELD 1: Always visible */
+        .recap-date-slot:nth-child(1) {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            animation: slotPulseReady 2s ease-in-out infinite;
+        }
+
+        /* FIELDS 2-4: Hidden until .revealed */
+        .recap-date-slot.revealed {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            animation: slotRollIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .recap-date-slot:hover {
+            background: linear-gradient(135deg, rgba(255, 0, 222, 0.15) 0%, rgba(142, 45, 226, 0.1) 100%);
+            border-color: rgba(255, 0, 222, 0.3);
+            color: rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 0, 222, 0.2);
+        }
+
+        .recap-date-slot:active {
+            transform: scale(0.95);
+        }
+
+        .recap-date-slot.active {
+            background: linear-gradient(135deg, rgba(255, 0, 222, 0.2) 0%, rgba(142, 45, 226, 0.15) 100%);
+            border-color: var(--accent-pink);
+            color: white;
+            box-shadow: 0 0 12px rgba(255, 0, 222, 0.3);
+            animation: none;
+        }
+
+        @keyframes slotPulseReady {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 rgba(0, 242, 255, 0);
+            }
+
+            50% {
+                box-shadow: 0 0 8px rgba(0, 242, 255, 0.3);
+            }
+        }
+
+        @keyframes slotRollIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 📋 RECAP TASK ROLLOUT - TUCKED INSIDE COLUMN */
+        .recap-task-rollout {
+            max-height: 0;
+            overflow: hidden;
+            margin-top: 0;
+            opacity: 0;
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .recap-task-rollout.open {
+            max-height: 380px;
+            margin-top: 14px;
+            opacity: 1;
+        }
+
+        .recap-task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+
+        .recap-task-label {
+            font-family: 'Outfit';
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.5px;
+        }
+
+        .recap-task-count {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            background: rgba(0, 242, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .recap-task-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, rgba(75, 76, 237, 0.25) 0%, rgba(142, 45, 226, 0.15) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .recap-task-rollout.open .recap-task-row {
+            animation: taskRowSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .recap-task-row:hover {
+            background: linear-gradient(135deg, rgba(75, 76, 237, 0.35) 0%, rgba(142, 45, 226, 0.25) 100%);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .recap-task-row:active {
+            transform: scale(0.98);
+        }
+
+        .recap-task-row .task-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-cyan);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .recap-task-row:hover .task-dot {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
+        }
+
+        .recap-task-row .task-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Outfit';
+            font-size: 0.85rem;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .recap-task-row .task-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+        }
+
+        @keyframes taskRowSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 📞 RECAP CARD DYNAMIC STYLES */
+        .recap-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .recap-card:hover {
+            transform: scale(1.02);
+        }
+
+        .recap-card:active {
+            transform: scale(0.98);
+        }
+
+        .recap-card.selected {
+            box-shadow: 0 0 20px rgba(255, 0, 222, 0.3), inset 0 0 0 2px rgba(255, 0, 222, 0.4);
+        }
+
+        .add-recap-btn:hover {
+            border-color: rgba(0, 242, 255, 0.4) !important;
+            background: rgba(0, 242, 255, 0.05);
+        }
+
+        .add-recap-btn:hover span {
+            color: var(--accent-cyan) !important;
+        }
+
+        @keyframes screenFade {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 🔄 DATE CASCADE RICOCHET EFFECT */
+        @keyframes dateCascade {
+            0% {
+                transform: scale(1);
+                background: rgba(0, 242, 255, 0.15);
+            }
+
+            50% {
+                transform: scale(1.15);
+                background: rgba(0, 242, 255, 0.4);
+                box-shadow: 0 0 15px rgba(0, 242, 255, 0.5);
+            }
+
+            100% {
+                transform: scale(1);
+                background: rgba(0, 242, 255, 0.15);
+            }
+        }
+
+        /* 🌫️ WHISPER CAROUSEL - VERTICAL STACK */
+        .whisper-carousel {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            align-items: flex-end;
+        }
+
+        .whisper-date {
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.6rem;
+            font-weight: 800;
+            white-space: nowrap;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            order: 4;
+        }
+
+        .whisper-active {
+            order: 0;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .whisper-ghost-1 {
+            order: 1;
+            opacity: 0.65;
+            transform: scale(0.92);
+        }
+
+        .whisper-ghost-2 {
+            order: 2;
+            opacity: 0.4;
+            transform: scale(0.85);
+        }
+
+        .whisper-ghost-3 {
+            order: 3;
+            opacity: 0.2;
+            transform: scale(0.78);
+        }
+
+        /* 🎨 UNIQUE COLORS PER DATE - RICH GRADIENTS */
+        .whisper-color-0 {
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.25) 0%, rgba(0, 180, 220, 0.15) 100%);
+            border: 1px solid rgba(0, 242, 255, 0.5);
+            color: #00f2ff;
+            box-shadow: 0 2px 8px rgba(0, 242, 255, 0.2);
+        }
+
+        .whisper-color-1 {
+            background: linear-gradient(135deg, rgba(255, 0, 222, 0.25) 0%, rgba(200, 0, 180, 0.15) 100%);
+            border: 1px solid rgba(255, 0, 222, 0.5);
+            color: #ff00de;
+            box-shadow: 0 2px 8px rgba(255, 0, 222, 0.2);
+        }
+
+        .whisper-color-2 {
+            background: linear-gradient(135deg, rgba(255, 165, 0, 0.25) 0%, rgba(255, 120, 0, 0.15) 100%);
+            border: 1px solid rgba(255, 165, 0, 0.5);
+            color: #ffa500;
+            box-shadow: 0 2px 8px rgba(255, 165, 0, 0.2);
+        }
+
+        .whisper-color-3 {
+            background: linear-gradient(135deg, rgba(50, 205, 50, 0.25) 0%, rgba(30, 180, 30, 0.15) 100%);
+            border: 1px solid rgba(50, 205, 50, 0.5);
+            color: #32cd32;
+            box-shadow: 0 2px 8px rgba(50, 205, 50, 0.2);
+        }
+
+        /* ✨ FLIP ANIMATION */
+        .whisper-date {
+            animation: whisperSettle 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .whisper-active {
+            animation: whisperFlipIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes whisperFlipIn {
+            0% {
+                transform: rotateX(-30deg) translateY(-5px);
+                opacity: 0.5;
+                filter: blur(2px);
+            }
+
+            100% {
+                transform: rotateX(0) translateY(0);
+                opacity: 1;
+                filter: blur(0);
+            }
+        }
+
+        @keyframes whisperSettle {
+            0% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .whisper-carousel:hover .whisper-ghost-1 {
+            opacity: 0.75;
+            transform: scale(0.94);
+        }
+
+        .whisper-carousel:hover .whisper-ghost-2 {
+            opacity: 0.5;
+            transform: scale(0.88);
+        }
+
+        .whisper-carousel:hover .whisper-ghost-3 {
+            opacity: 0.3;
+            transform: scale(0.82);
+        }
+
+        /* � DASHBOARD ENHANCEMENTS */
+        .dashboard-section-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            padding-left: 5px;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(0, 242, 255, 0.3), transparent);
+        }
+
+        .dashboard-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dashboard-pill span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+
+        .glass-medium {
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(0.9);
+                filter: brightness(1.2);
+            }
+        }
+
+        .active-glow {
+            border-color: rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 25px rgba(0, 242, 255, 0.1), inset 0 0 10px rgba(0, 242, 255, 0.05);
+        }
+
+        /* �🔘 CYCLE DOT */
+        .whisper-cycle-dot {
+            position: absolute;
+            left: -26px;
+            top: 9px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1.5px solid rgba(0, 242, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 10;
+            /* Extra Hit Area */
+            padding: 10px;
+            margin: -10px;
+        }
+
+        .whisper-cycle-dot:hover {
+            background: var(--accent-cyan);
+            border-color: #fff;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.6);
+            transform: scale(1.3);
+        }
+
+        .whisper-cycle-dot:active {
+            transform: translateY(-50%) scale(0.9);
+        }
+
+        /* 📋 WHISPER TASK SHEET */
+    </style>
+</head>
+
+<body>
+
+    <div class="mesh-bg">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-frame">
+        <div id="screen-mount" class="scroll-hide"></div>
+
+        <nav class="tab-bar-container">
+            <div class="tab-btn active" onclick="app.load('home')">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+            </div>
+            <div class="tab-btn" onclick="app.load('search')">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+            </div>
+            <div class="tab-btn center-island" onclick="app.toggleOverlay('ticket', true)">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg>
+            </div>
+            <div class="tab-btn" onclick="app.load('save')">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path
+                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+            </div>
+            <div class="tab-btn" onclick="app.load('profile')">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+            </div>
+        </nav>
+    </div>
+
+    <!-- 🎟️ TICKET OVERLAY MOUNT -->
+    <div id="ticket-overlay" class="overlay-container">
+        <div class="overlay-backdrop" onclick="app.toggleOverlay('ticket', false)"></div>
+        <div class="overlay-card scroll-hide">
+            <div class="drag-handle" onclick="app.toggleOverlay('ticket', false)"></div>
+            <div id="overlay-content"></div>
+        </div>
+    </div>
+
+    <!-- 🎬 CINEMATIC FOCUS OVERLAY -->
+    <div id="focus-overlay" class="focus-overlay" onclick="app.exitFocusMode()">
+        <div class="focused-task-container" onclick="event.stopPropagation()">
+            <div id="focus-mount"></div>
+        </div>
+    </div>
+
+    <!-- The Bundle: No Fetching Required -->
+    <script src="screens.js"></script>
+
+    <script>
+        const app = {
+            goals: [],
+            recaps: [],          // Now used for Week tiles
+            activeRecapId: null,
+            // WHISPER CAROUSEL DATA (4 date slots, each with 5 tasks)
+            whisperData: [
+                { date: 'MM/DD', tasks: ['', '', '', '', ''] },
+                { date: 'MM/DD', tasks: ['', '', '', '', ''] },
+                { date: 'MM/DD', tasks: ['', '', '', '', ''] },
+                { date: 'MM/DD', tasks: ['', '', '', '', ''] }
+            ],
+            whisperActiveIndex: 0,
+            isDragging: false,
+            startY: 0,
+            currentY: 0,
+            imagePool: [
+                'https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=500',
+                'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=500',
+                'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=500',
+                'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=500',
+                'https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=500'
+            ],
+
+            // ⏱️ LONG PRESS ENGINE (DEBUGGED)
+            pressTimer: null,
+            heldElement: null,
+            startLongPress(e, callback) {
+                // Prevent bubbling to parent cards
+                if (e) {
+                    e.stopPropagation();
+                    // Don't preventDefault yet, let them touch/click if short
+                }
+
+                this.cancelLongPress();
+                this.heldElement = e.currentTarget || e.target;
+                if (this.heldElement) this.heldElement.classList.add('is-holding');
+
+                this.pressTimer = setTimeout(() => {
+                    if (window.navigator.vibrate) window.navigator.vibrate(60);
+                    if (this.heldElement) this.heldElement.classList.remove('is-holding');
+                    callback();
+                    this.heldElement = null;
+                }, 600);
+            },
+            cancelLongPress() {
+                clearTimeout(this.pressTimer);
+                if (this.heldElement) {
+                    this.heldElement.classList.remove('is-holding');
+                    this.heldElement = null;
+                }
+            },
+
+            // 🎬 CINEMATIC FOCUS SYSTEM
+            focusState: null,
+            enterFocusMode(type, id, index, currentVal) {
+                const overlay = document.getElementById('focus-overlay');
+                const mount = document.getElementById('focus-mount');
+
+                this.focusState = { type, id, index };
+
+                mount.innerHTML = `
+                    <div class="recap-task-row active-glow" style="opacity: 1; transform: translateY(0); margin-bottom: 0; padding: 15px 20px;">
+                        <div class="task-dot" style="width: 12px; height: 12px; border-width: 3px;"></div>
+                        <input type="text" id="focused-input" class="task-input" 
+                               value="${currentVal}" 
+                               style="font-size: 1.1rem; font-weight: 800;"
+                               onkeydown="if(event.key==='Enter') app.exitFocusMode()">
+                    </div>
+                `;
+
+                overlay.classList.add('active');
+                setTimeout(() => {
+                    const input = document.getElementById('focused-input');
+                    input.focus();
+                    input.select();
+                }, 300);
+            },
+            exitFocusMode() {
+                const overlay = document.getElementById('focus-overlay');
+                const input = document.getElementById('focused-input');
+                if (!overlay.classList.contains('active')) return;
+
+                if (input && this.focusState) {
+                    const val = input.value;
+                    if (this.focusState.type === 'week') {
+                        this.saveRecapTask(this.focusState.id, this.focusState.index, val);
+                    } else {
+                        this.saveWhisperTask(this.focusState.index, val);
+                    }
+                    // Refresh UI
+                    this.load('home');
+                }
+
+                overlay.classList.remove('active');
+                this.focusState = null;
+            },
+
+            init() {
+                this.load('home');
+                this.initGestures();
+            },
+
+            load(screenName) {
+                const mount = document.getElementById('screen-mount');
+                mount.style.opacity = '0';
+
+                setTimeout(() => {
+                    if (SCREENS[screenName]) {
+                        mount.innerHTML = SCREENS[screenName];
+
+                        if (screenName === 'home') {
+                            // Load saved data
+                            this.loadRecaps();
+
+                            // Render Week Tiles (left column)
+                            const weeksMount = document.getElementById('weeks-mount');
+                            if (weeksMount) {
+                                weeksMount.innerHTML = this.recaps.map((w, idx) => `
+                                    <div class="glass-medium recap-card week-card"
+                                         data-id="${w.id}"
+                                         data-index="${idx}"
+                                         style="min-height: 80px; border-radius: var(--radius-md); padding: 10px; position: relative; overflow: hidden; animation: screenFade 0.5s ease-out forwards; animation-delay: ${idx * 0.1}s;">
+                                        <img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=500" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.4;">
+                                        <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(26, 11, 46, 0.85) 0%, rgba(75, 76, 237, 0.4) 100%);"></div>
+
+                                        <!-- Header Area (Restricted Toggle) -->
+                                        <div style="position: relative; cursor: pointer; padding: 5px;" onclick="app.selectRecap(${w.id}, this.parentElement)">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                                <h4 style="font-size: 1rem; font-family: 'Outfit'; font-weight: 800; color: white;">${w.label}</h4>
+                                                <span class="week-date-label"
+                                                      data-week-index="${idx}"
+                                                      style="background: rgba(0,242,255,0.15); border: 1px solid rgba(0,242,255,0.3); padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; color: var(--accent-cyan); cursor: pointer;"
+                                                      oncontextmenu="event.preventDefault();"
+                                                      ontouchstart="app.startLongPress(event, () => app.editWeekDate(${idx}))"
+                                                      ontouchend="app.cancelLongPress()"
+                                                      ontouchmove="app.cancelLongPress()"
+                                                      onmousedown="app.startLongPress(event, () => app.editWeekDate(${idx}))"
+                                                      onmouseup="app.cancelLongPress()"
+                                                      onmouseleave="app.cancelLongPress()"
+                                                      onclick="event.stopPropagation()"
+                                                      >${w.date || 'MM/DD'}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Task Rollout (5 Slots) -->
+                                        <div class="recap-task-rollout" style="position: relative; margin-top: 12px;">
+                                            ${[0, 1, 2, 3, 4].map(i => `
+                                                <div class="recap-task-row" onclick="app.enterFocusMode('week', ${w.id}, ${i}, \`${w.tasks[i] || ''}\`)">
+                                                    <div class="task-dot"></div>
+                                                    <div class="task-input-display" style="flex:1; color: white; font-family: 'Outfit'; font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 0;">
+                                                        ${w.tasks[i] || `<span style="opacity: 0.4;">Objective #${i + 1}</span>`}
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `).join('');
+
+                                // Add Week button
+                                if (this.recaps.length < 12) {
+                                    weeksMount.innerHTML += `
+                                        <div class="glass-thin add-recap-btn"
+                                             style="height: 50px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px dashed rgba(255,255,255,0.15); transition: all 0.3s ease;"
+                                             onclick="app.addRecap()">
+                                            <span style="color: rgba(255,255,255,0.4); font-weight: 800; font-size: 0.8rem;">+ ADD WEEK</span>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }
+
+                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        const indexMap = { 'home': 0, 'search': 1, 'ticket': 2, 'save': 3, 'profile': 4 };
+                        document.querySelectorAll('.tab-btn')[indexMap[screenName]]?.classList.add('active');
+
+                        mount.style.transition = 'opacity 0.4s ease';
+                        mount.style.opacity = '1';
+                    }
+                }, 100);
+            },
+
+            toggleOverlay(screenName, show) {
+                const overlay = document.getElementById(`${screenName}-overlay`);
+                const content = document.getElementById('overlay-content');
+                const card = overlay.querySelector('.overlay-card');
+
+                if (show) {
+                    content.innerHTML = SCREENS[screenName];
+                    overlay.classList.add('active');
+                    card.style.transform = 'translateY(0)';
+                } else {
+                    overlay.classList.remove('active');
+                    card.style.transform = 'translateY(100%)';
+                    setTimeout(() => content.innerHTML = '', 600);
+                }
+            },
+
+            initGestures() {
+                const card = document.querySelector('.overlay-card');
+
+                card.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.drag-handle') || card.scrollTop <= 0) {
+                        this.isDragging = true;
+                        this.startY = e.pageY;
+                        card.style.transition = 'none';
+                    }
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!this.isDragging) return;
+                    this.currentY = Math.max(0, e.pageY - this.startY);
+                    card.style.transform = `translateY(${this.currentY}px)`;
+                });
+
+                window.addEventListener('mouseup', () => {
+                    if (!this.isDragging) return;
+                    this.isDragging = false;
+                    card.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+
+                    if (this.currentY > 150) {
+                        this.toggleOverlay('ticket', false);
+                    } else {
+                        card.style.transform = 'translateY(0)';
+                    }
+                    this.currentY = 0;
+                });
+            },
+
+            addGoal() {
+                // Redirect to addRecap - unified tile system
+                this.addRecap();
+                this.toggleOverlay('ticket', false);
+            },
+
+            // 📞 TOGGLE MAIN RECAP OF CALL
+            toggleRecapMain(el) {
+                const rollout = document.getElementById('main-recap-rollout');
+                if (rollout.classList.contains('open')) {
+                    rollout.classList.remove('open');
+                    el.classList.remove('selected');
+                } else {
+                    rollout.classList.add('open');
+                    el.classList.add('selected');
+                    // Load saved tasks
+                    const inputs = rollout.querySelectorAll('.task-input');
+                    inputs.forEach((inp, i) => inp.value = this.mainRecap.tasks[i] || '');
+                    // Restore date
+                    const dateEl = document.getElementById('main-recap-date');
+                    if (dateEl) dateEl.textContent = this.mainRecap.date || 'MM/DD';
+                    // Stagger animation
+                    rollout.querySelectorAll('.recap-task-row').forEach((row, i) => {
+                        row.style.animationDelay = `${(i + 1) * 0.08}s`;
+                    });
+                }
+            },
+
+            // 💾 SAVE MAIN RECAP TASK (per keystroke)
+            saveMainRecap(index, value) {
+                this.mainRecap.tasks[index] = value;
+                this.saveRecaps();
+            },
+
+            // 📋 TOGGLE WHISPER TASK SHEET (single click on card)
+            toggleWhisperSheet(el) {
+                const sheet = el.querySelector('#whisper-task-sheet');
+                if (!sheet) return;
+
+                if (sheet.classList.contains('open')) {
+                    sheet.classList.remove('open');
+                    el.classList.remove('selected');
+                } else {
+                    sheet.classList.add('open');
+                    el.classList.add('selected');
+                    this.loadWhisperTasks();
+                    // Stagger animation
+                    sheet.querySelectorAll('.recap-task-row').forEach((row, i) => {
+                        row.style.animationDelay = `${(i + 1) * 0.08}s`;
+                    });
+                }
+            },
+
+            // 🌫️ CYCLE WHISPER CAROUSEL (click dot to flip)
+            cycleWhisperDate() {
+                // Make sure sheet is open
+                const sheet = document.getElementById('whisper-task-sheet');
+                if (!sheet.classList.contains('open')) {
+                    sheet.classList.add('open');
+                }
+
+                // Advance to next date
+                this.whisperActiveIndex = (this.whisperActiveIndex + 1) % 4;
+                this.updateWhisperCarousel();
+                this.loadWhisperTasks();
+
+                // Re-trigger flip animation
+                const activeEl = document.querySelector('.whisper-active');
+                if (activeEl) {
+                    activeEl.style.animation = 'none';
+                    activeEl.offsetHeight; // Force reflow
+                    activeEl.style.animation = 'whisperFlipIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                }
+            },
+
+            // 🔄 UPDATE WHISPER CAROUSEL VISUALS
+            updateWhisperCarousel() {
+                const dates = document.querySelectorAll('.whisper-date');
+                const positionClasses = ['whisper-active', 'whisper-ghost-1', 'whisper-ghost-2', 'whisper-ghost-3'];
+
+                dates.forEach((el) => {
+                    const dataIndex = parseInt(el.dataset.index);
+                    const offset = (dataIndex - this.whisperActiveIndex + 4) % 4;
+
+                    // Remove position classes only (keep color class)
+                    el.classList.remove(...positionClasses);
+                    // Add appropriate position class
+                    el.classList.add(positionClasses[offset]);
+
+                    // Update date text
+                    el.textContent = this.whisperData[dataIndex].date;
+                });
+            },
+
+            // 📋 LOAD WHISPER TASKS FOR ACTIVE DATE
+            loadWhisperTasks() {
+                const sheet = document.getElementById('whisper-task-sheet');
+                if (!sheet) return;
+                const displays = sheet.querySelectorAll('.task-input-display');
+                const tasks = this.whisperData[this.whisperActiveIndex].tasks;
+
+                displays.forEach((el, i) => {
+                    const val = tasks[i] || '';
+                    el.innerHTML = val || `<span style="opacity: 0.4;">Vision #${i + 1}</span>`;
+                });
+            },
+
+            // 💾 SAVE WEEK RECAP TASK
+            saveRecapTask(id, taskIndex, value) {
+                const week = this.recaps.find(w => w.id === id);
+                if (week) {
+                    week.tasks[taskIndex] = value;
+                    this.saveRecaps();
+                }
+            },
+
+            // 💾 SAVE WHISPER TASK (per keystroke)
+            saveWhisperTask(taskIndex, value) {
+                this.whisperData[this.whisperActiveIndex].tasks[taskIndex] = value;
+                this.saveRecaps();
+            },
+
+            // ✏️ EDIT ACTIVE WHISPER DATE (single right-click)
+            editActiveWhisperDate() {
+                this.editWhisperDate(this.whisperActiveIndex);
+            },
+
+            // ✏️ EDIT WHISPER DATE
+            editWhisperDate(index) {
+                const dateEl = document.querySelector(`.whisper-date[data-index="${index}"]`);
+                if (!dateEl) return;
+
+                const currentDate = this.whisperData[index].date;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentDate === 'MM/DD' ? '' : currentDate;
+                input.placeholder = 'MM/DD';
+                input.style.cssText = `
+                    background: rgba(0,0,0,0.9); border: 1px solid var(--accent-cyan);
+                    border-radius: 6px; color: white; text-align: center; padding: 4px;
+                    font-family: 'Outfit'; font-size: 0.6rem; font-weight: 800;
+                    outline: none; width: 45px; position: relative; z-index: 10;
+                `;
+
+                dateEl.textContent = '';
+                dateEl.appendChild(input);
+                input.focus();
+                input.select();
+
+                const save = () => {
+                    const val = input.value.trim() || 'MM/DD';
+                    this.whisperData[index].date = val;
+                    dateEl.textContent = val;
+                    this.saveRecaps();
+                };
+
+                input.addEventListener('blur', save);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { save(); input.blur(); }
+                    if (e.key === 'Escape') { dateEl.textContent = currentDate; }
+                });
+            },
+
+            // 📅 ADD NEW WEEK TILE
+            addRecap() {
+                const weekNum = this.recaps.length + 1;
+                this.recaps.push({
+                    id: Date.now(),
+                    label: `Week ${weekNum}`,
+                    date: 'MM/DD',
+                    tasks: ['', '', '', '', '']
+                });
+                this.saveRecaps();
+                this.load('home');
+            },
+
+            // 🖱️ DOUBLE RIGHT-CLICK HANDLER
+            dateRightClickCount: {},
+            handleDateRightClick(weekIndex, el) {
+                if (!this.dateRightClickCount[weekIndex]) this.dateRightClickCount[weekIndex] = 0;
+                this.dateRightClickCount[weekIndex]++;
+
+                if (this.dateRightClickCount[weekIndex] === 2) {
+                    this.editWeekDate(weekIndex);
+                    this.dateRightClickCount[weekIndex] = 0;
+                }
+
+                setTimeout(() => this.dateRightClickCount[weekIndex] = 0, 400);
+            },
+
+            // ✏️ EDIT WEEK DATE - CASCADES TO ALL FOLLOWING WEEKS
+            editWeekDate(weekIndex) {
+                const dateEl = document.querySelectorAll('.week-date-label')[weekIndex];
+                if (!dateEl) return;
+
+                const currentDate = this.recaps[weekIndex]?.date || 'MM/DD';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentDate === 'MM/DD' ? '' : currentDate;
+                input.placeholder = 'MM/DD';
+                input.style.cssText = `
+                    background: rgba(0,0,0,0.8); border: 1px solid var(--accent-cyan);
+                    border-radius: 6px; color: white; text-align: center; padding: 4px 8px;
+                    font-family: 'Outfit'; font-size: 0.65rem; font-weight: 800;
+                    outline: none; width: 55px;
+                `;
+
+                dateEl.textContent = '';
+                dateEl.appendChild(input);
+                input.focus();
+                input.select();
+
+                const save = () => {
+                    const val = input.value.trim() || 'MM/DD';
+                    this.recaps[weekIndex].date = val;
+                    dateEl.textContent = val;
+
+                    // 🔄 CASCADE: Calculate +7 days for each following week
+                    if (val !== 'MM/DD') {
+                        this.cascadeWeekDates(weekIndex, val);
+                    }
+
+                    this.saveRecaps();
+                };
+
+                input.addEventListener('blur', save);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { save(); input.blur(); }
+                    if (e.key === 'Escape') { dateEl.textContent = currentDate; }
+                });
+            },
+
+            // 🔄 CASCADE WEEK DATES (+7 days each)
+            cascadeWeekDates(startIndex, startDate) {
+                // Parse MM/DD format
+                const parts = startDate.split('/');
+                if (parts.length !== 2) return;
+
+                let month = parseInt(parts[0], 10);
+                let day = parseInt(parts[1], 10);
+                if (isNaN(month) || isNaN(day)) return;
+
+                const year = new Date().getFullYear();
+                let currentDate = new Date(year, month - 1, day);
+
+                // Update all following weeks with +7 day increments
+                const allDateLabels = document.querySelectorAll('.week-date-label');
+
+                for (let i = startIndex + 1; i < this.recaps.length; i++) {
+                    currentDate.setDate(currentDate.getDate() + 7);
+
+                    const newMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+                    const newDay = String(currentDate.getDate()).padStart(2, '0');
+                    const newDateStr = `${newMonth}/${newDay}`;
+
+                    this.recaps[i].date = newDateStr;
+
+                    // Animate the ricochet effect
+                    if (allDateLabels[i]) {
+                        allDateLabels[i].textContent = newDateStr;
+                        allDateLabels[i].style.animation = 'none';
+                        allDateLabels[i].offsetHeight; // Trigger reflow
+                        allDateLabels[i].style.animation = `dateCascade 0.4s ease ${(i - startIndex) * 0.1}s`;
+                    }
+                }
+            },
+
+            // 💾 SAVE ALL DATA (triple backup + session)
+            saveRecaps() {
+                try {
+                    const data = JSON.stringify({
+                        whisperData: this.whisperData,
+                        weeks: this.recaps
+                    });
+
+                    // Rotate backups: backup2 <- backup1 <- primary
+                    const b1 = localStorage.getItem('recaps_primary');
+                    const b2 = localStorage.getItem('recaps_backup1');
+                    if (b2) localStorage.setItem('recaps_backup2', b2);
+                    if (b1) localStorage.setItem('recaps_backup1', b1);
+
+                    // Save primary
+                    localStorage.setItem('recaps_primary', data);
+
+                    // Session backup (survives tab crash)
+                    sessionStorage.setItem('recaps_session', data);
+
+                } catch (e) { console.error('[Recap] Save failed'); }
+            },
+
+            // 📂 LOAD ALL DATA (fallback chain)
+            loadRecaps() {
+                try {
+                    let saved = localStorage.getItem('recaps_primary');
+                    if (!saved) saved = localStorage.getItem('recaps_backup1');
+                    if (!saved) saved = localStorage.getItem('recaps_backup2');
+                    if (!saved) saved = sessionStorage.getItem('recaps_session');
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        this.whisperData = data.whisperData || [
+                            { date: 'MM/DD', tasks: ['', '', ''] },
+                            { date: 'MM/DD', tasks: ['', '', ''] },
+                            { date: 'MM/DD', tasks: ['', '', ''] },
+                            { date: 'MM/DD', tasks: ['', '', ''] }
+                        ];
+                        this.recaps = data.weeks || [];
+                    }
+
+                    // IF EMPTY (First boot), INITIALIZE 5 WEEKS
+                    if (this.recaps.length === 0) {
+                        for (let i = 1; i <= 5; i++) {
+                            this.recaps.push({
+                                id: Date.now() + i,
+                                label: `Week ${i}`,
+                                date: 'MM/DD',
+                                tasks: ['', '', '', '', '']
+                            });
+                        }
+                        this.saveRecaps();
+                    }
+                    // Update whisper carousel display
+                    setTimeout(() => this.updateWhisperCarousel(), 100);
+                } catch (e) { console.warn('[Recap] Load failed'); }
+            },
+
+            // 🔀 SELECT RECAP CARD & TOGGLE TASKS
+            selectRecap(id, el) {
+                const rollout = el.querySelector('.recap-task-rollout');
+
+                // If clicking same card, toggle closed
+                if (this.activeRecapId === id && rollout.classList.contains('open')) {
+                    rollout.classList.remove('open');
+                    el.classList.remove('selected');
+                    this.activeRecapId = null;
+                    return;
+                }
+
+                // Close all other cards
+                document.querySelectorAll('.recap-card').forEach(c => {
+                    c.classList.remove('selected');
+                    c.querySelector('.recap-task-rollout')?.classList.remove('open');
+                });
+
+                // Open this card
+                el.classList.add('selected');
+                this.activeRecapId = id;
+
+                // Find this recap's data
+                const recap = this.recaps.find(r => r.id === id);
+                if (!recap) return;
+
+                // Show task rollout
+                if (rollout) {
+                    rollout.classList.add('open');
+                    const rows = rollout.querySelectorAll('.recap-task-row');
+                    rows.forEach((row, i) => {
+                        row.style.animationDelay = `${(i + 1) * 0.08}s`;
+                        const input = row.querySelector('.task-input');
+                        if (input) input.value = recap.tasks[i] || '';
+                    });
+                }
+            },
+
+            // 💾 SAVE TASK INPUT (real-time)
+            saveRecapTask(recapId, taskIndex, value) {
+                const recap = this.recaps.find(r => r.id === recapId);
+                if (recap) {
+                    recap.tasks[taskIndex] = value;
+                    this.saveRecaps();
+                }
+            },
+
+            // ✏️ EDIT RECAP DATE (double right-click)
+            editRecapDate(recapId, el) {
+                const recap = this.recaps.find(r => r.id === recapId);
+                if (!recap) return;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = recap.date === 'MM/DD' ? '' : recap.date;
+                input.placeholder = 'MM/DD';
+                input.style.cssText = `
+                    background: rgba(0,0,0,0.8); border: 1px solid var(--accent-cyan);
+                    border-radius: 6px; color: white; text-align: center; padding: 4px 8px;
+                    font-family: 'Outfit'; font-size: 0.7rem; font-weight: 800;
+                    outline: none; width: 60px;
+                `;
+
+                const label = el.querySelector('.recap-date-label');
+                const origText = label.textContent;
+                label.textContent = '';
+                label.appendChild(input);
+                input.focus();
+                input.select();
+
+                const save = () => {
+                    recap.date = input.value.trim() || 'MM/DD';
+                    label.textContent = recap.date;
+                    this.saveRecaps();
+                };
+
+                input.addEventListener('blur', save);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { save(); input.blur(); }
+                    if (e.key === 'Escape') { label.textContent = origText; }
+                });
+            },
+
+            toggleFocusTasks() {
+                const container = document.getElementById('focus-tasks-container');
+                const isOpen = container.classList.toggle('open');
+
+                if (isOpen) {
+                    const rows = container.querySelectorAll('.task-row');
+                    rows.forEach((row, i) => {
+                        row.style.animationDelay = `${(i + 1) * 0.1}s`;
+                    });
+                }
+            }
+        };
+
+        window.addEventListener('load', () => app.init());
+    </script>
+</body>
+
+</html>

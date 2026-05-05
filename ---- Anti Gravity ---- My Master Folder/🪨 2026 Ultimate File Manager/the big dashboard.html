@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Board — Chad's Dreams</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/dashboard.css">
+</head>
+<body class="dashboard-page">
+
+<div class="masthead">
+  <h1>The <span>Board</span></h1>
+  <div class="sub">5 × 3 · One step · Left → Right</div>
+</div>
+
+<!-- ============================================================
+     WEEK CAROUSEL (atomic-clock seeded)
+     ============================================================ -->
+<div class="carousel-wrap" id="weekCarouselWrap">
+  <div class="carousel-label">Weeks</div>
+  <div class="carousel-row">
+    <button class="carousel-arrow" id="weekArrowLeft" aria-label="Scroll weeks left">‹</button>
+    <div class="carousel-track" id="weekTrack"></div>
+    <button class="carousel-arrow" id="weekArrowRight" aria-label="Scroll weeks right">›</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     JOB CAROUSEL (active week)
+     ============================================================ -->
+<div class="carousel-wrap" id="jobCarouselWrap">
+  <div class="carousel-label" id="jobCarouselLabel">Jobs this week</div>
+  <div class="carousel-row">
+    <button class="carousel-arrow" id="jobArrowLeft" aria-label="Scroll jobs left">‹</button>
+    <div class="carousel-track" id="jobTrack"></div>
+    <button class="carousel-arrow" id="jobArrowRight" aria-label="Scroll jobs right">›</button>
+  </div>
+</div>
+
+<div class="board" id="board"></div>
+
+<div class="footer">
+  Click any cell for detail · Click a row header to collapse · The glowing cell is <span>your next step</span>
+</div>
+
+<script>
+  const rows = [
+    {
+      id: 'active',
+      badge: 'Active Now',
+      title: 'The next 5 steps',
+      meta: '1 → 5 · do these first',
+      className: 'active-row',
+      cells: [
+        { num: '01', dot: 'mint', title: 'The iPad Grid', hint: 'visual map, tap-to-open', foot: 'Work Progress', status: 'active', detail: 'Build the iPad grid visual — the anchor view for the full ecosystem. Tap-to-open any tile.' },
+        { num: '02', dot: 'amber', title: 'Randy — Finish the Presentation', hint: 'one-click, push-button simple', foot: 'Goal locked', status: 'pending', detail: 'Finish the Randy Engineerski presentation. Goal: if it is not push-of-a-button simple, it is not ready.' },
+        { num: '03', dot: 'violet', title: 'Mike "Blessing" App', hint: 'stutter-as-advantage wholesome', foot: 'Warm Heart', status: 'pending', detail: 'Evidence-backed wholesome app reframing stuttering as a gift. Same template as Ozzy.' },
+        { num: '04', dot: 'blue', title: 'Koi — Singer Tribute', hint: 'the "it factor" app', foot: 'Variants deployed', status: 'pending', detail: 'Tribute app for the singer with the "it factor". Variants live at koi-where-opera-stands-04428 and for-koi-603660.' },
+        { num: '05', dot: 'red', title: 'Big Payback Job', hint: 'everyone paid back, color coded', foot: 'Work Debt', status: 'pending', detail: 'Build the payback tracker. Every person, every amount, color coded by status.' }
+      ]
+    },
+    {
+      id: 'queued',
+      badge: 'Queued Next',
+      title: 'When Active clears',
+      meta: '6 → 10 · warm, waiting',
+      className: 'queued-row',
+      cells: [
+        { num: '06', dot: 'blue', title: 'James Budget / Task App', hint: 'personal, for James Downs', foot: 'Personal & Family', status: 'pending', detail: 'Simple budget + task app personalized for James.' },
+        { num: '07', dot: 'blue', title: 'James — Marching Band App', hint: 'schedule, drills, routines', foot: 'Personal & Family', status: 'pending', detail: 'Marching band companion app for James.' },
+        { num: '08', dot: 'blue', title: 'Dad — Financial Plan', hint: 'clear, step-by-step', foot: 'Personal & Family', status: 'pending', detail: 'Clear, visual financial plan document for Dad.' },
+        { num: '09', dot: 'amber', title: 'Master Business Creator', hint: 'boxes & arrows builder', foot: 'Work Progress', status: 'pending', detail: 'Drag-and-drop boxes-and-arrows builder for mapping business flows.' },
+        { num: '10', dot: 'violet', title: 'YouTube Channel Assembly', hint: 'HTML pipeline, repeatable', foot: 'Work Progress', status: 'pending', detail: 'Repeatable HTML assembly line for spinning up YouTube channel pages.' }
+      ]
+    },
+    {
+      id: 'backlog',
+      badge: 'Backlog',
+      title: 'On deck, no rush',
+      meta: '11 → 15 · later this stretch',
+      className: 'backlog-row',
+      cells: [
+        { num: '11', dot: 'dim', title: 'Tool — Detective-File Clone', hint: 'band tribute, Ozzy pattern', foot: 'Work Progress', status: 'pending', detail: 'Tool (the band) detective-file tribute — clone of the Ozzy canonical template.' },
+        { num: '12', dot: 'dim', title: 'Koi Board', hint: 'ops board for Koi project', foot: 'Work Progress', status: 'pending', detail: 'Dedicated Koi board for managing the variants + flow.' },
+        { num: '13', dot: 'dim', title: 'Cloudy Nav Samples', hint: 'navigation UI set', foot: 'Work Progress', status: 'pending', detail: 'Sample gallery of cloudy / soft navigation UI variants.' },
+        { num: '14', dot: 'dim', title: 'VR Status Preview', hint: 'VR status prototype', foot: 'Work Progress', status: 'pending', detail: 'Prototype for a VR status / presence preview screen.' },
+        { num: '15', dot: 'dim', title: '3D Photo Showcase', hint: '3D photo gallery proto', foot: 'Work Progress', status: 'pending', detail: 'Prototype 3D photo gallery experience.' }
+      ]
+    }
+  ];
+
+  const board = document.getElementById('board');
+  rows.forEach(row => {
+    const r = document.createElement('div');
+    r.className = `row ${row.className}`;
+    r.dataset.rowId = row.id;
+
+    const head = document.createElement('div');
+    head.className = 'row-head';
+    head.innerHTML = `
+      <div class="row-head-left">
+        <span class="row-badge">${row.badge}</span>
+        <span class="row-title">${row.title}</span>
+      </div>
+      <div class="row-head-left">
+        <span class="row-meta">${row.meta}</span>
+        <span class="chevron">▾</span>
+      </div>
+    `;
+    head.addEventListener('click', () => r.classList.toggle('collapsed'));
+
+    const body = document.createElement('div');
+    body.className = 'row-body';
+
+    const flow = document.createElement('div');
+    flow.className = 'flow';
+
+    row.cells.forEach((c) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'cell-wrap';
+      wrap.dataset.stepId = c.num;
+
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.stepStatus = c.status || 'pending';
+      cell.innerHTML = `
+        <div class="cell-help-icon" data-hint="${c.hint}">i</div>
+        <div class="cell-num">${c.num}</div>
+        <div class="cell-dot dot-${c.dot}"></div>
+        <div class="cell-title">${c.title}</div>
+        <div class="cell-hint">${c.hint}</div>
+        <div class="cell-foot"><span>${c.foot}</span></div>
+        <button class="do-next-btn">Do next step →</button>
+        <div class="cell-drawer">${c.detail}</div>
+      `;
+      cell.addEventListener('click', (e) => {
+        if (e.target.classList.contains('do-next-btn')) return;
+        if (e.target.classList.contains('cell-help-icon')) return;
+        e.stopPropagation();
+        cell.classList.toggle('expanded');
+      });
+
+      wrap.appendChild(cell);
+      flow.appendChild(wrap);
+    });
+
+    body.appendChild(flow);
+    r.appendChild(head);
+    r.appendChild(body);
+    board.appendChild(r);
+  });
+
+  // Initialize status classes on every cell (after render)
+  function initializeBoard() {
+    document.querySelectorAll('.cell').forEach(cell => {
+      const status = cell.dataset.stepStatus || 'pending';
+      cell.classList.remove('start-here');
+      if (status === 'active') cell.classList.add('active');
+      if (status === 'done') cell.classList.add('done');
+    });
+  }
+  initializeBoard();
+
+  // Arrow-hover glow when mouse is near the active cell
+  document.addEventListener('mousemove', (e) => {
+    document.querySelectorAll('.cell.active').forEach(activeCell => {
+      const wrap = activeCell.closest('.cell-wrap');
+      if (!wrap) return;
+      const rect = wrap.getBoundingClientRect();
+      const dist = Math.hypot(
+        e.clientX - (rect.left + rect.width / 2),
+        e.clientY - (rect.top + rect.height / 2)
+      );
+      wrap.classList.toggle('arrow-hover', dist < 80);
+    });
+  });
+
+  // "Do next step" click handler
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('do-next-btn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const stepId = e.target.closest('.cell-wrap').dataset.stepId;
+      console.log(`Triggering sub-agent for step: ${stepId}`);
+    }
+  });
+
+  /* ============================================================
+     UPGRADE: Week Carousel + Job Carousel + Atomic Clock
+     ============================================================
+     Pure JS, no deps. Seeded from hardcoded arrays.
+     TODO: replace with server read of stage-3 MD files for real jobs/weeks.
+     ============================================================ */
+
+  // ---- DATA SEEDS --------------------------------------------
+  // Weeks — date is YYYY-MM-DD (ISO is used ONLY internally for math).
+  // The pill LABEL is always short "week of M/D" per requirements.
+  const weeks = [
+    { date: '2026-04-23', label: 'week of 4/23' }
+  ];
+
+  // Job slug maps to jobs/{slug}.html
+  // TODO: wire to wrapper-folder names under "-- Results folder master forever/"
+  const jobsByWeek = {
+    '2026-04-23': [
+      { slug: 'scout-troop-app',       name: 'scout troop app' },
+      { slug: 'koi-tribute',           name: 'koi tribute' },
+      { slug: 'character-ai-homemade', name: 'character ai homemade' }
+    ]
+  };
+
+  // ---- HELPERS -----------------------------------------------
+  function shortLabel(dateObj) {
+    return `week of ${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+  }
+  function parseISODate(s) {
+    // Build as local date to avoid TZ drift
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function toISO(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // ---- ATOMIC CLOCK: auto-insert weekly pill -----------------
+  (function atomicClock() {
+    const latestDate = parseISODate(weeks[weeks.length - 1].date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deltaDays = Math.floor((today - latestDate) / (1000 * 60 * 60 * 24));
+    if (deltaDays >= 7) {
+      const next = new Date(latestDate);
+      next.setDate(next.getDate() + 7);
+      weeks.push({ date: toISO(next), label: shortLabel(next) });
+    }
+  })();
+
+  // ---- STATE -------------------------------------------------
+  let activeWeekIndex = weeks.length - 1; // default to latest week
+
+  // ---- RENDER: weeks -----------------------------------------
+  const weekTrack = document.getElementById('weekTrack');
+  function renderWeeks() {
+    weekTrack.innerHTML = '';
+    weeks.forEach((w, idx) => {
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'week-pill' + (idx === activeWeekIndex ? ' active' : '');
+      pill.textContent = w.label;
+      pill.dataset.idx = idx;
+      pill.addEventListener('click', () => setActiveWeek(idx));
+      weekTrack.appendChild(pill);
+    });
+    // Scroll the active pill into view
+    const activePill = weekTrack.querySelector('.week-pill.active');
+    if (activePill) {
+      activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }
+
+  function setActiveWeek(idx) {
+    activeWeekIndex = idx;
+    renderWeeks();
+    renderJobs();
+  }
+
+  // ---- RENDER: jobs ------------------------------------------
+  const jobTrack = document.getElementById('jobTrack');
+  const jobLabel = document.getElementById('jobCarouselLabel');
+  function renderJobs() {
+    jobTrack.innerHTML = '';
+    const activeWeek = weeks[activeWeekIndex];
+    jobLabel.textContent = `Jobs — ${activeWeek.label}`;
+    const jobs = jobsByWeek[activeWeek.date] || [];
+    if (jobs.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding:14px 6px;font-family:JetBrains Mono,monospace;font-size:11px;color:var(--ink-faint);';
+      empty.textContent = 'No jobs seeded for this week.';
+      jobTrack.appendChild(empty);
+      return;
+    }
+    jobs.forEach(j => {
+      const tile = document.createElement('a');
+      tile.className = 'job-tile';
+      tile.href = `jobs/${j.slug}.html`;
+      tile.innerHTML = `
+        <div class="job-tile-name">${j.name}</div>
+        <div class="job-tile-meta">open job page →</div>
+      `;
+      jobTrack.appendChild(tile);
+    });
+  }
+
+  // ---- ARROW SCROLL ------------------------------------------
+  function scrollTrackBy(track, direction) {
+    const firstChild = track.querySelector('*');
+    const step = firstChild ? firstChild.getBoundingClientRect().width + 10 : 240;
+    track.scrollBy({ left: direction * step, behavior: 'smooth' });
+  }
+  document.getElementById('weekArrowLeft').addEventListener('click', () => scrollTrackBy(weekTrack, -1));
+  document.getElementById('weekArrowRight').addEventListener('click', () => scrollTrackBy(weekTrack, 1));
+  document.getElementById('jobArrowLeft').addEventListener('click', () => scrollTrackBy(jobTrack, -1));
+  document.getElementById('jobArrowRight').addEventListener('click', () => scrollTrackBy(jobTrack, 1));
+
+  // ---- INIT --------------------------------------------------
+  renderWeeks();
+  renderJobs();
+</script>
+
+</body>
+</html>

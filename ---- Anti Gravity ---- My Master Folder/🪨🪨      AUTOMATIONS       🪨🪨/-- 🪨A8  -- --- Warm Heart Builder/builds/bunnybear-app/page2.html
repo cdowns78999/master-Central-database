@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BUNNYBEAR — INTEL BRIEF</title>
+<style>
+  /* ============ BASE ============ */
+  :root{
+    --paper:#f5ead4;
+    --paper-dark:#e9dcba;
+    --ink:#17130d;
+    --ink-soft:#3a3229;
+    --red:#b8352b;
+    --red-dark:#8c2219;
+    --green:#3a6b4a;
+    --green-dark:#264a33;
+    --shadow: 0 2px 0 rgba(23,19,13,0.08), 0 10px 24px rgba(23,19,13,0.10);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Courier New","Courier",ui-monospace,monospace;line-height:1.55;}
+  body{
+    min-height:100vh;
+    background-color:var(--paper);
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, rgba(184,53,43,0.05), transparent 60%),
+      radial-gradient(800px 500px at 110% 20%, rgba(58,107,74,0.06), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(23,19,13,0.025) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(23,19,13,0.02) 0 1px, transparent 1px 4px);
+    padding:0 0 120px 0;
+  }
+
+  /* subtle paper fiber noise */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    pointer-events:none;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(140,90,30,0.07) 0 1px, transparent 2px),
+      radial-gradient(circle at 70% 60%, rgba(140,90,30,0.06) 0 1px, transparent 2px),
+      radial-gradient(circle at 40% 80%, rgba(140,90,30,0.05) 0 1px, transparent 2px);
+    background-size: 7px 7px, 11px 11px, 13px 13px;
+    opacity:0.55;
+    mix-blend-mode:multiply;
+    z-index:0;
+  }
+
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 28px 0;position:relative;z-index:1}
+
+  /* ============ HEADER / DOSSIER TOP ============ */
+  .dossier-top{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;
+  }
+  .stamp{
+    display:inline-flex;align-items:center;gap:8px;
+    border:2.5px solid var(--red);color:var(--red);
+    padding:8px 14px;letter-spacing:0.22em;font-weight:700;font-size:13px;
+    transform:rotate(-2.3deg);
+    background:rgba(184,53,43,0.04);
+    box-shadow:inset 0 0 0 1px rgba(184,53,43,0.18);
+    text-transform:uppercase;
+  }
+  .stamp .warn{color:var(--red);font-size:16px;line-height:1}
+  .dossier-id{
+    font-size:12px;letter-spacing:0.18em;color:var(--ink-soft);text-transform:uppercase;
+    text-align:right;
+  }
+  .dossier-id small{display:block;opacity:0.7;margin-top:3px;letter-spacing:0.14em}
+
+  .back-link{
+    display:inline-flex;align-items:center;gap:8px;
+    color:var(--ink);text-decoration:none;
+    font-size:12px;letter-spacing:0.2em;text-transform:uppercase;
+    padding:6px 10px;border:1px dashed var(--ink-soft);border-radius:2px;
+    margin-bottom:12px;
+    transition:all .18s ease;
+  }
+  .back-link:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  /* ============ TITLE BAR ============ */
+  .titlebar{
+    border:2px solid var(--ink);
+    padding:18px 22px;
+    margin-bottom:26px;
+    background:
+      repeating-linear-gradient(135deg, rgba(23,19,13,0.035) 0 10px, transparent 10px 20px),
+      var(--paper);
+    position:relative;
+  }
+  .titlebar::before,.titlebar::after{
+    content:"";position:absolute;width:18px;height:18px;border:2px solid var(--ink);
+  }
+  .titlebar::before{top:-2px;left:-2px;border-right:none;border-bottom:none}
+  .titlebar::after{bottom:-2px;right:-2px;border-left:none;border-top:none}
+  .titlebar h1{
+    font-size:clamp(22px,3.4vw,38px);
+    letter-spacing:0.08em;text-transform:uppercase;
+    line-height:1.1;font-weight:900;
+  }
+  .titlebar .kicker{
+    font-size:11px;letter-spacing:0.28em;color:var(--red);margin-bottom:6px;text-transform:uppercase;
+  }
+
+  /* ============ THESIS ============ */
+  .thesis{
+    position:relative;
+    padding:22px 28px;
+    margin:0 0 42px 0;
+    border-left:4px double var(--red);
+    border-right:4px double var(--red);
+    background:rgba(184,53,43,0.035);
+  }
+  .thesis p{
+    font-size:clamp(15px,1.6vw,19px);
+    letter-spacing:0.01em;color:var(--ink);
+    font-family:"Courier New",monospace;
+    line-height:1.7;
+  }
+  .thesis .caret{color:var(--red);font-weight:700;margin-right:6px}
+
+  /* ============ SECTION HEADERS ============ */
+  .section{margin:52px 0 0 0;position:relative}
+  .section-head{
+    display:flex;align-items:center;gap:14px;
+    border-bottom:1.5px solid var(--ink);
+    padding-bottom:10px;margin-bottom:24px;
+  }
+  .section-tag{
+    background:var(--red);color:var(--paper);
+    font-size:11px;letter-spacing:0.26em;padding:6px 12px;
+    text-transform:uppercase;font-weight:700;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .section-tag.green{background:var(--green)}
+  .section-head h2{
+    font-size:clamp(16px,2vw,22px);
+    letter-spacing:0.12em;text-transform:uppercase;font-weight:800;
+  }
+  .section-sub{
+    font-size:11px;letter-spacing:0.2em;color:var(--ink-soft);
+    margin-left:auto;text-transform:uppercase;display:none;
+  }
+  @media(min-width:720px){ .section-sub{display:inline} }
+
+  /* ============ FIELD REPORT CARDS (SA-A) ============ */
+  .grid-2{
+    display:grid;grid-template-columns:1fr;gap:22px;
+  }
+  @media(min-width:860px){ .grid-2{grid-template-columns:1fr 1fr} }
+
+  .fr-card{
+    background:var(--paper);
+    border:1.5px solid var(--ink);
+    position:relative;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .fr-card:hover{transform:translateY(-2px);box-shadow:0 4px 0 rgba(23,19,13,0.1), 0 14px 30px rgba(23,19,13,0.15)}
+  .fr-strip{
+    background:var(--ink);color:var(--paper);
+    padding:10px 14px;font-size:11px;letter-spacing:0.22em;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;text-transform:uppercase;
+  }
+  .fr-strip .src-label{color:#d9c98a}
+  .fr-strip .src-year{opacity:0.75}
+  .fr-body{padding:18px 20px 20px}
+  .fr-quote{
+    font-size:15px;line-height:1.65;color:var(--ink);
+    padding-left:16px;border-left:3px solid var(--red);
+    margin-bottom:14px;
+  }
+  .fr-quote::before{content:"“";color:var(--red);font-size:28px;line-height:0;vertical-align:-6px;margin-right:4px}
+  .fr-quote::after{content:"”";color:var(--red);font-size:28px;line-height:0;vertical-align:-14px;margin-left:2px}
+  .fr-meta{font-size:11px;letter-spacing:0.14em;color:var(--ink-soft);text-transform:uppercase;margin-bottom:6px}
+  .fr-author{font-weight:700;letter-spacing:0.05em;font-size:13px;margin-bottom:2px}
+  .fr-context{
+    font-size:12px;color:var(--green-dark);
+    padding:8px 10px;margin-top:12px;
+    border:1px dashed var(--green);
+    background:rgba(58,107,74,0.06);
+    letter-spacing:0.02em;
+  }
+  .fr-context::before{content:"ANALYST NOTE ▸ ";color:var(--green);font-weight:700;letter-spacing:0.18em;font-size:10px}
+
+  /* ============ OPERATIVE TESTIMONY ============ */
+  .op-grid{display:grid;grid-template-columns:1fr;gap:20px}
+  @media(min-width:860px){ .op-grid{grid-template-columns:1fr 1fr} }
+
+  .op-card{
+    position:relative;
+    background:var(--paper);
+    border:1.5px solid var(--ink);
+    padding:22px 22px 18px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .op-card .redact{
+    position:absolute;inset:0;
+    background:var(--ink);
+    transform-origin:left center;
+    transform:scaleX(1);
+    transition:transform .9s cubic-bezier(.2,.9,.2,1);
+    z-index:2;pointer-events:none;
+  }
+  .op-card.revealed .redact{transform:scaleX(0)}
+
+  .op-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .op-badge{
+    width:48px;height:48px;border-radius:50%;
+    background:var(--ink);color:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;letter-spacing:0.08em;font-size:15px;
+    border:2px solid var(--red);
+    flex-shrink:0;
+  }
+  .op-name{font-size:15px;font-weight:800;letter-spacing:0.04em}
+  .op-role{font-size:11px;color:var(--ink-soft);letter-spacing:0.12em;text-transform:uppercase;margin-top:2px}
+  .op-quote{
+    font-size:15px;line-height:1.65;
+    padding:12px 0 10px;
+    border-top:1px dashed var(--ink-soft);
+    border-bottom:1px dashed var(--ink-soft);
+    margin-bottom:12px;
+  }
+  .op-quote::before{content:"// TRANSCRIPT ";color:var(--red);font-size:10px;letter-spacing:0.22em;display:block;margin-bottom:6px}
+  .op-src{font-size:10.5px;color:var(--ink-soft);letter-spacing:0.12em;text-transform:uppercase}
+
+  /* ============ RECEIPTS / STATS ============ */
+  .stats{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:760px){ .stats{grid-template-columns:repeat(3,1fr)} }
+
+  .stat-card{
+    background:var(--paper);
+    border:2px solid var(--ink);
+    padding:22px 20px 18px;
+    position:relative;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    transition:transform .18s ease;
+  }
+  .stat-card:hover{transform:translateY(-3px)}
+  .stat-card::before{
+    content:"INTEL SUMMARY";
+    position:absolute;top:-11px;left:14px;
+    background:var(--paper);color:var(--red);
+    padding:0 8px;font-size:10px;letter-spacing:0.24em;font-weight:700;
+  }
+  .stat-value{
+    font-size:clamp(22px,2.6vw,28px);
+    font-weight:900;letter-spacing:0.02em;
+    color:var(--ink);line-height:1.15;margin-bottom:12px;
+  }
+  .stat-value .big{color:var(--red)}
+  .stat-src{font-size:11px;color:var(--ink-soft);letter-spacing:0.08em;text-transform:uppercase;line-height:1.5}
+  .stat-year{display:inline-block;margin-top:8px;padding:2px 8px;background:var(--ink);color:var(--paper);font-size:10px;letter-spacing:0.18em}
+
+  /* ============ HIGH-VALUE VOICES RIBBON ============ */
+  .ribbon{
+    display:flex;flex-wrap:wrap;gap:12px;
+  }
+  .vcard{
+    position:relative;
+    padding:12px 16px;
+    background:var(--paper);
+    border:1.5px solid var(--ink);
+    overflow:hidden;
+    cursor:pointer;
+    transition:transform .2s ease;
+    min-width:140px;
+  }
+  .vcard:hover{transform:translateY(-2px)}
+  .vcard .vredact{
+    position:absolute;inset:0;background:var(--ink);
+    transform-origin:left;transform:scaleX(1);
+    transition:transform .7s cubic-bezier(.2,.9,.2,1);
+  }
+  .vcard.revealed .vredact{transform:scaleX(0)}
+  .vcard .vname{
+    font-weight:800;letter-spacing:0.04em;font-size:14px;position:relative;z-index:2;
+  }
+  .vcard .vrole{
+    font-size:10px;color:var(--ink-soft);letter-spacing:0.14em;text-transform:uppercase;
+    position:relative;z-index:2;margin-top:2px;
+  }
+
+  /* ============ CAROUSEL ============ */
+  .carousel-wrap{position:relative}
+  .carousel{
+    display:flex;overflow-x:auto;scroll-snap-type:x mandatory;
+    gap:20px;padding:8px 2px 18px;scroll-behavior:smooth;
+    scrollbar-width:thin;
+  }
+  .carousel::-webkit-scrollbar{height:8px}
+  .carousel::-webkit-scrollbar-thumb{background:var(--ink-soft);border-radius:4px}
+  .idx-card{
+    flex:0 0 calc(100% - 0px);
+    scroll-snap-align:center;
+    background:var(--paper);
+    border:1.5px solid var(--ink);
+    padding:22px;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    position:relative;
+  }
+  @media(min-width:760px){ .idx-card{flex:0 0 70%} }
+  @media(min-width:1100px){ .idx-card{flex:0 0 55%} }
+
+  .idx-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .idx-badge{
+    width:54px;height:54px;border-radius:50%;
+    background:var(--red);color:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;letter-spacing:0.06em;font-size:16px;
+    border:2px solid var(--ink);flex-shrink:0;
+  }
+  .idx-name{font-weight:800;letter-spacing:0.04em;font-size:15px}
+  .idx-role{font-size:11px;color:var(--ink-soft);letter-spacing:0.12em;text-transform:uppercase;margin-top:2px}
+  .idx-quote{
+    font-size:16px;line-height:1.6;margin:12px 0;
+    padding:12px 14px;
+    background:rgba(184,53,43,0.04);
+    border-left:3px solid var(--red);
+  }
+  .idx-foot{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);
+    border-top:1px dashed var(--ink-soft);padding-top:10px;margin-top:6px;
+  }
+  .idx-foot .outlet{color:var(--green-dark);font-weight:700}
+
+  .car-nav{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;
+  }
+  .car-btn{
+    background:var(--ink);color:var(--paper);border:none;
+    padding:8px 14px;font-family:inherit;font-size:12px;letter-spacing:0.22em;
+    cursor:pointer;text-transform:uppercase;font-weight:700;
+    transition:background .15s ease;
+  }
+  .car-btn:hover{background:var(--red)}
+  .dots{display:flex;gap:8px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--ink-soft);opacity:0.35;cursor:pointer;transition:all .15s ease}
+  .dot.active{background:var(--red);opacity:1;transform:scale(1.2)}
+
+  /* ============ SOURCE BANNER ============ */
+  .src-banner{
+    position:fixed;top:18px;right:18px;z-index:100;
+    background:var(--red);color:var(--paper);
+    border:2px solid var(--ink);
+    padding:10px 16px;
+    font-size:12px;letter-spacing:0.16em;text-transform:uppercase;font-weight:700;
+    box-shadow:4px 4px 0 var(--ink);
+    cursor:pointer;text-decoration:none;
+    opacity:0;transform:translateY(-10px);pointer-events:none;
+    transition:opacity .28s ease, transform .28s ease;
+    max-width:min(420px, 80vw);
+  }
+  .src-banner.show{opacity:1;transform:translateY(0);pointer-events:auto}
+  .src-banner .lead{display:block;font-size:10px;opacity:0.85;letter-spacing:0.22em;margin-bottom:3px}
+  .src-banner .outlet-name{display:block;font-size:13px;letter-spacing:0.08em}
+  .src-banner .arrow{display:inline-block;margin-left:6px}
+
+  /* ============ FOOTER ============ */
+  footer{
+    margin-top:70px;padding-top:22px;
+    border-top:2px solid var(--ink);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;
+    font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-soft);
+  }
+
+  /* ============ FADE-IN ON SCROLL ============ */
+  .fade-in{opacity:0;transform:translateY(14px);transition:opacity .6s ease, transform .6s ease}
+  .fade-in.in{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ============ SOURCE BANNER ============ -->
+<a id="srcBanner" class="src-banner" target="_blank" rel="noopener">
+  <span class="lead">OPEN SOURCE</span>
+  <span class="outlet-name" id="srcOutlet">—</span>
+  <span>click to access <span class="arrow">→</span></span>
+</a>
+
+<div class="wrap">
+
+  <!-- ============ BACK LINK ============ -->
+  <a href="index.html" class="back-link">← back to dossier cover</a>
+
+  <!-- ============ DOSSIER TOP ============ -->
+  <div class="dossier-top">
+    <div class="stamp"><span class="warn">⚠</span> DECLASSIFIED · LEVEL 6</div>
+    <div class="dossier-id">
+      DOSSIER #B-2407-BB
+      <small>PAGE 02 / INTEL</small>
+    </div>
+  </div>
+
+  <!-- ============ TITLE BAR ============ -->
+  <div class="titlebar">
+    <div class="kicker">FIELD REPORT</div>
+    <h1>The Ones Who Couldn't Look Away</h1>
+  </div>
+
+  <!-- ============ THESIS ============ -->
+  <div class="thesis">
+    <p><span class="caret">&gt;&gt;</span> the ones who can't look away are the reason exploitation ends. the pain of seeing it IS the signal. every protector in history started here. here's the proof.</p>
+  </div>
+
+  <!-- ============ SECTION 1 — PRIMARY INTEL ============ -->
+  <section class="section">
+    <div class="section-head">
+      <span class="section-tag">Primary Intel</span>
+      <h2>Peer-Reviewed Source Material</h2>
+      <span class="section-sub">06 verified sources</span>
+    </div>
+    <div class="grid-2" id="primaryGrid"></div>
+  </section>
+
+  <!-- ============ SECTION 2 — OPERATIVE TESTIMONY ============ -->
+  <section class="section">
+    <div class="section-head">
+      <span class="section-tag green">Operative Testimony</span>
+      <h2>In Their Own Words</h2>
+      <span class="section-sub">05 operatives</span>
+    </div>
+    <div class="op-grid" id="opGrid"></div>
+  </section>
+
+  <!-- ============ SECTION 3 — RECEIPTS ============ -->
+  <section class="section">
+    <div class="section-head">
+      <span class="section-tag">The Receipts</span>
+      <h2>Hard Data</h2>
+      <span class="section-sub">03 data points</span>
+    </div>
+    <div class="stats" id="statsGrid"></div>
+  </section>
+
+  <!-- ============ SECTION 4 — HIGH-VALUE VOICES ============ -->
+  <section class="section">
+    <div class="section-head">
+      <span class="section-tag green">High-Value Voices</span>
+      <h2>Public Figures on the Record</h2>
+      <span class="section-sub">names ribbon</span>
+    </div>
+    <div class="ribbon" id="ribbon"></div>
+  </section>
+
+  <!-- ============ SECTION 5 — DECLASSIFIED CAROUSEL ============ -->
+  <section class="section" id="carouselSection">
+    <div class="section-head">
+      <span class="section-tag">Declassified Quotes</span>
+      <h2>Carousel</h2>
+      <span class="section-sub">scroll or tap</span>
+    </div>
+    <div class="carousel-wrap">
+      <div class="carousel" id="carousel"></div>
+      <div class="car-nav">
+        <button class="car-btn" id="carPrev">◀ PREV</button>
+        <div class="dots" id="carDots"></div>
+        <button class="car-btn" id="carNext">NEXT ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <a href="index.html" class="back-link" style="margin:0">← back to dossier cover</a>
+    <div>END OF BRIEF · FILE B-2407-BB · BUNNYBEAR</div>
+  </footer>
+
+</div>
+
+<script>
+/* ============ DATA ============ */
+const PRIMARY = [
+  {author:"Samuel P. Oliner and Pearl M. Oliner",role:"Founders, Altruistic Personality & Prosocial Behavior Institute, Humboldt State University",publication:"The Altruistic Personality: Rescuers of Jews in Nazi Europe",year:"1988",url:"https://humboldt.edu/altruistic-personality-prosocial-behavior-institute/altruistic-personality-rescuers-jews-nazi-europe",quote:"those who intervened were distinguished by characteristics such as empathy and a sense of connection to others",context:"Names the exact trait — being unable to look away IS the rescuer signature."},
+  {author:"Eva Fogelman, PhD",role:"Psychologist, founder of the Rescuer Project, CUNY",publication:"Conscience and Courage: Rescuers of Jews During the Holocaust",year:"1994",url:"https://evafogelman.com/publications/conscience-and-courage-rescuers-of-jews-during-the-holocaust/",quote:"Once a rescuer takes on the responsibility to save another person's life, they develop a heightened sense of empathy that allows them to transcend propaganda as well as overcome their own instincts for self preservation.",context:"Proves the ache is the launchpad."},
+  {author:"Paul Slovic",role:"Professor of Psychology, University of Oregon; President, Decision Research",publication:"Judgment and Decision Making",year:"2007",url:"https://www.cambridge.org/core/journals/judgment-and-decision-making/article/if-i-look-at-the-mass-i-will-never-act-psychic-numbing-and-genocide/0E55D099E133068F9ACD5A0DBBE1E4E2",quote:"Most people are caring and will exert great effort to rescue individual victims whose needy plight comes to their attention.",context:"Caring-when-you-see-it is the default — the people who stay awake to it are the rare ones who act."},
+  {author:"Klimecki, Leiberg, Ricard, Singer",role:"Researchers, Max Planck Institute for Human Cognitive and Brain Sciences",publication:"Social Cognitive and Affective Neuroscience",year:"2014",url:"https://pubmed.ncbi.nlm.nih.gov/23576808/",quote:"training compassion may reflect a new coping strategy to overcome empathic distress and strengthen resilience",context:"fMRI proof — the pain of seeing suffering can be trained into sustained compassionate action."},
+  {author:"United States Holocaust Memorial Museum",role:"U.S. federal Holocaust education institution",publication:"Holocaust Encyclopedia — Righteous Among the Nations",year:"2024",url:"https://encyclopedia.ushmm.org/content/en/article/righteous-among-the-nations",quote:"As of January 1, 2024, Yad Vashem had awarded the title of Righteous Among the Nations to 28,707 individuals from 51 countries.",context:"Receipts — 28,707 verified names."},
+  {author:"Lasse Suonperä Liebst, Richard Philpot, Wim Bernasco, et al.",role:"Criminologists, University of Copenhagen",publication:"Aggressive Behavior 45(6)",year:"2019",url:"https://pmc.ncbi.nlm.nih.gov/articles/PMC6790599/",quote:"At the context-level, at least one bystander intervened in 85.0% of the 81 videos.",context:"CCTV data — when pain is witnessed, intervention is the norm, not the exception."}
+];
+
+const OPERATIVES = [
+  {author:"Dolores Huerta",role:"Co-founder, United Farm Workers",publication:"NFWA March & Rally speech (Archives of Women's Political Communication, Iowa State)",year:"1966",url:"https://awpc.cattcenter.iastate.edu/2017/03/09/nfwa-march-and-rally-april-10-1966/",quote:"You cannot close your eyes and your ears to us any longer. You cannot pretend that we do not exist."},
+  {author:"Cesar Chavez",role:"Co-founder, United Farm Workers",publication:"Address to the Commonwealth Club of California",year:"1984",url:"https://www.historyisaweapon.com/defcon1/chavezcommonwealth.html",quote:"It grew from the frustration and humiliation I felt as a boy who couldn't understand how the growers could abuse and exploit farm workers when there were so many of us and so few of them."},
+  {author:"Harriet Tubman",role:"Underground Railroad conductor",publication:"National Women's History Museum biography (1886 interview)",year:"1886",url:"https://www.womenshistory.org/education-resources/biographies/harriet-tubman",quote:"I had reasoned this out in my mind; there was one of two things I had the right to, liberty or death; if I could not have one, I would have the other."},
+  {author:"Frances Perkins",role:"U.S. Secretary of Labor, Triangle Shirtwaist fire witness",publication:"Cornell University ILR School (Triangle Fire archive)",year:"1964",url:"https://trianglefire.ilr.cornell.edu/primary/lectures/FrancesPerkinsLecture.html",quote:"We've got to turn this into some kind of victory, some kind of constructive action."},
+  {author:"Miep Gies",role:"Dutch rescuer who hid the Frank family",publication:"Anne Frank Remembered (1987)",year:"1987",url:"https://www.miepgies.nl/en/151.html",quote:"More than twenty thousand Dutch people helped to hide Jews and others in need of hiding during those years. I willingly did what I could to help. My husband did as well. It was not enough. There is nothing special about me. I have never wanted special attention. I was only willing to do what was asked of me and what seemed necessary at the time."}
+];
+
+const FACTS = [
+  {stat:"at least one bystander intervened in 85.0% of 81 violent-incident videos — 217 intervening bystanders, avg. 2.7 per situation",source:"Liebst, Philpot, Bernasco et al., Aggressive Behavior (Copenhagen CCTV study)",year:"2019",url:"https://pmc.ncbi.nlm.nih.gov/articles/PMC6790599/"},
+  {stat:"28,707 individuals from 51 countries awarded Righteous Among the Nations",source:"United States Holocaust Memorial Museum",year:"2024",url:"https://encyclopedia.ushmm.org/content/en/article/righteous-among-the-nations"},
+  {stat:"compassion training elicited activity in a neural network including the medial orbitofrontal cortex, putamen, pallidum, and ventral tegmental area",source:"Klimecki, Leiberg, Lamm, Singer — Cerebral Cortex",year:"2013",url:"https://pubmed.ncbi.nlm.nih.gov/22661409/"}
+];
+
+const CELEBS = [
+  {author:"Elie Wiesel",role:"Nobel Peace Prize laureate, Holocaust survivor, author",outlet:"Elie Wiesel Foundation for Humanity (Nobel Prize Acceptance Speech)",year:"1986",url:"https://eliewieselfoundation.org/about-elie-wiesel/nobel-prize-speech/",quote:"We must take sides. Neutrality helps the oppressor, never the victim. Silence encourages the tormentor, never the tormented."},
+  {author:"Elie Wiesel",role:"Nobel Peace Prize laureate, author",outlet:"Elie Wiesel Foundation for Humanity",year:"1986",url:"https://eliewieselfoundation.org/about-elie-wiesel/nobel-prize-speech/",quote:"I swore never to be silent whenever wherever human beings endure suffering and humiliation."},
+  {author:"Malala Yousafzai",role:"Nobel Peace Prize laureate, education activist",outlet:"Malala Fund (Nobel Peace Prize Acceptance Speech)",year:"2014",url:"https://malala.org/news-and-voices/malala-nobel-speech",quote:"We could not just stand by and see those injustices of the terrorists denying our rights, ruthlessly killing people and misusing the name of Islam."},
+  {author:"Muhammad Ali",role:"Heavyweight boxing champion, civil rights activist",outlet:"Democracy Now!",year:"2016",url:"https://www.democracynow.org/2016/6/6/just_take_me_to_jail_remembering",quote:"My conscience won't let me go shoot my brother, or some darker people or some poor, hungry people in the mud, for big, powerful America."},
+  {author:"John Lewis",role:"U.S. Congressman, civil rights icon",outlet:"PBS NewsHour",year:"2020",url:"https://www.pbs.org/newshour/show/remembering-john-lewis-an-american-civil-rights-icon",quote:"When you see something that is not right, not just, not fair, you have a moral obligation to say something!"}
+];
+
+/* ============ HELPERS ============ */
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function initials(name){
+  return name.split(/[\s,]+/).filter(w=>w && /[A-Za-z]/.test(w[0])).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+}
+
+/* ============ RENDER — PRIMARY INTEL ============ */
+const primaryGrid = document.getElementById('primaryGrid');
+PRIMARY.forEach(s => {
+  const card = document.createElement('div');
+  card.className = 'fr-card fade-in';
+  card.setAttribute('data-source', s.url);
+  card.setAttribute('data-outlet', s.publication);
+  card.innerHTML = `
+    <div class="fr-strip">
+      <span><span class="src-label">SOURCE ▸</span> ${esc(s.author)}</span>
+      <span class="src-year">${esc(s.year)}</span>
+    </div>
+    <div class="fr-body">
+      <div class="fr-quote">${esc(s.quote)}</div>
+      <div class="fr-author">${esc(s.author)}</div>
+      <div class="fr-meta">${esc(s.role)}</div>
+      <div class="fr-meta" style="margin-top:4px">${esc(s.publication)}</div>
+      <div class="fr-context">${esc(s.context)}</div>
+    </div>
+  `;
+  primaryGrid.appendChild(card);
+});
+
+/* ============ RENDER — OPERATIVES ============ */
+const opGrid = document.getElementById('opGrid');
+OPERATIVES.forEach(o => {
+  const card = document.createElement('div');
+  card.className = 'op-card fade-in';
+  card.setAttribute('data-source', o.url);
+  card.setAttribute('data-outlet', o.publication);
+  card.innerHTML = `
+    <div class="redact" aria-hidden="true"></div>
+    <div class="op-head">
+      <div class="op-badge">${initials(o.author)}</div>
+      <div>
+        <div class="op-name">${esc(o.author)}</div>
+        <div class="op-role">${esc(o.role)}</div>
+      </div>
+    </div>
+    <div class="op-quote">${esc(o.quote)}</div>
+    <div class="op-src">${esc(o.publication)} · ${esc(o.year)}</div>
+  `;
+  opGrid.appendChild(card);
+});
+
+/* ============ RENDER — FACTS ============ */
+const statsGrid = document.getElementById('statsGrid');
+FACTS.forEach(f => {
+  const card = document.createElement('div');
+  card.className = 'stat-card fade-in';
+  card.setAttribute('data-source', f.url);
+  card.setAttribute('data-outlet', f.source);
+  card.innerHTML = `
+    <div class="stat-value"><span class="big">▸</span> ${esc(f.stat)}</div>
+    <div class="stat-src">${esc(f.source)}</div>
+    <div class="stat-year">${esc(f.year)}</div>
+  `;
+  statsGrid.appendChild(card);
+});
+
+/* ============ RENDER — RIBBON (celeb names) ============ */
+const ribbon = document.getElementById('ribbon');
+// unique by author for the ribbon
+const seen = new Set();
+CELEBS.forEach(c => {
+  if(seen.has(c.author)) return;
+  seen.add(c.author);
+  const v = document.createElement('div');
+  v.className = 'vcard fade-in';
+  v.setAttribute('data-source', c.url);
+  v.setAttribute('data-outlet', c.outlet);
+  v.innerHTML = `
+    <div class="vredact" aria-hidden="true"></div>
+    <div class="vname">${esc(c.author)}</div>
+    <div class="vrole">${esc(c.role.split(',')[0])}</div>
+  `;
+  ribbon.appendChild(v);
+});
+
+/* ============ RENDER — CAROUSEL ============ */
+const carouselSection = document.getElementById('carouselSection');
+const carousel = document.getElementById('carousel');
+const carDots = document.getElementById('carDots');
+
+if(!CELEBS.length){
+  carouselSection.style.display = 'none';
+} else {
+  CELEBS.forEach((c,i) => {
+    const card = document.createElement('div');
+    card.className = 'idx-card fade-in';
+    card.setAttribute('data-source', c.url);
+    card.setAttribute('data-outlet', c.outlet);
+    card.innerHTML = `
+      <div class="idx-head">
+        <div class="idx-badge">${initials(c.author)}</div>
+        <div>
+          <div class="idx-name">${esc(c.author)}</div>
+          <div class="idx-role">${esc(c.role)}</div>
+        </div>
+      </div>
+      <div class="idx-quote">${esc(c.quote)}</div>
+      <div class="idx-foot">
+        <span class="outlet">${esc(c.outlet)}</span>
+        <span>${esc(c.year)}</span>
+      </div>
+    `;
+    carousel.appendChild(card);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i===0?' active':'');
+    dot.addEventListener('click', () => scrollToCard(i));
+    carDots.appendChild(dot);
+  });
+
+  function scrollToCard(i){
+    const card = carousel.children[i];
+    if(!card) return;
+    carousel.scrollTo({left: card.offsetLeft - carousel.offsetLeft, behavior:'smooth'});
+  }
+  function currentIndex(){
+    const cards = [...carousel.children];
+    const sl = carousel.scrollLeft;
+    let best = 0, bestDist = Infinity;
+    cards.forEach((c,i)=>{
+      const d = Math.abs(c.offsetLeft - carousel.offsetLeft - sl);
+      if(d<bestDist){bestDist=d;best=i;}
+    });
+    return best;
+  }
+  document.getElementById('carPrev').addEventListener('click', ()=>{
+    scrollToCard(Math.max(0, currentIndex()-1));
+  });
+  document.getElementById('carNext').addEventListener('click', ()=>{
+    scrollToCard(Math.min(CELEBS.length-1, currentIndex()+1));
+  });
+  carousel.addEventListener('scroll', () => {
+    const idx = currentIndex();
+    [...carDots.children].forEach((d,i)=>d.classList.toggle('active', i===idx));
+  });
+}
+
+/* ============ SOURCE BANNER — delegated ============ */
+const banner = document.getElementById('srcBanner');
+const bannerOutlet = document.getElementById('srcOutlet');
+let bannerTimer = null;
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-source]');
+  if(!el) return;
+  // if click landed on the banner itself, let its link work
+  if(el === banner) return;
+  const url = el.getAttribute('data-source');
+  const outlet = el.getAttribute('data-outlet') || 'source';
+  if(!url) return;
+
+  bannerOutlet.textContent = outlet;
+  banner.setAttribute('href', url);
+  banner.classList.add('show');
+
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => banner.classList.remove('show'), 3000);
+});
+
+/* ============ FADE-IN OBSERVER ============ */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(en => {
+    if(en.isIntersecting){
+      en.target.classList.add('in');
+      // trigger redact reveal for op-cards / vcards
+      if(en.target.classList.contains('op-card') || en.target.classList.contains('vcard')){
+        setTimeout(()=>en.target.classList.add('revealed'), 160);
+      }
+      io.unobserve(en.target);
+    }
+  });
+}, {threshold: 0.18});
+
+document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

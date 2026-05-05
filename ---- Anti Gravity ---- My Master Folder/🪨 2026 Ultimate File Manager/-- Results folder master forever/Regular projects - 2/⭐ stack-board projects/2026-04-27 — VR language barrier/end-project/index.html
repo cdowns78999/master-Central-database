@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VR language barrier — comms hub</title>
+<link rel="stylesheet" href="hub.css" />
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <span class="orb orb-a"></span>
+    <span class="orb orb-b"></span>
+    <span class="orb orb-c"></span>
+  </div>
+
+  <header class="hub-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <span class="dot d1"></span>
+        <span class="dot d2"></span>
+        <span class="dot d3"></span>
+      </div>
+      <div class="brand-text">
+        <h1>VR language barrier <span class="tagline">— comms hub</span></h1>
+        <p class="kicker">Real-time multimodal translation layer for VRChat lobbies</p>
+      </div>
+    </div>
+    <div class="avatar-pill" title="Active avatar session">
+      <span class="avatar-ring"></span>
+      <span class="avatar-glyph">人</span>
+      <div class="avatar-meta">
+        <span class="avatar-name">chad.vr</span>
+        <span class="avatar-status">connected · JP ⇄ EN</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="hub-main">
+    <section class="tile-grid" aria-label="Communication channels">
+      <article class="tile tile-voice" data-channel="voice">
+        <header class="tile-head">
+          <span class="tile-icon">◉</span>
+          <h2>Voice</h2>
+          <span class="status-pill ok">live</span>
+        </header>
+        <p class="tile-blurb">Low-latency speech-to-speech with phoneme-aware lip-sync passthrough.</p>
+        <ul class="tile-stats">
+          <li><span>latency</span><b>118 ms</b></li>
+          <li><span>langs</span><b>14</b></li>
+        </ul>
+      </article>
+
+      <article class="tile tile-chat" data-channel="chat">
+        <header class="tile-head">
+          <span class="tile-icon">▤</span>
+          <h2>Chat</h2>
+          <span class="status-pill ok">live</span>
+        </header>
+        <p class="tile-blurb">Inline overlay text with auto-detect language and dual-script rendering.</p>
+        <ul class="tile-stats">
+          <li><span>queue</span><b>0</b></li>
+          <li><span>scripts</span><b>JP·EN·KO</b></li>
+        </ul>
+      </article>
+
+      <article class="tile tile-gesture" data-channel="gesture">
+        <header class="tile-head">
+          <span class="tile-icon">✋</span>
+          <h2>Gesture</h2>
+          <span class="status-pill warn">calibrating</span>
+        </header>
+        <p class="tile-blurb">Hand-tracking glyphs map to short intent phrases — wave, point, pause, agree.</p>
+        <ul class="tile-stats">
+          <li><span>tracked</span><b>2 hands</b></li>
+          <li><span>glyphs</span><b>32</b></li>
+        </ul>
+      </article>
+
+      <article class="tile tile-sign" data-channel="sign">
+        <header class="tile-head">
+          <span class="tile-icon">⌖</span>
+          <h2>Sign</h2>
+          <span class="status-pill ok">live</span>
+        </header>
+        <p class="tile-blurb">ASL / JSL pose stream → captioned phrase output for hearing-mixed lobbies.</p>
+        <ul class="tile-stats">
+          <li><span>fps</span><b>60</b></li>
+          <li><span>dialects</span><b>ASL·JSL</b></li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="feed-panel" aria-label="Unified feed">
+      <header class="feed-head">
+        <h2>Unified Feed</h2>
+        <div class="feed-legend">
+          <span class="lg lg-voice">voice</span>
+          <span class="lg lg-chat">chat</span>
+          <span class="lg lg-gesture">gesture</span>
+          <span class="lg lg-sign">sign</span>
+        </div>
+        <button id="showMatrixBtn" class="ghost-btn" type="button">Show Matrix</button>
+      </header>
+      <ul id="feedList" class="feed-list"></ul>
+    </section>
+
+    <section class="pilot-panel" aria-label="Pilot results">
+      <header class="pilot-head">
+        <h2>Pilot</h2>
+        <span class="pilot-sub">A6 agent writes here</span>
+      </header>
+      <div id="pilotResults" class="pilot-results">
+        <p class="pilot-empty">Run a pilot to populate this panel.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="action-bar">
+    <button class="act act-langs" type="button">
+      <span class="act-glyph">A 文</span>
+      <span class="act-label">Langs</span>
+    </button>
+    <button class="act act-map" type="button">
+      <span class="act-glyph">▦</span>
+      <span class="act-label">Barrier Map</span>
+    </button>
+    <button class="act act-launch" type="button">
+      <span class="act-glyph">▶</span>
+      <span class="act-label">Launch in VRChat</span>
+    </button>
+    <button class="act act-pilot" type="button" id="runPilotBtn">
+      <span class="act-glyph">✦</span>
+      <span class="act-label">Run Pilot</span>
+    </button>
+  </footer>
+
+  <div id="matrixModal" class="modal" hidden>
+    <div class="modal-backdrop" data-close="1"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="matrixTitle">
+      <header class="modal-head">
+        <h3 id="matrixTitle">Barrier Matrix</h3>
+        <button class="modal-close" type="button" data-close="1">×</button>
+      </header>
+      <div id="matrixMount" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- agent-owned modules -->
+  <script src="data.js"></script>
+  <script src="matrix-view.js"></script>
+  <script src="pilot.js"></script>
+  <script src="integration.js"></script>
+
+  <script>
+    // demo seed feed (5 mixed messages)
+    (function seedFeed(){
+      var feed = document.getElementById('feedList');
+      if(!feed) return;
+      var seed = [
+        { kind:'voice',   who:'kenji.vr',   lang:'JP→EN', text:'Welcome — glad you could drop in tonight.', t:'21:04' },
+        { kind:'chat',    who:'mira_07',    lang:'EN',    text:'where is the karaoke stage?', t:'21:05' },
+        { kind:'gesture', who:'kenji.vr',   lang:'glyph', text:'[wave] · [point → north portal]', t:'21:05' },
+        { kind:'sign',    who:'rui.signer', lang:'JSL→EN',text:'Follow me — I will lead the group.', t:'21:06' },
+        { kind:'voice',   who:'mira_07',    lang:'EN→JP', text:'Thanks! I can hear everyone clearly now.', t:'21:07' }
+      ];
+      feed.innerHTML = seed.map(function(m){
+        return '<li class="feed-item kind-'+m.kind+'">'
+             + '<span class="feed-kind">'+m.kind+'</span>'
+             + '<div class="feed-body">'
+             + '<div class="feed-meta"><b>'+m.who+'</b><span class="feed-lang">'+m.lang+'</span><span class="feed-time">'+m.t+'</span></div>'
+             + '<div class="feed-text">'+m.text+'</div>'
+             + '</div></li>';
+      }).join('');
+    })();
+
+    // matrix modal wiring
+    (function modalWire(){
+      var modal = document.getElementById('matrixModal');
+      var mount = document.getElementById('matrixMount');
+      var open  = document.getElementById('showMatrixBtn');
+      function show(){
+        modal.hidden = false;
+        try {
+          if (typeof renderMatrix === 'function') {
+            renderMatrix(mount);
+          } else {
+            mount.innerHTML = '<p class="matrix-fallback">renderMatrix() not loaded yet — check matrix-view.js.</p>';
+          }
+        } catch(e){
+          mount.innerHTML = '<p class="matrix-fallback">Matrix render failed: '+ (e && e.message || e) +'</p>';
+        }
+      }
+      function hide(){ modal.hidden = true; mount.innerHTML = ''; }
+      open && open.addEventListener('click', show);
+      modal.addEventListener('click', function(e){
+        if (e.target && e.target.dataset && e.target.dataset.close) hide();
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape' && !modal.hidden) hide();
+      });
+    })();
+
+    // pilot button — defers to pilot.js if it exposes runPilot()
+    (function pilotWire(){
+      var btn = document.getElementById('runPilotBtn');
+      if(!btn) return;
+      btn.addEventListener('click', function(){
+        var out = document.getElementById('pilotResults');
+        if (typeof runPilot === 'function') {
+          try { runPilot(out); } catch(e){ out.innerHTML = '<p class="pilot-empty">Pilot error: '+(e && e.message || e)+'</p>'; }
+        } else {
+          out.innerHTML = '<p class="pilot-empty">runPilot() not exposed — A6 agent owns pilot.js.</p>';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

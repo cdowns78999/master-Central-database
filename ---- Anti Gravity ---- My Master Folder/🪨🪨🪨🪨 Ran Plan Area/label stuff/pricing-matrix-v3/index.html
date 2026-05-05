@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Label Finder</title>
+    <link rel="stylesheet" href="style.css?v=20260322">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ═══ DARK MODE OVERRIDES ═══ */
+        body {
+            background: #0a0a0a !important;
+            color: #e0e0e0;
+        }
+        .sidebar {
+            background: #111111 !important;
+            border-right-color: rgba(255,255,255,0.06) !important;
+        }
+        .nav-item {
+            color: rgba(255,255,255,0.3) !important;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255,255,255,0.05) !important;
+            color: #4da6ff !important;
+        }
+        .logo-circle {
+            border-color: #4da6ff !important;
+            box-shadow: 0 0 20px rgba(77,166,255,0.2) !important;
+        }
+        .top-bar {
+            background: #111111 !important;
+            border-bottom-color: rgba(255,255,255,0.06) !important;
+        }
+        .user-profile {
+            background: rgba(255,255,255,0.05) !important;
+            color: rgba(255,255,255,0.4) !important;
+        }
+        .user-avatar {
+            background: rgba(255,255,255,0.08) !important;
+        }
+        .ambient-glow-1 { background: radial-gradient(circle, rgba(77,166,255,0.06) 0%, transparent 70%) !important; }
+        .ambient-glow-2 { background: radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%) !important; }
+        .ambient-glow-3 { background: radial-gradient(circle, rgba(56,189,248,0.04) 0%, transparent 70%) !important; }
+        .selection-row {
+            border-bottom-color: rgba(255,255,255,0.04) !important;
+            border-radius: 12px !important;
+            margin-bottom: 2px !important;
+            padding: 6px 12px !important;
+            transition: background 0.15s ease, box-shadow 0.15s ease !important;
+        }
+        .selection-row:hover {
+            background: rgba(255,255,255,0.03) !important;
+            box-shadow: 0 0 0 1px rgba(77,166,255,0.08) !important;
+        }
+
+        /* ═══ 4-Button Action Bar ═══ */
+        .action-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 110px);
+            gap: 4px;
+            align-items: center;
+            margin: 0 8px;
+            flex-shrink: 0;
+        }
+        .action-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.45rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0;
+            height: 26px;
+            width: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            color: rgba(255,255,255,0.3);
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .action-btn:hover {
+            background: rgba(77,166,255,0.08);
+            border-color: rgba(77,166,255,0.2);
+            color: #4da6ff;
+            transform: scale(1.06);
+        }
+        .action-btn:active {
+            transform: scale(0.95);
+            transition: all 0.08s ease;
+        }
+        .action-btn.coming-soon {
+            cursor: default;
+        }
+        .action-btn.coming-soon:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* ═══ 10 BUTTON STYLE VARIANTS — Test on first 10 rows ═══ */
+
+        /* Style 1: Glow border — subtle neon edge */
+        .main-btn.style-1 {
+            background: rgba(77,166,255,0.06);
+            border: 1px solid rgba(77,166,255,0.25);
+            color: #4da6ff;
+            box-shadow: 0 0 8px rgba(77,166,255,0.1);
+        }
+        .main-btn.style-1:hover {
+            box-shadow: 0 0 16px rgba(77,166,255,0.25);
+            border-color: rgba(77,166,255,0.5);
+            background: rgba(77,166,255,0.1);
+        }
+
+        /* Style 2: Solid fill — dark button with bright text */
+        .main-btn.style-2 {
+            background: rgba(77,166,255,0.15);
+            border: none;
+            color: #4da6ff;
+            font-weight: 700;
+        }
+        .main-btn.style-2:hover {
+            background: rgba(77,166,255,0.25);
+            box-shadow: 0 4px 12px rgba(77,166,255,0.15);
+        }
+
+        /* Style 3: Underline accent — minimal with bottom border */
+        .main-btn.style-3 {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid rgba(77,166,255,0.3);
+            border-radius: 0;
+            color: rgba(255,255,255,0.5);
+            padding: 5px 10px 3px;
+        }
+        .main-btn.style-3:hover {
+            border-bottom-color: #4da6ff;
+            color: #4da6ff;
+            transform: none;
+        }
+
+        /* Style 4: Pill outline — thicker border, rounded */
+        .main-btn.style-4 {
+            background: transparent;
+            border: 1.5px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.45);
+        }
+        .main-btn.style-4:hover {
+            border-color: #4da6ff;
+            color: #4da6ff;
+            background: rgba(77,166,255,0.04);
+        }
+
+        /* Style 5: Glass morph — frosted with blur */
+        .main-btn.style-5 {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            color: rgba(255,255,255,0.5);
+        }
+        .main-btn.style-5:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(77,166,255,0.3);
+            color: #4da6ff;
+        }
+
+        /* Style 6: Gradient shimmer — left-to-right shine on hover */
+        .main-btn.style-6 {
+            background: linear-gradient(135deg, rgba(77,166,255,0.08) 0%, rgba(99,102,241,0.08) 100%);
+            border: 1px solid rgba(77,166,255,0.12);
+            color: rgba(255,255,255,0.4);
+        }
+        .main-btn.style-6:hover {
+            background: linear-gradient(135deg, rgba(77,166,255,0.15) 0%, rgba(99,102,241,0.15) 100%);
+            color: #4da6ff;
+            box-shadow: 0 2px 10px rgba(77,166,255,0.12);
+        }
+
+        /* Style 7: Chunky — taller, bolder, more presence */
+        .main-btn.style-7 {
+            padding: 7px 14px;
+            font-size: 0.5rem;
+            font-weight: 700;
+            background: rgba(77,166,255,0.1);
+            border: 1px solid rgba(77,166,255,0.2);
+            color: #4da6ff;
+            letter-spacing: 0.1em;
+        }
+        .main-btn.style-7:hover {
+            background: rgba(77,166,255,0.18);
+            box-shadow: 0 4px 16px rgba(77,166,255,0.15);
+        }
+
+        /* Style 8: Tag chip — rounded square, compact */
+        .main-btn.style-8 {
+            border-radius: 4px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.4);
+            padding: 4px 10px;
+        }
+        .main-btn.style-8:hover {
+            border-radius: 4px;
+            background: rgba(77,166,255,0.1);
+            border-color: rgba(77,166,255,0.25);
+            color: #4da6ff;
+        }
+
+        /* Style 9: Dot indicator — small colored dot before text */
+        .main-btn.style-9 {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.35);
+            padding-left: 18px;
+        }
+        .main-btn.style-9::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(77,166,255,0.4);
+            transition: all 0.2s ease;
+        }
+        .main-btn.style-9:hover::before {
+            background: #4da6ff;
+            box-shadow: 0 0 6px rgba(77,166,255,0.5);
+        }
+        .main-btn.style-9:hover {
+            color: #4da6ff;
+            border-color: rgba(77,166,255,0.15);
+        }
+
+        /* Style 10: Inset shadow — pressed-in look */
+        .main-btn.style-10 {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.04);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+            color: rgba(255,255,255,0.35);
+        }
+        .main-btn.style-10:hover {
+            background: rgba(77,166,255,0.08);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 0 10px rgba(77,166,255,0.1);
+            border-color: rgba(77,166,255,0.2);
+            color: #4da6ff;
+        }
+
+        /* Field tags — same look as buttons, display-only */
+        .field-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 110px);
+            gap: 4px;
+            align-items: center;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+        .action-btn.field-tag {
+            cursor: default;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid rgba(77,166,255,0.15);
+            border-radius: 0;
+            color: rgba(255,255,255,0.35);
+            padding: 5px 10px 3px;
+        }
+        .action-btn.field-tag:hover {
+            border-bottom-color: rgba(77,166,255,0.35);
+            color: rgba(255,255,255,0.5);
+            transform: none;
+            background: transparent;
+        }
+
+        /* Relevance Score hover card */
+        .relevance-card {
+            position: absolute;
+            z-index: 510;
+            background: rgba(17, 17, 17, 0.95);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            padding: 16px 20px;
+            width: 260px;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+        }
+        .relevance-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .rel-header {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.8rem;
+            color: #e0e0e0;
+            margin-bottom: 2px;
+        }
+        .rel-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 14px;
+        }
+        .rel-metric {
+            margin-bottom: 14px;
+        }
+        .rel-metric-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.35);
+            margin-bottom: 6px;
+        }
+        .rel-metric-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .rel-grade {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 1.2rem;
+            min-width: 28px;
+        }
+        .rel-grade.S { color: #f59e0b; }
+        .rel-grade.A { color: #4da6ff; }
+        .rel-grade.B { color: #10b981; }
+        .rel-grade.C { color: rgba(255,255,255,0.4); }
+        .rel-grade.D { color: #ef4444; }
+        .rel-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .rel-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.4s ease;
+        }
+        .rel-bar-fill.S { background: #f59e0b; }
+        .rel-bar-fill.A { background: #4da6ff; }
+        .rel-bar-fill.B { background: #10b981; }
+        .rel-bar-fill.C { background: rgba(255,255,255,0.25); }
+        .rel-bar-fill.D { background: #ef4444; }
+        .rel-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #4da6ff;
+            min-width: 50px;
+            text-align: right;
+        }
+        .rel-freq-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .rel-freq-row:last-child { border-bottom: none; }
+        .rel-freq-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .rel-freq-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #4da6ff;
+        }
+        .rel-pace {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.45rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            background: rgba(77,166,255,0.08);
+            border: 1px solid rgba(77,166,255,0.15);
+            color: #4da6ff;
+            margin-top: 8px;
+        }
+        .divider-pipe { background: rgba(255,255,255,0.06) !important; }
+        .selection-data {
+            font-size: 0.6875rem !important;
+            letter-spacing: 0.02em !important;
+        }
+        .selection-data .reveal-char { color: rgba(255,255,255,0.12) !important; }
+        .selection-row:hover .selection-data .reveal-char { color: rgba(255,255,255,0.5) !important; text-shadow: none !important; }
+        .selection-data::before { color: rgba(255,255,255,0.15) !important; }
+        .section-title { color: #4da6ff !important; }
+
+        /* Hero */
+        .hero-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.6s ease;
+        }
+        .hero-overlay.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .hero-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #e0e0e0;
+            letter-spacing: -0.02em;
+        }
+        .hero-text .hero-char {
+            opacity: 0;
+            display: inline-block;
+            animation: heroReveal 0.4s ease forwards;
+        }
+        @keyframes heroReveal {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .hero-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: #cbd5e0;
+            margin-top: 16px;
+            text-align: center;
+            opacity: 0;
+            animation: heroSubFade 0.5s ease 2.5s forwards;
+        }
+        @keyframes heroSubFade {
+            to { opacity: 1; }
+        }
+
+        /* Search bar */
+        .search-wrap {
+            margin-bottom: 16px;
+        }
+        .search-input {
+            width: 100%;
+            max-width: 480px;
+            height: 40px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 9999px;
+            padding: 0 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #e0e0e0;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.2);
+        }
+        .search-input:focus {
+            border-color: #4da6ff;
+            background: rgba(77,166,255,0.04);
+        }
+
+        /* Sort row */
+        .sort-row {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.625rem;
+            color: #cbd5e0;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .sort-row .sort-prefix {
+            opacity: 0.6;
+        }
+        .sort-btn {
+            background: none;
+            border: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.625rem;
+            color: #cbd5e0;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: color 0.2s ease;
+        }
+        .sort-btn:hover {
+            color: #4da6ff;
+        }
+        .sort-btn.active {
+            color: #4da6ff;
+            text-shadow: 0 0 12px rgba(77, 166, 255, 0.3);
+        }
+        .sort-sep {
+            color: rgba(255,255,255,0.1);
+        }
+
+        /* Override selection-data::before for label finder */
+        .selection-data::before {
+            content: "// " !important;
+        }
+
+        /* Section title override */
+        .section-title {
+            font-size: 0.875rem;
+            letter-spacing: 0.5em;
+            margin-bottom: 24px;
+        }
+
+        /* Info hover card — appears to the RIGHT of the row */
+        .info-card {
+            position: absolute;
+            z-index: 490;
+            background: rgba(17, 17, 17, 0.95);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            padding: 16px 20px;
+            width: 280px;
+            opacity: 0;
+            transform: translateX(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+        }
+        .info-card.visible {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+        .info-card-header {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.8rem;
+            color: #e0e0e0;
+            margin-bottom: 2px;
+        }
+        .info-card-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #9ca3af;
+        }
+        .info-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #4da6ff;
+            text-align: right;
+        }
+        .info-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 10px;
+        }
+        .info-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            background: rgba(77, 166, 255, 0.06);
+            border: 1px solid rgba(77, 166, 255, 0.12);
+            color: #4da6ff;
+        }
+        .info-assoc {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* Artist hover card — appears BELOW the pill */
+        .hover-card {
+            position: absolute;
+            z-index: 500;
+            background: rgba(17, 17, 17, 0.95);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            padding: 16px 20px;
+            width: 320px;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+        }
+        .hover-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .hover-card-header {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.8rem;
+            color: #e0e0e0;
+            margin-bottom: 2px;
+        }
+        .hover-card-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+        }
+        .hover-artist-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+        }
+        .hover-artist-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+        .hover-artist-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .hover-artist-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .hover-artist-name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: #e0e0e0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hover-artist-listeners {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: #4da6ff;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .trend-up { color: #22c55e; }
+        .trend-down { color: #ef4444; }
+        .trend-steady { color: #9ca3af; }
+        .hover-artist-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            color: #9ca3af;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Fade transitions for rows */
+        .outlet-grid {
+            transition: opacity 0.25s ease;
+        }
+        .outlet-grid.fading {
+            opacity: 0;
+        }
+
+        /* Row cursor */
+        .selection-row {
+            cursor: pointer;
+            position: relative;
+        }
+
+        /* Selection box needs relative for hover card positioning */
+        .selection-box-wrap {
+            position: relative;
+        }
+        .selection-box {
+            width: 180px !important; min-width: 180px !important; max-width: 180px !important;
+            position: relative !important; overflow: visible !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            box-shadow: 0 0 12px rgba(0,0,0,0.3) !important;
+        }
+        .selection-box-overlay {
+            opacity: 0.3 !important;
+            mix-blend-mode: normal !important;
+        }
+
+        /* Type sticker — sits on the label pill like a store "NEW" tag */
+        .type-sticker {
+            position: absolute;
+            top: -6px;
+            right: -4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.35rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 6px;
+            border-radius: 6px;
+            z-index: 2;
+            transform: rotate(4deg);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            pointer-events: none;
+        }
+        .type-sticker.major {
+            background: #ef4444;
+            color: #fff;
+        }
+        .type-sticker.major-backed {
+            background: #4da6ff;
+            color: #fff;
+        }
+        .type-sticker.independent {
+            background: #10b981;
+            color: #fff;
+        }
+
+        /* Label count badge */
+        .label-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: #cbd5e0;
+            margin-left: 12px;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glow Orbs -->
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+    <div class="ambient-glow ambient-glow-3"></div>
+
+    <!-- Hero Overlay -->
+    <div class="hero-overlay" id="heroOverlay">
+        <div style="text-align: center;">
+            <div class="hero-text" id="heroText"></div>
+            <div class="hero-sub">click anywhere to explore</div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo-container">
+            <div class="logo-circle" id="logoBtn" title="Home"></div>
+        </div>
+        <div class="nav-links" id="navLinks">
+            <div class="nav-item active" data-view="all" title="All Labels">A</div>
+            <div class="nav-item" data-view="bass" title="Bass / Dubstep">B</div>
+            <div class="nav-item" data-view="house" title="House / Tech House">H</div>
+            <div class="nav-item" data-view="techno" title="Techno">T</div>
+            <div class="nav-item" data-view="progressive" title="Progressive">P</div>
+            <div class="nav-item" data-view="melodic" title="Melodic">M</div>
+            <div class="nav-item" data-view="riddim" title="Riddim">R</div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="nav-item" style="cursor: default; opacity: 0.3;">?</div>
+        </div>
+    </nav>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="app-name"></div>
+            <div class="user-profile">
+                <div class="user-avatar"></div>
+                <span>user</span>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area" id="contentArea">
+            <div class="search-wrap">
+                <input type="text" class="search-input" id="searchInput" placeholder="// search labels...">
+            </div>
+            <div class="sort-row">
+                <span class="sort-prefix">// sort:</span>
+                <button class="sort-btn" data-sort="roster">roster</button>
+                <span class="sort-sep">&middot;</span>
+                <button class="sort-btn" data-sort="year">year</button>
+                <span class="sort-sep">&middot;</span>
+                <button class="sort-btn" data-sort="az">a-z</button>
+                <span class="sort-sep">&middot;</span>
+                <button class="sort-btn" data-sort="reach">reach</button>
+            </div>
+            <div style="display: flex; align-items: baseline;">
+                <div class="section-title" id="sectionTitle">ALL LABELS</div>
+                <span class="label-count" id="labelCount"></span>
+            </div>
+            <div class="outlet-grid" id="gridRoot"></div>
+        </div>
+    </div>
+
+    <!-- Hover Card (singleton, repositioned on hover) -->
+    <div class="hover-card" id="hoverCard"></div>
+    <div class="info-card" id="infoCard"></div>
+    <div class="relevance-card" id="relevanceCard"></div>
+    <div class="relevance-card" id="releasesCard"></div>
+
+    <!-- ═══ TEST OVERLAY — Hover Transition Lab ═══ -->
+    <div id="hoverLab" style="
+        position: fixed; inset: 0; z-index: 9000;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(30px);
+        display: none; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 40px;
+    ">
+        <div style="
+            font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 800;
+            color: #4da6ff; letter-spacing: 0.3em; text-transform: uppercase;
+            margin-bottom: 8px;
+        ">HOVER TRANSITION LAB</div>
+        <div style="
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+            color: rgba(255,255,255,0.3); margin-bottom: 32px;
+        ">// move mouse between rows — test 4 transition styles</div>
+        <div id="labClose" style="
+            position: absolute; top: 20px; right: 24px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+            color: rgba(255,255,255,0.3); cursor: pointer;
+        ">✕ close</div>
+        <div id="labGrid" style="
+            width: 100%; max-width: 700px;
+            display: flex; flex-direction: column; gap: 0;
+        "></div>
+        <!-- Lab hover cards -->
+        <div class="hover-card" id="labHoverCard" style="z-index: 9100;"></div>
+        <div class="info-card" id="labInfoCard" style="z-index: 9090;"></div>
+    </div>
+
+    <script src="data.js?v=20260322"></script>
+    <script src="app.js?v=20260322"></script>
+</body>
+</html>

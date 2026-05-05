@@ -1,0 +1,3179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — Payback Grid</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800;900&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ROOT TOKENS
+   ============================================================ */
+:root {
+  --bg:           #f7f5ef;
+  --surface:      #faf9f5;
+  --surface2:     #f0ede4;
+  --border:       #e8e4d9;
+  --border-light: #f0ede4;
+  --text-primary: #1a1814;
+  --text-second:  #4a4640;
+  --text-muted:   #9a958c;
+  --text-ghost:   #c8c3ba;
+  --blue:         #2e7be8;
+  --blue-soft:    rgba(46, 123, 232, 0.08);
+  --blue-glow:    rgba(46, 123, 232, 0.18);
+  --green:        #1a9e6e;
+  --green-soft:   rgba(26, 158, 110, 0.08);
+  --green-glow:   rgba(26, 158, 110, 0.18);
+  --amber:        #c07a1a;
+  --amber-soft:   rgba(192, 122, 26, 0.08);
+  --red:          #d94040;
+  --red-soft:     rgba(217, 64, 64, 0.08);
+  --purple:       #7c5cbf;
+  --purple-soft:  rgba(124, 92, 191, 0.08);
+  --mono:         'JetBrains Mono', monospace;
+  --sans:         'Outfit', system-ui, sans-serif;
+  --r:            6px;
+  --r-lg:         10px;
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:    0 4px 16px rgba(0,0,0,0.08);
+  --transition:   all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  font-family: var(--mono);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   AMBIENT GLOW ORBS
+   ============================================================ */
+.ambient-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
+}
+.glow-1 {
+  top: -10%;  left: -8%;
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(46,123,232,0.09) 0%, transparent 70%);
+  animation: glow-breathe 9s ease-in-out infinite;
+}
+.glow-2 {
+  bottom: -20%; right: -4%;
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, rgba(26,158,110,0.08) 0%, transparent 70%);
+  animation: glow-breathe 11s ease-in-out infinite 1.5s;
+}
+.glow-3 {
+  top: 42%; left: 45%;
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(124,92,191,0.06) 0%, transparent 70%);
+  animation: glow-breathe 14s ease-in-out infinite 3s;
+}
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.06); }
+}
+
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.page-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 56px 40px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  animation: fade-up 0.55s ease-out both;
+}
+.header-left {}
+.header-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.header-title {
+  font-family: var(--sans);
+  font-size: clamp(1.55rem, 3.5vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.header-title span {
+  color: var(--blue);
+}
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+.meta-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+.meta-dot.blue   { background: var(--blue); box-shadow: 0 0 6px var(--blue-glow); }
+.meta-dot.green  { background: var(--green); box-shadow: 0 0 6px var(--green-glow); }
+.meta-dot.amber  { background: var(--amber); }
+.meta-pill {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--surface);
+}
+
+/* ============================================================
+   SUMMARY STAT STRIP
+   ============================================================ */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  animation: fade-up 0.55s ease-out 0.08s both;
+}
+@media (max-width: 900px) { .stat-strip { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px) { .stat-strip { grid-template-columns: repeat(2, 1fr); } }
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  transition: var(--transition);
+  cursor: default;
+}
+.stat-card:hover {
+  border-color: transparent;
+  box-shadow: 0 0 0 1.5px var(--blue), var(--shadow-md), 0 0 20px var(--blue-glow);
+  transform: translateY(-1px);
+}
+.stat-card.green:hover {
+  box-shadow: 0 0 0 1.5px var(--green), var(--shadow-md), 0 0 20px var(--green-glow);
+}
+.stat-card.amber:hover {
+  box-shadow: 0 0 0 1.5px var(--amber), var(--shadow-md), 0 0 16px var(--amber-soft);
+}
+.stat-tag {
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-family: var(--sans);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.stat-value.blue   { color: var(--blue); }
+.stat-value.green  { color: var(--green); }
+.stat-value.amber  { color: var(--amber); }
+.stat-value.red    { color: var(--red); }
+.stat-value.purple { color: var(--purple); }
+.stat-sub {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   SECTION LABEL
+   ============================================================ */
+.section-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-light);
+}
+
+/* ============================================================
+   MAIN PRICING TABLE
+   ============================================================ */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: fade-up 0.55s ease-out 0.14s both;
+}
+
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+/* Column widths */
+.pricing-table col.col-item    { width: 22%; }
+.pricing-table col.col-tier    { width: 10%; }
+.pricing-table col.col-total   { width: 11%; }
+.pricing-table col.col-payback { width: 10%; }
+.pricing-table col.col-cost    { width: 10%; }
+.pricing-table col.col-net     { width: 11%; }
+.pricing-table col.col-status  { width: 8%; }
+
+/* Header row */
+.pricing-table thead th {
+  background: var(--surface2);
+  color: var(--text-muted);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.pricing-table thead th.col-num {
+  text-align: right;
+  color: var(--text-ghost);
+}
+.pricing-table thead th.th-blue   { color: var(--blue); }
+.pricing-table thead th.th-green  { color: var(--green); }
+.pricing-table thead th.th-amber  { color: var(--amber); }
+.pricing-table thead th.th-purple { color: var(--purple); }
+
+/* Category header rows */
+.pricing-table tr.cat-header td {
+  background: var(--bg);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  padding: 10px 14px 8px;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+}
+.pricing-table tr.cat-header td .cat-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
+/* Data rows */
+.pricing-table tbody tr.data-row {
+  border-bottom: 1px solid var(--border-light);
+  transition: var(--transition);
+  cursor: default;
+}
+.pricing-table tbody tr.data-row:last-of-type {
+  border-bottom: none;
+}
+.pricing-table tbody tr.data-row:hover {
+  background: rgba(46, 123, 232, 0.035);
+}
+.pricing-table tbody tr.data-row:hover td {
+  color: var(--text-primary);
+}
+.pricing-table tbody tr.data-row:hover td.item-name::before {
+  opacity: 1;
+  color: var(--blue);
+}
+
+/* Cells */
+.pricing-table td {
+  padding: 11px 14px;
+  vertical-align: middle;
+  color: var(--text-second);
+  line-height: 1;
+  transition: var(--transition);
+}
+.pricing-table td.item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.7rem;
+  position: relative;
+}
+.pricing-table td.item-name::before {
+  content: '// ';
+  color: var(--text-ghost);
+  font-size: 0.625rem;
+  opacity: 0.5;
+  transition: var(--transition);
+}
+.pricing-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.pricing-table td.blue-val   { color: var(--blue); }
+.pricing-table td.green-val  { color: var(--green); }
+.pricing-table td.amber-val  { color: var(--amber); }
+.pricing-table td.red-val    { color: var(--red); }
+.pricing-table td.purple-val { color: var(--purple); }
+.pricing-table td.muted-val  { color: var(--text-muted); }
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.badge.active  { background: var(--green-soft); color: var(--green); }
+.badge.pending { background: var(--amber-soft); color: var(--amber); }
+.badge.review  { background: var(--blue-soft);  color: var(--blue);  }
+.badge.hold    { background: var(--red-soft);   color: var(--red);   }
+
+/* Editable cells */
+.cell-edit {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--border);
+  color: inherit;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  width: 100%;
+  min-width: 60px;
+  padding: 0 2px;
+  outline: none;
+  text-align: right;
+  transition: var(--transition);
+  -webkit-font-smoothing: antialiased;
+}
+.cell-edit:focus {
+  border-bottom-color: var(--blue);
+  background: var(--blue-soft);
+  border-radius: 2px;
+  color: var(--text-primary);
+}
+.cell-edit::placeholder { color: var(--text-ghost); }
+
+/* Totals row */
+.pricing-table tr.totals-row td {
+  background: linear-gradient(to right, rgba(46,123,232,0.04), rgba(26,158,110,0.04));
+  border-top: 1.5px solid var(--border);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 14px 14px;
+  color: var(--text-primary);
+}
+.pricing-table tr.totals-row td.item-name::before {
+  content: '';
+}
+
+/* ============================================================
+   PAYBACK RATES TABLE
+   ============================================================ */
+.rates-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  animation: fade-up 0.55s ease-out 0.22s both;
+}
+@media (max-width: 700px) { .rates-grid { grid-template-columns: 1fr; } }
+
+.rates-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.rates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+.rates-table th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.rates-table th.num { text-align: right; }
+.rates-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-second);
+  vertical-align: middle;
+  transition: var(--transition);
+}
+.rates-table tr:last-child td { border-bottom: none; }
+.rates-table tr:hover td { background: rgba(46,123,232,0.03); color: var(--text-primary); }
+.rates-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   SUMMARY / TOTALS PANEL
+   ============================================================ */
+.summary-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: fade-up 0.55s ease-out 0.30s both;
+}
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.summary-header-title {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.summary-header-sub {
+  font-size: 0.585rem;
+  color: var(--text-ghost);
+}
+.summary-body {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+@media (max-width: 700px) { .summary-body { grid-template-columns: repeat(2, 1fr); } }
+.summary-cell {
+  padding: 20px 22px;
+  border-right: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  transition: var(--transition);
+  cursor: default;
+}
+.summary-cell:nth-child(4n) { border-right: none; }
+.summary-cell:hover { background: rgba(46,123,232,0.03); }
+.summary-cell-label {
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  margin-bottom: 8px;
+}
+.summary-cell-value {
+  font-family: var(--sans);
+  font-size: 1.65rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+.summary-cell-value.blue   { color: var(--blue); }
+.summary-cell-value.green  { color: var(--green); }
+.summary-cell-value.amber  { color: var(--amber); }
+.summary-cell-value.purple { color: var(--purple); }
+.summary-cell-sub {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Net row inside summary */
+.summary-net-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1.5px solid var(--border);
+}
+.net-cell {
+  padding: 18px 22px;
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: var(--transition);
+}
+.net-cell:last-child { border-right: none; }
+.net-cell:hover { background: rgba(26,158,110,0.03); }
+.net-label-group {}
+.net-label {
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  margin-bottom: 4px;
+}
+.net-value {
+  font-family: var(--sans);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.net-value.green  { color: var(--green); }
+.net-value.red    { color: var(--red); }
+.net-sub {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+.net-bar-visual {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.net-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(26,158,110,0.35);
+}
+
+/* ============================================================
+   NOTES + EDITABLE SECTION
+   ============================================================ */
+.notes-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  animation: fade-up 0.55s ease-out 0.38s both;
+}
+@media (max-width: 700px) { .notes-wrap { grid-template-columns: 1fr; } }
+
+.notes-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.notes-card-header {
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.notes-textarea {
+  width: 100%;
+  min-height: 130px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-second);
+  padding: 14px 16px;
+  resize: vertical;
+  line-height: 1.65;
+  transition: var(--transition);
+}
+.notes-textarea::placeholder { color: var(--text-ghost); }
+.notes-textarea:focus { background: rgba(46,123,232,0.02); }
+
+/* Quick-edit field grid */
+.fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.field-cell {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+  transition: var(--transition);
+}
+.field-cell:nth-child(2n) { border-right: none; }
+.field-cell:nth-last-child(-n+2) { border-bottom: none; }
+.field-cell:hover { background: rgba(46,123,232,0.03); }
+.field-label {
+  font-size: 0.565rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  margin-bottom: 5px;
+}
+.field-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--border);
+  outline: none;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  padding: 2px 0;
+  transition: var(--transition);
+}
+.field-input:focus {
+  border-bottom-color: var(--blue);
+  background: var(--blue-soft);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   PAGE FOOTER
+   ============================================================ */
+.page-footer {
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.585rem;
+  color: var(--text-ghost);
+  letter-spacing: 0.12em;
+  animation: fade-up 0.4s ease-out 0.5s both;
+}
+.footer-id { font-weight: 700; color: var(--text-ghost); }
+.footer-dots { display: flex; gap: 5px; align-items: center; }
+.footer-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-ghost); }
+
+/* ============================================================
+   TOP TOOLBAR
+   ============================================================ */
+.top-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 48px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 var(--border-light), 0 2px 12px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  gap: 12px;
+}
+
+.toolbar-breadcrumb {
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.toolbar-breadcrumb .tb-sep {
+  color: var(--border);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.toolbar-breadcrumb .tb-current {
+  color: var(--text-muted);
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Ghost button base */
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  outline: none;
+}
+.tb-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+.tb-btn:active {
+  transform: scale(0.97);
+}
+.tb-btn.tb-icon {
+  padding: 0 7px;
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-ghost);
+}
+.tb-btn.tb-icon:hover {
+  border-color: var(--border);
+  color: var(--text-muted);
+  background: var(--surface2);
+}
+
+/* Divider between button groups */
+.tb-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   SORT SUB-BAR (lives inside table-wrap, above column headers)
+   ============================================================ */
+.sort-sub-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.ssb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  font-family: var(--mono);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.ssb-btn:hover {
+  color: var(--blue);
+  border-color: var(--blue-glow);
+  background: var(--blue-soft);
+}
+.ssb-btn.active {
+  color: var(--blue);
+  border-color: var(--blue-glow);
+  background: var(--blue-soft);
+}
+.ssb-btn.urgent-active {
+  color: var(--red);
+  border-color: rgba(217,64,64,0.25);
+  background: var(--red-soft);
+}
+.ssb-btn.ssb-muted {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.ssb-btn.ssb-add-row {
+  color: var(--blue);
+  border-color: var(--blue-glow);
+  background: var(--blue-soft);
+}
+.ssb-btn.ssb-add-row:hover {
+  background: rgba(46,123,232,0.14);
+  box-shadow: 0 0 0 1px var(--blue-glow);
+}
+.ssb-divider {
+  width: 1px;
+  height: 12px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+/* ============================================================
+   SAVE / LOAD BUTTONS — primary data controls
+   ============================================================ */
+.tb-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--r);
+  font-family: var(--mono);
+  font-size: 0.685rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  outline: none;
+  border: none;
+  flex-direction: column;
+  gap: 0;
+  justify-content: center;
+  line-height: 1.1;
+}
+.tb-btn-primary .btn-label {
+  font-size: 0.685rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.tb-btn-primary .btn-sub {
+  font-size: 0.48rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  opacity: 0.7;
+}
+
+/* Download = green */
+.tb-btn-download {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(26,158,110,0.25);
+}
+.tb-btn-download:hover {
+  background: #168f62;
+  box-shadow: 0 3px 14px rgba(26,158,110,0.38);
+  transform: translateY(-1px);
+}
+.tb-btn-download:active {
+  transform: scale(0.97) translateY(0);
+}
+
+/* Upload = blue */
+.tb-btn-upload {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(46,123,232,0.25);
+}
+.tb-btn-upload:hover {
+  background: #2568c8;
+  box-shadow: 0 3px 14px rgba(46,123,232,0.38);
+  transform: translateY(-1px);
+}
+.tb-btn-upload:active {
+  transform: scale(0.97) translateY(0);
+}
+
+/* ============================================================
+   TABLE HEADER — SORTABLE HINTS
+   ============================================================ */
+.pricing-table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.pricing-table thead th.sortable:hover {
+  color: var(--text-second);
+  background: var(--surface);
+}
+.pricing-table thead th.sortable::after {
+  content: '↕';
+  font-size: 0.6rem;
+  opacity: 0;
+  margin-left: 4px;
+  transition: opacity 0.15s ease;
+  color: var(--text-ghost);
+}
+.pricing-table thead th.sortable:hover::after {
+  opacity: 1;
+}
+.pricing-table thead th.sort-asc::after  { content: '↑'; opacity: 0.7; color: var(--blue); }
+.pricing-table thead th.sort-desc::after { content: '↓'; opacity: 0.7; color: var(--blue); }
+
+/* ============================================================
+   URGENT ROW GLOW
+   ============================================================ */
+.pricing-table tbody tr.data-row.urgent-glow {
+  box-shadow: 0 0 0 1px rgba(239,68,68,0.4), 0 0 12px rgba(239,68,68,0.15);
+  position: relative;
+  z-index: 1;
+}
+
+/* Active sort button indicator */
+.tb-btn.tb-sort-active {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+.tb-btn.tb-urgent-active {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-soft);
+}
+
+/* ============================================================
+   LEAVE PROTOCOL BUTTON (fixed, red circle)
+   ============================================================ */
+#leave-protocol-btn {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(217,64,64,0.35);
+  animation: lp-pulse 3s ease-in-out infinite;
+  outline: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+#leave-protocol-btn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 3px 14px rgba(217,64,64,0.5);
+}
+
+@keyframes lp-pulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(217,64,64,0.35); }
+  50%       { box-shadow: 0 2px 16px rgba(217,64,64,0.6), 0 0 0 4px rgba(217,64,64,0.12); }
+}
+
+/* Leave Protocol tooltip popup */
+#leave-protocol-popup {
+  position: fixed;
+  top: 96px;
+  right: 16px;
+  width: 260px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: 14px 16px;
+  z-index: 201;
+  display: none;
+  animation: fade-up 0.2s ease-out both;
+}
+#leave-protocol-popup.visible {
+  display: block;
+}
+.lp-popup-title {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--red);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.lp-popup-body {
+  font-size: 0.625rem;
+  color: var(--text-second);
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+.lp-popup-status {
+  margin-top: 10px;
+  padding: 5px 10px;
+  border-radius: var(--r);
+  background: var(--red-soft);
+  font-size: 0.565rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+.lp-popup-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-ghost);
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: var(--transition);
+}
+.lp-popup-close:hover { color: var(--text-muted); background: var(--surface2); }
+
+/* Upload toast flash */
+#upload-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--green);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(26,158,110,0.35);
+  z-index: 300;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+#upload-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================================
+   FEATURE A — EDIT / VIEW MODE TOGGLE BUTTON
+   ============================================================ */
+#edit-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  outline: none;
+  /* sits at left of toolbar, separated from breadcrumb */
+  flex-shrink: 0;
+}
+#edit-mode-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+/* Edit Mode ON state */
+#edit-mode-btn.edit-on {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+}
+#edit-mode-btn.edit-on:hover {
+  background: rgba(26, 158, 110, 0.14);
+}
+
+/* ── View Mode: all editable fields go read-only + muted ── */
+body.view-mode input.cell-edit,
+body.view-mode input.field-input,
+body.view-mode textarea.notes-textarea,
+body.view-mode textarea.notepad-textarea {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.72;
+  border-bottom-color: transparent !important;
+  background: transparent !important;
+}
+/* ── Edit Mode: item-name cells editable ── */
+body.edit-mode td.item-name {
+  border-bottom: 1px dashed var(--border);
+  cursor: text;
+  outline: none;
+}
+body.edit-mode td.item-name:focus {
+  border-bottom-color: var(--blue);
+  background: var(--blue-soft);
+  border-radius: 3px;
+}
+body.view-mode td.item-name {
+  cursor: default;
+}
+
+/* ── Edit Mode: focus glow on cell inputs ── */
+body.edit-mode input.cell-edit:focus {
+  border-bottom-color: var(--blue);
+  background: var(--blue-soft);
+  box-shadow: 0 0 0 2px var(--blue-glow);
+  border-radius: 3px;
+  outline: none;
+}
+body.edit-mode input.field-input:focus {
+  border-bottom-color: var(--blue);
+  background: var(--blue-soft);
+  box-shadow: 0 0 0 2px var(--blue-glow);
+  border-radius: 3px;
+  outline: none;
+}
+
+/* ============================================================
+   FEATURE B — STICKY NOTEPAD
+   ============================================================ */
+.notepad-section {
+  animation: fade-up 0.55s ease-out 0.46s both;
+}
+
+.notepad-wrap {
+  background: #fefce8;
+  border: 1px solid #e5e3d0;
+  border-radius: var(--r-lg);
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.06),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+  position: relative;
+  /* ruled lines as CSS background — 24px apart, very faint */
+  background-image:
+    linear-gradient(#fefce8 0px, #fefce8 23px, #e5e3d0 23px, #e5e3d0 24px);
+  background-size: 100% 24px;
+  background-attachment: local;
+}
+
+/* Title bar sits above the ruled area — solid cream, no lines showing through */
+.notepad-title-bar {
+  background: #fffbeb;
+  border-bottom: 2px solid #e5e3d0;
+  padding: 12px 20px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Override the repeating background for this bar */
+  background-image: none;
+  position: relative;
+}
+.notepad-title-bar::before {
+  /* left margin red rule, classic legal pad */
+  content: '';
+  position: absolute;
+  left: 52px;
+  top: 0; bottom: 0;
+  width: 1.5px;
+  background: rgba(217, 64, 64, 0.18);
+}
+.notepad-title {
+  font-family: 'Caveat', cursive;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #6b6248;
+  letter-spacing: 0.01em;
+  user-select: none;
+}
+.notepad-pin {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f59e0b, #c07a1a);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  flex-shrink: 0;
+}
+
+.notepad-textarea {
+  width: 100%;
+  min-height: 200px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Caveat', cursive;
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: #3d3520;
+  padding: 10px 20px 20px 58px;  /* left pad aligns with margin rule */
+  resize: none;
+  line-height: 24px;             /* matches the repeating-gradient 24px lines */
+  transition: var(--transition);
+  display: block;
+  box-sizing: border-box;
+  overflow: hidden;              /* no scrollbar — grows with content via JS */
+}
+.notepad-textarea::placeholder {
+  color: #b8af94;
+  font-style: italic;
+}
+.notepad-textarea:focus {
+  background: rgba(255, 251, 235, 0.4);
+}
+
+/* ============================================================
+   FOCUS BOX FEATURE
+   ============================================================ */
+
+/* ── Focus button on each row ── */
+.focus-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 0.6rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  outline: none;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.focus-btn:hover {
+  background: #2568c8;
+  box-shadow: 0 0 0 3px var(--blue-glow);
+  transform: scale(1.1);
+}
+.focus-btn:disabled {
+  background: var(--border);
+  color: var(--text-ghost);
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+td.focus-col {
+  width: 32px;
+  padding: 8px 6px 8px 10px;
+  vertical-align: middle;
+  text-align: center;
+}
+th.focus-col-th {
+  width: 32px;
+  padding: 12px 6px 12px 10px;
+  text-align: center;
+}
+
+/* ── In Focus indicator (replaces the button text in-row) ── */
+.in-focus-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  border: 1px solid rgba(46,123,232,0.2);
+  border-radius: 999px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* ── Row tint when in focus ── */
+.pricing-table tbody tr.data-row.row-in-focus {
+  background: rgba(46, 123, 232, 0.055) !important;
+}
+
+/* ── Row blue glow flash on dblclick ── */
+@keyframes row-focus-flash {
+  0%   { box-shadow: inset 0 0 0 2px rgba(46,123,232,0); background: rgba(46,123,232,0); }
+  30%  { box-shadow: inset 0 0 0 2px rgba(46,123,232,0.55); background: rgba(46,123,232,0.13); }
+  100% { box-shadow: inset 0 0 0 2px rgba(46,123,232,0); background: rgba(46,123,232,0.055); }
+}
+.pricing-table tbody tr.data-row.focus-flash {
+  animation: row-focus-flash 0.45s ease-out forwards;
+}
+
+/* ── Click Test button ── */
+#click-test-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  outline: none;
+}
+#click-test-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+#click-test-btn.pulsing {
+  animation: test-btn-pulse 2.2s ease-in-out infinite;
+}
+@keyframes test-btn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46,123,232,0); border-color: var(--border); color: var(--text-muted); }
+  50%       { box-shadow: 0 0 0 4px rgba(46,123,232,0.18); border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+}
+
+/* ── Focus Box wrapper ── */
+.focus-box-section {
+  animation: fade-up 0.4s ease-out both;
+}
+.focus-box-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.focus-box-outer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
+  opacity: 0;
+  padding: 0 16px;
+}
+.focus-box-outer.has-cards {
+  max-height: 420px;
+  opacity: 1;
+  padding: 16px;
+}
+.focus-cards-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 370px;
+}
+
+/* ── Individual focus card ── */
+.focus-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blue);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  box-shadow: 0 1px 4px rgba(46,123,232,0.06);
+  animation: focus-card-in 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+.focus-card.removing {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+}
+@keyframes focus-card-in {
+  from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.focus-card-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.focus-card-monthly {
+  font-size: 0.685rem;
+  font-weight: 700;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.focus-card-badge {
+  flex-shrink: 0;
+}
+.focus-card-remove {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-ghost);
+  font-size: 0.65rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  outline: none;
+  flex-shrink: 0;
+  padding: 0;
+}
+.focus-card-remove:hover {
+  background: var(--red-soft);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* ── Clear All button inside focus box header ── */
+#focus-clear-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 0.565rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+  cursor: pointer;
+  transition: var(--transition);
+  outline: none;
+}
+#focus-clear-all:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-soft);
+}
+
+/* col for focus btn column */
+.pricing-table col.col-focus { width: 34px; }
+</style>
+</head>
+<body>
+
+<!-- ─── TOP TOOLBAR ─── -->
+<div class="top-toolbar">
+  <!-- Edit / View Mode toggle — upper left -->
+  <button id="edit-mode-btn" class="edit-on" title="Toggle edit / view mode">✏️ Edit Mode</button>
+
+  <div class="toolbar-breadcrumb">
+    <span>Ahead</span>
+    <span class="tb-sep">/</span>
+    <span>Payback</span>
+    <span class="tb-sep">/</span>
+    <span class="tb-current">Pricing Grid</span>
+  </div>
+  <div class="toolbar-actions">
+
+    <!-- ── SAVE / LOAD (primary) ── -->
+    <button class="tb-btn-primary tb-btn-download" id="tb-download" title="Download all grid data as JSON">
+      <span class="btn-label">⬇ Save Data</span>
+      <span class="btn-sub">Download JSON</span>
+    </button>
+    <button class="tb-btn-primary tb-btn-upload" id="tb-upload-btn" title="Load data from a JSON file">
+      <span class="btn-label">⬆ Load Data</span>
+      <span class="btn-sub">Upload JSON</span>
+    </button>
+    <!-- Hidden file input for upload -->
+    <input type="file" id="tb-upload-input" accept=".json" style="display:none;">
+
+    <button class="tb-btn tb-icon" id="tb-settings" title="Settings (coming soon)">⚙</button>
+  </div>
+</div>
+
+<!-- ─── UPLOAD TOAST ─── -->
+<div id="upload-toast">Data loaded successfully</div>
+
+<!-- Ambient glow orbs -->
+<div class="ambient-glow glow-1"></div>
+<div class="ambient-glow glow-2"></div>
+<div class="ambient-glow glow-3"></div>
+
+<div class="page-wrap">
+
+  <!-- ─── HEADER ─── -->
+  <header class="page-header">
+    <div class="header-left">
+      <div class="header-label">// payback grid · day view</div>
+      <h1 class="header-title">Pricing <span>/ Payback</span> Grid</h1>
+    </div>
+    <div class="header-meta">
+      <span class="meta-pill"><span class="meta-dot blue"></span>Tier 1 · 2 · 3</span>
+      <span class="meta-pill"><span class="meta-dot green"></span>Day Payback</span>
+      <span class="meta-pill"><span class="meta-dot amber"></span>Net Calc</span>
+    </div>
+  </header>
+
+  <!-- ─── STICKY NOTEPAD (under title) ─── -->
+  <div class="notepad-section">
+    <div class="notepad-wrap">
+      <div class="notepad-title-bar">
+        <div class="notepad-pin"></div>
+        <div class="notepad-title">Notes</div>
+      </div>
+      <textarea
+        class="notepad-textarea"
+        data-key="notepad"
+        placeholder="Scratch thoughts, rate ideas, quick reminders... write freely."
+        rows="5"
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- ─── CLICK TEST + FOCUS BOX ─── -->
+  <div class="focus-box-section">
+    <div class="focus-box-header-row">
+      <div class="section-label" style="flex:1;">👁 Focus</div>
+      <div style="display:flex; align-items:center; gap:10px; margin-left:16px;">
+        <button id="focus-clear-all" title="Remove all focus cards" style="display:none;">✕ Clear All</button>
+        <button id="click-test-btn" class="pulsing" title="Demo: auto-focuses the first row">▶ Click Test</button>
+      </div>
+    </div>
+    <div class="focus-box-outer" id="focus-box-outer">
+      <div class="focus-cards-wrap" id="focus-cards-wrap">
+        <!-- focus cards injected here by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STAT STRIP ─── -->
+  <div class="stat-strip">
+    <div class="stat-card">
+      <div class="stat-tag">CC Minimums</div>
+      <div class="stat-value blue" id="stat-revenue">$2,272.07</div>
+      <div class="stat-sub">monthly minimum payments</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-tag">Monthly Bills</div>
+      <div class="stat-value amber" id="stat-payback">$3,870.96</div>
+      <div class="stat-sub">housing · utilities · tools</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-tag">CC Balances</div>
+      <div class="stat-value red" id="stat-cost">$25,578.75</div>
+      <div class="stat-sub">total owed across all cards</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-tag">Combined Monthly</div>
+      <div class="stat-value" id="stat-net">$6,143.03</div>
+      <div class="stat-sub">minimums + bills</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-tag">Highest APR</div>
+      <div class="stat-value purple" id="stat-pct">29.74%</div>
+      <div class="stat-sub">Amazon Store Card</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-tag">Line Items</div>
+      <div class="stat-value" id="stat-items">43</div>
+      <div class="stat-sub">across 6 categories</div>
+    </div>
+  </div>
+
+  <!-- ─── MAIN PRICING TABLE ─── -->
+  <div>
+    <div class="section-label" style="margin-bottom:12px;">Monthly Obligations — Full Breakdown</div>
+    <div class="table-wrap">
+      <!-- ─── SORT SUB-BAR ─── -->
+      <div class="sort-sub-bar">
+        <button class="ssb-btn" id="tb-sort-az" title="Sort highest expense first">A→Z <span class="tb-sort-indicator" id="az-indicator"></span></button>
+        <button class="ssb-btn" id="tb-sort-za" title="Sort lowest expense first">Z→A <span class="tb-sort-indicator" id="za-indicator"></span></button>
+        <div class="ssb-divider"></div>
+        <button class="ssb-btn" id="tb-urgent" title="Sort by urgency (high amount first)">⚡ Urgent <span class="tb-sort-indicator" id="urgent-indicator"></span></button>
+        <div class="ssb-divider"></div>
+        <button class="ssb-btn ssb-muted" id="tb-filter" title="Filter / View (coming soon)">⊟ Filter</button>
+        <div class="ssb-divider"></div>
+        <button class="ssb-btn ssb-add-row" id="tb-add-row" title="Add a new empty row">＋ Add Row</button>
+      </div>
+      <table class="pricing-table">
+        <colgroup>
+          <col class="col-focus">
+          <col class="col-item">
+          <col class="col-tier">
+          <col class="col-tier">
+          <col class="col-tier">
+          <col class="col-total">
+          <col class="col-payback">
+          <col class="col-cost">
+          <col class="col-net">
+          <col class="col-status">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="focus-col-th"></th>
+            <th class="sortable" id="th-item">Item / Provider</th>
+            <th class="col-num th-blue sortable" id="th-tier1">Min / Amt</th>
+            <th class="col-num th-blue sortable" id="th-tier2">Balance</th>
+            <th class="col-num th-blue sortable" id="th-tier3">Limit / Source</th>
+            <th class="col-num sortable" id="th-total">Monthly</th>
+            <th class="col-num th-green sortable" id="th-payback">APR / Rate</th>
+            <th class="col-num th-amber sortable" id="th-cost">Owed</th>
+            <th class="col-num th-purple sortable" id="th-net">Due</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- ── CREDIT CARDS ── -->
+          <tr class="cat-header">
+            <td colspan="10"><span class="cat-dot" style="background:var(--red); box-shadow:0 0 5px rgba(217,64,64,0.3);"></span>Credit Cards</td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Citi Strata Card</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r0-tier1" placeholder="—" value="$1,109.07"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r0-tier2" placeholder="—" value="$10,442.88"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r0-tier3" placeholder="—" value="$10,000"></td>
+            <td class="num"><input class="cell-edit" data-key="r0-total" placeholder="—" value="$1,109.07"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r0-payback" placeholder="—" value="24.99%"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r0-cost" placeholder="—" value="$10,442.88"></td>
+            <td class="num"><input class="cell-edit" data-key="r0-net" placeholder="—" value="09"></td>
+            <td><span class="badge hold">PAY NOW</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Visa Signature</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r1-tier1" placeholder="—" value="$660.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r1-tier2" placeholder="—" value="$6,680.99"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r1-tier3" placeholder="—" value="$6,800"></td>
+            <td class="num"><input class="cell-edit" data-key="r1-total" placeholder="—" value="$660.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r1-payback" placeholder="—" value="24.74%"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r1-cost" placeholder="—" value="$6,680.99"></td>
+            <td class="num"><input class="cell-edit" data-key="r1-net" placeholder="—" value="18"></td>
+            <td><span class="badge pending">QUEUE</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Amazon Prime Visa</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r2-tier1" placeholder="—" value="$40.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r2-tier2" placeholder="—" value="$1,255.42"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r2-tier3" placeholder="—" value="$1,400"></td>
+            <td class="num"><input class="cell-edit" data-key="r2-total" placeholder="—" value="$40.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r2-payback" placeholder="—" value="25.74%"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r2-cost" placeholder="—" value="$1,255.42"></td>
+            <td class="num"><input class="cell-edit" data-key="r2-net" placeholder="—" value="22"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Amazon Store Card</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r3-tier1" placeholder="—" value="$50.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r3-tier2" placeholder="—" value="$1,415.14"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r3-tier3" placeholder="—" value="$1,470"></td>
+            <td class="num"><input class="cell-edit" data-key="r3-total" placeholder="—" value="$50.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r3-payback" placeholder="—" value="29.74%"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r3-cost" placeholder="—" value="$1,415.14"></td>
+            <td class="num"><input class="cell-edit" data-key="r3-net" placeholder="—" value="25"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Wells Fargo CC (7750)</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r4-tier1" placeholder="—" value="$361.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r4-tier2" placeholder="—" value="$5,590.93"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r4-tier3" placeholder="—" value="$5,300"></td>
+            <td class="num"><input class="cell-edit" data-key="r4-total" placeholder="—" value="$361.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r4-payback" placeholder="—" value="24.65%"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r4-cost" placeholder="—" value="$5,590.93"></td>
+            <td class="num"><input class="cell-edit" data-key="r4-net" placeholder="—" value="12"></td>
+            <td><span class="badge hold">PAY NOW</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Active Cash Visa Signature</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r5-tier1" placeholder="—" value="$52.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r5-tier2" placeholder="—" value="$193.39"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r5-tier3" placeholder="—" value="$1,000"></td>
+            <td class="num"><input class="cell-edit" data-key="r5-total" placeholder="—" value="$52.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r5-payback" placeholder="—" value="24.74%"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r5-cost" placeholder="—" value="$193.39"></td>
+            <td class="num"><input class="cell-edit" data-key="r5-net" placeholder="—" value="27"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Orthodontic</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r6-tier1" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r6-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r6-tier3" placeholder="—" value="—"></td>
+            <td class="num"><input class="cell-edit" data-key="r6-total" placeholder="—" value="—"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r6-payback" placeholder="—" value="0%"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r6-cost" placeholder="—" value="—"></td>
+            <td class="num"><input class="cell-edit" data-key="r6-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Marching Band Instrument</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r7-tier1" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r7-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r7-tier3" placeholder="—" value="—"></td>
+            <td class="num"><input class="cell-edit" data-key="r7-total" placeholder="—" value="—"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r7-payback" placeholder="—" value="0%"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r7-cost" placeholder="—" value="—"></td>
+            <td class="num"><input class="cell-edit" data-key="r7-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+
+          <!-- ── HOUSING ── -->
+          <tr class="cat-header">
+            <td colspan="10"><span class="cat-dot" style="background:var(--blue); box-shadow:0 0 5px var(--blue-glow);"></span>Housing</td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Mortgage Part 1</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r8-tier1" placeholder="—" value="$1,000.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r8-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r8-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r8-total" placeholder="—" value="$1,000.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r8-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r8-cost" placeholder="—" value="$1,000.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r8-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Mortgage Part 2</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r9-tier1" placeholder="—" value="$222.77"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r9-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r9-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r9-total" placeholder="—" value="$222.77"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r9-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r9-cost" placeholder="—" value="$222.77"></td>
+            <td class="num"><input class="cell-edit" data-key="r9-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Property Tax</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r10-tier1" placeholder="—" value="$222.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r10-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r10-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r10-total" placeholder="—" value="$222.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r10-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r10-cost" placeholder="—" value="$222.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r10-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+
+          <!-- ── INSURANCE ── -->
+          <tr class="cat-header">
+            <td colspan="10"><span class="cat-dot" style="background:var(--amber);"></span>Insurance</td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Health Insurance (AllState / Nat. Gen.)</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r11-tier1" placeholder="—" value="$56.69"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r11-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r11-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r11-total" placeholder="—" value="$56.69"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r11-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r11-cost" placeholder="—" value="$56.69"></td>
+            <td class="num"><input class="cell-edit" data-key="r11-net" placeholder="—" value="22"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Ameritas (Dad &amp; James)</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r12-tier1" placeholder="—" value="$61.58"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r12-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r12-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r12-total" placeholder="—" value="$61.58"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r12-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r12-cost" placeholder="—" value="$61.58"></td>
+            <td class="num"><input class="cell-edit" data-key="r12-net" placeholder="—" value="30"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">StateFarm</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r13-tier1" placeholder="—" value="$124.46"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r13-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r13-tier3" placeholder="—" value="WF Active"></td>
+            <td class="num"><input class="cell-edit" data-key="r13-total" placeholder="—" value="$124.46"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r13-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r13-cost" placeholder="—" value="$124.46"></td>
+            <td class="num"><input class="cell-edit" data-key="r13-net" placeholder="—" value="15"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+
+          <!-- ── FAMILY / PERSONAL ── -->
+          <tr class="cat-header">
+            <td colspan="10"><span class="cat-dot" style="background:var(--green); box-shadow:0 0 5px var(--green-glow);"></span>Family / Personal</td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">OBC Sandy Smiles — James Braces</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r14-tier1" placeholder="—" value="$130.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r14-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r14-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r14-total" placeholder="—" value="$130.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r14-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r14-cost" placeholder="—" value="$130.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r14-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Playground Music Center</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r15-tier1" placeholder="—" value="$34.23"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r15-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r15-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r15-total" placeholder="—" value="$34.23"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r15-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r15-cost" placeholder="—" value="$34.23"></td>
+            <td class="num"><input class="cell-edit" data-key="r15-net" placeholder="—" value="17"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Yen Payment</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r16-tier1" placeholder="—" value="$175.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r16-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r16-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r16-total" placeholder="—" value="$175.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r16-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r16-cost" placeholder="—" value="$175.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r16-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Good Sam Roadside</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r17-tier1" placeholder="—" value="$89.95"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r17-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r17-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r17-total" placeholder="—" value="$89.95"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r17-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r17-cost" placeholder="—" value="$89.95"></td>
+            <td class="num"><input class="cell-edit" data-key="r17-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Grocery</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r18-tier1" placeholder="—" value="$210.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r18-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r18-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r18-total" placeholder="—" value="$210.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r18-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r18-cost" placeholder="—" value="$210.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r18-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Gas</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r19-tier1" placeholder="—" value="$20.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r19-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r19-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r19-total" placeholder="—" value="$20.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r19-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r19-cost" placeholder="—" value="$20.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r19-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Derek CPA Filing Fee</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r20-tier1" placeholder="—" value="$400.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r20-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r20-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r20-total" placeholder="—" value="$400.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r20-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r20-cost" placeholder="—" value="$400.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r20-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+
+          <!-- ── UTILITIES ── -->
+          <tr class="cat-header">
+            <td colspan="10"><span class="cat-dot" style="background:var(--purple); box-shadow:0 0 5px var(--purple-soft);"></span>Utilities</td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">ATT</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r21-tier1" placeholder="—" value="$176.87"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r21-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r21-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r21-total" placeholder="—" value="$176.87"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r21-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r21-cost" placeholder="—" value="$176.87"></td>
+            <td class="num"><input class="cell-edit" data-key="r21-net" placeholder="—" value="02"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">City of Valparaiso (Water, Sewer)</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r22-tier1" placeholder="—" value="$86.34"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r22-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r22-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r22-total" placeholder="—" value="$86.34"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r22-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r22-cost" placeholder="—" value="$86.34"></td>
+            <td class="num"><input class="cell-edit" data-key="r22-net" placeholder="—" value="12"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Florida Power &amp; Light + HomeServe</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r23-tier1" placeholder="—" value="$300.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r23-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r23-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r23-total" placeholder="—" value="$300.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r23-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r23-cost" placeholder="—" value="$300.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r23-net" placeholder="—" value="03"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">LiveOak Fiber</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r24-tier1" placeholder="—" value="$55.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r24-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r24-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r24-total" placeholder="—" value="$55.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r24-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r24-cost" placeholder="—" value="$55.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r24-net" placeholder="—" value="02"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+
+          <!-- ── SUBSCRIPTIONS & TOOLS ── -->
+          <tr class="cat-header">
+            <td colspan="10"><span class="cat-dot" style="background:var(--blue); box-shadow:0 0 5px var(--blue-glow);"></span>Subscriptions &amp; Tools</td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">GoDaddy (Yearly)</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r25-tier1" placeholder="—" value="$22.17"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r25-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r25-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r25-total" placeholder="—" value="$22.17"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r25-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r25-cost" placeholder="—" value="$22.17"></td>
+            <td class="num"><input class="cell-edit" data-key="r25-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Google One</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r26-tier1" placeholder="—" value="$9.99"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r26-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r26-tier3" placeholder="—" value="Citi Card"></td>
+            <td class="num"><input class="cell-edit" data-key="r26-total" placeholder="—" value="$9.99"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r26-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r26-cost" placeholder="—" value="$9.99"></td>
+            <td class="num"><input class="cell-edit" data-key="r26-net" placeholder="—" value="29"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Google Workspace</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r27-tier1" placeholder="—" value="$33.60"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r27-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r27-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r27-total" placeholder="—" value="$33.60"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r27-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r27-cost" placeholder="—" value="$33.60"></td>
+            <td class="num"><input class="cell-edit" data-key="r27-net" placeholder="—" value="01"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">iCloud Space</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r28-tier1" placeholder="—" value="$0.99"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r28-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r28-tier3" placeholder="—" value="Citi Card"></td>
+            <td class="num"><input class="cell-edit" data-key="r28-total" placeholder="—" value="$0.99"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r28-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r28-cost" placeholder="—" value="$0.99"></td>
+            <td class="num"><input class="cell-edit" data-key="r28-net" placeholder="—" value="09"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Unicorn Platform (Paddle.net)</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r29-tier1" placeholder="—" value="$29.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r29-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r29-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r29-total" placeholder="—" value="$29.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r29-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r29-cost" placeholder="—" value="$29.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r29-net" placeholder="—" value="01"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Superhuman Mail</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r30-tier1" placeholder="—" value="$30.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r30-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r30-tier3" placeholder="—" value="Personal"></td>
+            <td class="num"><input class="cell-edit" data-key="r30-total" placeholder="—" value="$30.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r30-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r30-cost" placeholder="—" value="$30.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r30-net" placeholder="—" value="01"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Make.com</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r31-tier1" placeholder="—" value="$18.82"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r31-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r31-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r31-total" placeholder="—" value="$18.82"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r31-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r31-cost" placeholder="—" value="$18.82"></td>
+            <td class="num"><input class="cell-edit" data-key="r31-net" placeholder="—" value="03"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Claude AI</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r32-tier1" placeholder="—" value="$20.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r32-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r32-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r32-total" placeholder="—" value="$20.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r32-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r32-cost" placeholder="—" value="$20.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r32-net" placeholder="—" value="01"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">OpenAI</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r33-tier1" placeholder="—" value="$20.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r33-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r33-tier3" placeholder="—" value="WF Active"></td>
+            <td class="num"><input class="cell-edit" data-key="r33-total" placeholder="—" value="$20.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r33-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r33-cost" placeholder="—" value="$20.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r33-net" placeholder="—" value="05"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">LTXSTUD</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r34-tier1" placeholder="—" value="$35.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r34-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r34-tier3" placeholder="—" value="Citi Card"></td>
+            <td class="num"><input class="cell-edit" data-key="r34-total" placeholder="—" value="$35.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r34-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r34-cost" placeholder="—" value="$35.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r34-net" placeholder="—" value="22"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Rewardful (Edmonton / Calgary)</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r35-tier1" placeholder="—" value="$99.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r35-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r35-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r35-total" placeholder="—" value="$99.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r35-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r35-cost" placeholder="—" value="$99.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r35-net" placeholder="—" value="06"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">SERENIX / Blue Tick</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r36-tier1" placeholder="—" value="$50.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r36-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r36-tier3" placeholder="—" value="Business Acct"></td>
+            <td class="num"><input class="cell-edit" data-key="r36-total" placeholder="—" value="$50.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r36-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r36-cost" placeholder="—" value="$50.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r36-net" placeholder="—" value="09"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">SpotOnTrack</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r37-tier1" placeholder="—" value="$11.75"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r37-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r37-tier3" placeholder="—" value="Citi Card"></td>
+            <td class="num"><input class="cell-edit" data-key="r37-total" placeholder="—" value="$11.75"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r37-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r37-cost" placeholder="—" value="$11.75"></td>
+            <td class="num"><input class="cell-edit" data-key="r37-net" placeholder="—" value="06"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Google YouTube</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r38-tier1" placeholder="—" value="$22.99"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r38-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r38-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r38-total" placeholder="—" value="$22.99"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r38-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r38-cost" placeholder="—" value="$22.99"></td>
+            <td class="num"><input class="cell-edit" data-key="r38-net" placeholder="—" value="—"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">YouTube Premium</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r39-tier1" placeholder="—" value="$25.14"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r39-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r39-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r39-total" placeholder="—" value="$25.14"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r39-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r39-cost" placeholder="—" value="$25.14"></td>
+            <td class="num"><input class="cell-edit" data-key="r39-net" placeholder="—" value="02"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Tiny Host London</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r40-tier1" placeholder="—" value="$38.00"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r40-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r40-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r40-total" placeholder="—" value="$38.00"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r40-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r40-cost" placeholder="—" value="$38.00"></td>
+            <td class="num"><input class="cell-edit" data-key="r40-net" placeholder="—" value="07"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Netflix</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r41-tier1" placeholder="—" value="$20.38"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r41-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r41-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r41-total" placeholder="—" value="$20.38"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r41-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r41-cost" placeholder="—" value="$20.38"></td>
+            <td class="num"><input class="cell-edit" data-key="r41-net" placeholder="—" value="15"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+          <tr class="data-row">
+            <td class="focus-col"><button class="focus-btn" title="Double-click to focus this row">◎</button></td>
+            <td class="item-name">Spotify Premium</td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r42-tier1" placeholder="—" value="$19.24"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r42-tier2" placeholder="—" value="—"></td>
+            <td class="num blue-val"><input class="cell-edit" data-key="r42-tier3" placeholder="—" value="WF Platinum"></td>
+            <td class="num"><input class="cell-edit" data-key="r42-total" placeholder="—" value="$19.24"></td>
+            <td class="num green-val"><input class="cell-edit" data-key="r42-payback" placeholder="—" value="—"></td>
+            <td class="num amber-val"><input class="cell-edit" data-key="r42-cost" placeholder="—" value="$19.24"></td>
+            <td class="num"><input class="cell-edit" data-key="r42-net" placeholder="—" value="02"></td>
+            <td><span class="badge active">SET</span></td>
+          </tr>
+
+          <!-- TOTALS -->
+          <tr class="totals-row">
+            <td class="focus-col"></td>
+            <td class="item-name" style="font-weight:700; font-size:0.75rem; color:var(--text-primary);">Monthly Totals</td>
+            <td class="num blue-val">$6,143.03</td>
+            <td class="num blue-val">$25,578.75</td>
+            <td class="num blue-val">$25,970.00</td>
+            <td class="num" style="color:var(--text-primary);">$6,143.03</td>
+            <td class="num green-val">29.74% max</td>
+            <td class="num amber-val">$25,578.75</td>
+            <td class="num">—</td>
+            <td></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─── PAYBACK RATES + TIER BREAKDOWN ─── -->
+  <div>
+    <div class="section-label" style="margin-bottom:12px;">Tier Breakdown + Rate Reference</div>
+    <div class="rates-grid">
+
+      <!-- Tier breakdown -->
+      <div class="rates-table-wrap">
+        <table class="rates-table">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th class="num th-blue">Price Range</th>
+              <th class="num th-green">Avg Payback %</th>
+              <th class="num th-amber">Avg Cost</th>
+              <th class="num th-purple">Avg Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge review">Tier 1</span></td>
+              <td class="num">$100 – $500</td>
+              <td class="num green-val">68%</td>
+              <td class="num amber-val">$189</td>
+              <td class="num green-val">$458</td>
+            </tr>
+            <tr>
+              <td><span class="badge review">Tier 2</span></td>
+              <td class="num">$150 – $750</td>
+              <td class="num green-val">64%</td>
+              <td class="num amber-val">$261</td>
+              <td class="num green-val">$638</td>
+            </tr>
+            <tr>
+              <td><span class="badge review">Tier 3</span></td>
+              <td class="num">$200 – $1,100</td>
+              <td class="num green-val">61%</td>
+              <td class="num amber-val">$341</td>
+              <td class="num green-val">$851</td>
+            </tr>
+            <tr>
+              <td><span class="badge active">Combined</span></td>
+              <td class="num" style="font-weight:700;">$14,600</td>
+              <td class="num green-val" style="font-weight:700;">62.4%</td>
+              <td class="num amber-val" style="font-weight:700;">$2,320</td>
+              <td class="num green-val" style="font-weight:700;">$5,762</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Per-category payback -->
+      <div class="rates-table-wrap">
+        <table class="rates-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th class="num">Items</th>
+              <th class="num th-blue">Revenue</th>
+              <th class="num th-green">Payback $</th>
+              <th class="num th-purple">Net</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span style="color:var(--blue); font-weight:700; font-size:0.7rem;">Campaign Svcs</span></td>
+              <td class="num muted-val">3</td>
+              <td class="num">$3,700</td>
+              <td class="num green-val">$2,294</td>
+              <td class="num green-val">$1,726</td>
+            </tr>
+            <tr>
+              <td><span style="color:var(--green); font-weight:700; font-size:0.7rem;">Press & PR</span></td>
+              <td class="num muted-val">3</td>
+              <td class="num">$4,675</td>
+              <td class="num green-val">$2,571</td>
+              <td class="num green-val">$2,129</td>
+            </tr>
+            <tr>
+              <td><span style="color:var(--amber); font-weight:700; font-size:0.7rem;">Social / Content</span></td>
+              <td class="num muted-val">2</td>
+              <td class="num">$3,000</td>
+              <td class="num green-val">$1,820</td>
+              <td class="num green-val">$1,194</td>
+            </tr>
+            <tr>
+              <td><span style="color:var(--purple); font-weight:700; font-size:0.7rem;">Add-Ons</span></td>
+              <td class="num muted-val">3</td>
+              <td class="num">$3,225</td>
+              <td class="num green-val">$1,829</td>
+              <td class="num green-val">$1,313</td>
+            </tr>
+            <tr style="font-weight:700;">
+              <td style="color:var(--text-primary); font-weight:700;">All Categories</td>
+              <td class="num muted-val">12</td>
+              <td class="num" style="font-weight:700;">$14,600</td>
+              <td class="num green-val" style="font-weight:700;">$8,514</td>
+              <td class="num green-val" style="font-weight:700;">$6,362</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── SUMMARY PANEL ─── -->
+  <div>
+    <div class="section-label" style="margin-bottom:12px;">Combined Day Summary</div>
+    <div class="summary-panel">
+      <div class="summary-header">
+        <div class="summary-header-title">// day payback — final totals</div>
+        <div class="summary-header-sub">all 12 items · 4 categories · today</div>
+      </div>
+      <div class="summary-body">
+        <div class="summary-cell">
+          <div class="summary-cell-label">Gross Revenue</div>
+          <div class="summary-cell-value blue">$14,600</div>
+          <div class="summary-cell-sub">all tiers combined<br>12 active services</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Day Payback</div>
+          <div class="summary-cell-value green">$8,514</div>
+          <div class="summary-cell-sub">collected today<br>62.4% of gross</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Operating Cost</div>
+          <div class="summary-cell-value amber">$2,320</div>
+          <div class="summary-cell-sub">cogs + overhead<br>15.9% of gross</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-cell-label">Payback %</div>
+          <div class="summary-cell-value purple">62.4%</div>
+          <div class="summary-cell-sub">payback / revenue<br>target: 60%+ ✓</div>
+        </div>
+      </div>
+      <div class="summary-net-bar">
+        <div class="net-cell">
+          <div class="net-label-group">
+            <div class="net-label">Net Day Profit</div>
+            <div class="net-value green">$6,194</div>
+            <div class="net-sub">payback − operating cost</div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:6px; justify-content:center;">
+            <div style="font-size:0.565rem; color:var(--text-ghost); letter-spacing:0.14em; text-transform:uppercase;">profit margin</div>
+            <div class="net-bar-visual" style="height:6px;">
+              <div class="net-bar-fill" style="width:72%;"></div>
+            </div>
+            <div style="font-size:0.625rem; color:var(--green); font-weight:700;">72% margin</div>
+          </div>
+        </div>
+        <div class="net-cell">
+          <div class="net-label-group">
+            <div class="net-label">Remaining (Deferred)</div>
+            <div class="net-value" style="color:var(--text-second);">$6,086</div>
+            <div class="net-sub">gross − payback · billed not collected</div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:6px; justify-content:center;">
+            <div style="font-size:0.565rem; color:var(--text-ghost); letter-spacing:0.14em; text-transform:uppercase;">collection rate</div>
+            <div class="net-bar-visual" style="height:6px;">
+              <div class="net-bar-fill" style="width:58%; background:var(--blue); box-shadow:0 0 8px rgba(46,123,232,0.35);"></div>
+            </div>
+            <div style="font-size:0.625rem; color:var(--blue); font-weight:700;">58% collected</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── NOTES + QUICK EDIT ─── -->
+  <div>
+    <div class="section-label" style="margin-bottom:12px;">Notes + Quick Fields</div>
+    <div class="notes-wrap">
+
+      <div class="notes-card">
+        <div class="notes-card-header">// session notes</div>
+        <textarea class="notes-textarea" data-key="field-notes" placeholder="Tiers, adjustments, client context, rate changes...&#10;&#10;// type freely"></textarea>
+      </div>
+
+      <div class="notes-card">
+        <div class="notes-card-header">// quick fields</div>
+        <div class="fields-grid">
+          <div class="field-cell">
+            <div class="field-label">Day Date</div>
+            <input class="field-input" data-key="field-day-date" placeholder="e.g. 2026-03-29">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Client / Project</div>
+            <input class="field-input" data-key="field-client" placeholder="—">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Revenue Target</div>
+            <input class="field-input" data-key="field-rev-target" placeholder="$0">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Payback Target</div>
+            <input class="field-input" data-key="field-payback-target" placeholder="$0">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Cost Cap</div>
+            <input class="field-input" data-key="field-cost-cap" placeholder="$0">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Net Goal</div>
+            <input class="field-input" data-key="field-net-goal" placeholder="$0">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Manager / Owner</div>
+            <input class="field-input" data-key="field-manager" placeholder="—">
+          </div>
+          <div class="field-cell">
+            <div class="field-label">Notes Ref #</div>
+            <input class="field-input" data-key="field-notes-ref" placeholder="—">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <footer class="page-footer">
+    <div class="footer-id">pricing · payback · grid · v2</div>
+    <div class="footer-dots">
+      <div class="footer-dot" style="background:var(--blue);"></div>
+      <div class="footer-dot" style="background:var(--green);"></div>
+      <div class="footer-dot" style="background:var(--amber);"></div>
+      <div class="footer-dot" style="background:var(--purple);"></div>
+      <div class="footer-dot" style="background:var(--red);"></div>
+    </div>
+    <div>ahead · artist solutions · day payback system</div>
+  </footer>
+
+</div>
+
+<script>
+  // ─── UTILITIES ──────────────────────────────────────────────
+  function parseMoney(str) {
+    if (!str) return 0;
+    return parseFloat(str.replace(/[$,%]/g, '').replace(/,/g, '')) || 0;
+  }
+
+  // ─── LIVE STAT BAR ──────────────────────────────────────────
+  function recalc() {
+    const rows = document.querySelectorAll('.pricing-table tbody tr.data-row');
+    let totalRevenue = 0, totalPayback = 0, totalCost = 0, totalNet = 0;
+
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input.cell-edit');
+      if (inputs.length < 7) return;
+      // inputs: tier1[0] tier2[1] tier3[2] dayTotal[3] payback%[4] cost[5] net[6]
+      const dayTotal   = parseMoney(inputs[3].value);
+      const paybackPct = parseMoney(inputs[4].value) / 100;
+      const cost       = parseMoney(inputs[5].value);
+      const net        = parseMoney(inputs[6].value);
+      totalRevenue += dayTotal;
+      totalPayback += dayTotal * paybackPct;
+      totalCost    += cost;
+      totalNet     += net;
+    });
+
+    const pct = totalRevenue > 0 ? (totalPayback / totalRevenue * 100).toFixed(1) : 0;
+    const fmt = n => '$' + Math.round(n).toLocaleString();
+
+    document.getElementById('stat-revenue').textContent = fmt(totalRevenue);
+    document.getElementById('stat-payback').textContent = fmt(totalPayback);
+    document.getElementById('stat-cost').textContent    = fmt(totalCost);
+    document.getElementById('stat-net').textContent     = fmt(totalNet);
+    document.getElementById('stat-pct').textContent     = pct + '%';
+  }
+
+  document.querySelectorAll('input.cell-edit').forEach(inp => inp.addEventListener('input', recalc));
+  recalc();
+
+  // ============================================================
+  // FEATURE 1 — JSON DOWNLOAD / UPLOAD
+  // ============================================================
+
+  // Collect all keyed fields + item-name cell text into a plain object
+  function collectData() {
+    const data = { _version: 'pricing-grid-v2', _exported: new Date().toISOString() };
+    // All data-key inputs / textareas
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const key = el.getAttribute('data-key');
+      if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+        data[key] = el.value;
+      }
+    });
+    // Item-name cells (plain text or contenteditable TDs)
+    document.querySelectorAll('.pricing-table tbody tr.data-row').forEach((row, i) => {
+      const nameCell = row.querySelector('td.item-name');
+      if (nameCell) {
+        const inp = nameCell.querySelector('input');
+        data['_rowname_' + i] = inp ? inp.value : nameCell.textContent.trim();
+      }
+    });
+    return data;
+  }
+
+  // Populate all keyed fields + item-name cells from a plain object
+  function applyData(data) {
+    document.querySelectorAll('[data-key]').forEach(el => {
+      const key = el.getAttribute('data-key');
+      if (key in data) {
+        if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+          el.value = data[key];
+        }
+      }
+    });
+    // Restore item-name cells
+    document.querySelectorAll('.pricing-table tbody tr.data-row').forEach((row, i) => {
+      const key = '_rowname_' + i;
+      if (key in data) {
+        const nameCell = row.querySelector('td.item-name');
+        if (!nameCell) return;
+        const inp = nameCell.querySelector('input');
+        if (inp) inp.value = data[key];
+        else nameCell.textContent = data[key];
+      }
+    });
+    recalc();
+  }
+
+  // ── Download ───────────────────────────────────────────────
+  document.getElementById('tb-download').addEventListener('click', function () {
+    const data = collectData();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'pricing-grid-data.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // Small delay before revoke so browser can start the download
+    setTimeout(() => URL.revokeObjectURL(url), 200);
+    showToast('Saved — pricing-grid-data.json');
+  });
+
+  // ── Upload ─────────────────────────────────────────────────
+  document.getElementById('tb-upload-btn').addEventListener('click', function () {
+    document.getElementById('tb-upload-input').click();
+  });
+
+  document.getElementById('tb-upload-input').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (evt) {
+      try {
+        const data = JSON.parse(evt.target.result);
+        applyData(data);
+        showToast('Data loaded successfully');
+        // Resize notepad after programmatic restore
+        setTimeout(function () {
+          const np = document.querySelector('.notepad-textarea');
+          if (np) { np.style.height = 'auto'; np.style.height = Math.max(200, np.scrollHeight) + 'px'; }
+        }, 40);
+      } catch (err) {
+        showToast('Invalid JSON file', true);
+      }
+    };
+    reader.readAsText(file);
+    // Reset so same file can be re-uploaded
+    e.target.value = '';
+  });
+
+  // ── Upload toast helper ─────────────────────────────────────
+  function showToast(msg, isError) {
+    const toast = document.getElementById('upload-toast');
+    toast.textContent = msg;
+    toast.style.background = isError ? '#d94040' : '#1a9e6e';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2600);
+  }
+
+  // ============================================================
+  // FEATURE 2 — LEAVE PROTOCOL (active)
+  // ============================================================
+  window.addEventListener('beforeunload', function (e) {
+    e.preventDefault();
+    e.returnValue = 'You have unsaved data. Did you remember to Download JSON?';
+  });
+
+  // ─── SORT INFRASTRUCTURE ────────────────────────────────────
+  function getDataRowGroups() {
+    const tbody = document.querySelector('.pricing-table tbody');
+    const allRows = Array.from(tbody.querySelectorAll('tr'));
+    const groups = [];
+    let current = null;
+    allRows.forEach(row => {
+      if (row.classList.contains('cat-header')) {
+        current = { catRow: row, dataRows: [] };
+        groups.push(current);
+      } else if (row.classList.contains('data-row') && current) {
+        current.dataRows.push(row);
+      }
+    });
+    return groups;
+  }
+
+  function getCellVal(row, colIdx) {
+    if (colIdx === 0) {
+      const td = row.querySelector('td.item-name');
+      return td ? td.textContent.trim() : '';
+    }
+    const inputs = row.querySelectorAll('input.cell-edit');
+    const inp = inputs[colIdx - 1];
+    return inp ? parseMoney(inp.value) : 0;
+  }
+
+  // col 4 = Day Total (index in thIds), col 6 = Day Cost
+  // inputs index: dayTotal = inputs[3], cost = inputs[5]
+  function getDayTotal(row) {
+    const inputs = row.querySelectorAll('input.cell-edit');
+    return inputs[3] ? parseMoney(inputs[3].value) : 0;
+  }
+  function getDayCost(row) {
+    const inputs = row.querySelectorAll('input.cell-edit');
+    return inputs[5] ? parseMoney(inputs[5].value) : 0;
+  }
+
+  let currentSortCol   = null;
+  let currentSortDir   = null;   // 'asc' | 'desc'
+  let currentSortMode  = null;   // 'table' | 'expense' | 'urgent'
+
+  // Track double-click sort state per column: cycles desc → asc → default
+  const colDblState = {}; // colIdx → 0 (desc) | 1 (asc) | 2 (default)
+
+  // Toolbar button toggle state
+  const tbBtnState = { az: false, za: false, urgent: false };
+
+  function clearSortIndicators() {
+    document.querySelectorAll('.pricing-table thead th.sortable').forEach(th => {
+      th.classList.remove('sort-asc', 'sort-desc');
+    });
+  }
+
+  function clearUrgentGlow() {
+    document.querySelectorAll('.pricing-table tbody tr.data-row.urgent-glow').forEach(r => {
+      r.classList.remove('urgent-glow');
+    });
+  }
+
+  function clearAllToolbarActive() {
+    document.getElementById('tb-sort-az').classList.remove('tb-sort-active');
+    document.getElementById('tb-sort-za').classList.remove('tb-sort-active');
+    document.getElementById('tb-urgent').classList.remove('tb-urgent-active');
+    document.getElementById('az-indicator').textContent     = '';
+    document.getElementById('za-indicator').textContent     = '';
+    document.getElementById('urgent-indicator').textContent = '';
+    Object.keys(tbBtnState).forEach(k => tbBtnState[k] = false);
+  }
+
+  function sortTable(colIdx, dir) {
+    const tbody = document.querySelector('.pricing-table tbody');
+    const totalsRow = tbody.querySelector('tr.totals-row');
+    const groups = getDataRowGroups();
+
+    // Flat sort — all data rows sorted together across all categories
+    const allDataRows = groups.flatMap(g => g.dataRows);
+    allDataRows.sort((a, b) => {
+      const va = getCellVal(a, colIdx);
+      const vb = getCellVal(b, colIdx);
+      if (typeof va === 'string') {
+        return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      }
+      return dir === 'asc' ? va - vb : vb - va;
+    });
+
+    // Remove cat-headers from view, lay out sorted rows flat
+    groups.forEach(g => { if (g.catRow.parentNode === tbody) tbody.removeChild(g.catRow); });
+    allDataRows.forEach(r => tbody.appendChild(r));
+    if (totalsRow) tbody.appendChild(totalsRow);
+
+    currentSortCol  = colIdx;
+    currentSortDir  = dir;
+    currentSortMode = 'table';
+
+    clearSortIndicators();
+    clearUrgentGlow();
+    const thIds = ['th-item','th-tier1','th-tier2','th-tier3','th-total','th-payback','th-cost','th-net'];
+    const targetTh = document.getElementById(thIds[colIdx]);
+    if (targetTh) targetTh.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+  }
+
+  // ─── EXPENSE SORT (A→Z / Z→A toolbar buttons) ───────────────
+  // Sorts ALL data rows flat by Day Total (highest = most expensive)
+  function sortByExpense(dir) {
+    const tbody = document.querySelector('.pricing-table tbody');
+    const totalsRow = tbody.querySelector('tr.totals-row');
+    const groups = getDataRowGroups();
+
+    // Flatten all data rows across all groups
+    const allDataRows = groups.flatMap(g => g.dataRows);
+    allDataRows.sort((a, b) => {
+      const va = getDayTotal(a);
+      const vb = getDayTotal(b);
+      return dir === 'desc' ? vb - va : va - vb;
+    });
+
+    // Rebuild tbody: remove cat headers, put sorted rows inline, keep totals last
+    groups.forEach(g => {
+      if (g.catRow.parentNode === tbody) tbody.removeChild(g.catRow);
+    });
+    allDataRows.forEach(r => tbody.appendChild(r));
+    if (totalsRow) tbody.appendChild(totalsRow);
+
+    currentSortCol  = 4; // Day Total
+    currentSortDir  = dir;
+    currentSortMode = 'expense';
+
+    clearSortIndicators();
+    clearUrgentGlow();
+    const targetTh = document.getElementById('th-total');
+    if (targetTh) targetTh.classList.add(dir === 'desc' ? 'sort-desc' : 'sort-asc');
+  }
+
+  // ─── URGENCY SORT ────────────────────────────────────────────
+  // No due date column → pure amount descending urgency score
+  function sortByUrgency() {
+    const tbody = document.querySelector('.pricing-table tbody');
+    const totalsRow = tbody.querySelector('tr.totals-row');
+    const groups = getDataRowGroups();
+
+    const allDataRows = groups.flatMap(g => g.dataRows);
+    allDataRows.sort((a, b) => {
+      // Urgency = Day Total descending (most expensive = most urgent)
+      const va = getDayTotal(a);
+      const vb = getDayTotal(b);
+      return vb - va;
+    });
+
+    groups.forEach(g => {
+      if (g.catRow.parentNode === tbody) tbody.removeChild(g.catRow);
+    });
+    allDataRows.forEach(r => tbody.appendChild(r));
+    if (totalsRow) tbody.appendChild(totalsRow);
+
+    currentSortMode = 'urgent';
+    clearSortIndicators();
+    clearUrgentGlow();
+
+    // Apply red glow to top 5
+    allDataRows.slice(0, 5).forEach(r => r.classList.add('urgent-glow'));
+
+    const targetTh = document.getElementById('th-total');
+    if (targetTh) targetTh.classList.add('sort-desc');
+  }
+
+  // ─── TOOLBAR: A→Z (highest expense first, toggles) ──────────
+  document.getElementById('tb-sort-az').addEventListener('click', function () {
+    const wasActive = tbBtnState.az;
+    clearAllToolbarActive();
+    if (!wasActive) {
+      // First click: descending (most expensive first)
+      tbBtnState.az = true;
+      this.classList.add('tb-sort-active');
+      document.getElementById('az-indicator').textContent = ' ↓';
+      sortByExpense('desc');
+    } else {
+      // Second click: ascending (cheapest first — reverse)
+      tbBtnState.az = false;
+      // stay un-active but fire reverse sort without active style
+      document.getElementById('az-indicator').textContent = '';
+      sortByExpense('asc');
+    }
+  });
+
+  // ─── TOOLBAR: Z→A (lowest expense first, toggles) ───────────
+  document.getElementById('tb-sort-za').addEventListener('click', function () {
+    const wasActive = tbBtnState.za;
+    clearAllToolbarActive();
+    if (!wasActive) {
+      tbBtnState.za = true;
+      this.classList.add('tb-sort-active');
+      document.getElementById('za-indicator').textContent = ' ↑';
+      sortByExpense('asc');
+    } else {
+      tbBtnState.za = false;
+      document.getElementById('za-indicator').textContent = '';
+      sortByExpense('desc');
+    }
+  });
+
+  // ─── TOOLBAR: ⚡ URGENT (toggles) ────────────────────────────
+  document.getElementById('tb-urgent').addEventListener('click', function () {
+    const wasActive = tbBtnState.urgent;
+    clearAllToolbarActive();
+    if (!wasActive) {
+      tbBtnState.urgent = true;
+      this.classList.add('tb-urgent-active');
+      document.getElementById('urgent-indicator').textContent = ' ↓';
+      sortByUrgency();
+    } else {
+      // Second click: reverse urgency (lowest to highest)
+      tbBtnState.urgent = false;
+      document.getElementById('urgent-indicator').textContent = '';
+      // Reverse — sort by amount ascending, remove glow
+      const tbody = document.querySelector('.pricing-table tbody');
+      const totalsRow = tbody.querySelector('tr.totals-row');
+      const groups = getDataRowGroups();
+      const allDataRows = groups.flatMap(g => g.dataRows);
+      allDataRows.sort((a, b) => getDayTotal(a) - getDayTotal(b));
+      groups.forEach(g => { if (g.catRow.parentNode === tbody) tbody.removeChild(g.catRow); });
+      allDataRows.forEach(r => tbody.appendChild(r));
+      if (totalsRow) tbody.appendChild(totalsRow);
+      clearUrgentGlow();
+      clearSortIndicators();
+      document.getElementById('th-total').classList.add('sort-asc');
+    }
+  });
+
+  // ─── ADD ROW ─────────────────────────────────────────────────
+  let addRowCount = 0;
+  document.getElementById('tb-add-row').addEventListener('click', function () {
+    const tbody = document.querySelector('.pricing-table tbody');
+    addRowCount++;
+    const key = 'new' + addRowCount;
+    const tr = document.createElement('tr');
+    tr.className = 'data-row';
+    tr.innerHTML = `
+      <td class="focus-col"><button class="focus-btn" title="Double-click to focus">◎</button></td>
+      <td class="item-name" contenteditable="true" spellcheck="false">New Item</td>
+      <td class="num blue-val"><input class="cell-edit" data-key="${key}-tier1" placeholder="—" value=""></td>
+      <td class="num blue-val"><input class="cell-edit" data-key="${key}-tier2" placeholder="—" value=""></td>
+      <td class="num blue-val"><input class="cell-edit" data-key="${key}-tier3" placeholder="—" value=""></td>
+      <td class="num"><input class="cell-edit" data-key="${key}-total" placeholder="—" value=""></td>
+      <td class="num green-val"><input class="cell-edit" data-key="${key}-payback" placeholder="—" value=""></td>
+      <td class="num amber-val"><input class="cell-edit" data-key="${key}-cost" placeholder="—" value=""></td>
+      <td class="num"><input class="cell-edit" data-key="${key}-net" placeholder="—" value=""></td>
+      <td><span class="badge review">NEW</span></td>`;
+    // Insert at TOP of tbody (before first child)
+    tbody.insertBefore(tr, tbody.firstChild);
+    // Wire focus button on the new row
+    if (typeof wireFocusBtn === 'function') wireFocusBtn(tr.querySelector('.focus-btn'), tr);
+    // Flash new row
+    tr.style.transition = 'background 0.4s';
+    tr.style.background = 'rgba(46,123,232,0.08)';
+    setTimeout(() => { tr.style.background = ''; }, 800);
+    // Focus the name cell
+    const nameCell = tr.querySelector('td.item-name');
+    if (nameCell) { nameCell.focus(); const sel = window.getSelection(); const range = document.createRange(); range.selectNodeContents(nameCell); sel.removeAllRanges(); sel.addRange(range); }
+  });
+
+  // ─── COLUMN HEADER: SINGLE CLICK (toggle asc/desc) ──────────
+  const thMap = {
+    'th-item': 0, 'th-tier1': 1, 'th-tier2': 2, 'th-tier3': 3,
+    'th-total': 4, 'th-payback': 5, 'th-cost': 6, 'th-net': 7
+  };
+  Object.entries(thMap).forEach(([id, colIdx]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener('click', () => {
+      // Ignore if triggered by dblclick (dblclick fires click first — gate with flag)
+      if (el._dblPending) return;
+      clearAllToolbarActive();
+      let dir = 'desc'; // first click = descending (highest first)
+      if (currentSortCol === colIdx && currentSortDir === 'desc' && currentSortMode === 'table') {
+        dir = 'asc';
+      }
+      sortTable(colIdx, dir);
+    });
+
+    // ─── COLUMN HEADER: DOUBLE CLICK (3-state cycle) ──────────
+    // State 0 → desc | State 1 → asc | State 2 → default (by name)
+    el.addEventListener('dblclick', () => {
+      el._dblPending = true;
+      setTimeout(() => { el._dblPending = false; }, 400);
+
+      clearAllToolbarActive();
+      const state = colDblState[colIdx] !== undefined ? colDblState[colIdx] : -1;
+      const nextState = (state + 1) % 3;
+      colDblState[colIdx] = nextState;
+
+      if (nextState === 0) {
+        // descending — highest first
+        sortTable(colIdx, 'desc');
+      } else if (nextState === 1) {
+        // ascending — lowest first
+        sortTable(colIdx, 'asc');
+      } else {
+        // default — restore original DOM order (sort by item name asc)
+        sortTable(0, 'asc');
+        clearSortIndicators();
+        currentSortCol = null;
+        currentSortDir = null;
+      }
+    });
+  });
+
+  // ============================================================
+  // FEATURE: EDIT / VIEW MODE TOGGLE
+  // ============================================================
+  const editModeBtn = document.getElementById('edit-mode-btn');
+
+  function getAllInputFields() {
+    return document.querySelectorAll(
+      'input.cell-edit, input.field-input, textarea.notes-textarea, textarea.notepad-textarea'
+    );
+  }
+  function getAllItemNameCells() {
+    return document.querySelectorAll('td.item-name');
+  }
+
+  function setViewMode() {
+    document.body.classList.remove('edit-mode');
+    document.body.classList.add('view-mode');
+    editModeBtn.classList.remove('edit-on');
+    editModeBtn.textContent = '🔒 View';
+    getAllInputFields().forEach(el => {
+      el.setAttribute('disabled', '');
+      el.setAttribute('tabindex', '-1');
+    });
+    getAllItemNameCells().forEach(td => {
+      td.removeAttribute('contenteditable');
+    });
+  }
+
+  function setEditMode() {
+    document.body.classList.remove('view-mode');
+    document.body.classList.add('edit-mode');
+    editModeBtn.classList.add('edit-on');
+    editModeBtn.textContent = '✏️ Edit';
+    getAllInputFields().forEach(el => {
+      el.removeAttribute('disabled');
+      el.removeAttribute('tabindex');
+    });
+    getAllItemNameCells().forEach(td => {
+      td.setAttribute('contenteditable', 'true');
+      td.setAttribute('spellcheck', 'false');
+    });
+  }
+
+  // Start in Edit Mode
+  setEditMode();
+
+  editModeBtn.addEventListener('click', function () {
+    if (document.body.classList.contains('edit-mode')) {
+      setViewMode();
+    } else {
+      setEditMode();
+    }
+  });
+
+  // ============================================================
+  // FEATURE: FOCUS BOX
+  // ============================================================
+
+  const focusBoxOuter   = document.getElementById('focus-box-outer');
+  const focusCardsWrap  = document.getElementById('focus-cards-wrap');
+  const focusClearAll   = document.getElementById('focus-clear-all');
+  const clickTestBtn    = document.getElementById('click-test-btn');
+
+  // Map: row element → focus card element (and vice versa)
+  const focusedRows = new Map(); // row → card
+
+  function updateFocusBoxState() {
+    const hasCards = focusedRows.size > 0;
+    if (hasCards) {
+      focusBoxOuter.classList.add('has-cards');
+      focusClearAll.style.display = '';
+      clickTestBtn.classList.remove('pulsing');
+    } else {
+      focusBoxOuter.classList.remove('has-cards');
+      focusClearAll.style.display = 'none';
+      clickTestBtn.classList.add('pulsing');
+    }
+  }
+
+  function getRowData(row) {
+    const nameEl  = row.querySelector('td.item-name');
+    const inputs  = row.querySelectorAll('input.cell-edit');
+    const badgeEl = row.querySelector('.badge');
+    const name    = nameEl ? nameEl.textContent.replace('// ', '').trim() : '—';
+    const monthly = inputs[3] ? inputs[3].value || '—' : '—';
+    const badge   = badgeEl ? badgeEl.outerHTML : '';
+    return { name, monthly, badge };
+  }
+
+  function focusRow(row) {
+    if (focusedRows.has(row)) return; // already focused
+
+    const { name, monthly, badge } = getRowData(row);
+
+    // Flash the row
+    row.classList.add('focus-flash', 'row-in-focus');
+    setTimeout(() => row.classList.remove('focus-flash'), 500);
+
+    // Replace focus button with "in focus" pill
+    const focusBtn = row.querySelector('.focus-btn');
+    if (focusBtn) {
+      focusBtn.disabled = true;
+      focusBtn.style.display = 'none';
+    }
+    const pill = document.createElement('span');
+    pill.className = 'in-focus-pill';
+    pill.title = 'Currently in Focus Box';
+    pill.textContent = '📌';
+    const focusTd = row.querySelector('td.focus-col');
+    if (focusTd) focusTd.appendChild(pill);
+
+    // Build focus card
+    const card = document.createElement('div');
+    card.className = 'focus-card';
+    card.innerHTML = `
+      <div class="focus-card-name" title="${name}">${name}</div>
+      <div class="focus-card-monthly">${monthly}</div>
+      <div class="focus-card-badge">${badge}</div>
+      <button class="focus-card-remove" title="Remove from Focus">✕</button>
+    `;
+
+    // Remove button
+    card.querySelector('.focus-card-remove').addEventListener('click', function () {
+      removeFocusCard(row, card);
+    });
+
+    focusCardsWrap.appendChild(card);
+    focusedRows.set(row, card);
+    updateFocusBoxState();
+  }
+
+  function removeFocusCard(row, card) {
+    card.classList.add('removing');
+    setTimeout(() => {
+      if (card.parentNode) card.parentNode.removeChild(card);
+      focusedRows.delete(row);
+
+      // Restore focus button on the row
+      row.classList.remove('row-in-focus');
+      const focusTd = row.querySelector('td.focus-col');
+      if (focusTd) {
+        const pill = focusTd.querySelector('.in-focus-pill');
+        if (pill) focusTd.removeChild(pill);
+        const focusBtn = focusTd.querySelector('.focus-btn');
+        if (focusBtn) {
+          focusBtn.disabled = false;
+          focusBtn.style.display = '';
+        }
+      }
+      updateFocusBoxState();
+    }, 300);
+  }
+
+  // Attach dblclick listeners to all focus buttons
+  document.querySelectorAll('.focus-btn').forEach(btn => {
+    btn.addEventListener('dblclick', function (e) {
+      e.stopPropagation();
+      const row = btn.closest('tr.data-row');
+      if (row) focusRow(row);
+    });
+    // Prevent single click from doing anything
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+  });
+
+  // Clear All
+  focusClearAll.addEventListener('click', function () {
+    // Remove all cards at once
+    const rows = Array.from(focusedRows.keys());
+    rows.forEach(row => {
+      const card = focusedRows.get(row);
+      if (card) {
+        card.classList.add('removing');
+        setTimeout(() => { if (card.parentNode) card.parentNode.removeChild(card); }, 300);
+      }
+      row.classList.remove('row-in-focus');
+      const focusTd = row.querySelector('td.focus-col');
+      if (focusTd) {
+        const pill = focusTd.querySelector('.in-focus-pill');
+        if (pill) focusTd.removeChild(pill);
+        const focusBtn = focusTd.querySelector('.focus-btn');
+        if (focusBtn) { focusBtn.disabled = false; focusBtn.style.display = ''; }
+      }
+    });
+    focusedRows.clear();
+    setTimeout(updateFocusBoxState, 320);
+  });
+
+  // Click Test button
+  clickTestBtn.addEventListener('click', function () {
+    const firstRow = document.querySelector('.pricing-table tbody tr.data-row');
+    if (!firstRow) return;
+    const firstBtn = firstRow.querySelector('.focus-btn');
+    if (!firstBtn || firstBtn.disabled) return;
+    // Brief visual cue on the button before firing
+    firstBtn.style.transform = 'scale(1.3)';
+    firstBtn.style.boxShadow = '0 0 0 5px rgba(46,123,232,0.28)';
+    setTimeout(() => {
+      firstBtn.style.transform = '';
+      firstBtn.style.boxShadow = '';
+      focusRow(firstRow);
+    }, 600);
+  });
+
+  // Init state
+  updateFocusBoxState();
+
+  // ============================================================
+  // FEATURE: NOTEPAD AUTO-GROW
+  // ============================================================
+  const notepadTA = document.querySelector('.notepad-textarea');
+  function autoGrowNotepad() {
+    notepadTA.style.height = 'auto';
+    notepadTA.style.height = Math.max(200, notepadTA.scrollHeight) + 'px';
+  }
+  notepadTA.addEventListener('input', autoGrowNotepad);
+  // Re-run after any data load so height matches restored content
+  const _origApplyData = applyData;
+  // Patch: call autoGrow after applyData restores notepad content
+  document.getElementById('tb-upload-btn').addEventListener('click', function () {
+    // already handled via tb-upload-input change → applyData → recalc
+    // autoGrow fires via the 'input' event on textarea; for programmatic
+    // value set we call it explicitly after a tick
+    setTimeout(autoGrowNotepad, 80);
+  });
+  autoGrowNotepad();
+</script>
+
+</body>
+</html>

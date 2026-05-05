@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sharon — Catalog Dashboard</title>
+<link rel="stylesheet" href="overlay.css">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --pane: #ffffff;
+    --rail: #ebedf1;
+    --rail-hover: #dfe2e8;
+    --rail-active: #4a6da7;
+    --rail-active-ink: #ffffff;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --line: #e1e4ea;
+    --line-soft: #eef0f4;
+    --tile: #ffffff;
+    --accent: #4a6da7;
+    --accent-soft: #eaf0fa;
+    --row-alt: #f9fafc;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 13px;
+    overflow: hidden;
+  }
+
+  /* ── App shell ───────────────────────────────────────── */
+  .app {
+    display: grid;
+    grid-template-rows: 44px 1fr 28px;
+    height: 100vh;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    background: linear-gradient(180deg, #f8f9fb 0%, #eceff4 100%);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar .traffic {
+    display: flex; gap: 6px;
+  }
+  .traffic span {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: #d8dbe1; border: 1px solid #b9bdc6;
+  }
+  .traffic span:nth-child(1) { background: #ff5f57; border-color: #e04a45; }
+  .traffic span:nth-child(2) { background: #ffbd2e; border-color: #dfa122; }
+  .traffic span:nth-child(3) { background: #28c940; border-color: #1ea832; }
+
+  .topbar .nav {
+    display: flex; gap: 4px;
+  }
+  .topbar .nav button {
+    width: 26px; height: 22px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 4px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .topbar .nav button:hover { color: var(--ink); border-color: #c7ccd5; }
+
+  .topbar .title {
+    flex: 1;
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: #4a5060;
+  }
+
+  .topbar .search {
+    display: flex; align-items: center;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 3px 8px;
+    width: 220px;
+  }
+  .topbar .search input {
+    border: none; outline: none;
+    font-size: 12px;
+    width: 100%;
+    background: transparent;
+  }
+  .topbar .search::before {
+    content: "⌕";
+    color: var(--muted);
+    margin-right: 6px;
+    font-size: 13px;
+  }
+
+  /* Body */
+  .body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    overflow: hidden;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--rail);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+  .rail-group {
+    padding: 12px 14px 4px;
+  }
+  .rail-group h4 {
+    margin: 0 0 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .rail-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 14px;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 12.5px;
+    user-select: none;
+  }
+  .rail-item .ico {
+    width: 16px; text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .rail-item:hover { background: var(--rail-hover); }
+  .rail-item.active {
+    background: var(--rail-active);
+    color: var(--rail-active-ink);
+  }
+  .rail-item.active .ico { color: var(--rail-active-ink); }
+  .rail-item .count {
+    margin-left: auto;
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+  .rail-item.active .count { color: rgba(255,255,255,0.85); }
+
+  /* Main pane */
+  .main {
+    background: var(--pane);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 38px 1fr;
+  }
+
+  .tabstrip {
+    display: flex; align-items: center;
+    border-bottom: 1px solid var(--line);
+    padding: 0 14px;
+    background: #fbfcfd;
+    gap: 2px;
+  }
+  .tab {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+  .tabstrip .spacer { flex: 1; }
+  .view-toggle {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .view-toggle button {
+    padding: 4px 10px;
+    border: none;
+    background: #fff;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .view-toggle button + button { border-left: 1px solid var(--line); }
+  .view-toggle button.active { background: var(--accent-soft); color: var(--accent); }
+
+  .content {
+    overflow: auto;
+    padding: 16px 18px 24px;
+  }
+
+  /* Card grid view */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--tile);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    display: flex; flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(20, 30, 50, 0.08);
+    border-color: var(--accent);
+  }
+  .card .cover {
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(135deg, #e9ecf2 0%, #d6dbe5 100%);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    color: #9aa3b2;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .card .meta {
+    padding: 8px 10px 10px;
+  }
+  .card .meta .name {
+    font-size: 12.5px;
+    font-weight: 600;
+    margin: 0 0 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card .meta .sub {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Dense list view */
+  .list {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .list thead th {
+    text-align: left;
+    padding: 6px 10px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    background: #fbfcfd;
+    position: sticky; top: 0;
+  }
+  .list tbody td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--ink);
+  }
+  .list tbody tr:nth-child(even) td { background: var(--row-alt); }
+  .list tbody tr:hover td { background: var(--accent-soft); cursor: pointer; }
+  .list .num { color: var(--muted); width: 36px; }
+  .list .dur { color: var(--muted); width: 60px; text-align: right; }
+
+  /* Status bar */
+  .statusbar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 18px;
+    background: linear-gradient(180deg, #f5f6f9 0%, #e9ecf1 100%);
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .statusbar .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* Hidden views */
+  .view { display: none; }
+  .view.active { display: block; }
+</style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="traffic"><span></span><span></span><span></span></div>
+      <div class="nav">
+        <button title="Back">‹</button>
+        <button title="Forward">›</button>
+      </div>
+      <div class="title">Sharon — Catalog</div>
+      <div class="search"><input type="text" placeholder="Search catalog…"></div>
+    </header>
+
+    <!-- Body -->
+    <div class="body">
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="rail-group">
+          <h4>Library</h4>
+          <div class="rail-item active" data-view="catalog">
+            <span class="ico">♪</span><span>Catalog</span><span class="count">0</span>
+          </div>
+          <div class="rail-item" data-view="samples">
+            <span class="ico">▦</span><span>Samples</span><span class="count">—</span>
+          </div>
+          <div class="rail-item" data-view="recent">
+            <span class="ico">⏱</span><span>Recently Added</span><span class="count">0</span>
+          </div>
+          <div class="rail-item" data-view="starred">
+            <span class="ico">★</span><span>Starred</span><span class="count">0</span>
+          </div>
+        </div>
+
+        <div class="rail-group">
+          <h4>Collections</h4>
+          <div class="rail-item" data-view="placeholder"><span class="ico">▤</span><span>(empty)</span></div>
+        </div>
+
+        <div class="rail-group">
+          <h4>Sources</h4>
+          <div class="rail-item" data-view="placeholder"><span class="ico">⌂</span><span>Local</span></div>
+          <div class="rail-item" data-view="placeholder"><span class="ico">☁</span><span>Cloud (future)</span></div>
+        </div>
+      </aside>
+
+      <!-- Main pane -->
+      <main class="main">
+        <div class="tabstrip">
+          <div class="tab active">Catalog</div>
+          <div class="tab">Details</div>
+          <div class="tab">Notes</div>
+          <div class="spacer"></div>
+          <div class="view-toggle">
+            <button class="active" data-mode="grid">Grid</button>
+            <button data-mode="list">List</button>
+          </div>
+        </div>
+
+        <div class="content">
+
+          <!-- Grid view -->
+          <div class="view active" data-view-mode="grid">
+            <div class="grid">
+              <div class="card"><div class="cover">A</div><div class="meta"><div class="name">Sample Slot 01</div><div class="sub">empty · click to fill</div></div></div>
+              <div class="card"><div class="cover">B</div><div class="meta"><div class="name">Sample Slot 02</div><div class="sub">empty · click to fill</div></div></div>
+              <div class="card"><div class="cover">C</div><div class="meta"><div class="name">Sample Slot 03</div><div class="sub">empty · click to fill</div></div></div>
+              <div class="card"><div class="cover">D</div><div class="meta"><div class="name">Sample Slot 04</div><div class="sub">empty · click to fill</div></div></div>
+              <div class="card"><div class="cover">E</div><div class="meta"><div class="name">Sample Slot 05</div><div class="sub">empty · click to fill</div></div></div>
+              <div class="card"><div class="cover">F</div><div class="meta"><div class="name">Sample Slot 06</div><div class="sub">empty · click to fill</div></div></div>
+              <div class="card"><div class="cover">G</div><div class="meta"><div class="name">Sample Slot 07</div><div class="sub">empty · click to fill</div></div></div>
+              <div class="card"><div class="cover">H</div><div class="meta"><div class="name">Sample Slot 08</div><div class="sub">empty · click to fill</div></div></div>
+            </div>
+          </div>
+
+          <!-- List view -->
+          <div class="view" data-view-mode="list">
+            <table class="list">
+              <thead>
+                <tr>
+                  <th class="num">#</th>
+                  <th>Name</th>
+                  <th>Source</th>
+                  <th>Tags</th>
+                  <th>Added</th>
+                  <th class="dur">Size</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="num">1</td><td>Sample Slot 01</td><td>—</td><td>—</td><td>—</td><td class="dur">—</td></tr>
+                <tr><td class="num">2</td><td>Sample Slot 02</td><td>—</td><td>—</td><td>—</td><td class="dur">—</td></tr>
+                <tr><td class="num">3</td><td>Sample Slot 03</td><td>—</td><td>—</td><td>—</td><td class="dur">—</td></tr>
+                <tr><td class="num">4</td><td>Sample Slot 04</td><td>—</td><td>—</td><td>—</td><td class="dur">—</td></tr>
+                <tr><td class="num">5</td><td>Sample Slot 05</td><td>—</td><td>—</td><td>—</td><td class="dur">—</td></tr>
+                <tr><td class="num">6</td><td>Sample Slot 06</td><td>—</td><td>—</td><td>—</td><td class="dur">—</td></tr>
+                <tr><td class="num">7</td><td>Sample Slot 07</td><td>—</td><td>—</td><td>—</td><td class="dur">—</td></tr>
+                <tr><td class="num">8</td><td>Sample Slot 08</td><td>—</td><td>—</td><td>—</td><td class="dur">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- Status bar -->
+    <footer class="statusbar">
+      <span><span class="dot"></span>Sharon · v0.1 baseline</span>
+      <span>·</span>
+      <span>8 items</span>
+      <span>·</span>
+      <span>0 selected</span>
+    </footer>
+
+  </div>
+
+  <script>
+    // Sidebar item activation
+    document.querySelectorAll('.rail-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.rail-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+
+    // Tab activation
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Grid / List toggle
+    document.querySelectorAll('.view-toggle button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelector(`.view[data-view-mode="${mode}"]`).classList.add('active');
+      });
+    });
+  </script>
+  <script src="overlay.js"></script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VR Worlds + Recipes — Toggle View</title>
+  <link rel="stylesheet" href="assets/split.css" />
+</head>
+<body>
+
+  <button id="view-toggle" class="view-toggle" aria-label="Switch view">
+    <span class="toggle-number">1</span>
+    <span class="toggle-label">VR CHAT WORLDS</span>
+  </button>
+
+  <main class="view-stage">
+    <section id="view-1" class="view active" data-view-kind="worlds">
+      <div class="tiles" id="worlds-tiles"></div>
+    </section>
+    <section id="view-2" class="view" data-view-kind="recipes">
+      <div class="tiles" id="recipes-tiles"></div>
+    </section>
+  </main>
+
+  <aside id="source-registry" hidden>
+    <button class="registry-close" aria-label="Close">×</button>
+    <div class="registry-banner">All Sources</div>
+    <ul class="registry-list"></ul>
+  </aside>
+
+  <div id="recipe-overlay" hidden>
+    <button class="overlay-close" aria-label="Close">×</button>
+    <div class="overlay-content"></div>
+  </div>
+
+  <script>
+    /* ======================================================================
+       INLINE LOADER — fetches all 6 JSONs (gracefully tolerates 404s),
+       renders worlds + recipes into their views, dispatches tiles-rendered
+       ====================================================================== */
+    (function () {
+      const WORLD_FILES = [
+        'data/worlds-western.json',
+        'data/worlds-eastern.json',
+        'data/worlds-international-pack-a.json',
+        'data/worlds-international-pack-b.json'
+      ];
+      const RECIPE_FILES = [
+        'data/recipes-pasta.json',
+        'data/recipes-brownie.json'
+      ];
+
+      function fetchJSON(url) {
+        return fetch(url, { cache: 'no-store' }).then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url);
+          return r.json();
+        });
+      }
+
+      function escapeHTML(s) {
+        if (s == null) return '';
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function displayUrl(u) {
+        if (!u) return '';
+        try {
+          const x = new URL(u);
+          return x.hostname.replace(/^www\./, '') + (x.pathname && x.pathname !== '/' ? x.pathname : '');
+        } catch (e) {
+          return u;
+        }
+      }
+
+      function renderWorlds(worlds) {
+        const host = document.getElementById('worlds-tiles');
+        if (!host) return;
+        const html = worlds.map(function (w) {
+          const name = escapeHTML(w.name || 'Untitled World');
+          const desc = escapeHTML(w.description || '');
+          const url = escapeHTML(w.url || '#');
+          const du = escapeHTML(displayUrl(w.url || ''));
+          const img = w.image ? "url('" + String(w.image).replace(/'/g, "\\'") + "')" : '';
+          const styleBg = img ? ('background-image:' + img + ';') : '';
+          return (
+            '<a class="tile world-tile" href="' + url + '" target="_blank" rel="noopener" data-name="' + name + '">' +
+              '<div class="thumb" style="' + styleBg + '"></div>' +
+              '<div class="name">' + name + '</div>' +
+              '<div class="desc">' + desc + '</div>' +
+              '<div class="url">' + du + ' <span class="arrow">→</span></div>' +
+            '</a>'
+          );
+        }).join('');
+        host.innerHTML = html;
+      }
+
+      function renderRecipes(recipes) {
+        const host = document.getElementById('recipes-tiles');
+        if (!host) return;
+        const html = recipes.map(function (r, idx) {
+          const name = escapeHTML(r.name || 'Untitled Recipe');
+          const uniq = escapeHTML(r.unique_factor || r.unique || '');
+          const img = r.image ? "url('" + String(r.image).replace(/'/g, "\\'") + "')" : '';
+          const styleBg = img ? ('background-image:' + img + ';') : '';
+          return (
+            '<div class="tile recipe-tile" data-recipe-id="' + idx + '" data-name="' + name + '">' +
+              '<div class="thumb" style="' + styleBg + '"></div>' +
+              '<div class="name">' + name + '</div>' +
+              '<div class="unique-factor">' + uniq + '</div>' +
+              '<button class="orbit-btn" aria-label="Open recipe details">' +
+                '<span class="orbit-core">★</span>' +
+                '<span class="orbit-particle"></span>' +
+              '</button>' +
+              '<div class="recipe-collapse" hidden>' +
+                '<button class="source-btn" aria-label="Open source registry" title="Open source">🔥</button>' +
+                '<h4>Ingredients</h4>' +
+                '<ul class="ingredients"></ul>' +
+                '<h4>Steps</h4>' +
+                '<ol class="steps"></ol>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+        host.innerHTML = html;
+
+        // Populate ingredients/steps lists from data
+        const tiles = host.querySelectorAll('.recipe-tile');
+        tiles.forEach(function (tile, i) {
+          const r = recipes[i];
+          if (!r) return;
+          const ing = tile.querySelector('.ingredients');
+          const stp = tile.querySelector('.steps');
+          if (ing && Array.isArray(r.ingredients)) {
+            ing.innerHTML = r.ingredients.map(function (it) { return '<li>' + escapeHTML(it) + '</li>'; }).join('');
+          }
+          if (stp && Array.isArray(r.steps)) {
+            stp.innerHTML = r.steps.map(function (it) { return '<li>' + escapeHTML(it) + '</li>'; }).join('');
+          }
+        });
+      }
+
+      function renderRegistry(sources) {
+        const list = document.querySelector('#source-registry .registry-list');
+        if (!list) return;
+        list.innerHTML = sources.map(function (s) {
+          const name = escapeHTML(s.name || 'Untitled');
+          const url = escapeHTML(s.url || '#');
+          const type = escapeHTML(s.type || '');
+          return (
+            '<li data-source-url="' + url + '">' +
+              '<a href="' + url + '" target="_blank" rel="noopener">' + name + '</a>' +
+              '<div class="registry-meta">' + type + '</div>' +
+            '</li>'
+          );
+        }).join('');
+      }
+
+      // Kick off all fetches in parallel; tolerate missing files with allSettled
+      const allFiles = WORLD_FILES.concat(RECIPE_FILES);
+      Promise.allSettled(allFiles.map(fetchJSON)).then(function (results) {
+        const worldResults  = results.slice(0, WORLD_FILES.length);
+        const recipeResults = results.slice(WORLD_FILES.length);
+
+        // Concatenate all worlds[].verified
+        const allWorlds = [];
+        worldResults.forEach(function (res) {
+          if (res.status !== 'fulfilled' || !res.value) return;
+          const data = res.value;
+          if (Array.isArray(data.worlds)) {
+            data.worlds.forEach(function (group) {
+              if (group && Array.isArray(group.verified)) {
+                allWorlds.push.apply(allWorlds, group.verified);
+              }
+            });
+          } else if (Array.isArray(data.verified)) {
+            allWorlds.push.apply(allWorlds, data.verified);
+          }
+        });
+
+        // Concatenate all recipes[].recipes
+        const allRecipes = [];
+        recipeResults.forEach(function (res) {
+          if (res.status !== 'fulfilled' || !res.value) return;
+          const data = res.value;
+          if (Array.isArray(data.recipes)) {
+            data.recipes.forEach(function (group) {
+              if (group && Array.isArray(group.recipes)) {
+                allRecipes.push.apply(allRecipes, group.recipes);
+              } else if (group && (group.name || group.ingredients)) {
+                // tolerate flat array of recipe objects
+                allRecipes.push(group);
+              }
+            });
+          }
+        });
+
+        // Build ALL_SOURCES from worlds + recipe sources
+        const allSources = [];
+        allWorlds.forEach(function (w) {
+          if (w && w.url) {
+            allSources.push({ name: w.name || 'World', url: w.url, type: 'World' });
+          }
+        });
+        allRecipes.forEach(function (r) {
+          if (r && Array.isArray(r.sources)) {
+            r.sources.forEach(function (s) {
+              if (s && s.url) allSources.push({ name: s.name || r.name || 'Source', url: s.url, type: s.type || 'Recipe Source' });
+            });
+          } else if (r && r.source_url) {
+            allSources.push({ name: r.name || 'Recipe', url: r.source_url, type: 'Recipe Source' });
+          }
+        });
+
+        // Expose globally
+        window.WORLDS_DATA = allWorlds;
+        window.RECIPES_DATA = allRecipes;
+        window.ALL_SOURCES = allSources;
+
+        renderWorlds(allWorlds);
+        renderRecipes(allRecipes);
+        renderRegistry(allSources);
+
+        // Tell split.js everything is ready
+        window.dispatchEvent(new Event('tiles-rendered'));
+      });
+    })();
+  </script>
+
+  <script src="assets/split.js"></script>
+</body>
+</html>

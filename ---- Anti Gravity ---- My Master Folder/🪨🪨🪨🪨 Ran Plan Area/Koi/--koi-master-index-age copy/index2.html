@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The iPad Grid</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+    background: #070b18;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(56, 108, 220, 0.22), transparent 45%),
+      radial-gradient(circle at 80% 90%, rgba(168, 85, 247, 0.18), transparent 50%),
+      radial-gradient(circle 1px at 25px 25px, rgba(120,160,230,0.10) 1px, transparent 0);
+    background-size: auto, auto, 50px 50px;
+    min-height: 100vh;
+    color: #e6edf7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 36px 28px 80px;
+  }
+
+  /* Title bar */
+  .titlebar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding: 0 6px;
+  }
+  .titlebar h1 {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #cfe0ff 0%, #7aa2ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 24px rgba(122, 162, 255, 0.25);
+  }
+  .titlebar .caption {
+    font-size: 14px;
+    color: #8695b5;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* Section */
+  section { margin-bottom: 28px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 6px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #a8b5d1;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .section-header .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 10px currentColor;
+  }
+  .section-header .count {
+    font-size: 12px;
+    color: #6b7998;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Stack groups (Koi + Angel) get a tinted bounded card */
+  .stack-group {
+    background: rgba(18, 24, 42, 0.65);
+    border: 1.5px solid rgba(90, 110, 160, 0.25);
+    border-radius: 28px;
+    padding: 18px 18px 20px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+      0 8px 28px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .stack-group.koi {
+    background: linear-gradient(135deg, rgba(14, 58, 96, 0.55) 0%, rgba(60, 24, 70, 0.45) 100%);
+    border-color: rgba(56, 140, 210, 0.35);
+    box-shadow:
+      0 8px 28px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(120, 200, 255, 0.08),
+      0 0 40px rgba(14, 165, 233, 0.08);
+  }
+  .stack-group.angel {
+    background: linear-gradient(135deg, rgba(70, 50, 10, 0.55) 0%, rgba(46, 30, 80, 0.5) 100%);
+    border-color: rgba(200, 150, 60, 0.35);
+    box-shadow:
+      0 8px 28px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 220, 140, 0.08),
+      0 0 40px rgba(245, 158, 11, 0.08);
+  }
+
+  .stack-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #c8d4ee;
+    background: rgba(20, 28, 48, 0.7);
+    border: 1px solid rgba(120, 150, 200, 0.18);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Grids */
+  .grid {
+    display: grid;
+    gap: 14px;
+  }
+  .koi .grid { grid-template-columns: repeat(4, 1fr); }
+  .angel .grid { grid-template-columns: repeat(3, 1fr); }
+  .other-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); padding: 0 4px; }
+
+  /* Tile */
+  .tile {
+    aspect-ratio: 1 / 1;
+    border-radius: 22px;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #e6edf7;
+    background: #131a2e;
+    border: 1px solid rgba(120, 150, 200, 0.12);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 6px 18px rgba(0, 0, 0, 0.45),
+      0 1px 3px rgba(0, 0, 0, 0.35);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+  }
+  .tile:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+  .tile:hover {
+    transform: translateY(-2px);
+    border-color: rgba(150, 180, 240, 0.3);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 12px 28px rgba(0, 0, 0, 0.55),
+      0 0 24px rgba(122, 162, 255, 0.18),
+      0 2px 6px rgba(0, 0, 0, 0.35);
+  }
+  .tile .emoji {
+    font-size: 44px;
+    line-height: 1;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 8px rgba(180, 200, 255, 0.15));
+  }
+  .tile .name {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.25;
+    color: #eef3ff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  .tile .stack-tag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #c8d4ee;
+    background: rgba(10, 16, 32, 0.75);
+    border: 1px solid rgba(120, 150, 200, 0.18);
+    padding: 2px 6px;
+    border-radius: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Per-tile gradient backgrounds (midnight palette with phosphor hints) */
+  .tile.koi-1 { background: linear-gradient(135deg, #2a1530 0%, #4a1c3d 100%); }
+  .tile.koi-2 { background: linear-gradient(135deg, #0a2540 0%, #0f3d6e 100%); }
+  .tile.koi-3 { background: linear-gradient(135deg, #2e0f1a 0%, #52162a 100%); }
+  .tile.koi-4 { background: linear-gradient(135deg, #2a1226 0%, #4a1a3e 100%); }
+
+  .tile.angel-1 { background: linear-gradient(135deg, #2e2410 0%, #4a3a12 100%); }
+  .tile.angel-2 { background: linear-gradient(135deg, #1f1a40 0%, #2e265e 100%); }
+  .tile.angel-3 { background: linear-gradient(135deg, #2a1226 0%, #4a1a3e 100%); }
+
+  .tile.app-1 { background: linear-gradient(135deg, #2e0f1a 0%, #5a1c2a 100%); }
+  .tile.app-2 { background: linear-gradient(135deg, #22123a 0%, #3d1e66 100%); }
+  .tile.app-3 { background: linear-gradient(135deg, #0f2e22 0%, #18523a 100%); }
+  .tile.app-4 { background: linear-gradient(135deg, #0f1e3d 0%, #1a3566 100%); }
+  .tile.app-5 { background: linear-gradient(135deg, #2e2410 0%, #5a4410 100%); }
+
+  /* Stack-internal connector indicator */
+  .stack-group .grid {
+    position: relative;
+  }
+
+  /* Footer note */
+  .foot {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 11px;
+    color: #6b7998;
+    letter-spacing: 0.04em;
+  }
+
+  /* iPad portrait tweaks */
+  @media (max-width: 820px) {
+    .titlebar h1 { font-size: 28px; }
+    .koi .grid { grid-template-columns: repeat(2, 1fr); }
+    .angel .grid { grid-template-columns: repeat(3, 1fr); }
+    .tile .emoji { font-size: 38px; }
+  }
+  @media (max-width: 520px) {
+    .angel .grid { grid-template-columns: repeat(2, 1fr); }
+    .other-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="titlebar">
+      <h1>The iPad Grid</h1>
+      <div class="caption">
+        tap to launch
+        &nbsp;·&nbsp;
+        <a href="../koi-board.html" style="color:#7aa2ff;text-decoration:none;border-bottom:1px solid #7aa2ff;padding-bottom:1px;">→ Koi Board</a>
+      </div>
+    </div>
+
+    <!-- KOI STACK -->
+    <section>
+      <div class="section-header">
+        <span class="dot" style="background:#0ea5e9"></span>
+        Koi Stack
+        <span class="count">— 4 linked apps</span>
+      </div>
+      <div class="stack-group koi">
+        <div class="stack-label">🔗 Koi Stack — linked together</div>
+        <div class="grid">
+          <a class="tile koi-1" href="https://little-koi-link-tree-1776618139.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">KOI</span>
+            <div class="emoji">🐠</div>
+            <div class="name">Little Koi<br>Link Tree</div>
+          </a>
+          <a class="tile koi-2" href="https://koi-where-opera-stands-04428.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">KOI</span>
+            <div class="emoji">🌊</div>
+            <div class="name">Koi Where<br>Opera Stands</div>
+          </a>
+          <a class="tile koi-3" href="https://koi-warm-heart.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">KOI</span>
+            <div class="emoji">💗</div>
+            <div class="name">Koi<br>Warm Heart</div>
+          </a>
+          <a class="tile koi-4" href="https://for-koi-603660.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">KOI</span>
+            <div class="emoji">🌸</div>
+            <div class="name">For Koi</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANGEL STACK -->
+    <section>
+      <div class="section-header">
+        <span class="dot" style="background:#f59e0b"></span>
+        Angel Stack
+        <span class="count">— 3 linked apps</span>
+      </div>
+      <div class="stack-group angel">
+        <div class="stack-label">👼 Angel Stack — linked together</div>
+        <div class="grid">
+          <a class="tile angel-1" href="https://angel1-project-3657.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">ANGEL</span>
+            <div class="emoji">👼</div>
+            <div class="name">Angel1<br>Project</div>
+          </a>
+          <a class="tile angel-2" href="https://angel1-notes-3657.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">ANGEL</span>
+            <div class="emoji">📝</div>
+            <div class="name">Angel1<br>Notes</div>
+          </a>
+          <a class="tile angel-3" href="https://angel1-sample-3657.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">ANGEL</span>
+            <div class="emoji">🎨</div>
+            <div class="name">Angel1<br>Sample</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- APPS -->
+    <section>
+      <div class="section-header">
+        <span class="dot" style="background:#6366f1"></span>
+        Apps
+        <span class="count">— 5 standalone</span>
+      </div>
+      <div class="grid other-grid">
+        <a class="tile app-1" href="https://vespers-salon.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🌹</div>
+          <div class="name">Vespers Salon</div>
+        </a>
+        <a class="tile app-2" href="https://mythical-warm-heart.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🦄</div>
+          <div class="name">Mythical<br>Warm Heart</div>
+        </a>
+        <a class="tile app-3" href="https://kiwi-warm-1776573437.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🥝</div>
+          <div class="name">Kiwi<br>Warm Heart</div>
+        </a>
+        <a class="tile app-4" href="https://samples-8-music-forms-1776604446.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🎵</div>
+          <div class="name">Samples 8<br>Music Forms</div>
+        </a>
+        <a class="tile app-5" href="https://vr-final-label.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🎮</div>
+          <div class="name">VR Final<br>Label</div>
+        </a>
+      </div>
+    </section>
+
+    <div class="foot">12 live deploys · iPad Grid Preview</div>
+
+  </div>
+</body>
+</html>

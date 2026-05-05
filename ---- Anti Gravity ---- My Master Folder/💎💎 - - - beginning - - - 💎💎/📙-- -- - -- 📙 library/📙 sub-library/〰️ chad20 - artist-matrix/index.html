@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix | Bird's-Eye Client View</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg: #010c1a;
+            --card-bg: rgba(255,255,255,0.04);
+            --card-border: rgba(255,255,255,0.08);
+            --primary: #4cc9f0;
+            --accent: #4361ee;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --purple: #6366f1;
+            --text: #fff;
+            --text-dim: rgba(255,255,255,0.45);
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            background-image: radial-gradient(circle at 50% -20%, #003049 0%, transparent 70%);
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            padding: 2rem;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            display: inline-block;
+            border: 2px solid rgba(255,255,255,0.6);
+            padding: 8px 32px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+        .header-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            margin-top: 0.5rem;
+            letter-spacing: 0.1em;
+        }
+
+        /* ── Controls ── */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 2rem;
+        }
+        .ctrl-btn {
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 2px solid var(--card-border);
+            background: var(--card-bg);
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ctrl-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .ctrl-btn.active { border-color: var(--primary); background: rgba(76,201,240,0.1); color: var(--primary); }
+
+        /* ── Card Grid ── */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ── Client Card ── */
+        .client-card {
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+        }
+        .client-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px rgba(76,201,240,0.15);
+        }
+        .client-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(76,201,240,0.2);
+        }
+
+        .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .card-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .card-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            line-height: 1.2;
+        }
+        .card-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            color: var(--text-dim);
+        }
+
+        /* Status pill */
+        .card-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .card-status.active { background: rgba(16,185,129,0.15); color: var(--green); }
+        .card-status.lead { background: rgba(245,158,11,0.15); color: var(--amber); }
+        .card-status.paused { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+
+        /* Relationship badge */
+        .card-rel {
+            position: absolute;
+            top: 8px; right: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.4rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .card-rel.parent { background: rgba(99,102,241,0.15); color: var(--purple); }
+        .card-rel.child { background: rgba(76,201,240,0.15); color: var(--primary); }
+        .card-rel.mutual { background: rgba(16,185,129,0.15); color: var(--green); }
+
+        /* Plan badges */
+        .card-plans {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .plan-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.4rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-dim);
+        }
+        .plan-badge.has-plan { background: rgba(16,185,129,0.1); color: var(--green); }
+
+        /* Network lines */
+        .network-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, var(--purple), var(--primary));
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Add Card ── */
+        .add-card {
+            background: transparent;
+            border: 2px dashed var(--card-border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            transition: all 0.2s;
+            min-height: 100px;
+        }
+        .add-card:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ── Detail Panel (slide from right) ── */
+        .detail-panel {
+            position: fixed;
+            top: 0; right: -400px;
+            width: 380px; height: 100vh;
+            background: rgba(1,12,26,0.95);
+            border-left: 2px solid var(--card-border);
+            padding: 2rem;
+            transition: right 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 100;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+        }
+        .detail-panel.open { right: 0; }
+        .detail-close {
+            position: absolute;
+            top: 16px; right: 16px;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--card-border);
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .detail-close:hover { border-color: var(--red); color: var(--red); }
+        .detail-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .detail-section {
+            margin-top: 1.5rem;
+        }
+        .detail-section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+        }
+        .detail-field {
+            padding: 8px 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .detail-rel-picker {
+            display: flex; gap: 6px;
+        }
+        .rel-pick {
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 2px solid var(--card-border);
+            background: transparent;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .rel-pick:hover { border-color: var(--primary); }
+        .rel-pick.active-parent { border-color: var(--purple); color: var(--purple); background: rgba(99,102,241,0.1); }
+        .rel-pick.active-child { border-color: var(--primary); color: var(--primary); background: rgba(76,201,240,0.1); }
+        .rel-pick.active-mutual { border-color: var(--green); color: var(--green); background: rgba(16,185,129,0.1); }
+
+        /* Network list in detail */
+        .network-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 0.7rem;
+        }
+        .network-item .ni-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .network-item .ni-type {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.45rem;
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Matrix</h1>
+        <div class="header-sub">bird's-eye client management &middot; low-code</div>
+    </div>
+
+    <div class="controls">
+        <button class="ctrl-btn active" data-filter="all">All</button>
+        <button class="ctrl-btn" data-filter="active">Active</button>
+        <button class="ctrl-btn" data-filter="lead">Leads</button>
+        <button class="ctrl-btn" data-filter="paused">Paused</button>
+        <button class="ctrl-btn" id="addClientBtn">+ Add</button>
+    </div>
+
+    <div class="card-grid" id="cardGrid"></div>
+
+    <!-- Detail Panel -->
+    <div class="detail-panel" id="detailPanel">
+        <button class="detail-close" id="detailClose">&times;</button>
+        <div class="detail-name" id="detailName" contenteditable="true">Client Name</div>
+        <div class="detail-section">
+            <div class="detail-section-label">Status</div>
+            <div class="detail-rel-picker" id="statusPicker">
+                <button class="rel-pick" data-status="active">Active</button>
+                <button class="rel-pick" data-status="lead">Lead</button>
+                <button class="rel-pick" data-status="paused">Paused</button>
+            </div>
+        </div>
+        <div class="detail-section">
+            <div class="detail-section-label">Plans</div>
+            <div class="detail-field" id="detailYearlyPlan" contenteditable="true" data-placeholder="Yearly plan notes..."></div>
+            <div class="detail-field" id="detailThreeMonthPlan" contenteditable="true" data-placeholder="3 month plan notes..."></div>
+        </div>
+        <div class="detail-section">
+            <div class="detail-section-label">Network / Relationships</div>
+            <div id="networkList"></div>
+            <button class="ctrl-btn" id="addRelBtn" style="margin-top:8px;">+ Link Client</button>
+        </div>
+    </div>
+
+    <script>
+        // ── Client Data Store (localStorage-backed) ──
+        var STORE_KEY = 'matrixClients';
+
+        function loadClients() {
+            try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+            catch(e) { return []; }
+        }
+
+        function saveClients(clients) {
+            localStorage.setItem(STORE_KEY, JSON.stringify(clients));
+        }
+
+        function newClient(name) {
+            return {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                name: name || 'New Client',
+                status: 'active',
+                yearlyPlan: '',
+                threeMonthPlan: '',
+                relationships: [] // [{targetId, type: 'parent'|'child'|'mutual'}]
+            };
+        }
+
+        // ── Render ──
+        var clients = loadClients();
+        var selectedId = null;
+
+        function render(filter) {
+            filter = filter || 'all';
+            var grid = document.getElementById('cardGrid');
+            grid.innerHTML = '';
+
+            var filtered = filter === 'all' ? clients : clients.filter(function(c) { return c.status === filter; });
+
+            filtered.forEach(function(c) {
+                var card = document.createElement('div');
+                card.className = 'client-card' + (c.id === selectedId ? ' selected' : '');
+                card.dataset.id = c.id;
+
+                var initials = c.name.split(' ').map(function(w) { return w[0]; }).join('').slice(0, 2).toUpperCase();
+
+                // Find relationships for this client
+                var rels = c.relationships || [];
+                var relBadge = '';
+                if (rels.length > 0) {
+                    var firstRel = rels[0].type;
+                    relBadge = '<div class="card-rel ' + firstRel + '">' + firstRel + '</div>';
+                }
+
+                var yearlyClass = c.yearlyPlan ? 'has-plan' : '';
+                var threeClass = c.threeMonthPlan ? 'has-plan' : '';
+
+                card.innerHTML =
+                    relBadge +
+                    '<div class="card-top">' +
+                        '<div class="card-avatar">' + initials + '</div>' +
+                        '<div><div class="card-name">' + c.name + '</div>' +
+                        '<div class="card-sub">' + (rels.length > 0 ? rels.length + ' connections' : 'no connections') + '</div></div>' +
+                    '</div>' +
+                    '<div class="card-status ' + c.status + '">' +
+                        '<span style="font-size:0.5rem">●</span> ' + c.status +
+                    '</div>' +
+                    '<div class="card-plans">' +
+                        '<span class="plan-badge ' + yearlyClass + '">12mo</span>' +
+                        '<span class="plan-badge ' + threeClass + '">3mo</span>' +
+                    '</div>';
+
+                card.addEventListener('click', function() { openDetail(c.id); });
+                grid.appendChild(card);
+            });
+
+            // Add card
+            var addCard = document.createElement('div');
+            addCard.className = 'add-card';
+            addCard.innerHTML = '<span style="font-size:1.5rem">+</span> Add Client';
+            addCard.addEventListener('click', addNewClient);
+            grid.appendChild(addCard);
+        }
+
+        // ── Detail Panel ──
+        function openDetail(id) {
+            selectedId = id;
+            var c = clients.find(function(x) { return x.id === id; });
+            if (!c) return;
+
+            document.getElementById('detailName').textContent = c.name;
+            document.getElementById('detailYearlyPlan').textContent = c.yearlyPlan || '';
+            document.getElementById('detailThreeMonthPlan').textContent = c.threeMonthPlan || '';
+
+            // Status picker
+            var statusBtns = document.querySelectorAll('#statusPicker .rel-pick');
+            statusBtns.forEach(function(b) {
+                b.className = 'rel-pick';
+                if (b.dataset.status === c.status) b.classList.add('active-' + c.status);
+            });
+
+            // Network list
+            renderNetwork(c);
+
+            document.getElementById('detailPanel').classList.add('open');
+            render(currentFilter);
+        }
+
+        function renderNetwork(c) {
+            var list = document.getElementById('networkList');
+            list.innerHTML = '';
+            (c.relationships || []).forEach(function(rel) {
+                var target = clients.find(function(x) { return x.id === rel.targetId; });
+                if (!target) return;
+                var colors = { parent: '#6366f1', child: '#4cc9f0', mutual: '#10b981' };
+                var item = document.createElement('div');
+                item.className = 'network-item';
+                item.innerHTML =
+                    '<span class="ni-dot" style="background:' + (colors[rel.type] || '#fff') + '"></span>' +
+                    '<span>' + target.name + '</span>' +
+                    '<span class="ni-type" style="background:rgba(255,255,255,0.06)">' + rel.type + '</span>';
+                list.appendChild(item);
+            });
+        }
+
+        function closeDetail() {
+            // Save before closing
+            if (selectedId) {
+                var c = clients.find(function(x) { return x.id === selectedId; });
+                if (c) {
+                    c.name = document.getElementById('detailName').textContent.trim() || c.name;
+                    c.yearlyPlan = document.getElementById('detailYearlyPlan').textContent.trim();
+                    c.threeMonthPlan = document.getElementById('detailThreeMonthPlan').textContent.trim();
+                    saveClients(clients);
+                }
+            }
+            selectedId = null;
+            document.getElementById('detailPanel').classList.remove('open');
+            render(currentFilter);
+        }
+
+        // ── Add Client ──
+        function addNewClient() {
+            var c = newClient('New Client');
+            clients.push(c);
+            saveClients(clients);
+            render(currentFilter);
+            openDetail(c.id);
+        }
+
+        // ── Add Relationship ──
+        document.getElementById('addRelBtn').addEventListener('click', function() {
+            if (!selectedId) return;
+            var c = clients.find(function(x) { return x.id === selectedId; });
+            if (!c) return;
+
+            // Show a simple prompt for now — will be upgraded to a picker
+            var otherNames = clients.filter(function(x) { return x.id !== selectedId; }).map(function(x) { return x.name; });
+            var name = prompt('Link to which client?\n\nAvailable: ' + otherNames.join(', '));
+            if (!name) return;
+
+            var target = clients.find(function(x) { return x.name.toLowerCase() === name.toLowerCase(); });
+            if (!target) { alert('Client not found'); return; }
+
+            var type = prompt('Relationship type? (parent / child / mutual)') || 'mutual';
+            type = type.toLowerCase().trim();
+            if (['parent', 'child', 'mutual'].indexOf(type) === -1) type = 'mutual';
+
+            // Add bidirectional relationship
+            if (!c.relationships) c.relationships = [];
+            c.relationships.push({ targetId: target.id, type: type });
+
+            // Reverse relationship on target
+            var reverseType = type === 'parent' ? 'child' : type === 'child' ? 'parent' : 'mutual';
+            if (!target.relationships) target.relationships = [];
+            target.relationships.push({ targetId: c.id, type: reverseType });
+
+            saveClients(clients);
+            renderNetwork(c);
+            render(currentFilter);
+        });
+
+        // ── Status Picker ──
+        document.querySelectorAll('#statusPicker .rel-pick').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (!selectedId) return;
+                var c = clients.find(function(x) { return x.id === selectedId; });
+                if (!c) return;
+                c.status = btn.dataset.status;
+                saveClients(clients);
+                // Update active state
+                document.querySelectorAll('#statusPicker .rel-pick').forEach(function(b) { b.className = 'rel-pick'; });
+                btn.classList.add('active-' + c.status);
+                render(currentFilter);
+            });
+        });
+
+        // ── Filter Controls ──
+        var currentFilter = 'all';
+        document.querySelectorAll('.ctrl-btn[data-filter]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                currentFilter = btn.dataset.filter;
+                document.querySelectorAll('.ctrl-btn[data-filter]').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                render(currentFilter);
+            });
+        });
+
+        document.getElementById('addClientBtn').addEventListener('click', addNewClient);
+        document.getElementById('detailClose').addEventListener('click', closeDetail);
+
+        // Seed test data if empty
+        if (clients.length === 0) {
+            clients = [
+                { id: 'marc1', name: 'Marc Antonix', status: 'active', yearlyPlan: '', threeMonthPlan: '', relationships: [] },
+                { id: 'test2', name: 'Sample Lead', status: 'lead', yearlyPlan: '', threeMonthPlan: '', relationships: [] }
+            ];
+            saveClients(clients);
+        }
+
+        render('all');
+    </script>
+</body>
+</html>

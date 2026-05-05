@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Squishy — Dark After Hours</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* OBS Custom CSS field will override background if needed.
+     Default: solid black. For transparent bg, paste in OBS Custom CSS:
+     body { background-color: rgba(0,0,0,0) !important; }          */
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── TICKER BARS ── */
+    .ticker-bar {
+      position: fixed;
+      left: 0;
+      width: 100%;
+      height: 86px;
+      background: rgba(6, 6, 6, 0.93);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    #ticker-top {
+      top: 0;
+      border-bottom: 3px solid #e800a0;
+      box-shadow: 0 5px 28px #e800a066, 0 10px 50px #8b00ff22;
+    }
+
+    #ticker-bottom {
+      bottom: 0;
+      border-top: 3px solid #e800a0;
+      box-shadow: 0 -5px 28px #e800a066, 0 -10px 50px #8b00ff22;
+    }
+
+    /* checkered tape strip — INSIDE the bar at the glowing edge */
+    #ticker-top::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 7px;
+      z-index: 2;
+      background: repeating-linear-gradient(90deg, #e800a0 0, #e800a0 9px, #000 9px, #000 18px);
+      opacity: 0.75;
+    }
+
+    #ticker-bottom::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 7px;
+      z-index: 2;
+      background: repeating-linear-gradient(90deg, #e800a0 0, #e800a0 9px, #000 9px, #000 18px);
+      opacity: 0.75;
+    }
+
+    /* scanlines */
+    .ticker-bar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 0, 0, 0.14) 3px, rgba(0, 0, 0, 0.14) 4px);
+    }
+
+    /* ── SCROLL TRACKS ── */
+    .ticker-track {
+      display: flex;
+      white-space: nowrap;
+      will-change: transform;
+    }
+
+    #track-bottom {
+      animation: scroll-left 65s linear infinite;
+      padding-left: 100vw;
+    }
+
+    #track-top {
+      animation: scroll-right 75s linear infinite;
+    }
+
+    @keyframes scroll-left {
+      0% {
+        transform: translateX(0)
+      }
+
+      100% {
+        transform: translateX(-50%)
+      }
+    }
+
+    @keyframes scroll-right {
+      0% {
+        transform: translateX(-50%)
+      }
+
+      100% {
+        transform: translateX(0)
+      }
+    }
+
+    /* ── WORDS ── */
+    .word {
+      display: inline-block;
+      font-family: 'Permanent Marker', Impact, sans-serif;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 0 30px;
+      color: #fff;
+      text-shadow: 0 0 6px #e800a0, 0 0 18px #e800a0, 0 0 36px #8b00ff, 2px 2px 0 #000;
+      animation: bob var(--bob-dur, 1.9s) ease-in-out infinite;
+      animation-delay: var(--bob-delay, 0s);
+    }
+
+    .word.alt {
+      color: #e800a0;
+      text-shadow: 0 0 6px #fff, 0 0 20px #e800a0, 0 0 36px #e800a0, 2px 2px 0 #000;
+    }
+
+    @keyframes bob {
+
+      0%,
+      100% {
+        transform: translateY(0) scaleY(1) scaleX(1);
+      }
+
+      30% {
+        transform: translateY(-9px) scaleY(1.08) scaleX(0.94);
+      }
+
+      60% {
+        transform: translateY(5px) scaleY(0.93) scaleX(1.06);
+      }
+    }
+
+    /* ── SEPARATORS ── */
+    .sep {
+      display: inline-block;
+      font-size: 28px;
+      padding: 0 8px;
+      color: #8b00ff;
+      text-shadow: 0 0 10px #8b00ff, 0 0 24px #e800a0;
+      animation: flicker var(--flicker-dur, 2s) ease-in-out infinite;
+      animation-delay: var(--flicker-delay, 0s);
+    }
+
+    @keyframes flicker {
+
+      0%,
+      89%,
+      91%,
+      93%,
+      100% {
+        opacity: 1
+      }
+
+      90%,
+      92% {
+        opacity: 0.12
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="canvas"></canvas>
+  <div class="ticker-bar" id="ticker-top">
+    <div class="ticker-track" id="track-top"></div>
+  </div>
+  <div class="ticker-bar" id="ticker-bottom">
+    <div class="ticker-track" id="track-bottom"></div>
+  </div>
+
+  <script>
+    // ─── WORDS ──────────────────────────────────────────────────────────────────
+    const WORDS = [
+      'ssssquishhh', 'squish that azzzz', 'ssssquishhh', 'squishh those cheeeseee',
+      'ssssquishhh', 'sqeeeezeee those lipppsssss',
+      'ssssquishhh', 'squish that azzzz', 'dead cute',
+      'squishh those cheeeseee', 'after dark', 'ssssquishhh', 'sqeeeezeee those lipppsssss',
+      'tie those wristssss 🪢', 'ssssquishhh'
+    ];
+    const SEPS = ['💀', '✦', '☆', '✗', '✦', '💜', '✗', '☠️'];
+
+    function buildTicker(trackId) {
+      const track = document.getElementById(trackId);
+      for (let pass = 0; pass < 2; pass++) {
+        WORDS.forEach((word, i) => {
+          const s = document.createElement('span');
+          s.className = 'word' + (i % 3 === 1 ? ' alt' : '');
+          s.textContent = word;
+          s.style.setProperty('--bob-dur', (1.5 + Math.random() * 1.2).toFixed(2) + 's');
+          s.style.setProperty('--bob-delay', (Math.random() * 1.8).toFixed(2) + 's');
+          track.appendChild(s);
+          const sep = document.createElement('span');
+          sep.className = 'sep';
+          sep.textContent = SEPS[Math.floor(Math.random() * SEPS.length)];
+          sep.style.setProperty('--flicker-dur', (1.8 + Math.random() * 3).toFixed(2) + 's');
+          sep.style.setProperty('--flicker-delay', (Math.random() * 2).toFixed(2) + 's');
+          track.appendChild(sep);
+        });
+      }
+    }
+    buildTicker('track-top');
+    buildTicker('track-bottom');
+
+    // ─── CANVAS ─────────────────────────────────────────────────────────────────
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const TICKER_H = 86;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      buildHeart();
+    }
+    window.addEventListener('resize', resize);
+
+    // ─── HEART PATH (parametric formula from Wolfram / Paul Irish) ───────────────
+    // Sources studied:
+    //   gist.github.com/paulirish/1823634  — heart curve + particle node flow
+    //   github.com/msval/canvasparticletornado — orbital swirl math
+    //
+    //   x(t) = cx + scale * sin³(t)
+    //   y(t) = cy − (scale/17) * (15cos(t) − 5cos(2t) − 2cos(3t) − cos(4t))
+    //   t ∈ [0, 2π]
+    // ─────────────────────────────────────────────────────────────────────────────
+    let heartNodes = [];
+
+    function buildHeart() {
+      const w = canvas.width, h = canvas.height;
+      const cx = w * 0.26;   // left-aligned — right side free for camera
+      const cy = h / 2;
+      const availH = h - TICKER_H * 2;
+      const scale = Math.min(w * 0.17, availH * 0.29);
+      heartNodes = [];
+      for (let t = 0; t < Math.PI * 2; t += 0.035) {
+        const x = cx + scale * Math.pow(Math.sin(t), 3);
+        const y = cy - (scale / 17) * (
+          15 * Math.cos(t) -
+          5 * Math.cos(2 * t) -
+          2 * Math.cos(3 * t) -
+          Math.cos(4 * t)
+        );
+        heartNodes.push({ x, y });
+      }
+    }
+
+    // ─── GLEAMY SPIKE BALL PARTICLES ────────────────────────────────────────────
+    // Each particle:
+    //   • orbits a node on the heart outline (small tight orbit — "whirlpool" effect)
+    //   • slowly walks along the heart path (+ or − direction)
+    //   • leaves glowing trails via low-alpha fill instead of clearRect
+    // ─────────────────────────────────────────────────────────────────────────────
+    const PCOLORS = [
+      ['#e800a0', '#ff69d4'],
+      ['#8b00ff', '#cc88ff'],
+      ['#ff00cc', '#ffaaee'],
+      ['#00eaff', '#aaf6ff'],
+      ['#ffffff', '#ffe0f8'],
+      ['#ff2df7', '#ffaaff'],
+    ];
+
+    class Particle {
+      constructor() { this.init(true); }
+
+      init(rnd = false) {
+        const c = PCOLORS[Math.floor(Math.random() * PCOLORS.length)];
+        this.coreCol = c[0];
+        this.glowCol = c[1];
+        this.nodeIdx = rnd ? Math.random() * heartNodes.length : 0;
+        // direction along heart path — some clockwise, some counter
+        this.nodeSpeed = (0.05 + Math.random() * 0.13) * (Math.random() > 0.5 ? 1 : -1);
+        // tight local orbit around the node (the "whirlpool" swirl)
+        this.orbitR = 3 + Math.random() * 18;
+        this.orbitAngle = Math.random() * Math.PI * 2;
+        this.orbitSpeed = (0.04 + Math.random() * 0.09) * (Math.random() > 0.5 ? 1 : -1);
+        // appearance
+        this.size = 5 + Math.random() * 11;
+        this.spikes = 8 + Math.floor(Math.random() * 7);
+        this.spikeLen = 0.5 + Math.random() * 0.55;
+        this.alpha = 0.55 + Math.random() * 0.45;
+        this.rot = Math.random() * Math.PI * 2;
+        this.rotS = (Math.random() > 0.5 ? 1 : -1) * (0.01 + Math.random() * 0.045);
+        this.pulse = Math.random() * Math.PI * 2;
+        this.pulseS = 0.03 + Math.random() * 0.04;
+        // start position
+        if (heartNodes.length) {
+          const n = heartNodes[Math.floor(Math.abs(this.nodeIdx)) % heartNodes.length];
+          this.x = n.x; this.y = n.y;
+        }
+      }
+
+      update() {
+        if (!heartNodes.length) return;
+        // walk the heart outline
+        this.nodeIdx = ((this.nodeIdx + this.nodeSpeed) + heartNodes.length * 100) % heartNodes.length;
+        // orbit around current node
+        this.orbitAngle += this.orbitSpeed;
+        this.rot += this.rotS;
+        this.pulse += this.pulseS;
+        const n = heartNodes[Math.floor(this.nodeIdx)];
+        this.x = n.x + Math.cos(this.orbitAngle) * this.orbitR;
+        this.y = n.y + Math.sin(this.orbitAngle) * this.orbitR;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rot);
+
+        const s = this.size * (1 + 0.12 * Math.sin(this.pulse));
+        const spikeTip = s * (1 + this.spikeLen);
+        const innerR = s * 0.42;
+
+        // outer glow halo
+        const halo = ctx.createRadialGradient(0, 0, s * 0.3, 0, 0, spikeTip * 1.4);
+        halo.addColorStop(0, this.glowCol + 'cc');
+        halo.addColorStop(0.5, this.coreCol + '44');
+        halo.addColorStop(1, this.coreCol + '00');
+        ctx.shadowColor = this.glowCol; ctx.shadowBlur = 20;
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(0, 0, spikeTip * 1.4, 0, Math.PI * 2); ctx.fill();
+
+        // spike silhouette
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = this.coreCol;
+        ctx.beginPath();
+        for (let i = 0; i < this.spikes * 2; i++) {
+          const r = i % 2 === 0 ? spikeTip : innerR;
+          const a = (i / (this.spikes * 2)) * Math.PI * 2;
+          i === 0
+            ? ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r)
+            : ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath(); ctx.fill();
+
+        // gleamy core ball with radial gradient
+        const grad = ctx.createRadialGradient(-s * .28, -s * .28, s * .04, 0, 0, s);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.3, this.glowCol);
+        grad.addColorStop(1, this.coreCol);
+        ctx.shadowBlur = 22;
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(0, 0, s, 0, Math.PI * 2); ctx.fill();
+
+        // specular glint
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = this.alpha * 0.85;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(-s * .28, -s * .28, s * .18, 0, Math.PI * 2); ctx.fill();
+
+        ctx.restore();
+      }
+    }
+
+    resize();
+    const particles = Array.from({ length: 95 }, () => new Particle());
+    let squidPhase = 0;
+
+    // ─── MAIN LOOP ───────────────────────────────────────────────────────────────
+    function loop() {
+      const w = canvas.width, h = canvas.height;
+      squidPhase += 0.004;
+
+      // ── trail fade (keeps particle streaks — the key to the whirlpool look) ──
+      ctx.fillStyle = 'rgba(0,0,0,0.072)';
+      ctx.fillRect(0, 0, w, h);
+
+      // ── grayscale squid bg — barely-there shifting gray blobs ──
+      // Like a squid's chromatophores: slow, organic, grayscale only
+      ctx.save();
+      ctx.globalAlpha = 0.065;
+
+      const b = [
+        { fx: 0.5, fy: 0.5, sx: 0.7, sy: 0.5, r: 0.55, spd: 1.0, ph: 0.0 },
+        { fx: 0.28, fy: 0.62, sx: 0.12, sy: 0.10, r: 0.38, spd: 0.85, ph: 1.0 },
+        { fx: 0.76, fy: 0.34, sx: 0.10, sy: 0.12, r: 0.33, spd: 0.55, ph: 3.0 },
+        { fx: 0.5, fy: 0.78, sx: 0.14, sy: 0.08, r: 0.28, spd: 1.2, ph: 5.0 },
+      ];
+
+      b.forEach((blob, i) => {
+        const bx = w * blob.fx + Math.sin(squidPhase * blob.spd + blob.ph) * w * blob.sx;
+        const by = h * blob.fy + Math.cos(squidPhase * blob.spd * 0.7 + blob.ph) * h * blob.sy;
+        const gv = Math.round(7 + Math.sin(squidPhase * (0.8 + i * 0.2) + blob.ph) * 6);
+        const rad = ctx.createRadialGradient(bx, by, 0, bx, by, w * blob.r);
+        rad.addColorStop(0, `rgb(${gv},${gv},${gv})`);
+        rad.addColorStop(0.6, `rgb(${Math.round(gv * 0.3)},${Math.round(gv * 0.3)},${Math.round(gv * 0.3)})`);
+        rad.addColorStop(1, 'rgb(0,0,0)');
+        ctx.fillStyle = rad;
+        ctx.fillRect(0, 0, w, h);
+      });
+
+      ctx.restore();
+
+      // ── particles ──
+      particles.forEach(p => { p.update(); p.draw(); });
+
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+
+</html>

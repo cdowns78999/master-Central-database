@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Messenger — Grid View</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif; }
+  body { background: #fff; height: 100vh; display: flex; overflow: hidden; }
+
+  /* ─── LEFT PANEL ─── */
+  #left-panel {
+    width: 300px;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #e4e4e4;
+    background: #fff;
+  }
+
+  #left-header {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  #messenger-logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0084ff;
+    letter-spacing: -0.5px;
+  }
+  #left-header-icons { display: flex; gap: 8px; }
+  .header-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px; color: #333;
+    position: relative;
+  }
+  .badge {
+    position: absolute; top: -2px; right: -2px;
+    background: #e41e2a; color: #fff;
+    font-size: 9px; font-weight: 700;
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff;
+  }
+
+  /* SEARCH */
+  #search-wrap { padding: 4px 12px 10px; }
+  .search-inner { position: relative; }
+  .search-icon {
+    position: absolute; left: 11px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px; color: #8e8e93; pointer-events: none;
+  }
+  #search-input {
+    width: 100%;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 14px 8px 34px;
+    font-size: 14px; color: #050505;
+    outline: none;
+  }
+  #search-input::placeholder { color: #8e8e93; }
+
+  /* CHAT LIST */
+  #chat-list { flex: 1; overflow-y: auto; }
+  #chat-list::-webkit-scrollbar { width: 0; }
+
+  .chat-item {
+    display: flex; align-items: center;
+    padding: 7px 10px 7px 12px;
+    gap: 9px;
+    transition: background 0.12s;
+  }
+  .chat-item:hover { background: #f5f5f5; }
+
+  .ci-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: #f0f0f0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; flex-shrink: 0; position: relative;
+  }
+  .online-dot {
+    width: 11px; height: 11px; background: #31a24c;
+    border-radius: 50%; border: 2px solid #fff;
+    position: absolute; bottom: 1px; right: 1px;
+  }
+  .ci-info { flex: 1; min-width: 0; }
+  .ci-name { font-size: 13.5px; font-weight: 600; color: #050505; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ci-prev { font-size: 12px; color: #65676b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .ci-prev.unread { color: #050505; font-weight: 500; }
+  .unread-pip { width: 9px; height: 9px; background: #0084ff; border-radius: 50%; flex-shrink: 0; }
+
+  .open-btn {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    background: #0084ff;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: none; outline: none;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .open-btn:hover { background: #006fdb; }
+  .open-btn.open { background: #e8f4ff; color: #0084ff; font-size: 18px; }
+  .open-btn:active { transform: scale(0.9); }
+
+  /* BOTTOM NAV */
+  #left-nav {
+    display: flex; border-top: 1px solid #e4e4e4;
+    padding: 6px 0 16px;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 6px 0; cursor: pointer; position: relative;
+  }
+  .nav-icon { font-size: 20px; color: #65676b; position: relative; }
+  .nav-icon.active-nav { color: #0084ff; }
+  .nav-label { font-size: 10px; color: #65676b; margin-top: 2px; }
+  .nav-label.active-nav { color: #0084ff; }
+  .nav-badge {
+    position: absolute; top: -3px; right: -7px;
+    background: #e41e2a; color: #fff;
+    font-size: 9px; font-weight: 700;
+    min-width: 15px; height: 15px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px; border: 2px solid #fff;
+  }
+
+  /* ─── RIGHT / MAIN PANEL ─── */
+  #right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f7f8fa;
+    overflow: hidden;
+  }
+
+  /* TABS HEADER */
+  #tabs-header {
+    background: #fff;
+    border-bottom: 1px solid #e4e4e4;
+    padding: 14px 22px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #tabs-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #050505;
+  }
+  #tabs-row {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 12px;
+  }
+  .tab-pill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid #e4e4e4;
+    background: #fff;
+    color: #65676b;
+    transition: all 0.15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab-pill:hover { border-color: #0084ff; color: #0084ff; }
+  .tab-pill.active {
+    background: #0084ff;
+    border-color: #0084ff;
+    color: #fff;
+  }
+  .tab-count {
+    display: inline-block;
+    padding: 0 5px;
+    font-size: 11px;
+    margin-left: 3px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.25);
+  }
+  .tab-pill:not(.active) .tab-count {
+    background: #ebebeb;
+    color: #65676b;
+  }
+
+  /* GRID AREA */
+  #grid-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #grid-area::-webkit-scrollbar { width: 4px; }
+  #grid-area::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+  #grid-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #c8c8c8;
+    gap: 10px;
+    padding: 80px 0;
+  }
+  #grid-empty .ei { font-size: 46px; }
+  #grid-empty .et { font-size: 15px; font-weight: 600; color: #bbb; }
+  #grid-empty .es { font-size: 12px; color: #ccc; }
+
+  /* GRID ROW */
+  .grid-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    animation: rowIn 0.18s ease;
+  }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ALL BOXES share same height */
+  .g-box {
+    min-height: 76px;
+    border-radius: 13px;
+    border: 1.5px solid #e8e8e8;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: default;
+  }
+  .g-box:hover {
+    border-color: #b8d8ff;
+    box-shadow: 0 2px 10px rgba(0,132,255,0.07);
+  }
+
+  /* DOMINANT — left anchor, takes more flex weight */
+  .g-box.dominant {
+    flex: 2.2;
+    justify-content: flex-start;
+    gap: 12px;
+    border-color: #d6eaff;
+    background: #fff;
+  }
+  .dom-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: #e8f4ff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .dom-info { min-width: 0; }
+  .dom-name { font-size: 14px; font-weight: 700; color: #050505; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dom-sub  { font-size: 11px; color: #65676b; margin-top: 3px; }
+
+  /* FOLLOWER BOXES — equal flex */
+  .g-box.follower {
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    background: #fafafa;
+  }
+  .f-label {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    color: #c0c0c0;
+  }
+  .f-value {
+    font-size: 13px; font-weight: 600; color: #050505;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ LEFT PANEL ═══ -->
+<div id="left-panel">
+
+  <div id="left-header">
+    <span id="messenger-logo">messenger</span>
+    <div id="left-header-icons">
+      <div class="header-icon">✏️</div>
+      <div class="header-icon">
+        <span>📘</span>
+        <span class="badge">1</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="search-wrap">
+    <div class="search-inner">
+      <span class="search-icon">🔍</span>
+      <input id="search-input" type="text" placeholder="Search people..." oninput="filterChats(this.value)" />
+    </div>
+  </div>
+
+  <div id="chat-list"></div>
+
+  <div id="left-nav">
+    <div class="nav-item">
+      <div class="nav-icon active-nav" style="position:relative;">💬<span class="nav-badge">7</span></div>
+      <div class="nav-label active-nav">Chats</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">📖<span class="nav-badge">●</span></div>
+      <div class="nav-label">Stories</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">🔔<span class="nav-badge">●</span></div>
+      <div class="nav-label">Notifs</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon" style="position:relative;">☰<span class="nav-badge">●</span></div>
+      <div class="nav-label">Menu</div>
+    </div>
+  </div>
+
+</div><!-- end left-panel -->
+
+<!-- ═══ RIGHT / MAIN PANEL ═══ -->
+<div id="right-panel">
+
+  <div id="tabs-header">
+    <div id="tabs-title">Messages</div>
+    <div id="tabs-row">
+      <div class="tab-pill active" onclick="setTab('all',this)">All <span class="tab-count">12</span></div>
+      <div class="tab-pill" onclick="setTab('unread',this)">Unread <span class="tab-count">3</span></div>
+      <div class="tab-pill" onclick="setTab('groups',this)">Groups <span class="tab-count">2</span></div>
+      <div class="tab-pill" onclick="setTab('requests',this)">Requests <span class="tab-count">1</span></div>
+    </div>
+  </div>
+
+  <div id="grid-area">
+    <div id="grid-empty">
+      <div class="ei">💬</div>
+      <div class="et">Nothing open yet</div>
+      <div class="es">Hit + next to any contact to expand it here</div>
+    </div>
+  </div>
+
+</div><!-- end right-panel -->
+
+<script>
+const contacts = [
+  { id:'family', emoji:'👩‍👦', name:'FAMILY CHAT',          preview:'You: Ok · 2:05 pm',                  online:true,  unread:0, group:true,  sub:'2:05 pm' },
+  { id:'ray',    emoji:'👨',   name:'Ray Downs',             preview:'You: Thank you ! · 2:05 pm',         online:true,  unread:0, group:false, sub:'2:05 pm' },
+  { id:'chad',   emoji:'🧔',   name:'Chad Downs',            preview:'You sent a photo. · 2:01 pm',        online:false, unread:0, group:false, sub:'2:01 pm' },
+  { id:'raykim', emoji:'👫',   name:'Ray, Kim',              preview:'You: that sounds like... · Sun',     online:true,  unread:0, group:true,  sub:'Sun'     },
+  { id:'randy',  emoji:'🎸',   name:'Randy Engineersski',    preview:'2 new messages · Sun',               online:true,  unread:2, group:false, sub:'Sun'     },
+  { id:'james',  emoji:'🧑',   name:'James Poddubny',        preview:'❤️❤️❤️ love you... · Sun',          online:true,  unread:0, group:false, sub:'Sun'     },
+  { id:'jenna',  emoji:'👩‍🦱', name:'Jenna Bodley',          preview:'You: hollar whenever u... · Sat',   online:true,  unread:0, group:false, sub:'Sat'     },
+  { id:'kim',    emoji:'👩',   name:'Kim Downs',             preview:'You: kim · Fri',                     online:true,  unread:0, group:false, sub:'Fri'     },
+  { id:'linda',  emoji:'👩‍🦳', name:'Linda-Brooke Thompson', preview:'4 new messages · Fri',               online:false, unread:4, group:false, sub:'Fri'     },
+  { id:'ed',     emoji:'👨‍🦳', name:'Ed Adkins Sr.',         preview:'You: work going well th... · Thu',  online:false, unread:0, group:false, sub:'Thu'     },
+  { id:'kayla',  emoji:'🧕',   name:'Kayla Amber',           preview:'You: That was waay... · Mar 22',    online:true,  unread:0, group:false, sub:'Mar 22'  },
+  { id:'ari',    emoji:'🧑‍💼', name:'Ari Aloush',            preview:'Hey, at this rate I thi... · Mar 16', online:false, unread:3, group:false, sub:'Mar 16' },
+];
+
+const openRows = new Set();
+
+function renderContactList(filter = '') {
+  const list = document.getElementById('chat-list');
+  list.innerHTML = '';
+  contacts
+    .filter(c => c.name.toLowerCase().includes(filter.toLowerCase()))
+    .forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'chat-item';
+      const isOpen = openRows.has(c.id);
+      item.innerHTML = `
+        <div class="ci-avatar">
+          ${c.emoji}
+          ${c.online ? '<div class="online-dot"></div>' : ''}
+        </div>
+        <div class="ci-info">
+          <div class="ci-name">${c.name}</div>
+          <div class="ci-prev${c.unread ? ' unread' : ''}">${c.preview}</div>
+        </div>
+        ${c.unread ? '<div class="unread-pip"></div>' : ''}
+        <button class="open-btn${isOpen ? ' open' : ''}" onclick="toggleRow('${c.id}',this,event)">${isOpen ? '−' : '+'}</button>
+      `;
+      list.appendChild(item);
+    });
+}
+
+function toggleRow(id, btn, e) {
+  e.stopPropagation();
+  if (openRows.has(id)) {
+    openRows.delete(id);
+    btn.classList.remove('open');
+    btn.textContent = '+';
+  } else {
+    openRows.add(id);
+    btn.classList.add('open');
+    btn.textContent = '−';
+  }
+  renderGrid();
+}
+
+function renderGrid() {
+  const area = document.getElementById('grid-area');
+  area.innerHTML = '';
+
+  if (openRows.size === 0) {
+    area.innerHTML = `
+      <div id="grid-empty">
+        <div class="ei">💬</div>
+        <div class="et">Nothing open yet</div>
+        <div class="es">Hit + next to any contact to expand it here</div>
+      </div>`;
+    return;
+  }
+
+  openRows.forEach(id => {
+    const c = contacts.find(x => x.id === id);
+    if (!c) return;
+    const row = document.createElement('div');
+    row.className = 'grid-row';
+    row.innerHTML = `
+      <div class="g-box dominant">
+        <div class="dom-avatar">${c.emoji}</div>
+        <div class="dom-info">
+          <div class="dom-name">${c.name}</div>
+          <div class="dom-sub">${c.sub}${c.online ? ' · Active now' : ''}</div>
+        </div>
+      </div>
+      <div class="g-box follower">
+        <div class="f-label">Messages</div>
+        <div class="f-value">${c.unread > 0 ? c.unread + ' new' : 'Read'}</div>
+      </div>
+      <div class="g-box follower">
+        <div class="f-label">Status</div>
+        <div class="f-value">${c.online ? '🟢 Online' : '⚫ Away'}</div>
+      </div>
+      <div class="g-box follower">
+        <div class="f-label">Type</div>
+        <div class="f-value">${c.group ? 'Group' : 'Direct'}</div>
+      </div>
+      <div class="g-box follower">
+        <div class="f-label">Last seen</div>
+        <div class="f-value">${c.sub}</div>
+      </div>
+    `;
+    area.appendChild(row);
+  });
+}
+
+function setTab(tab, el) {
+  document.querySelectorAll('.tab-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function filterChats(val) {
+  renderContactList(val);
+}
+
+renderContactList();
+renderGrid();
+</script>
+</body>
+</html>

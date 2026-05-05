@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Start Here — VRChat Ultimate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    .platform-picker { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .platform-card {
+      flex: 1; min-width: 140px;
+      background: var(--bg-2);
+      border: 2px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 1.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .platform-card:hover { border-color: var(--vrc-lavender); }
+    .platform-card.selected {
+      border-color: var(--vrc-lavender);
+      background: rgba(189,147,249,0.08);
+      box-shadow: var(--glow-purple);
+    }
+    .platform-card .platform-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .platform-card .platform-name { font-weight: 700; font-size: 1rem; }
+    .checklist-section { margin-bottom: 2rem; }
+    .checklist-section h3 {
+      font-size: 1.1rem; font-weight: 700;
+      color: var(--vrc-lavender);
+      margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 0.5rem;
+    }
+    .progress-pct { font-size: 1.5rem; font-weight: 800; color: var(--vrc-lavender); }
+  </style>
+</head>
+<body>
+  <div id="sidebar-mount"></div>
+  <button id="hamburger" class="hamburger">&#9776;</button>
+  <main id="main-content">
+
+    <h1 class="section-title">Start Here</h1>
+    <p style="color:var(--text-muted);margin-bottom:1.5rem;">Your VRChat onboarding checklist. Pick your platform and check things off as you go.</p>
+
+    <!-- Progress -->
+    <div class="progress-label">
+      <span style="color:var(--text-dim);font-weight:600;">Your Progress</span>
+      <span class="progress-pct" id="pct-display">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+
+    <!-- Platform Picker -->
+    <h3 style="font-size:1rem;font-weight:700;color:var(--text-bright);margin:2rem 0 1rem;">Choose Your Platform</h3>
+    <div class="platform-picker" id="platform-picker">
+      <div class="platform-card" data-platform="pc">
+        <div class="platform-icon">&#128187;</div>
+        <div class="platform-name">PC VR</div>
+        <div style="color:var(--text-muted);font-size:0.8rem;margin-top:0.25rem;">SteamVR / Oculus Link</div>
+      </div>
+      <div class="platform-card" data-platform="quest">
+        <div class="platform-icon">&#129509;</div>
+        <div class="platform-name">Quest</div>
+        <div style="color:var(--text-muted);font-size:0.8rem;margin-top:0.25rem;">Standalone headset</div>
+      </div>
+      <div class="platform-card" data-platform="mobile">
+        <div class="platform-icon">&#128241;</div>
+        <div class="platform-name">Mobile</div>
+        <div style="color:var(--text-muted);font-size:0.8rem;margin-top:0.25rem;">iOS / Android</div>
+      </div>
+    </div>
+
+    <!-- Checklists -->
+    <div class="checklist-section">
+      <h3>&#9881;&#65039; Account Setup</h3>
+      <label class="checklist-item"><input type="checkbox" data-task="create-account"><span>Create your VRChat account at vrchat.com</span></label>
+      <label class="checklist-item"><input type="checkbox" data-task="choose-avatar"><span>Choose your first avatar from the public avatar world</span></label>
+      <label class="checklist-item"><input type="checkbox" data-task="safety-settings"><span>Set your safety settings (Quick Menu > Safety)</span></label>
+    </div>
+
+    <div class="checklist-section">
+      <h3>&#127758; First World Visit</h3>
+      <label class="checklist-item"><input type="checkbox" data-task="quick-menu"><span>Open the Quick Menu (press Escape or tap your wrist)</span></label>
+      <label class="checklist-item"><input type="checkbox" data-task="public-world"><span>Join a public world from the World menu</span></label>
+      <label class="checklist-item"><input type="checkbox" data-task="game-world"><span>Try a game world (Murder, Freeze Tag, Among Us)</span></label>
+    </div>
+
+    <div class="checklist-section">
+      <h3>&#128737;&#65039; Safety 101</h3>
+      <label class="checklist-item"><input type="checkbox" data-task="block-mute"><span>Learn how to block and mute (Quick Menu > player nameplate)</span></label>
+      <label class="checklist-item"><input type="checkbox" data-task="personal-space"><span>Set your personal space bubble (Safety > Personal Space)</span></label>
+      <label class="checklist-item"><input type="checkbox" data-task="trust-ranks"><span>Understand trust ranks: Visitor &#8594; New User &#8594; User &#8594; Known &#8594; Trusted</span></label>
+    </div>
+
+  </main>
+
+  <script src="../shared/nav.js"></script>
+  <script src="../shared/components.js"></script>
+  <script>
+    (function() {
+      const STORAGE_KEY = 'vrc-start-here';
+      const checkboxes = document.querySelectorAll('.checklist-item input[type="checkbox"]');
+      const fill = document.getElementById('progress-fill');
+      const pctDisplay = document.getElementById('pct-display');
+
+      // Load saved state
+      let saved = {};
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) {}
+
+      // Restore checkboxes
+      checkboxes.forEach(cb => {
+        const task = cb.getAttribute('data-task');
+        if (saved[task]) { cb.checked = true; cb.closest('.checklist-item').style.opacity = '0.55'; }
+      });
+
+      function updateProgress() {
+        const total = checkboxes.length;
+        let done = 0;
+        const state = {};
+        checkboxes.forEach(cb => {
+          const task = cb.getAttribute('data-task');
+          if (cb.checked) { done++; state[task] = true; cb.closest('.checklist-item').style.opacity = '0.55'; }
+          else { cb.closest('.checklist-item').style.opacity = '1'; }
+        });
+        const pct = Math.round((done / total) * 100);
+        fill.style.width = pct + '%';
+        pctDisplay.textContent = pct + '%';
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      checkboxes.forEach(cb => cb.addEventListener('change', updateProgress));
+      updateProgress();
+
+      // Platform picker
+      const cards = document.querySelectorAll('.platform-card');
+      const savedPlatform = localStorage.getItem('vrc-platform');
+      if (savedPlatform) {
+        cards.forEach(c => { if (c.dataset.platform === savedPlatform) c.classList.add('selected'); });
+      }
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          cards.forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          localStorage.setItem('vrc-platform', card.dataset.platform);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

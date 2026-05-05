@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chad's Personal Playground — Carousel Picker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 24px 80px;
+  }
+
+  h1 {
+    font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #f1f5f9;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 56px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .trigger-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 32px 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: default;
+  }
+
+  .trigger-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+
+  .impl-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 99px;
+    width: fit-content;
+  }
+
+  .impl-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    line-height: 1.3;
+  }
+
+  .impl-desc {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .launch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    letter-spacing: 0.02em;
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .launch-btn:hover { opacity: 0.88; transform: scale(0.98); }
+  .launch-btn:active { transform: scale(0.95); }
+
+  /* Indigo */
+  .c1 .impl-badge { background: #3730a3; color: #a5b4fc; }
+  .c1 .launch-btn { background: #4f46e5; color: #fff; }
+  .c1:hover { border-color: #6366f1; }
+
+  /* Purple */
+  .c2 .impl-badge { background: #4a1d96; color: #d8b4fe; }
+  .c2 .launch-btn { background: #7c3aed; color: #fff; }
+  .c2:hover { border-color: #a855f7; }
+
+  /* Sky blue */
+  .c3 .impl-badge { background: #0c4a6e; color: #7dd3fc; }
+  .c3 .launch-btn { background: #0284c7; color: #fff; }
+  .c3:hover { border-color: #38bdf8; }
+
+  /* Emerald */
+  .c4 .impl-badge { background: #064e3b; color: #6ee7b7; }
+  .c4 .launch-btn { background: #059669; color: #fff; }
+  .c4:hover { border-color: #34d399; }
+
+  /* Amber */
+  .c5 .impl-badge { background: #78350f; color: #fcd34d; }
+  .c5 .launch-btn { background: #d97706; color: #fff; }
+  .c5:hover { border-color: #fbbf24; }
+
+  /* ─── OVERLAY ─── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .overlay.active { display: flex; }
+
+  .overlay-close {
+    position: fixed;
+    top: 22px;
+    right: 28px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #e2e8f0;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    transition: background 0.15s;
+  }
+  .overlay-close:hover { background: rgba(255,255,255,0.16); }
+
+  .overlay-title {
+    font-size: clamp(1.2rem, 2.5vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+    text-align: center;
+    z-index: 1050;
+  }
+
+  .overlay-backdrop-click {
+    position: fixed;
+    inset: 0;
+    z-index: 1005;
+  }
+
+  .overlay-inner {
+    position: relative;
+    z-index: 1050;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ═══════════════════════════════
+     IMPL 1 — CSS CYLINDER
+  ═══════════════════════════════ */
+  #overlay1 .overlay-title {
+    color: #a5b4fc;
+    text-shadow: 0 0 24px #6366f1, 0 0 60px #4f46e566;
+  }
+
+  .cyl-scene {
+    width: 340px;
+    height: 210px;
+    perspective: 900px;
+    margin: 20px auto 0;
+  }
+
+  .cyl-ring {
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(.4,0,.2,1);
+    position: relative;
+  }
+
+  .cyl-card {
+    position: absolute;
+    width: 320px;
+    height: 190px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #1e293b;
+    left: 50%;
+    top: 50%;
+    margin-left: -160px;
+    margin-top: -95px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: box-shadow 0.3s;
+  }
+
+  .cyl-card:hover { box-shadow: 0 0 30px rgba(99,102,241,0.5); }
+
+  .cyl-card-inner {
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 60%);
+    padding: 14px 16px 12px;
+  }
+
+  .cyl-card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+  }
+
+  .cyl-card-url {
+    font-size: 0.7rem;
+    color: #818cf8;
+    opacity: 0.8;
+  }
+
+  .cyl-card-thumb {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+    z-index: -1;
+  }
+
+  .cyl-nav {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    align-items: center;
+  }
+
+  .cyl-btn {
+    background: rgba(99,102,241,0.2);
+    border: 1px solid #6366f1;
+    color: #a5b4fc;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .cyl-btn:hover { background: rgba(99,102,241,0.4); }
+
+  .cyl-counter {
+    font-size: 0.82rem;
+    color: #64748b;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* ═══════════════════════════════
+     IMPL 2 — COVERFLOW
+  ═══════════════════════════════ */
+  #overlay2 .overlay-title {
+    color: #d8b4fe;
+    text-shadow: 0 0 24px #7c3aed, 0 0 60px #7c3aed44;
+  }
+
+  .cf-wrap {
+    width: min(900px, 96vw);
+    height: 240px;
+    perspective: 800px;
+    margin: 24px auto 0;
+    position: relative;
+    overflow: visible;
+  }
+
+  .cf-track {
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    position: relative;
+  }
+
+  .cf-card {
+    position: absolute;
+    width: 320px;
+    height: 190px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #1e293b;
+    top: 50%;
+    left: 50%;
+    margin-top: -95px;
+    margin-left: -160px;
+    transition: all 0.45s cubic-bezier(.4,0,.2,1);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .cf-reflection {
+    position: absolute;
+    bottom: -36px;
+    left: 0; right: 0;
+    height: 36px;
+    background: linear-gradient(to bottom, rgba(99,0,255,0.25), transparent);
+    transform: scaleY(-1);
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .cf-card.cf-active .cf-reflection { opacity: 1; }
+
+  .cf-inner {
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%);
+    padding: 14px 16px 12px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .cf-thumb {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #2e1065 0%, #4a1d96 50%, #2e1065 100%);
+    z-index: 0;
+  }
+
+  .cf-dots {
+    display: flex;
+    gap: 7px;
+    margin-top: 60px;
+    justify-content: center;
+  }
+
+  .cf-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #475569;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .cf-dot.active { background: #a855f7; transform: scale(1.3); }
+
+  /* ═══════════════════════════════
+     IMPL 3 — FLOATING ARC
+  ═══════════════════════════════ */
+  #overlay3 .overlay-title {
+    color: #7dd3fc;
+    text-shadow: 0 0 24px #0ea5e9, 0 0 60px #06b6d444;
+  }
+
+  .arc-scene {
+    width: min(960px, 95vw);
+    height: 280px;
+    position: relative;
+    margin: 20px auto 0;
+    perspective: 900px;
+  }
+
+  .arc-card {
+    position: absolute;
+    width: 300px;
+    height: 178px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #1e293b;
+    top: 50%;
+    left: 50%;
+    margin-top: -89px;
+    margin-left: -150px;
+    transition: box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    opacity: 0;
+    transform: translate3d(-50%,80px,0);
+  }
+
+  .arc-card.arc-visible {
+    animation: arcFloat var(--float-dur, 4s) ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+  }
+
+  @keyframes arcFloat {
+    0%, 100% { transform: var(--arc-base-t) translateY(0px); }
+    50%       { transform: var(--arc-base-t) translateY(-8px); }
+  }
+
+  @keyframes arcEntry {
+    from { opacity: 0; transform: var(--arc-base-t) translateY(50px); }
+    to   { opacity: 1; transform: var(--arc-base-t) translateY(0px); }
+  }
+
+  .arc-card-inner {
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%);
+    padding: 12px 14px 10px;
+  }
+
+  .arc-thumb {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #082f49 0%, #0c4a6e 50%, #082f49 100%);
+    z-index: -1;
+  }
+
+  /* ═══════════════════════════════
+     IMPL 4 — STACK FAN-OUT
+  ═══════════════════════════════ */
+  #overlay4 .overlay-title {
+    color: #6ee7b7;
+    text-shadow: 0 0 24px #10b981, 0 0 60px #10b98144;
+  }
+
+  .fan-scene {
+    width: 340px;
+    height: 230px;
+    position: relative;
+    margin: 30px auto 0;
+  }
+
+  .fan-card {
+    position: absolute;
+    width: 310px;
+    height: 183px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #1e293b;
+    top: 50%;
+    left: 50%;
+    margin-left: -155px;
+    margin-top: -92px;
+    transition: all 0.5s cubic-bezier(.34,1.2,.64,1);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transform-origin: bottom center;
+  }
+
+  .fan-card-inner {
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%);
+    padding: 10px 14px 10px;
+  }
+
+  .fan-thumb {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .fan-btn {
+    margin-top: 16px;
+    padding: 10px 28px;
+    background: rgba(16,185,129,0.2);
+    border: 1px solid #10b981;
+    color: #6ee7b7;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .fan-btn:hover { background: rgba(16,185,129,0.38); }
+
+  /* ═══════════════════════════════
+     IMPL 5 — DRAG REEL
+  ═══════════════════════════════ */
+  #overlay5 .overlay-title {
+    color: #fcd34d;
+    text-shadow: 0 0 24px #d97706, 0 0 60px #f59e0b44;
+  }
+
+  .reel-wrap {
+    width: min(900px, 96vw);
+    height: 220px;
+    position: relative;
+    overflow: hidden;
+    margin: 20px auto 0;
+    cursor: grab;
+    user-select: none;
+    border-radius: 16px;
+  }
+  .reel-wrap:active { cursor: grabbing; }
+
+  .reel-track {
+    display: flex;
+    gap: 16px;
+    height: 100%;
+    align-items: center;
+    padding: 0 calc(50% - 160px);
+    will-change: transform;
+  }
+
+  .reel-card {
+    flex-shrink: 0;
+    width: 320px;
+    height: 190px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #1e293b;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: transform 0.25s, box-shadow 0.25s;
+    position: relative;
+  }
+
+  .reel-card.reel-center {
+    transform: scale(1.06);
+    box-shadow: 0 0 36px rgba(217,119,6,0.45);
+    border-color: rgba(251,191,36,0.4);
+  }
+
+  .reel-inner {
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 60%);
+    padding: 12px 16px 12px;
+  }
+
+  .reel-thumb {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #431407 0%, #7c2d12 50%, #431407 100%);
+    z-index: -1;
+  }
+
+  .reel-hint {
+    margin-top: 12px;
+    font-size: 0.75rem;
+    color: #64748b;
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── Shared card text ─── */
+  .card-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-sub {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
+</head>
+<body>
+
+<h1>Chad's Personal Playground</h1>
+<p class="subtitle">Carousel Picker — 5 Implementations</p>
+
+<div class="grid">
+  <!-- IMPL 1 -->
+  <div class="trigger-card c1">
+    <span class="impl-badge">IMPL 1</span>
+    <div class="impl-name">CSS Cylinder</div>
+    <div class="impl-desc">Cards distributed around a rotateY 3D cylinder. Arrow keys + nav buttons to spin.</div>
+    <button class="launch-btn" onclick="openOverlay(1)">▶ Launch Preview</button>
+  </div>
+
+  <!-- IMPL 2 -->
+  <div class="trigger-card c2">
+    <span class="impl-badge">IMPL 2</span>
+    <div class="impl-name">Coverflow Apple-Style</div>
+    <div class="impl-desc">Center card large and forward, side cards tilted back. Reflection + dot indicators.</div>
+    <button class="launch-btn" onclick="openOverlay(2)">▶ Launch Preview</button>
+  </div>
+
+  <!-- IMPL 3 -->
+  <div class="trigger-card c3">
+    <span class="impl-badge">IMPL 3</span>
+    <div class="impl-name">Floating Arc</div>
+    <div class="impl-desc">Cards on a curved 3D arc with subtle drift animation. Staggered entry from below.</div>
+    <button class="launch-btn" onclick="openOverlay(3)">▶ Launch Preview</button>
+  </div>
+
+  <!-- IMPL 4 -->
+  <div class="trigger-card c4">
+    <span class="impl-badge">IMPL 4</span>
+    <div class="impl-name">Stack Fan-Out</div>
+    <div class="impl-desc">Cards stacked like a deck. Click to fan into a semicircle, click again to collapse.</div>
+    <button class="launch-btn" onclick="openOverlay(4)">▶ Launch Preview</button>
+  </div>
+
+  <!-- IMPL 5 -->
+  <div class="trigger-card c5">
+    <span class="impl-badge">IMPL 5</span>
+    <div class="impl-name">Drag Reel + Inertia</div>
+    <div class="impl-desc">Drag left/right to spin with inertia and snap-to-center. Scroll wheel also works.</div>
+    <button class="launch-btn" onclick="openOverlay(5)">▶ Launch Preview</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     OVERLAY 1 — CSS CYLINDER
+══════════════════════════════════ -->
+<div class="overlay" id="overlay1">
+  <div class="overlay-backdrop-click" onclick="closeOverlay()"></div>
+  <button class="overlay-close" onclick="closeOverlay()">✕</button>
+  <div class="overlay-inner">
+    <div class="overlay-title">Chad's Personal Playground</div>
+    <div style="font-size:0.78rem;color:#6366f1;letter-spacing:0.08em;margin-bottom:4px;">CSS CYLINDER</div>
+
+    <div class="cyl-scene">
+      <div class="cyl-ring" id="cylRing"></div>
+    </div>
+
+    <div class="cyl-nav">
+      <button class="cyl-btn" onclick="cylRotate(-1)">← Prev</button>
+      <span class="cyl-counter" id="cylCounter">1 / 10</span>
+      <button class="cyl-btn" onclick="cylRotate(1)">Next →</button>
+    </div>
+    <div style="font-size:0.73rem;color:#475569;margin-top:8px;">← → arrow keys work too</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     OVERLAY 2 — COVERFLOW
+══════════════════════════════════ -->
+<div class="overlay" id="overlay2">
+  <div class="overlay-backdrop-click" onclick="closeOverlay()"></div>
+  <button class="overlay-close" onclick="closeOverlay()">✕</button>
+  <div class="overlay-inner">
+    <div class="overlay-title">Chad's Personal Playground</div>
+    <div style="font-size:0.78rem;color:#a855f7;letter-spacing:0.08em;margin-bottom:4px;">COVERFLOW APPLE-STYLE</div>
+
+    <div class="cf-wrap">
+      <div class="cf-track" id="cfTrack"></div>
+    </div>
+    <div class="cf-dots" id="cfDots"></div>
+    <div style="font-size:0.73rem;color:#475569;margin-top:8px;">Click a card to open · ← → keys to navigate</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     OVERLAY 3 — FLOATING ARC
+══════════════════════════════════ -->
+<div class="overlay" id="overlay3">
+  <div class="overlay-backdrop-click" onclick="closeOverlay()"></div>
+  <button class="overlay-close" onclick="closeOverlay()">✕</button>
+  <div class="overlay-inner">
+    <div class="overlay-title">Chad's Personal Playground</div>
+    <div style="font-size:0.78rem;color:#0ea5e9;letter-spacing:0.08em;margin-bottom:4px;">FLOATING ARC</div>
+
+    <div class="arc-scene" id="arcScene"></div>
+    <div style="font-size:0.73rem;color:#475569;margin-top:28px;">Cards drift softly on a curved arc · Click to open</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     OVERLAY 4 — STACK FAN-OUT
+══════════════════════════════════ -->
+<div class="overlay" id="overlay4">
+  <div class="overlay-backdrop-click" onclick="closeOverlay()"></div>
+  <button class="overlay-close" onclick="closeOverlay()">✕</button>
+  <div class="overlay-inner">
+    <div class="overlay-title">Chad's Personal Playground</div>
+    <div style="font-size:0.78rem;color:#10b981;letter-spacing:0.08em;margin-bottom:4px;">STACK FAN-OUT</div>
+
+    <div class="fan-scene" id="fanScene"></div>
+    <button class="fan-btn" id="fanToggle" onclick="toggleFan()">Fan Out ▸</button>
+    <div style="font-size:0.73rem;color:#475569;margin-top:8px;">Click a card to open · Fan out to browse</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     OVERLAY 5 — DRAG REEL
+══════════════════════════════════ -->
+<div class="overlay" id="overlay5">
+  <div class="overlay-backdrop-click" onclick="closeOverlay()"></div>
+  <button class="overlay-close" onclick="closeOverlay()">✕</button>
+  <div class="overlay-inner">
+    <div class="overlay-title">Chad's Personal Playground</div>
+    <div style="font-size:0.78rem;color:#d97706;letter-spacing:0.08em;margin-bottom:4px;">DRAG REEL + INERTIA</div>
+
+    <div class="reel-wrap" id="reelWrap">
+      <div class="reel-track" id="reelTrack"></div>
+    </div>
+    <div class="reel-hint">Drag or scroll to spin · Snaps to center · Click to open</div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────
+const APPS = [
+  { url: 'https://easter-2026-family-gift.netlify.app',     label: 'Easter 2026 Gift' },
+  { url: 'https://the-ledger-chad.netlify.app',             label: 'The Ledger Chad' },
+  { url: 'https://ag-anthropic-music.netlify.app',          label: 'AG Anthropic Music' },
+  { url: 'https://james-downs-command.netlify.app',         label: 'James Downs Command' },
+  { url: 'https://marching-band-tracker.netlify.app',       label: 'Marching Band Tracker' },
+  { url: 'https://job7-the-ledger.netlify.app',             label: 'Job7 The Ledger' },
+  { url: 'https://chad-downs-vietnam.netlify.app',          label: 'Chad Down Vietnam' },
+  { url: 'https://anthropic-music-partnership.netlify.app', label: 'Anthropic Music' },
+  { url: 'https://ag-artist-onboarding.netlify.app',        label: 'AG Artist Onboarding' },
+  { url: 'https://the-payback-chad.netlify.app',            label: 'The Payback' },
+];
+
+// ─── OVERLAY OPEN / CLOSE ────────────────────────────────────────────
+let activeOverlay = null;
+
+function openOverlay(n) {
+  closeOverlay();
+  const el = document.getElementById('overlay' + n);
+  el.classList.add('active');
+  activeOverlay = n;
+  if (n === 1) initCylinder();
+  if (n === 2) initCoverflow();
+  if (n === 3) initArc();
+  if (n === 4) initFan();
+  if (n === 5) initReel();
+}
+
+function closeOverlay() {
+  document.querySelectorAll('.overlay').forEach(o => o.classList.remove('active'));
+  activeOverlay = null;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeOverlay();
+  if (activeOverlay === 1) {
+    if (e.key === 'ArrowLeft')  cylRotate(-1);
+    if (e.key === 'ArrowRight') cylRotate(1);
+  }
+  if (activeOverlay === 2) {
+    if (e.key === 'ArrowLeft')  cfMove(-1);
+    if (e.key === 'ArrowRight') cfMove(1);
+  }
+});
+
+// ────────────────────────────────────────────────────────────────────
+// IMPL 1 — CSS CYLINDER
+// ────────────────────────────────────────────────────────────────────
+const CYL_RADIUS = 420;
+let cylIndex = 0;
+
+const cylGrads = [
+  'linear-gradient(135deg,#1e1b4b,#312e81)',
+  'linear-gradient(135deg,#1e1b4b,#4338ca)',
+  'linear-gradient(135deg,#312e81,#6366f1)',
+  'linear-gradient(135deg,#1e1b4b,#3730a3)',
+  'linear-gradient(135deg,#0f0f2e,#4f46e5)',
+  'linear-gradient(135deg,#1e1b4b,#312e81)',
+  'linear-gradient(135deg,#2e1065,#4338ca)',
+  'linear-gradient(135deg,#1e1b4b,#6366f1)',
+  'linear-gradient(135deg,#312e81,#818cf8)',
+  'linear-gradient(135deg,#0f0f2e,#312e81)',
+];
+
+function initCylinder() {
+  const ring = document.getElementById('cylRing');
+  ring.innerHTML = '';
+  const n = APPS.length;
+  const angleStep = 360 / n;
+  APPS.forEach((app, i) => {
+    const card = document.createElement('div');
+    card.className = 'cyl-card';
+    const angle = angleStep * i;
+    card.style.transform = `rotateY(${angle}deg) translateZ(${CYL_RADIUS}px)`;
+    card.innerHTML = `
+      <div class="cyl-card-thumb" style="background:${cylGrads[i]}"></div>
+      <div class="cyl-card-inner">
+        <div class="cyl-card-title">${app.label}</div>
+        <div class="cyl-card-url">${app.url.replace('https://','')}</div>
+      </div>`;
+    card.addEventListener('click', () => window.open(app.url, '_blank'));
+    ring.appendChild(card);
+  });
+  cylUpdateRing();
+}
+
+function cylUpdateRing() {
+  const ring = document.getElementById('cylRing');
+  const n = APPS.length;
+  const angleStep = 360 / n;
+  ring.style.transform = `rotateY(${-cylIndex * angleStep}deg)`;
+  document.getElementById('cylCounter').textContent = `${cylIndex + 1} / ${n}`;
+}
+
+function cylRotate(dir) {
+  cylIndex = (cylIndex + dir + APPS.length) % APPS.length;
+  cylUpdateRing();
+}
+
+// ────────────────────────────────────────────────────────────────────
+// IMPL 2 — COVERFLOW
+// ────────────────────────────────────────────────────────────────────
+let cfIndex = 0;
+
+const cfGrads = [
+  'linear-gradient(135deg,#2e1065,#4a1d96)',
+  'linear-gradient(135deg,#2e1065,#6d28d9)',
+  'linear-gradient(135deg,#3b0764,#7c3aed)',
+  'linear-gradient(135deg,#1e1b4b,#5b21b6)',
+  'linear-gradient(135deg,#2e1065,#4c1d95)',
+  'linear-gradient(135deg,#1e1b4b,#7c3aed)',
+  'linear-gradient(135deg,#3b0764,#6d28d9)',
+  'linear-gradient(135deg,#2e1065,#5b21b6)',
+  'linear-gradient(135deg,#1e1b4b,#4a1d96)',
+  'linear-gradient(135deg,#3b0764,#7c3aed)',
+];
+
+function initCoverflow() {
+  const track = document.getElementById('cfTrack');
+  const dots  = document.getElementById('cfDots');
+  track.innerHTML = '';
+  dots.innerHTML  = '';
+
+  APPS.forEach((app, i) => {
+    const card = document.createElement('div');
+    card.className = 'cf-card';
+    card.id = 'cfCard' + i;
+    card.innerHTML = `
+      <div class="cf-thumb" style="background:${cfGrads[i]}"></div>
+      <div class="cf-reflection"></div>
+      <div class="cf-inner">
+        <div class="card-label">${app.label}</div>
+        <div class="card-sub">${app.url.replace('https://','')}</div>
+      </div>`;
+    card.addEventListener('click', () => window.open(app.url, '_blank'));
+    track.appendChild(card);
+
+    const dot = document.createElement('div');
+    dot.className = 'cf-dot';
+    dot.onclick = () => { cfIndex = i; cfRender(); };
+    dots.appendChild(dot);
+  });
+
+  cfRender();
+}
+
+function cfRender() {
+  const n = APPS.length;
+  APPS.forEach((_, i) => {
+    const card = document.getElementById('cfCard' + i);
+    const dot  = document.querySelectorAll('.cf-dot')[i];
+    const diff = i - cfIndex;
+    card.classList.toggle('cf-active', diff === 0);
+    dot.classList.toggle('active', diff === 0);
+
+    const absD = Math.abs(diff);
+    let tx = diff * 200;
+    let rY = diff > 0 ? -45 : 45;
+    let sc = Math.max(0.62, 1 - absD * 0.14);
+    let tz = absD === 0 ? 60 : -absD * 40;
+    let op = Math.max(0.3, 1 - absD * 0.22);
+    let zi = n - absD;
+
+    if (absD === 0) { rY = 0; sc = 1; }
+
+    card.style.transform    = `translateX(${tx}px) translateZ(${tz}px) rotateY(${rY}deg) scale(${sc})`;
+    card.style.opacity      = op;
+    card.style.zIndex       = zi;
+    card.style.pointerEvents = absD > 3 ? 'none' : 'auto';
+  });
+}
+
+function cfMove(dir) {
+  cfIndex = (cfIndex + dir + APPS.length) % APPS.length;
+  cfRender();
+}
+
+// ────────────────────────────────────────────────────────────────────
+// IMPL 3 — FLOATING ARC
+// ────────────────────────────────────────────────────────────────────
+const arcGrads = [
+  'linear-gradient(135deg,#082f49,#0c4a6e)',
+  'linear-gradient(135deg,#0c4a6e,#0369a1)',
+  'linear-gradient(135deg,#082f49,#075985)',
+  'linear-gradient(135deg,#0c4a6e,#0284c7)',
+  'linear-gradient(135deg,#082f49,#0369a1)',
+  'linear-gradient(135deg,#0c4a6e,#0284c7)',
+  'linear-gradient(135deg,#082f49,#075985)',
+  'linear-gradient(135deg,#0c4a6e,#0369a1)',
+  'linear-gradient(135deg,#082f49,#0284c7)',
+  'linear-gradient(135deg,#0c4a6e,#075985)',
+];
+
+function initArc() {
+  const scene = document.getElementById('arcScene');
+  scene.innerHTML = '';
+  const n = APPS.length;
+  // Distribute across arc: from -70deg to +70deg
+  const spanDeg = 140;
+  const W = scene.offsetWidth || 900;
+  const H = scene.offsetHeight || 280;
+  const arcRadius = 600;
+
+  APPS.forEach((app, i) => {
+    const card = document.createElement('div');
+    card.className = 'arc-card';
+
+    const t = n === 1 ? 0.5 : i / (n - 1);
+    const deg = -spanDeg / 2 + t * spanDeg;
+    const rad = deg * Math.PI / 180;
+    const cx = W / 2 + arcRadius * Math.sin(rad);
+    const cy = H * 0.5 + arcRadius * (1 - Math.cos(rad)) * 0.25;
+    const scale = 1 - Math.abs(deg) / 280;
+
+    const tx = cx - W/2;
+    const ty = cy - H/2;
+    const baseT = `translateX(${tx}px) translateY(${ty}px) rotateY(${-deg * 0.35}deg) scale(${scale})`;
+
+    card.style.setProperty('--arc-base-t', baseT);
+    card.style.setProperty('--float-dur',   `${3.5 + i * 0.3}s`);
+    card.style.setProperty('--float-delay', `${i * 0.18}s`);
+    card.style.opacity = '0';
+    card.style.zIndex  = Math.round(100 - Math.abs(deg));
+
+    card.innerHTML = `
+      <div class="arc-thumb" style="background:${arcGrads[i]}"></div>
+      <div class="arc-card-inner">
+        <div class="card-label">${app.label}</div>
+        <div class="card-sub">${app.url.replace('https://','')}</div>
+      </div>`;
+    card.addEventListener('click', () => window.open(app.url, '_blank'));
+    scene.appendChild(card);
+
+    // Staggered entry
+    setTimeout(() => {
+      card.style.transition = 'opacity 0.5s ease, transform 0.6s ease';
+      card.style.opacity    = String(scale > 0.5 ? scale : 0.55);
+      card.style.transform  = baseT;
+      setTimeout(() => {
+        card.classList.add('arc-visible');
+        card.style.transition = '';
+        card.style.transform  = '';
+      }, 650);
+    }, 60 + i * 80);
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// IMPL 4 — STACK FAN-OUT
+// ────────────────────────────────────────────────────────────────────
+let fanOpen = false;
+const fanGrads = [
+  'linear-gradient(135deg,#052e16,#14532d)',
+  'linear-gradient(135deg,#064e3b,#065f46)',
+  'linear-gradient(135deg,#052e16,#166534)',
+  'linear-gradient(135deg,#064e3b,#047857)',
+  'linear-gradient(135deg,#052e16,#059669)',
+  'linear-gradient(135deg,#064e3b,#065f46)',
+  'linear-gradient(135deg,#052e16,#14532d)',
+  'linear-gradient(135deg,#064e3b,#166534)',
+  'linear-gradient(135deg,#052e16,#047857)',
+  'linear-gradient(135deg,#064e3b,#059669)',
+];
+
+function initFan() {
+  const scene = document.getElementById('fanScene');
+  scene.innerHTML = '';
+  fanOpen = false;
+  document.getElementById('fanToggle').textContent = 'Fan Out ▸';
+
+  APPS.forEach((app, i) => {
+    const card = document.createElement('div');
+    card.className = 'fan-card';
+    card.id = 'fanCard' + i;
+    // Stacked offset
+    card.style.zIndex = APPS.length - i;
+    card.style.transform = `translateX(${i * 2}px) translateY(${-i * 2}px)`;
+    card.style.filter = `brightness(${1 - i * 0.06})`;
+    card.innerHTML = `
+      <div class="fan-thumb" style="background:${fanGrads[i]}"></div>
+      <div class="fan-card-inner">
+        <div class="card-label">${app.label}</div>
+        <div class="card-sub">${app.url.replace('https://','')}</div>
+      </div>`;
+    card.addEventListener('click', () => {
+      if (fanOpen) window.open(app.url, '_blank');
+      else toggleFan();
+    });
+    scene.appendChild(card);
+  });
+}
+
+function toggleFan() {
+  fanOpen = !fanOpen;
+  document.getElementById('fanToggle').textContent = fanOpen ? '◂ Collapse' : 'Fan Out ▸';
+  const n = APPS.length;
+
+  APPS.forEach((_, i) => {
+    const card = document.getElementById('fanCard' + i);
+    if (fanOpen) {
+      // Fan into semicircle: -90deg to +90deg across n cards
+      const t = n === 1 ? 0 : i / (n - 1);
+      const angle = -90 + t * 180;
+      const rad   = angle * Math.PI / 180;
+      const r     = 220;
+      const tx    = r * Math.sin(rad);
+      const ty    = -r * (1 - Math.cos(rad)) * 0.5;
+      card.style.transform = `translateX(${tx}px) translateY(${ty}px) rotate(${angle * 0.25}deg)`;
+      card.style.zIndex    = i + 1;
+      card.style.opacity   = '1';
+      card.style.filter    = 'brightness(1)';
+    } else {
+      card.style.transform = `translateX(${i * 2}px) translateY(${-i * 2}px)`;
+      card.style.zIndex    = n - i;
+      card.style.filter    = `brightness(${1 - i * 0.06})`;
+    }
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// IMPL 5 — DRAG REEL WITH INERTIA
+// ────────────────────────────────────────────────────────────────────
+const CARD_W = 320;
+const CARD_GAP = 16;
+const STEP = CARD_W + CARD_GAP;
+
+let reelX      = 0;
+let reelTarget = 0;
+let reelVel    = 0;
+let reelIndex  = 0;
+let reelDrag   = false;
+let reelDragX0 = 0;
+let reelX0     = 0;
+let reelRafId  = null;
+let reelInertia = false;
+
+const reelGrads = [
+  'linear-gradient(135deg,#431407,#7c2d12)',
+  'linear-gradient(135deg,#7c2d12,#92400e)',
+  'linear-gradient(135deg,#431407,#b45309)',
+  'linear-gradient(135deg,#7c2d12,#d97706)',
+  'linear-gradient(135deg,#431407,#92400e)',
+  'linear-gradient(135deg,#7c2d12,#b45309)',
+  'linear-gradient(135deg,#431407,#7c2d12)',
+  'linear-gradient(135deg,#92400e,#d97706)',
+  'linear-gradient(135deg,#431407,#b45309)',
+  'linear-gradient(135deg,#7c2d12,#92400e)',
+];
+
+function initReel() {
+  const track = document.getElementById('reelTrack');
+  const wrap  = document.getElementById('reelWrap');
+  track.innerHTML = '';
+  reelX = 0; reelTarget = 0; reelVel = 0; reelIndex = 0;
+  cancelAnimationFrame(reelRafId);
+
+  APPS.forEach((app, i) => {
+    const card = document.createElement('div');
+    card.className = 'reel-card';
+    card.id = 'reelCard' + i;
+    card.innerHTML = `
+      <div class="reel-thumb" style="background:${reelGrads[i]}"></div>
+      <div class="reel-inner">
+        <div class="card-label">${app.label}</div>
+        <div class="card-sub">${app.url.replace('https://','')}</div>
+      </div>`;
+    card.addEventListener('click', (e) => {
+      if (!reelDrag && Math.abs(reelX - reelTarget) < 4) window.open(app.url, '_blank');
+    });
+    track.appendChild(card);
+  });
+
+  reelSnap(0);
+  reelLoop();
+
+  // Drag events
+  wrap.onmousedown = (e) => {
+    reelDrag = true; reelDragX0 = e.clientX; reelX0 = reelX;
+    reelVel = 0; reelInertia = false;
+    e.preventDefault();
+  };
+  document.onmousemove = (e) => {
+    if (!reelDrag) return;
+    const dx = e.clientX - reelDragX0;
+    reelX = reelX0 - dx;
+    reelVel = -dx * 0.05;
+  };
+  document.onmouseup = () => {
+    if (!reelDrag) return;
+    reelDrag = false;
+    reelInertia = true;
+  };
+
+  // Touch
+  wrap.ontouchstart = (e) => {
+    reelDrag = true; reelDragX0 = e.touches[0].clientX; reelX0 = reelX;
+    reelVel = 0; reelInertia = false;
+  };
+  wrap.ontouchmove = (e) => {
+    if (!reelDrag) return;
+    const dx = e.touches[0].clientX - reelDragX0;
+    reelX = reelX0 - dx;
+    reelVel = -(e.touches[0].clientX - reelDragX0) * 0.04;
+    e.preventDefault();
+  };
+  wrap.ontouchend = () => { reelDrag = false; reelInertia = true; };
+
+  // Scroll wheel
+  wrap.onwheel = (e) => {
+    e.preventDefault();
+    reelX += e.deltaY * 0.5;
+    reelVel = e.deltaY * 0.04;
+    reelInertia = true;
+  };
+}
+
+function reelSnap(idx) {
+  reelIndex  = Math.max(0, Math.min(APPS.length - 1, idx));
+  reelTarget = reelIndex * STEP;
+}
+
+function reelLoop() {
+  if (reelInertia && !reelDrag) {
+    reelX += reelVel;
+    reelVel *= 0.92;
+    if (Math.abs(reelVel) < 0.3) {
+      reelInertia = false;
+      const snappedIdx = Math.round(reelX / STEP);
+      reelSnap(snappedIdx);
+    }
+  }
+
+  if (!reelDrag && !reelInertia) {
+    reelX += (reelTarget - reelX) * 0.12;
+  }
+
+  // Clamp
+  const maxX = (APPS.length - 1) * STEP;
+  reelX = Math.max(0, Math.min(maxX, reelX));
+
+  const track = document.getElementById('reelTrack');
+  if (!track) { reelRafId = requestAnimationFrame(reelLoop); return; }
+  track.style.transform = `translateX(${-reelX}px)`;
+
+  // Highlight center card
+  const nearest = Math.round(reelX / STEP);
+  APPS.forEach((_, i) => {
+    const c = document.getElementById('reelCard' + i);
+    if (c) c.classList.toggle('reel-center', i === nearest);
+  });
+
+  reelRafId = requestAnimationFrame(reelLoop);
+}
+</script>
+</body>
+</html>

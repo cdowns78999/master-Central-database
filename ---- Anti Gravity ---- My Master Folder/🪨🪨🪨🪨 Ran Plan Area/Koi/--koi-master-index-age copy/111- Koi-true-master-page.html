@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The iPad Grid</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+    background: #0a0f1e;
+    background-image:
+      radial-gradient(circle at 15% 12%, rgba(99, 102, 241, 0.75), transparent 40%),
+      radial-gradient(circle at 85% 20%, rgba(236, 72, 153, 0.65), transparent 42%),
+      radial-gradient(circle at 25% 85%, rgba(14, 165, 233, 0.7), transparent 45%),
+      radial-gradient(circle at 80% 80%, rgba(245, 158, 11, 0.55), transparent 40%),
+      radial-gradient(circle at 55% 50%, rgba(168, 85, 247, 0.5), transparent 50%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: #f4f6ff;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 36px 28px 80px;
+  }
+
+  /* Title bar */
+  .titlebar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding: 0 6px;
+  }
+  .titlebar h1 {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 30px rgba(255,255,255,0.15);
+  }
+  .titlebar .caption {
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* Section */
+  section { margin-bottom: 28px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 6px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .section-header .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 12px currentColor;
+  }
+  .section-header .count {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Stack groups (Koi + Angel) — frosted glass container */
+  .stack-group {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 28px;
+    padding: 18px 18px 20px;
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.25) inset,
+      0 -1px 0 rgba(255,255,255,0.06) inset,
+      0 20px 60px rgba(0, 0, 0, 0.35);
+  }
+  .stack-group.koi {
+    background: rgba(186, 230, 253, 0.08);
+    border-color: rgba(186, 230, 253, 0.25);
+  }
+  .stack-group.angel {
+    background: rgba(255, 235, 180, 0.08);
+    border-color: rgba(255, 235, 180, 0.25);
+  }
+
+  .stack-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Grids */
+  .grid {
+    display: grid;
+    gap: 14px;
+  }
+  .koi .grid { grid-template-columns: repeat(4, 1fr); }
+  .angel .grid { grid-template-columns: repeat(3, 1fr); }
+  .other-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); padding: 0 4px; }
+
+  /* Tile — frosted glass panel */
+  .tile {
+    aspect-ratio: 1 / 1;
+    border-radius: 22px;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #ffffff;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.35) inset,
+      0 -1px 0 rgba(255,255,255,0.08) inset,
+      0 0 0 0.5px rgba(255,255,255,0.1) inset,
+      0 10px 30px rgba(0, 0, 0, 0.25),
+      0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+  }
+  .tile::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 55%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    box-shadow: 0 0 40px rgba(255,255,255,0.08) inset;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .tile > * { position: relative; z-index: 2; }
+  .tile:active {
+    transform: scale(0.96);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.25) inset,
+      0 4px 12px rgba(0,0,0,0.25);
+  }
+  .tile:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.12);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.45) inset,
+      0 -1px 0 rgba(255,255,255,0.1) inset,
+      0 16px 40px rgba(0, 0, 0, 0.35),
+      0 3px 8px rgba(0, 0, 0, 0.2);
+  }
+  .tile .emoji {
+    font-size: 44px;
+    line-height: 1;
+    filter: drop-shadow(0 3px 10px rgba(0,0,0,0.35));
+  }
+  .tile .name {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.25;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .tile .stack-tag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 2px 6px;
+    border-radius: 6px;
+    letter-spacing: 0.04em;
+    z-index: 3;
+  }
+
+  /* Per-tile translucent color tints (let background bleed through frosted glass) */
+  .tile.koi-1 { background: linear-gradient(135deg, rgba(255, 180, 210, 0.18) 0%, rgba(255, 140, 180, 0.12) 100%); }
+  .tile.koi-2 { background: linear-gradient(135deg, rgba(125, 211, 252, 0.2) 0%, rgba(56, 189, 248, 0.12) 100%); }
+  .tile.koi-3 { background: linear-gradient(135deg, rgba(252, 165, 165, 0.2) 0%, rgba(248, 113, 113, 0.12) 100%); }
+  .tile.koi-4 { background: linear-gradient(135deg, rgba(251, 207, 232, 0.2) 0%, rgba(244, 114, 182, 0.12) 100%); }
+
+  .tile.angel-1 { background: linear-gradient(135deg, rgba(253, 224, 71, 0.2) 0%, rgba(250, 204, 21, 0.12) 100%); }
+  .tile.angel-2 { background: linear-gradient(135deg, rgba(196, 181, 253, 0.2) 0%, rgba(167, 139, 250, 0.12) 100%); }
+  .tile.angel-3 { background: linear-gradient(135deg, rgba(249, 168, 212, 0.2) 0%, rgba(236, 72, 153, 0.12) 100%); }
+
+  .tile.app-1 { background: linear-gradient(135deg, rgba(252, 165, 165, 0.2) 0%, rgba(239, 68, 68, 0.12) 100%); }
+  .tile.app-2 { background: linear-gradient(135deg, rgba(216, 180, 254, 0.2) 0%, rgba(168, 85, 247, 0.12) 100%); }
+  .tile.app-3 { background: linear-gradient(135deg, rgba(134, 239, 172, 0.2) 0%, rgba(34, 197, 94, 0.12) 100%); }
+  .tile.app-4 { background: linear-gradient(135deg, rgba(147, 197, 253, 0.2) 0%, rgba(59, 130, 246, 0.12) 100%); }
+  .tile.app-5 { background: linear-gradient(135deg, rgba(253, 224, 71, 0.2) 0%, rgba(245, 158, 11, 0.12) 100%); }
+
+  /* Stack-internal connector indicator */
+  .stack-group .grid {
+    position: relative;
+  }
+
+  /* Footer note */
+  .foot {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.04em;
+  }
+
+  /* iPad portrait tweaks */
+  @media (max-width: 820px) {
+    .titlebar h1 { font-size: 28px; }
+    .koi .grid { grid-template-columns: repeat(2, 1fr); }
+    .angel .grid { grid-template-columns: repeat(3, 1fr); }
+    .tile .emoji { font-size: 38px; }
+  }
+  @media (max-width: 520px) {
+    .angel .grid { grid-template-columns: repeat(2, 1fr); }
+    .other-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="titlebar">
+      <h1>The iPad Grid</h1>
+      <div class="caption">tap to launch</div>
+    </div>
+
+    <!-- KOI STACK -->
+    <section>
+      <div class="section-header">
+        <span class="dot" style="background:#0ea5e9"></span>
+        Koi Stack
+        <span class="count">— 4 linked apps</span>
+      </div>
+      <div class="stack-group koi">
+        <div class="stack-label">🔗 Koi Stack — linked together</div>
+        <div class="grid">
+          <a class="tile koi-1" href="https://little-koi-link-tree-1776618139.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">KOI</span>
+            <div class="emoji">🐠</div>
+            <div class="name">Little Koi<br>Link Tree</div>
+          </a>
+          <a class="tile koi-2" href="https://koi-where-opera-stands-04428.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">KOI</span>
+            <div class="emoji">🌊</div>
+            <div class="name">Koi Where<br>Opera Stands</div>
+          </a>
+          <a class="tile koi-3" href="https://koi-warm-heart.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">KOI</span>
+            <div class="emoji">💗</div>
+            <div class="name">Koi<br>Warm Heart</div>
+          </a>
+          <a class="tile koi-4" href="https://for-koi-603660.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">KOI</span>
+            <div class="emoji">🌸</div>
+            <div class="name">For Koi</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANGEL STACK -->
+    <section>
+      <div class="section-header">
+        <span class="dot" style="background:#f59e0b"></span>
+        Angel Stack
+        <span class="count">— 3 linked apps</span>
+      </div>
+      <div class="stack-group angel">
+        <div class="stack-label">👼 Angel Stack — linked together</div>
+        <div class="grid">
+          <a class="tile angel-1" href="https://angel1-project-3657.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">ANGEL</span>
+            <div class="emoji">👼</div>
+            <div class="name">Angel1<br>Project</div>
+          </a>
+          <a class="tile angel-2" href="https://angel1-notes-3657.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">ANGEL</span>
+            <div class="emoji">📝</div>
+            <div class="name">Angel1<br>Notes</div>
+          </a>
+          <a class="tile angel-3" href="https://angel1-sample-3657.netlify.app" target="_blank" rel="noopener">
+            <span class="stack-tag">ANGEL</span>
+            <div class="emoji">🎨</div>
+            <div class="name">Angel1<br>Sample</div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- APPS -->
+    <section>
+      <div class="section-header">
+        <span class="dot" style="background:#6366f1"></span>
+        Apps
+        <span class="count">— 5 standalone</span>
+      </div>
+      <div class="grid other-grid">
+        <a class="tile app-1" href="https://vespers-salon.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🌹</div>
+          <div class="name">Vespers Salon</div>
+        </a>
+        <a class="tile app-2" href="https://mythical-warm-heart.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🦄</div>
+          <div class="name">Mythical<br>Warm Heart</div>
+        </a>
+        <a class="tile app-3" href="https://kiwi-warm-1776573437.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🥝</div>
+          <div class="name">Kiwi<br>Warm Heart</div>
+        </a>
+        <a class="tile app-4" href="https://samples-8-music-forms-1776604446.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🎵</div>
+          <div class="name">Samples 8<br>Music Forms</div>
+        </a>
+        <a class="tile app-5" href="https://vr-final-label.netlify.app" target="_blank" rel="noopener">
+          <div class="emoji">🎮</div>
+          <div class="name">VR Final<br>Label</div>
+        </a>
+      </div>
+    </section>
+
+    <div class="foot">12 live deploys · iPad Grid Preview</div>
+
+  </div>
+</body>
+</html>

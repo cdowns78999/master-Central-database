@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Dashboard | Baller Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg: #010c1a;
+            --primary: #4cc9f0;
+            --accent: #4361ee;
+            --secondary: #7209b7;
+            --pink: #ff5d8f;
+            --green: #34c759;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.5);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --radius-lg: 35px;
+            --radius-md: 20px;
+            --radius-pill: 100px;
+            --transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 10% 10%, #001219 0%, transparent 50%),
+                radial-gradient(circle at 90% 90%, #003049 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, #1a2a6c 0%, transparent 80%);
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4rem 2rem;
+        }
+
+        canvas#bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        /* TYPOGRAPHY */
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+
+        /* --------------------------- */
+        /* TIER 1: STRATEGIC KANBAN    */
+        /* --------------------------- */
+        .task-tier {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        .task-input-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .premium-input {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-pill);
+            padding: 1rem 2rem;
+            color: #fff;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .premium-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(76, 201, 240, 0.2);
+        }
+
+        .p-btn-action {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            border-radius: var(--radius-pill);
+            padding: 0 2.5rem;
+            font-weight: 800;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .p-btn-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(67, 97, 238, 0.4);
+        }
+
+        .kanban-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .kanban-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            min-height: 200px;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .col-tag {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            padding: 4px 12px;
+            border-radius: 5px;
+            width: fit-content;
+        }
+
+        /* --------------------------- */
+        /* TIER 2: CROWN CONSOLE       */
+        /* --------------------------- */
+        .crown-tier {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        .glass-side-panel {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            transition: var(--transition);
+        }
+
+        .center-pillar {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 45px;
+            padding: 3rem;
+            min-height: 700px;
+            box-shadow: 0 60px 150px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            transform: translateY(-20px);
+            /* The "Crown" Lift */
+        }
+
+        /* MAPPER STYLE BUTTONS (REPLICATED) */
+        .p-btn {
+            padding: 18px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-pill);
+            color: #fff;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .p-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(76, 201, 240, 0.2);
+        }
+
+        .p-btn .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary);
+        }
+
+        .btn-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+        }
+
+        .btn-label {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn-meta {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* KANBAN CARDS */
+        .baller-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            cursor: grab;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+        }
+
+        .baller-card:hover {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .baller-card:active {
+            cursor: grabbing;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 93, 143, 0.2);
+            border: 1px solid rgba(255, 93, 143, 0.4);
+            border-radius: 50%;
+            color: var(--pink);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .baller-card:hover .delete-btn {
+            display: flex;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 93, 143, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* --------------------------- */
+        /* TIER 3: WORKSTATION GRID    */
+        /* --------------------------- */
+        .workstation-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        /* ANIMATIONS */
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="container">
+
+        <!-- TIER 1: STRATEGIC TASK MANAGEMENT -->
+        <section class="task-tier">
+            <div class="section-label">Strategic Pipeline</div>
+            <div class="task-input-bar">
+                <input type="text" id="taskInput" placeholder="Enter high-level objective..." class="premium-input">
+                <button onclick="addStrategicTask()" class="p-btn-action">DEPLOY TASK</button>
+            </div>
+            <div class="kanban-grid">
+                <div class="kanban-column" id="strat-todo" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="col-tag" style="background: rgba(67, 97, 238, 0.2); color: var(--accent);">TO DO</div>
+                </div>
+                <div class="kanban-column" id="strat-done" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="col-tag" style="background: rgba(52, 199, 89, 0.2); color: var(--green);">COMPLETE</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TIER 2: CROWN CONSOLE PIECE -->
+        <section class="crown-tier">
+
+            <!-- LEFT WING: REPORTS -->
+            <aside class="glass-side-panel">
+                <div class="section-label">Reporting Hub</div>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div class="p-btn" style="border-color: var(--pink);">
+                        <div class="status-dot" style="background: var(--pink); box-shadow: 0 0 12px var(--pink);">
+                        </div>
+                        <div class="btn-info">
+                            <span class="btn-label btn-label-report">{artist name} report</span>
+                            <span class="btn-meta">A recap of finished campaigns.</span>
+                        </div>
+                    </div>
+                    <div class="drop-zone-mini"
+                        style="border: 2px dashed rgba(255, 93, 143, 0.3); border-radius: 20px; padding: 20px; text-align: center;">
+                        <input type="text" id="linkDrop" placeholder="Drop URL to save..."
+                            style="background: transparent; border: none; color: #fff; width: 100%; text-align: center; font-size: 11px; outline: none;">
+                        <div id="savedLinks" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER: CAMPAIGN ENGINE -->
+            <main class="center-pillar">
+                <div class="section-label" style="text-align: center;">Campaign Engine</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <button class="p-btn-action"
+                        style="padding: 12px 20px; font-size: 20px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"
+                        onclick="openCampaignWizard()">+</button>
+                    <div style="font-size: 10px; letter-spacing: 2px; color: var(--primary);">ACTIVE CAMPAIGNS</div>
+                </div>
+
+                <!-- CAMPAIGN BOARD -->
+                <div id="campaign-board" style="display: flex; flex-direction: column; gap: 2rem; flex-grow: 1;">
+                    <div class="kanban-column" id="camp-active" ondrop="drop(event)" ondragover="allowDrop(event)"
+                        style="min-height: 250px;">
+                        <!-- Active Campaign Cards -->
+                    </div>
+                    <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                    <div class="kanban-column" id="camp-closed" ondrop="drop(event)" ondragover="allowDrop(event)"
+                        style="min-height: 250px;">
+                        <div class="col-tag" style="background: rgba(255,255,255,0.05); color: var(--text-dim);">CLOSED
+                            ARCHIVE</div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- RIGHT WING: IDENTITY & CONSOLE -->
+            <aside class="glass-side-panel">
+                <div class="section-label">Identity & System</div>
+                <div style="display: flex; flex-direction: column; gap: 2rem; align-items: center;">
+                    <div class="profile-frame" style="position: relative;">
+                        <div class="glow"
+                            style="position: absolute; width: 120%; height: 120%; top: -10%; left: -10%; background: var(--primary); filter: blur(40px); opacity: 0.2; border-radius: 50%;">
+                        </div>
+                        <div class="img-wrap" id="profileImageWrap"
+                            style="width: 120px; height: 120px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.1); overflow: hidden; position: relative; z-index: 2; background: rgba(255,255,255,0.05); background-size: cover; background-position: center;">
+                            <svg id="defaultProfileIcon" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
+                                stroke-width="1" style="width: 100%; height: 100%; padding: 25px;">
+                                <circle cx="12" cy="8" r="5" />
+                                <path d="M20 21a8 8 0 0 0-16 0" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="p-btn">
+                        <div class="status-dot"></div>
+                        <div class="btn-info">
+                            <span class="btn-label">Console Hub</span>
+                            <span class="btn-meta">Root System Access</span>
+                        </div>
+                    </div>
+                    <!-- SPOTIFY IDENTITY SYNC INPUT -->
+                    <div style="width: 100%;">
+                        <input type="text" id="spotifySyncInput" placeholder="Paste Spotify Artist Link..."
+                            class="premium-input" style="font-size: 10px; padding: 10px 15px;"
+                            onpaste="setTimeout(() => syncSpotifyIdentity(this.value), 10)">
+                    </div>
+                    <!-- SYSTEM CONTROLS -->
+                    <div style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="backupState()" class="p-btn-action"
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--primary); color: var(--primary); padding: 12px; font-size: 10px;">BACKUP
+                            SYSTEM (.JSON)</button>
+                        <div class="p-btn" style="border-color: rgba(255, 93, 143, 0.6);" onclick="triggerRestore()">
+                            <div class="status-dot"
+                                style="background: rgba(255, 93, 143, 0.8); box-shadow: 0 0 12px rgba(255, 93, 143, 0.4);">
+                            </div>
+                            <div class="btn-info">
+                                <span class="btn-label">RESTORE SNAPSHOT</span>
+                                <span class="btn-meta">Load system backup</span>
+                            </div>
+                        </div>
+                        <input type="file" id="snapshotInput" style="display: none;" onchange="restoreState(event)">
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+
+    </div>
+
+    <!-- MODALS / OVERLAYS -->
+    <div id="campaignWizard"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(1,12,26,0.95); backdrop-filter: blur(15px); z-index: 100; align-items: center; justify-content: center;">
+        <div class="glass-side-panel" style="width: 450px; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="section-label">Deploy New Campaign</div>
+            <input type="text" id="wizSong" placeholder="Song/Project Name" class="premium-input">
+            <input type="text" id="wizType" placeholder="Campaign Category" class="premium-input">
+            <input type="text" id="wizPrice" placeholder="Value/Volume" class="premium-input">
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="createCampaign()" class="p-btn-action" style="flex: 1;">EXECUTE</button>
+                <button onclick="closeCampaignWizard()" class="p-btn-action"
+                    style="flex: 1; background: transparent; border: 1px solid rgba(255,255,255,0.2);">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CORE DASHBOARD ENGINE
+        let state = {
+            strategicTasks: [],
+            campaigns: [],
+            reports: [],
+            artistIdentity: {
+                name: '{artist name}',
+                photo: ''
+            }
+        };
+
+        // DYNAMIC IDENTITY SYNC
+        async function syncSpotifyIdentity(url) {
+            if (!url.includes('spotify.com')) return;
+            const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+            try {
+                const response = await fetch(oembedUrl);
+                const data = await response.json();
+                const artistName = data.title ? data.title.toUpperCase() : "SYNCED ARTIST";
+                const thumbUrl = data.thumbnail_url;
+
+                // Update State
+                state.artistIdentity.name = artistName;
+                state.artistIdentity.photo = thumbUrl;
+
+                // Update UI
+                updateIdentityUI();
+            } catch (error) {
+                console.error('Sync failed:', error);
+            }
+        }
+
+        function updateIdentityUI() {
+            // Update Report Button
+            const reportLabel = document.querySelector('.btn-label-report');
+            if (reportLabel) reportLabel.textContent = `${state.artistIdentity.name} report`;
+
+            // Update Profile Image
+            const imgWrap = document.getElementById('profileImageWrap');
+            const defaultIcon = document.getElementById('defaultProfileIcon');
+            if (state.artistIdentity.photo) {
+                imgWrap.style.backgroundImage = `url('${state.artistIdentity.photo}')`;
+                if (defaultIcon) defaultIcon.style.display = 'none';
+            } else {
+                imgWrap.style.backgroundImage = 'none';
+                if (defaultIcon) defaultIcon.style.display = 'block';
+            }
+        }
+
+        // SMART LINK SAVING
+        document.getElementById('linkDrop').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const url = this.value.trim();
+                if (!url) return;
+                const container = document.getElementById('savedLinks');
+                const link = document.createElement('a');
+                link.href = url.startsWith('http') ? url : 'https://' + url;
+                link.target = '_blank';
+                link.className = 'btn-meta';
+                link.style.display = 'block';
+                link.style.padding = '8px';
+                link.style.background = 'rgba(255,255,255,0.05)';
+                link.style.borderRadius = '10px';
+                link.style.color = 'var(--pink)';
+                link.style.textDecoration = 'none';
+                link.textContent = url.length > 25 ? url.substring(0, 22) + '...' : url;
+                container.appendChild(link);
+                this.value = '';
+            }
+        });
+
+        function addStrategicTask() {
+            const input = document.getElementById('taskInput');
+            const val = input.value.trim();
+            if (!val) return;
+            renderCard('strat-todo', val, 'Strategic ID: ' + Math.random().toString(36).substr(2, 5));
+            input.value = '';
+        }
+
+        function openCampaignWizard() { document.getElementById('campaignWizard').style.display = 'flex'; }
+        function closeCampaignWizard() { document.getElementById('campaignWizard').style.display = 'none'; }
+
+        function createCampaign() {
+            const song = document.getElementById('wizSong').value;
+            const type = document.getElementById('wizType').value;
+            const price = document.getElementById('wizPrice').value;
+            if (!song) return;
+            renderCard('camp-active', song, `${type} | ${price}`);
+            closeCampaignWizard();
+            document.getElementById('wizSong').value = '';
+        }
+
+        function renderCard(targetId, title, meta) {
+            const id = 'card-' + Date.now() + Math.random().toString(36).substr(2, 4);
+            const card = document.createElement('div');
+            card.className = 'baller-card';
+            card.id = id;
+            card.draggable = true;
+            card.ondragstart = drag;
+            card.innerHTML = `
+                <button class="delete-btn" onclick="deleteCard('${id}')">×</button>
+                <div class="btn-label" style="font-size: 13px;">${title}</div>
+                <div class="btn-meta">${meta}</div>
+            `;
+            document.getElementById(targetId).appendChild(card);
+        }
+
+        function deleteCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.remove();
+            }
+        }
+
+        // DRAG & DROP LOGIC
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.style.background = 'rgba(76, 201, 240, 0.05)'; }
+        function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.style.background = '';
+            const data = ev.dataTransfer.getData("text");
+            ev.currentTarget.appendChild(document.getElementById(data));
+        }
+
+        // PERSISTENCE
+        function backupState() {
+            const data = {
+                ...state,
+                stratTodo: Array.from(document.getElementById('strat-todo').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[0].textContent, m: c.children[1].textContent })),
+                stratDone: Array.from(document.getElementById('strat-done').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[0].textContent, m: c.children[1].textContent })),
+                campActive: Array.from(document.getElementById('camp-active').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[0].textContent, m: c.children[1].textContent })),
+                campClosed: Array.from(document.getElementById('camp-closed').children).filter(c => c.classList.contains('baller-card')).map(c => ({ t: c.children[0].textContent, m: c.children[1].textContent }))
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = 'baller-dashboard-state.json'; a.click();
+        }
+
+        function triggerRestore() {
+            document.getElementById('snapshotInput').click();
+        }
+
+        function restoreState(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    state = data;
+
+                    // Clear existing boards
+                    document.getElementById('strat-todo').innerHTML = '<div class="col-tag" style="background: rgba(67, 97, 238, 0.2); color: var(--accent);">TO DO</div>';
+                    document.getElementById('strat-done').innerHTML = '<div class="col-tag" style="background: rgba(52, 199, 89, 0.2); color: var(--green);">COMPLETE</div>';
+                    document.getElementById('camp-active').innerHTML = '';
+                    document.getElementById('camp-closed').innerHTML = '<div class="col-tag" style="background: rgba(255,255,255,0.05); color: var(--text-dim);">CLOSED ARCHIVE</div>';
+                    document.getElementById('savedLinks').innerHTML = '';
+
+                    // Restore board data
+                    if (data.stratTodo) data.stratTodo.forEach(c => renderCard('strat-todo', c.t, c.m));
+                    if (data.stratDone) data.stratDone.forEach(c => renderCard('strat-done', c.t, c.m));
+                    if (data.campActive) data.campActive.forEach(c => renderCard('camp-active', c.t, c.m));
+                    if (data.campClosed) data.campClosed.forEach(c => renderCard('camp-closed', c.t, c.m));
+
+                    // Restore Identity
+                    updateIdentityUI();
+
+                    console.log('State restored successfully');
+                } catch (err) {
+                    console.error('Snapshot recovery failed:', err);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // CANVAS PARTICLES (BALLER STYLE)
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const resize = () => {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            particles = Array.from({ length: 60 }, () => ({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                s: Math.random() * 2 + 1, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+                o: Math.random() * 0.4 + 0.1
+            }));
+        };
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+                ctx.fillStyle = `rgba(76, 201, 240, ${p.o})`;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        };
+        window.onresize = resize; resize(); animate();
+    </script>
+</body>
+
+</html>

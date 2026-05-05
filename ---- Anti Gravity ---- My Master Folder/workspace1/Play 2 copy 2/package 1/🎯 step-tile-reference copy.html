@@ -1,0 +1,435 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Tile Reference | Ahead</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #f5f1eb;
+            --primary: #0ea5e9;
+            --accent: #6366f1;
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --yellow: #eab308;
+            --purple: #a855f7;
+            --text: #0f172a;
+            --text-dim: rgba(15, 23, 42, 0.6);
+            --radius: 100px;
+            --card-radius: 20px;
+            --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+            padding: 2rem 1.5rem 4rem;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background:
+                radial-gradient(ellipse at 50% -20%, rgba(14, 165, 233, 0.08) 0%, transparent 80%),
+                radial-gradient(ellipse at 0% 100%, rgba(168, 85, 247, 0.06) 0%, transparent 70%),
+                radial-gradient(ellipse at 100% 100%, rgba(244, 63, 94, 0.06) 0%, transparent 70%),
+                linear-gradient(180deg, #ffffff 0%, #f0ebe5 50%, #ede5da 100%);
+            pointer-events: none; z-index: -2;
+        }
+
+        .blob { position: fixed; border-radius: 50%; pointer-events: none; z-index: -1; will-change: opacity; animation: pulse 12s infinite ease-in-out; }
+        .blob-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 70%); top: -10%; left: -10%; }
+        .blob-2 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%); bottom: -5%; right: -10%; animation-duration: 15s; animation-delay: 2s; }
+        @keyframes pulse { 0%,100% { opacity: 0.1; } 50% { opacity: 0.2; } }
+
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; position: relative; z-index: 10; }
+
+        /* ── Header ── */
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 {
+            font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; letter-spacing: -0.05em;
+            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 50%, var(--accent) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            animation: titleShimmer 8s ease-in-out infinite; background-size: 200% 200%;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+        }
+        @keyframes titleShimmer { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        .header .subtitle {
+            font-size: 0.8rem; font-weight: 500; color: var(--text); margin-top: 0.4rem;
+            letter-spacing: 0.15em; text-transform: uppercase; text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* ── Color Legend Bar ── */
+        .legend-bar {
+            display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+            margin-bottom: 2rem; padding: 14px 24px;
+            background: rgba(255,255,255,0.6); backdrop-filter: blur(20px);
+            border: 1.5px solid rgba(14,165,233,0.15); border-radius: var(--radius);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        }
+        .legend-item {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.12em; color: var(--text-dim);
+        }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* ── Section Headers ── */
+        .section-header {
+            font-size: 1.1rem; font-weight: 700; color: var(--text);
+            margin: 2.5rem 0 1.2rem; display: flex; align-items: center; gap: 12px;
+            letter-spacing: -0.01em; text-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .section-header::before { content: ''; width: 4px; height: 24px; border-radius: 2px; }
+        .section-header.core::before { background: var(--primary); }
+        .section-header.extended::before { background: var(--accent); }
+
+        /* ── Tile Grid ── */
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        /* ── Individual Tile ── */
+        .step-tile {
+            --shimmer-speed: 5s;
+            --delay: 0s;
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1.5px solid rgba(255, 255, 255, 0.9);
+            border-radius: var(--card-radius); color: var(--text);
+            cursor: pointer; position: relative; overflow: hidden; isolation: isolate;
+            transition: transform var(--transition), border-color var(--transition), background var(--transition), box-shadow var(--transition);
+            box-shadow: 0 4px 12px -1px rgba(0,0,0,0.1), 0 2px 6px -1px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+
+        /* Radial glow on hover */
+        .step-tile::before {
+            content: ''; position: absolute; inset: 0; border-radius: inherit;
+            background: radial-gradient(ellipse 150% 80% at var(--x, 50%) var(--y, 50%), rgba(76,201,240,0.08) 0%, transparent 50%);
+            opacity: 0; transition: opacity 0.4s ease; pointer-events: none; z-index: 1;
+        }
+
+        /* Shimmer band */
+        .step-tile::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 300%; height: 100%;
+            background: linear-gradient(90deg,
+                rgba(14,165,233,0) 0%, rgba(14,165,233,0.10) 10%, rgba(99,102,241,0.12) 20%,
+                rgba(168,85,247,0.10) 30%, rgba(244,63,94,0.08) 40%, rgba(245,158,11,0.06) 50%,
+                rgba(244,63,94,0.08) 60%, rgba(168,85,247,0.10) 70%, rgba(99,102,241,0.12) 80%,
+                rgba(14,165,233,0.10) 90%, rgba(14,165,233,0) 100%);
+            transform: translateX(-100%) translateZ(0);
+            animation: shimmerFlow var(--shimmer-speed) ease-in-out infinite;
+            animation-delay: var(--delay); pointer-events: none; z-index: 2;
+        }
+        @keyframes shimmerFlow { 0% { transform: translateX(-100%) translateZ(0); } 100% { transform: translateX(100%) translateZ(0); } }
+
+        .step-tile:nth-child(2n) { --delay: 0.6s; }
+        .step-tile:nth-child(3n) { --delay: 1.2s; }
+        .step-tile:nth-child(4n) { --delay: 1.8s; }
+        .step-tile:nth-child(5n) { --delay: 0.3s; }
+
+        .step-tile:hover {
+            transform: translateY(-4px) scale(1.01);
+            background: rgba(255,255,255,0.85);
+            border-color: rgba(255,255,255,1);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.04), 0 0 20px rgba(14,165,233,0.1);
+        }
+        .step-tile:hover::before { opacity: 1; }
+        .step-tile:active { transform: translateY(-1px) scale(0.99); }
+
+        /* Copied flash */
+        .step-tile.copied {
+            border-color: var(--green) !important;
+            box-shadow: 0 0 20px rgba(16,185,129,0.25), 0 4px 12px rgba(0,0,0,0.08) !important;
+        }
+        .step-tile.copied .tile-badge { background: var(--green); color: #fff; }
+
+        /* Tile internal elements */
+        .tile-dot {
+            width: 10px; height: 10px; min-width: 10px;
+            border-radius: 50%; position: relative; z-index: 5;
+            animation: dotPulse 3s ease-in-out infinite;
+        }
+        @keyframes dotPulse { 0%,100% { box-shadow: 0 0 8px currentColor, 0 0 16px rgba(76,201,240,0.3); } 50% { box-shadow: 0 0 12px currentColor, 0 0 24px rgba(76,201,240,0.5); } }
+        .step-tile:hover .tile-dot { transform: scale(1.3); }
+
+        .tile-content { display: flex; flex-direction: column; gap: 3px; flex: 1; position: relative; z-index: 5; }
+        .tile-name {
+            font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .tile-sub {
+            font-size: 0.65rem; font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim); text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .tile-badge {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 10px;
+            border-radius: var(--radius); position: relative; z-index: 5;
+            background: rgba(15,23,42,0.04); color: var(--text-dim);
+            transition: all 0.25s ease;
+        }
+
+        /* ── Hotkey hint ── */
+        .tile-hotkey {
+            position: absolute; top: 6px; right: 10px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; font-weight: 700;
+            color: var(--primary); opacity: 0.4; z-index: 5;
+        }
+
+        /* ── Footer ── */
+        .footer-bar {
+            margin-top: 3rem; padding: 16px 24px;
+            background: rgba(255,255,255,0.5); backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(14,165,233,0.12); border-radius: var(--radius);
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        }
+        .footer-stat {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
+            color: var(--text-dim); display: flex; align-items: center; gap: 8px;
+        }
+        .footer-stat .count {
+            font-size: 1.1rem; font-weight: 800; color: var(--primary);
+        }
+        .clear-stack-btn {
+            padding: 8px 20px; border-radius: var(--radius);
+            background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239,68,68,0.25);
+            color: var(--red); font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            cursor: pointer; transition: all 0.25s ease;
+        }
+        .clear-stack-btn:hover { background: rgba(239,68,68,0.2); color: #fff; border-color: var(--red); }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Step Tile Reference</h1>
+            <p class="subtitle">Ahead Artist Solutions &mdash; Workflow Cue Cards</p>
+        </div>
+
+        <!-- Color Legend -->
+        <div class="legend-bar">
+            <div class="legend-item"><div class="legend-dot" style="background:#10b981;box-shadow:0 0 6px #10b981"></div>Planning</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#eab308;box-shadow:0 0 6px #eab308"></div>Outreach</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b"></div>Follow-Up</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#a855f7;box-shadow:0 0 6px #a855f7"></div>Conversion</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444"></div>Meetings</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9;box-shadow:0 0 6px #0ea5e9"></div>Tracking</div>
+        </div>
+
+        <!-- ── CORE STEPS (from Chrome Extension) ── -->
+        <div class="section-header core">Core Steps</div>
+        <div class="tile-grid" id="coreGrid"></div>
+
+        <!-- ── EXTENDED STEPS (new additions) ── -->
+        <div class="section-header extended">Extended Steps</div>
+        <div class="tile-grid" id="extGrid"></div>
+
+        <!-- ── ONE WORD (quick-fire single words) ── -->
+        <div class="section-header core">One Word</div>
+        <div class="tile-grid" id="oneWordGrid"></div>
+
+        <!-- ── TEXT ICONS (arrows + symbols, no emoji, no SVG) ── -->
+        <div class="section-header extended">Text Icons</div>
+        <div class="tile-grid" id="iconGrid"></div>
+
+        <!-- Footer -->
+        <div class="footer-bar">
+            <div class="footer-stat"><span class="count" id="stackCount">0</span> in clipboard stack</div>
+            <button class="clear-stack-btn" id="clearStack">Clear Stack</button>
+        </div>
+    </div>
+
+    <script>
+        // ── CORE TILES (from Chrome extension popup.js) ──
+        const coreTiles = [
+            { emoji: "✌️", name: "Set The Goal",                 sub: "Define the target outcome",         color: "#10b981", hotkey: "1" },
+            { emoji: "🟢", name: "Set Their Phase Plan",         sub: "Map the client's timeline",         color: "#10b981", hotkey: "2" },
+            { emoji: "🟡", name: "Contact Them",                 sub: "Initial outreach — email / DM",     color: "#eab308", hotkey: "3" },
+            { emoji: "🟡", name: "Call Them",                    sub: "Phone or video call",               color: "#eab308", hotkey: "4" },
+            { emoji: "🟡", name: "Send Recap Email",             sub: "Post-call summary to client",       color: "#eab308", hotkey: "5" },
+            { emoji: "🟡", name: "Update SIMS' Dash",            sub: "Log activity in SIMS dashboard",   color: "#eab308", hotkey: "6" },
+            { emoji: "🟠", name: "Follow Up",                    sub: "Chase outstanding items",           color: "#f59e0b", hotkey: "7" },
+            { emoji: "🟣", name: "Get Them To Purchase",         sub: "Close the deal — conversion push",  color: "#a855f7", hotkey: "8" },
+            { emoji: "🔴", name: "Get on: Group Weekly Call",    sub: "Team sync — group check-in",        color: "#ef4444", hotkey: "9" },
+            { emoji: "🔴", name: "Get on: Weekly Personal Call", sub: "1-on-1 with artist / client",       color: "#ef4444", hotkey: "0" },
+            { emoji: "🔵", name: "Report and Track Order",       sub: "Log & monitor active orders",       color: "#0ea5e9", hotkey: null },
+            { emoji: "🔵", name: "Unique",                       sub: "One-off / custom task",             color: "#0ea5e9", hotkey: null },
+            { emoji: "🔵", name: "Problem",                      sub: "Flag an issue for resolution",      color: "#0ea5e9", hotkey: null },
+        ];
+
+        // ── EXTENDED TILES (additional workflow cues) ──
+        const extTiles = [
+            { emoji: "📋", name: "Review Contract",              sub: "Check terms before signing",         color: "#6366f1" },
+            { emoji: "💰", name: "Send Invoice",                 sub: "Bill the client via PayPal",         color: "#f59e0b" },
+            { emoji: "📅", name: "Schedule Meeting",             sub: "Lock in date + calendar invite",     color: "#ef4444" },
+            { emoji: "🧑‍💻", name: "Onboard New Client",           sub: "Intake form + vault entry",          color: "#10b981" },
+            { emoji: "📊", name: "Check Campaign Status",        sub: "Review active campaign metrics",     color: "#0ea5e9" },
+            { emoji: "📝", name: "Create Proposal",              sub: "Draft offer / scope for client",     color: "#a855f7" },
+            { emoji: "💳", name: "Log Payment",                  sub: "Record received payment",            color: "#10b981" },
+            { emoji: "🚨", name: "Escalate Issue",               sub: "Flag critical — needs attention now", color: "#ef4444" },
+            { emoji: "📂", name: "Update Client Profile",        sub: "Edit client info in vault",          color: "#0ea5e9" },
+            { emoji: "🔁", name: "Send Follow-Up Email",         sub: "Second touch — keep momentum",       color: "#f59e0b" },
+        ];
+
+        // ── ONE WORD TILES ──
+        const oneWordTiles = [
+            { emoji: "", name: "Goal",       sub: "What's the target?",    color: "#10b981" },
+            { emoji: "", name: "Plan",       sub: "Map it out",            color: "#10b981" },
+            { emoji: "", name: "Contact",    sub: "Reach out",             color: "#eab308" },
+            { emoji: "", name: "Call",       sub: "Get on the phone",      color: "#eab308" },
+            { emoji: "", name: "Email",      sub: "Send it written",       color: "#eab308" },
+            { emoji: "", name: "Update",     sub: "Log the change",        color: "#0ea5e9" },
+            { emoji: "", name: "Follow",     sub: "Stay on it",            color: "#f59e0b" },
+            { emoji: "", name: "Close",      sub: "Seal the deal",         color: "#a855f7" },
+            { emoji: "", name: "Meet",       sub: "Sync up",               color: "#ef4444" },
+            { emoji: "", name: "Track",      sub: "Monitor progress",      color: "#0ea5e9" },
+            { emoji: "", name: "Review",     sub: "Check the work",        color: "#6366f1" },
+            { emoji: "", name: "Invoice",    sub: "Bill them",             color: "#f59e0b" },
+            { emoji: "", name: "Onboard",    sub: "Bring them in",         color: "#10b981" },
+            { emoji: "", name: "Escalate",   sub: "Flag it now",           color: "#ef4444" },
+            { emoji: "", name: "Ship",       sub: "Send it out",           color: "#0ea5e9" },
+        ];
+
+        // ── TEXT ICON TILES (arrows + symbols — no emoji, no SVG) ──
+        const iconTiles = [
+            { emoji: "", name: "\u2191",     sub: "Up arrow",              color: "#10b981" },
+            { emoji: "", name: "\u2193",     sub: "Down arrow",            color: "#10b981" },
+            { emoji: "", name: "\u2190",     sub: "Left arrow",            color: "#0ea5e9" },
+            { emoji: "", name: "\u2192",     sub: "Right arrow",           color: "#0ea5e9" },
+            { emoji: "", name: "\u2196",     sub: "Up-left arrow",         color: "#6366f1" },
+            { emoji: "", name: "\u2197",     sub: "Up-right arrow",        color: "#6366f1" },
+            { emoji: "", name: "\u2198",     sub: "Down-right arrow",      color: "#a855f7" },
+            { emoji: "", name: "\u2199",     sub: "Down-left arrow",       color: "#a855f7" },
+            { emoji: "", name: "\u21C4",     sub: "Right left arrows",     color: "#f59e0b" },
+            { emoji: "", name: "\u21C5",     sub: "Up down arrows",        color: "#f59e0b" },
+            { emoji: "", name: "\u21B5",     sub: "Return / enter",        color: "#eab308" },
+            { emoji: "", name: "\u21BB",     sub: "Clockwise loop",        color: "#eab308" },
+            { emoji: "", name: "\u21BA",     sub: "Counter-clockwise",     color: "#ef4444" },
+            { emoji: "", name: "\u21D2",     sub: "Double right arrow",    color: "#0ea5e9" },
+            { emoji: "", name: "\u21D0",     sub: "Double left arrow",     color: "#0ea5e9" },
+            { emoji: "", name: "\u21D1",     sub: "Double up arrow",       color: "#10b981" },
+            { emoji: "", name: "\u21D3",     sub: "Double down arrow",     color: "#10b981" },
+            { emoji: "", name: "\u27A4",     sub: "Heavy right arrow",     color: "#f59e0b" },
+            { emoji: "", name: "\u25B2",     sub: "Triangle up",           color: "#ef4444" },
+            { emoji: "", name: "\u25BC",     sub: "Triangle down",         color: "#ef4444" },
+            { emoji: "", name: "\u25C0",     sub: "Triangle left",         color: "#6366f1" },
+            { emoji: "", name: "\u25B6",     sub: "Triangle right / play", color: "#6366f1" },
+            { emoji: "", name: "\u2713",     sub: "Checkmark",             color: "#10b981" },
+            { emoji: "", name: "\u2717",     sub: "X mark",                color: "#ef4444" },
+            { emoji: "", name: "\u2605",     sub: "Star",                  color: "#f59e0b" },
+        ];
+
+        // ── Clipboard Stack ──
+        let clipStack = [];
+        const stackCountEl = document.getElementById('stackCount');
+
+        function updateStackCount() {
+            stackCountEl.textContent = clipStack.length;
+        }
+
+        // ── Build Tiles ──
+        function createTile(data, index, parent) {
+            const tile = document.createElement('div');
+            tile.className = 'step-tile';
+            tile.dataset.name = `${data.emoji} ${data.name}`;
+
+            let hotkeyHtml = '';
+            if (data.hotkey) {
+                hotkeyHtml = `<span class="tile-hotkey">[${data.hotkey}]</span>`;
+            }
+
+            tile.innerHTML = `
+                ${hotkeyHtml}
+                <div class="tile-dot" style="background:${data.color}; color:${data.color};"></div>
+                <div class="tile-content">
+                    <div class="tile-name">${data.emoji} ${data.name}</div>
+                    <div class="tile-sub">${data.sub}</div>
+                </div>
+                <div class="tile-badge">Copy</div>
+            `;
+
+            // Click to copy
+            tile.addEventListener('click', () => {
+                const text = `${data.emoji} ${data.name}`;
+                clipStack.push(text);
+                navigator.clipboard.writeText(clipStack.join('\n')).then(() => {
+                    tile.classList.add('copied');
+                    tile.querySelector('.tile-badge').textContent = 'Copied';
+                    updateStackCount();
+                    setTimeout(() => {
+                        tile.classList.remove('copied');
+                        tile.querySelector('.tile-badge').textContent = 'Copy';
+                    }, 600);
+                });
+            });
+
+            // Radial glow follow
+            tile.addEventListener('mousemove', (e) => {
+                const rect = tile.getBoundingClientRect();
+                tile.style.setProperty('--x', ((e.clientX - rect.left) / rect.width * 100) + '%');
+                tile.style.setProperty('--y', ((e.clientY - rect.top) / rect.height * 100) + '%');
+            });
+
+            parent.appendChild(tile);
+        }
+
+        const coreGrid = document.getElementById('coreGrid');
+        const extGrid = document.getElementById('extGrid');
+        const oneWordGrid = document.getElementById('oneWordGrid');
+        const iconGrid = document.getElementById('iconGrid');
+
+        coreTiles.forEach((t, i) => createTile(t, i, coreGrid));
+        extTiles.forEach((t, i) => createTile(t, i, extGrid));
+        oneWordTiles.forEach((t, i) => createTile(t, i, oneWordGrid));
+        iconTiles.forEach((t, i) => createTile(t, i, iconGrid));
+
+        // ── Keyboard Shortcuts (1-9, 0) ──
+        window.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') {
+                const index = e.key === '0' ? 9 : parseInt(e.key) - 1;
+                const tiles = coreGrid.querySelectorAll('.step-tile');
+                if (tiles[index]) tiles[index].click();
+            }
+        });
+
+        // ── Clear Stack ──
+        document.getElementById('clearStack').addEventListener('click', () => {
+            clipStack = [];
+            navigator.clipboard.writeText('').then(() => {
+                updateStackCount();
+                const btn = document.getElementById('clearStack');
+                btn.textContent = 'Cleared';
+                btn.style.background = 'rgba(16,185,129,0.15)';
+                btn.style.borderColor = 'rgba(16,185,129,0.4)';
+                btn.style.color = '#10b981';
+                setTimeout(() => {
+                    btn.textContent = 'Clear Stack';
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+</html>

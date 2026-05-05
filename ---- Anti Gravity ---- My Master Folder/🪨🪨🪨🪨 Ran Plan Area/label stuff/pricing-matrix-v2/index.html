@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Finder — Pricing Matrix v2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pos.css">
+    <style>
+        /* ===== RESET ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ===== BASE ===== */
+        html, body {
+            height: 100%;
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at 50% 15%, #ffffff 0%, #fdfdfd 40%, #f4f6f8 100%);
+            color: #1a1a2e;
+            overflow-x: hidden;
+        }
+
+        /* ===== AMBIENT GLOW ORBS ===== */
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(80px);
+            opacity: 0.35;
+        }
+        .glow-orb--1 {
+            width: 340px;
+            height: 340px;
+            background: rgba(77, 166, 255, 0.18);
+            top: -60px;
+            left: 20%;
+            animation: glow-pulse 8s ease-in-out infinite alternate;
+        }
+        .glow-orb--2 {
+            width: 280px;
+            height: 280px;
+            background: rgba(99, 102, 241, 0.12);
+            top: 40%;
+            right: 5%;
+            animation: glow-pulse 10s ease-in-out infinite alternate;
+        }
+        .glow-orb--3 {
+            width: 220px;
+            height: 220px;
+            background: rgba(16, 185, 129, 0.10);
+            bottom: 10%;
+            left: 10%;
+            animation: glow-pulse 12s ease-in-out infinite alternate;
+        }
+        @keyframes glow-pulse {
+            0%   { opacity: 0.25; transform: scale(1); }
+            100% { opacity: 0.45; transform: scale(1.15); }
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 64px;
+            height: 100vh;
+            background: #ffffff;
+            border-right: 1px solid #f2f4f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 14px;
+            z-index: 100;
+        }
+        .sidebar .logo-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid #4da6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.7rem;
+            color: #4da6ff;
+            margin-bottom: 28px;
+            transition: background 0.2s ease, color 0.2s ease;
+            user-select: none;
+        }
+        .sidebar .logo-circle:hover {
+            background: #4da6ff;
+            color: #ffffff;
+        }
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+        }
+        .nav-item {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.7rem;
+            color: #b0b8c4;
+            transition: background 0.2s ease, color 0.2s ease;
+            user-select: none;
+        }
+        .nav-item:hover {
+            background: rgba(77, 166, 255, 0.06);
+            color: #4da6ff;
+        }
+        .nav-item.active {
+            background: rgba(77, 166, 255, 0.10);
+            color: #4da6ff;
+        }
+        .sidebar-bottom {
+            margin-top: auto;
+            padding-bottom: 18px;
+        }
+        .nav-item.pos-launcher {
+            color: #c0c6d0;
+            font-size: 0.8rem;
+        }
+        .nav-item.pos-launcher:hover {
+            color: #4da6ff;
+            background: rgba(77, 166, 255, 0.06);
+        }
+
+        /* ===== TOP BAR ===== */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 64px;
+            right: 0;
+            height: 64px;
+            background: #ffffff;
+            border-bottom: 1px solid #f2f4f7;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 90;
+        }
+        .topbar-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #1a1a2e;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+        .topbar-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar-profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4da6ff, #6366f1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.65rem;
+            color: #ffffff;
+        }
+        .topbar-profile-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 400;
+            color: #8892a4;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            margin-left: 64px;
+            margin-top: 64px;
+            padding: 20px 24px;
+            position: relative;
+            z-index: 1;
+            min-height: calc(100vh - 64px);
+        }
+
+        /* ===== PHASE CONTAINERS ===== */
+        .phase { display: none; }
+        .phase.active { display: block; }
+
+        /* ===== HERO PHASE ===== */
+        .phase-hero {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 64px - 40px);
+            cursor: pointer;
+            user-select: none;
+        }
+        .phase-hero.active { display: flex; }
+        .hero-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 2.4rem;
+            color: #1a1a2e;
+            letter-spacing: -0.02em;
+            text-align: center;
+            line-height: 1.3;
+        }
+        .hero-text .char {
+            display: inline-block;
+            opacity: 0;
+            animation: stardustReveal 0.5s ease forwards;
+        }
+        @keyframes stardustReveal {
+            0%   { opacity: 0; transform: translateY(8px) scale(0.92); filter: blur(2px); }
+            60%  { opacity: 0.7; transform: translateY(-2px) scale(1.02); filter: blur(0); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        /* ===== GENRE SWITCH (HIDDEN, JS-CONTROLLED) ===== */
+        .genre-switch {
+            display: none;
+        }
+
+        /* ===== SEARCH BAR ===== */
+        .search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .search-bar {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: #1a1a2e;
+            background: #ffffff;
+            border: 1px solid #f0f0f0;
+            border-radius: 9999px;
+            padding: 10px 20px;
+            width: 340px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .search-bar::placeholder {
+            color: #c0c6d0;
+        }
+        .search-bar:focus {
+            border-color: rgba(77, 166, 255, 0.3);
+            box-shadow: 0 0 0 3px rgba(77, 166, 255, 0.06);
+        }
+        .search-scope {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 400;
+            color: #b0b8c4;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        /* ===== CATEGORY TITLE ===== */
+        .cat-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 1.6rem;
+            color: #1a1a2e;
+            letter-spacing: -0.01em;
+            margin-bottom: 6px;
+        }
+
+        /* ===== BACK BUTTON ===== */
+        .back-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 400;
+            color: #b0b8c4;
+            cursor: pointer;
+            margin-bottom: 14px;
+            display: inline-block;
+            transition: color 0.2s ease;
+            user-select: none;
+        }
+        .back-btn:hover {
+            color: #4da6ff;
+        }
+
+        /* ===== SORT ROW ===== */
+        .sort-row {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 400;
+            color: #c0c6d0;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+        }
+        .sort-row .sort-label {
+            color: #c0c6d0;
+            margin-right: 2px;
+        }
+        .sort-row .sort-option {
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            transition: color 0.2s ease, background 0.2s ease;
+        }
+        .sort-row .sort-option:hover {
+            color: #4da6ff;
+        }
+        .sort-row .sort-option.active {
+            color: #4da6ff;
+            text-shadow: 0 0 8px rgba(77, 166, 255, 0.4);
+        }
+        .sort-row .sort-sep {
+            color: #dde1e8;
+        }
+
+        /* ===== LABEL ROW ===== */
+        .label-row {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            border-radius: 12px;
+        }
+        .label-row:hover {
+            background: rgba(77, 166, 255, 0.02);
+        }
+
+        /* ===== SELECTION BOX (label name pill) ===== */
+        .selection-box {
+            width: 280px;
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #ffffff;
+            text-align: left;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .selection-box:hover {
+            transform: scale(1.015);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        /* ===== FIELD CONTAINER (right cell) ===== */
+        .field-container {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0,0,0,0.025);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            overflow-x: auto;
+        }
+        .field-container::-webkit-scrollbar { display: none; }
+
+        /* ===== PILL BADGES ===== */
+        .badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            white-space: nowrap;
+            display: inline-block;
+            background: rgba(77, 166, 255, 0.06);
+            border: 1px solid rgba(77, 166, 255, 0.12);
+            opacity: 0;
+            animation: pillFlutter 0.4s ease forwards;
+            animation-delay: calc(var(--pill-i, 0) * 0.06s);
+        }
+        @keyframes pillFlutter {
+            from { opacity: 0; transform: translateY(4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Badge variants */
+        .badge.type-major {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.06);
+        }
+        .badge.type-major-backed {
+            color: #4da6ff;
+            border-color: rgba(77, 166, 255, 0.2);
+            background: rgba(77, 166, 255, 0.06);
+        }
+        .badge.type-independent {
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.15);
+            background: rgba(16, 185, 129, 0.06);
+        }
+        .badge.sub-genre {
+            color: #f43f5e;
+            border-color: rgba(244, 63, 94, 0.12);
+            background: rgba(244, 63, 94, 0.06);
+        }
+        .badge.location {
+            color: #6366f1;
+            border-color: rgba(99, 102, 241, 0.12);
+            background: rgba(99, 102, 241, 0.06);
+        }
+        .badge.roster {
+            color: #4da6ff;
+            border-color: rgba(77, 166, 255, 0.12);
+            background: rgba(77, 166, 255, 0.06);
+        }
+
+        /* ===== EXPANDED DETAIL ===== */
+        .label-expand {
+            display: none;
+            grid-column: 1 / -1;
+            margin: 4px 0 8px 0;
+            padding: 10px 16px;
+            background: rgba(0,0,0,0.018);
+            border-radius: 14px;
+        }
+        .label-expand.open {
+            display: block;
+        }
+        .label-expand-inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+        .label-expand .badge {
+            font-size: 0.5rem;
+        }
+        .expand-section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            font-weight: 400;
+            color: #b0b8c4;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-right: 4px;
+        }
+
+        /* ===== HOVER PROFILE CARD ===== */
+        .hover-card {
+            position: absolute;
+            z-index: 500;
+            background: #ffffff;
+            border: 1px solid #f0f0f0;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 16px 20px;
+            width: 340px;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+        }
+        .hover-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .hover-card-header {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .hover-card-artists {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .hover-artist {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            animation: pillFlutter 0.4s ease forwards;
+            animation-delay: calc(var(--artist-i, 0) * 0.08s);
+        }
+        .hover-artist-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.6rem;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+        .hover-artist-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .hover-artist-name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: #1a1a2e;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hover-artist-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 400;
+            color: #b0b8c4;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hover-artist-stats {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .hover-artist-listeners {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .hover-artist-trend {
+            font-size: 0.55rem;
+        }
+        .hover-artist-trend.up { color: #10b981; }
+        .hover-artist-trend.down { color: #ef4444; }
+
+        /* ===== LABEL LIST WRAPPER ===== */
+        .label-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* ===== LABEL VIEW ===== */
+        .label-view-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 1.6rem;
+            color: #1a1a2e;
+            letter-spacing: -0.01em;
+            margin-bottom: 6px;
+        }
+
+        /* ===== POS SIDEBAR (placeholder) ===== */
+        .pos-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 380px;
+            height: 100vh;
+            background: #ffffff;
+            border-left: 1px solid #f0f0f0;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+            z-index: 200;
+            padding: 24px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .pos-sidebar.open {
+            transform: translateX(0);
+        }
+        .pos-sidebar-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1rem;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+        }
+
+        /* ===== SCROLLBAR STYLING ===== */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e0e4ea; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c0c6d0; }
+
+        /* ===== UTILITY ===== */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- ===== AMBIENT GLOW ORBS ===== -->
+    <div class="glow-orb glow-orb--1"></div>
+    <div class="glow-orb glow-orb--2"></div>
+    <div class="glow-orb glow-orb--3"></div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="logo-circle" id="logoBack" title="Toggle Bass / House">B</div>
+        <nav class="sidebar-nav">
+            <div class="nav-item" data-cat="all" title="All Labels">A</div>
+            <div class="nav-item active" data-cat="bass" title="Bass">B</div>
+            <div class="nav-item" data-cat="house" title="House">H</div>
+            <div class="nav-item" data-cat="riddim" title="Riddim">R</div>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="nav-item pos-launcher" id="posLaunchSidebar" title="POS Analyzer">?</div>
+        </div>
+    </aside>
+
+    <!-- ===== TOP BAR ===== -->
+    <header class="topbar">
+        <span class="topbar-title">label finder</span>
+        <div class="topbar-profile">
+            <div class="topbar-profile-avatar">CD</div>
+            <span class="topbar-profile-name">Chad Downs</span>
+        </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content">
+
+        <!-- Genre switch (hidden, JS-controlled) -->
+        <div id="genreSwitch" class="genre-switch">
+            <button class="genre-switch-btn" data-genre="bass">Bass</button>
+            <button class="genre-switch-btn" data-genre="house">House</button>
+        </div>
+
+        <!-- ===== PHASE: HERO ===== -->
+        <section id="phaseHero" class="phase phase-hero active">
+            <div id="heroClick" style="cursor:pointer;">
+                <h1 id="heroText" class="hero-text"></h1>
+            </div>
+        </section>
+
+        <!-- ===== PHASE: CATEGORIES (genre view) ===== -->
+        <section id="phaseCategories" class="phase">
+
+            <!-- Search -->
+            <div class="search-wrap">
+                <input type="text" id="searchBar" class="search-bar" placeholder="search bass..." autocomplete="off" spellcheck="false">
+                <span id="searchScope" class="search-scope">// scope: bass</span>
+            </div>
+
+            <!-- Sort Row -->
+            <div class="sort-row" id="sortRow">
+                <span class="sort-label">// sort:</span>
+                <span class="sort-option active" data-sort="roster">roster</span>
+                <span class="sort-sep">&middot;</span>
+                <span class="sort-option" data-sort="year">year</span>
+                <span class="sort-sep">&middot;</span>
+                <span class="sort-option" data-sort="az">a-z</span>
+                <span class="sort-sep">&middot;</span>
+                <span class="sort-option" data-sort="reach">reach</span>
+            </div>
+
+            <!-- Category Title -->
+            <h2 id="catTitle" class="cat-title">BASS</h2>
+
+            <!-- Label List -->
+            <div id="categoryList" class="label-list">
+                <!-- JS will render label rows here. Example row structure:
+
+                <div class="label-row" data-label="never-say-die">
+                    <div class="selection-box" style="background:#e62e2e;">Never Say Die</div>
+                    <div class="field-container">
+                        <span class="badge type-independent" style="--pill-i:0;">independent</span>
+                        <span class="badge sub-genre" style="--pill-i:1;">Bass / Dubstep</span>
+                        <span class="badge location" style="--pill-i:2;">United Kingdom &middot; est. 2009</span>
+                        <span class="badge roster" style="--pill-i:3;">roster: 80</span>
+                    </div>
+                </div>
+                <div class="label-expand" data-expand="never-say-die">
+                    <div class="label-expand-inner">
+                        <span class="expand-section-label">tags</span>
+                        <span class="badge" style="--pill-i:0;">dubstep</span>
+                        <span class="badge" style="--pill-i:1;">bass music</span>
+                        <span class="expand-section-label">association</span>
+                        <span class="badge" style="--pill-i:2;">Never Say Die Records Ltd</span>
+                        <span class="expand-section-label">source track</span>
+                        <span class="badge" style="--pill-i:3;">virtual riot - energy drink</span>
+                    </div>
+                </div>
+
+                -->
+            </div>
+        </section>
+
+        <!-- ===== PHASE: ALL LABELS VIEW ===== -->
+        <section id="phaseLabels" class="phase">
+
+            <!-- Search (labels view) -->
+            <div class="search-wrap">
+                <input type="text" id="searchBarLabels" class="search-bar" placeholder="search all 77 labels..." autocomplete="off" spellcheck="false">
+                <span id="searchScopeLabels" class="search-scope">// scope: all</span>
+            </div>
+
+            <!-- Sort Row (reuses same structure) -->
+            <div class="sort-row" id="sortRowLabels">
+                <span class="sort-label">// sort:</span>
+                <span class="sort-option active" data-sort="roster">roster</span>
+                <span class="sort-sep">&middot;</span>
+                <span class="sort-option" data-sort="year">year</span>
+                <span class="sort-sep">&middot;</span>
+                <span class="sort-option" data-sort="az">a-z</span>
+                <span class="sort-sep">&middot;</span>
+                <span class="sort-option" data-sort="reach">reach</span>
+            </div>
+
+            <!-- Back to categories -->
+            <span id="backToCategories" class="back-btn">&larr; back to categories</span>
+
+            <!-- Label View Title -->
+            <h2 id="labelViewTitle" class="label-view-title">ALL LABELS</h2>
+
+            <!-- Label List (all) -->
+            <div id="labelList" class="label-list">
+                <!-- JS renders all 77 sorted label rows here, same structure as categoryList -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== HOVER PROFILE CARD ===== -->
+    <div id="hoverCard" class="hover-card">
+        <div class="hover-card-header" id="hoverCardTitle"><!-- Label Name --></div>
+        <div class="hover-card-artists" id="hoverCardArtists">
+            <!-- JS injects up to 4 artist rows. Structure per artist:
+
+            <div class="hover-artist" style="--artist-i:0;">
+                <div class="hover-artist-avatar" style="background:#e62e2e;">VR</div>
+                <div class="hover-artist-info">
+                    <div class="hover-artist-name">Virtual Riot</div>
+                    <div class="hover-artist-meta">@virtualriot &middot; Nightmare</div>
+                </div>
+                <div class="hover-artist-stats">
+                    <div class="hover-artist-listeners">1.2M</div>
+                    <div class="hover-artist-trend up">&uarr; 4%</div>
+                </div>
+            </div>
+
+            -->
+        </div>
+    </div>
+
+    <!-- ===== POS ANALYZER SIDEBAR ===== -->
+    <aside class="pos-sidebar" id="posSidebar">
+        <div class="pos-sidebar-title">POS Analyzer</div>
+        <div id="posContent">
+            <!-- pos.js will populate -->
+        </div>
+    </aside>
+
+    <!-- ===== EXTERNAL SCRIPTS ===== -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script src="pos.js"></script>
+
+</body>
+</html>

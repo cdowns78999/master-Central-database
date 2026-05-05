@@ -1,0 +1,1495 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Backup System</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&amp;family=Inter:wght@300;400;500&amp;display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0077be, #004d7a);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+            padding: 2rem;
+        }
+
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        h1 {
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            text-align: center;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Floating Deal Builder Overlay */
+        .deal-builder-floating {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(127, 219, 255, 0.4);
+            border-radius: 20px;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .deal-builder-floating .builder-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .deal-builder-floating .percent-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(127, 219, 255, 0.3);
+            color: #7FDBFF;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .deal-builder-floating .percent-btn:hover {
+            background: rgba(127, 219, 255, 0.15);
+        }
+
+        .deal-builder-floating .percent-btn.active {
+            background: #7FDBFF;
+            color: #0f172a;
+            border-color: #7FDBFF;
+        }
+
+        .deal-builder-floating .date-picker-wrap,
+        .deal-builder-floating .tile-selector-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .deal-builder-floating select {
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .deal-builder-floating select option {
+            background: #0f172a;
+            color: white;
+        }
+
+        .deal-builder-floating input[type="date"] {
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .deal-builder-floating input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.7;
+            cursor: pointer;
+        }
+
+        .apply-deal-btn {
+            background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .apply-deal-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.4);
+        }
+
+        .add-text-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .add-text-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .add-text-input-container {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2001;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(245, 158, 11, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            display: none;
+            gap: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .add-text-input-container input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            color: white;
+            padding: 10px 15px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            min-width: 300px;
+            outline: none;
+        }
+
+        .add-text-input-container button {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-text-input-container button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Visualization Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 440px));
+            gap: 20px;
+            margin-top: 3rem;
+            width: 100%;
+            padding: 10px;
+            justify-content: center;
+        }
+
+        /* Tile Positioning Controls */
+        .positioning-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .position-btn {
+            background: rgba(127, 219, 255, 0.1);
+            border: 1px solid rgba(127, 219, 255, 0.3);
+            color: #7FDBFF;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .position-btn:hover {
+            background: rgba(127, 219, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .position-btn.active {
+            background: #7FDBFF;
+            color: #0f172a;
+            border-color: #7FDBFF;
+        }
+
+        .card-wrapper {
+            animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+
+        @keyframes cardEntrance {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Asset Card Styling */
+        .asset-card {
+            background: rgba(0, 119, 190, 0.4);
+            backdrop-filter: blur(25px);
+            border: 2px solid rgba(127, 219, 255, 0.3);
+            border-radius: 35px;
+            padding: 30px;
+            position: relative;
+            z-index: 10;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            min-height: 520px;
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            transform-style: preserve-3d;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+            overflow: visible;
+            margin: 0 auto;
+        }
+
+        .asset-card:hover {
+            border-color: #7FDBFF;
+            box-shadow: 0 50px 120px rgba(0, 53, 102, 0.6);
+        }
+
+        @media (max-width: 480px) {
+            .asset-card {
+                padding: 20px;
+                min-height: auto;
+                border-radius: 20px;
+            }
+
+            .card-grid {
+                gap: 15px;
+                padding: 5px;
+            }
+
+            body {
+                padding: 1rem;
+            }
+        }
+
+        .deal-badge {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transform: translateZ(50px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .footer-bar,
+        .deal-card {
+            background: #0f172a;
+            border: 2px solid rgba(127, 219, 255, 0.2);
+            border-radius: 8px;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            transform: translateZ(20px);
+        }
+
+        .deal-card {
+            border: 2px solid #ff6b6b;
+            margin-top: 15px;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.2);
+            transform: translateZ(30px);
+        }
+
+        .footer-price,
+        .deal-price {
+            color: #e6e6e6;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .footer-divider {
+            width: 1.5px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-action {
+            color: #4FC3F7;
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+
+        .footer-action:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .deal-percent {
+            color: #ff6b6b;
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .reveal-code-btn-final {
+            background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 100px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+            box-shadow: 0 8px 20px rgba(52, 211, 153, 0.3);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reveal-code-btn-final::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.1) 10px, rgba(255, 255, 255, 0.1) 20px);
+            animation: stripeSlide 3s linear infinite;
+        }
+
+        @keyframes stripeSlide {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 200%;
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-50%) translateX(-5px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(-50%) translateX(5px);
+            }
+        }
+
+        .success-bg {
+            background: #34d399 !important;
+        }
+
+        .shortcut-btn {
+            background: rgba(127, 219, 255, 0.1);
+            border: 1px solid rgba(127, 219, 255, 0.3);
+            color: #7FDBFF;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        @keyframes boxFlash {
+            0% {
+                border-color: rgba(127, 219, 255, 0.3);
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            }
+
+            50% {
+                border-color: #7FDBFF;
+                box-shadow: 0 0 20px rgba(127, 219, 255, 0.6);
+            }
+
+            100% {
+                border-color: rgba(127, 219, 255, 0.3);
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            }
+        }
+
+        .update-flash {
+            animation: boxFlash 0.6s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Floating Deal Builder -->
+    <div class="deal-builder-floating" id="deal-builder">
+        <div class="builder-section">
+            <div class="tile-selector-wrap">
+                <span style="font-size: 0.8rem; opacity: 0.7;">🎯</span>
+                <select id="tile-selector">
+                    <option value="all">All Tiles</option>
+                    <option value="0">Tile 1</option>
+                </select>
+            </div>
+        </div>
+        <div class="builder-section">
+            <button class="percent-btn" onclick="selectQuickDiscount(this, 5)">5%</button>
+            <button class="percent-btn" onclick="selectQuickDiscount(this, 10)">10%</button>
+            <button class="percent-btn" onclick="selectQuickDiscount(this, 15)">15%</button>
+            <button class="percent-btn" onclick="selectQuickDiscount(this, 20)">20%</button>
+            <input type="number" id="custom-percent-input" placeholder="Custom %" min="0" max="100" step="1"
+                style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(127, 219, 255, 0.3); color: #7FDBFF; padding: 8px 12px; border-radius: 8px; font-weight: 600; width: 80px; outline: none; font-size: 0.8rem;"
+                onblur="selectCustomDiscount(this)">
+        </div>
+        <div class="builder-section">
+            <div class="date-picker-wrap">
+                <span style="font-size: 0.8rem; opacity: 0.7;">📅</span>
+                <input type="date" id="floating-date">
+            </div>
+        </div>
+        <div class="builder-section">
+            <button class="add-text-btn" id="floating-add-text-btn" onclick="toggleAddTextField()">Add Text</button>
+        </div>
+        <div class="builder-section">
+            <button class="apply-deal-btn" id="floating-apply-btn" onclick="applyFloatingDeal()">Apply Deal</button>
+        </div>
+    </div>
+
+    <!-- Add Text Input Container -->
+    <div class="add-text-input-container" id="add-text-input-container">
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+            <input type="text" id="additional-text-input-1" placeholder="Field 1 (top line)...">
+            <input type="text" id="additional-text-input-2" placeholder="Field 2 (bottom line)...">
+            <button onclick="applyAdditionalText()">Apply Text</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="glass-card">
+            <h1>🛠️ Card Backup System</h1>
+
+            <div id="input-sections">
+                <div class="input-section" id="section-0">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; align-items:center;">
+                        <span style="font-weight:600; color:rgba(127,219,255,0.9);">Main Input Tile</span>
+                    </div>
+                    <textarea id="code-input-0" placeholder="Paste order code here (e.g., from Process Revelation)...">// Generated Card Code - 2026-01-14T19:07:28.356Z
+// Card Data Structure:
+const cardData = {
+tag: "Campaign Summary",
+title: "Test Song Name",
+cost: "$490.00",
+points: [
+{
+"l": "order1",
+"v": "20K Spotify - $490"
+},
+{
+"l": "pay here",
+"v": "✓"
+}
+]
+};
+
+// HTML Structure:
+const cardHTML = `
+&lt;div class="asset-card is-main"&gt;
+    &lt;div class="card-inner" style="padding-top: 30px; align-items: center; text-align: center;"&gt;
+
+        &lt;div style="display: flex; align-items: flex-start; gap: 24px; width: 100%; margin-bottom: 35px;"&gt;
+            &lt;div style="flex-shrink: 0; padding-top: 5px;"&gt;
+
+                &lt;div style="text-align: center;"&gt;
+                    &lt;img src="https://image-cdn-ak.spotifycdn.com/image/ab6761610000517481f47f44084e0a09b5f0fa13"
+                        alt="Bad Bunny" style="width: 88px; height: 88px; border-radius: 50%; object-fit: cover; 
+                                        border: 3px solid rgba(79, 195, 247, 0.6); box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+                                        background: linear-gradient(135deg, #4FC3F7 0%, #0077BE 100%); padding: 3px;"&gt;
+                &lt;/div&gt;
+
+            &lt;/div&gt;
+            &lt;div style="display: flex; flex-direction: column; text-align: left; gap: 18px; flex: 1;"&gt;
+                &lt;div&gt;
+                    &lt;span
+                        style="color: rgba(79, 195, 247, 0.7); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12rem; display: block; margin-bottom: 6px;"&gt;Spotify
+                        ID Name&lt;/span&gt;
+                    &lt;div style="color: #ffffff; font-size: 1.1rem; font-weight: 500; font-family: 'Inter', sans-serif;"&gt;
+                        Bad Bunny&lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div&gt;
+                    &lt;span
+                        style="color: rgba(79, 195, 247, 0.7); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12rem; display: block; margin-bottom: 6px;"&gt;Song
+                        Name&lt;/span&gt;
+                    &lt;div style="color: #ffffff; font-size: 1.3rem; font-weight: 600; font-family: 'Inter', sans-serif;"&gt;
+                        Test Song Name&lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;div class="data-stack" style="width: 100%; display: flex; flex-direction: column; gap: 12px;"&gt;
+
+            &lt;div class="data-point"
+                style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 4px; padding: 18px; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); backdrop-filter: blur(5px);"&gt;
+                &lt;span style="color: #ffffff; font-size: 1rem; font-weight: 500; letter-spacing: 0.02rem;"&gt;20K Spotify -
+                    $490&lt;/span&gt;
+            &lt;/div&gt;
+
+            &lt;div class="data-point"
+                style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 4px; padding: 18px; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); backdrop-filter: blur(5px);"&gt;
+                &lt;span style="color: #ffffff; font-size: 1rem; font-weight: 500; letter-spacing: 0.02rem;"&gt;✓&lt;/span&gt;
+            &lt;/div&gt;
+
+        &lt;/div&gt;
+        &lt;div class="price-footer"
+            style="margin-top: 35px; width: 100%; display: flex; justify-content: center; transform: translateZ(30px);"&gt;
+            &lt;div
+                style="background: rgba(15, 23, 42, 0.8); border: 1.5px solid rgba(14, 165, 233, 0.4); border-radius: 4px; padding: 12px 40px; display: flex; align-items: center; gap: 25px; backdrop-filter: blur(20px); box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);"&gt;
+                &lt;div style="display: flex; align-items: center; gap: 12px; cursor: default;"&gt;
+                    &lt;span
+                        style="color: #e6e6e6; font-weight: 600; font-size: 1.2rem; letter-spacing: 0.05rem;"&gt;$490.00&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div style="width: 1px; height: 20px; background: rgba(255, 255, 255, 0.2);"&gt;&lt;/div&gt;
+                &lt;button onclick="window.open('https://example.com/payment', '_blank')"
+                    style="background: transparent; border: none; color: #4FC3F7; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;"&gt;
+                    Pay Now
+                &lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;`;
+
+// Form Data:
+const formData = {
+name: "Test Song Name",
+order: "20K Spotify - $490",
+discount: "10%",
+paymentLink: "https://example.com/payment"
+};
+
+// To render this card:
+function renderCard(data, html) {
+const container = document.getElementById('card-container');
+container.innerHTML = html;
+// Add 3D physics and event listeners here</textarea>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="visualize-btn">🚀 Visualize All</button>
+                <button class="btn" id="lock-btn">🔒 Lock</button>
+                <button class="btn btn-secondary" id="add-card-btn">➕ Add Card</button>
+                <button class="btn btn-secondary" id="clear-all-btn">🧹 Clear All</button>
+                <button class="btn" id="copy-all-btn">📋 Copy All HTML</button>
+            </div>
+
+            <!-- Positioning Controls -->
+            <div class="positioning-controls" style="display: none;">
+                <button class="position-btn active" onclick="setLayout('grid')" id="layout-grid">🔲 Grid Layout</button>
+                <button class="position-btn" onclick="setLayout('flex')" id="layout-flex">📱 Flex Layout</button>
+                <button class="position-btn" onclick="setLayout('masonry')" id="layout-masonry">🧱 Masonry
+                    Layout</button>
+                <button class="position-btn" onclick="setLayout('horizontal')" id="layout-horizontal">➡️
+                    Horizontal</button>
+            </div>
+        </div>
+
+        <div class="card-grid" id="visualization-grid"></div>
+
+        <!-- Real-time Code Display Area -->
+        <div class="glass-card" id="code-display-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0; font-size: 1.3rem; font-weight: 600;">🔍 Ready-to-Paste Code</h2>
+                <button class="btn" onclick="copyCompleteCode()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">📋
+                    Copy Complete Code</button>
+            </div>
+            <textarea id="code-display" readonly=""
+                style="height: 300px; font-family: 'Courier New', monospace; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(127, 219, 255, 0.3); color: #ffffff; line-height: 1.4;"
+                placeholder="Ready-to-paste HTML will appear here when tiles are visualized..."></textarea>
+            <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.85rem; opacity: 0.7;">💡 Paste this directly into any HTML page</span>
+                <span id="char-count" style="font-size: 0.85rem; opacity: 0.7;">0 characters</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Particle System
+        class ParticleSystem {
+            constructor() {
+                this.canvas = document.getElementById('particles-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.particleCount = 50;
+                this.init();
+                this.animate();
+            }
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                for (let i = 0; i < this.particleCount; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 3 + 1,
+                        speedX: (Math.random() - 0.5) * 0.5,
+                        speedY: (Math.random() - 0.5) * 0.5,
+                        opacity: Math.random() * 0.5 + 0.2
+                    });
+                }
+            }
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                this.particles.forEach(p => {
+                    p.x += p.speedX; p.y += p.speedY;
+                    if (p.x < 0 || p.x > this.canvas.width) p.speedX *= -1;
+                    if (p.y < 0 || p.y > this.canvas.height) p.speedY *= -1;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+        new ParticleSystem();
+
+        let currentDiscountPercent = null;
+        let cardCount = 1;
+        let additionalText = "";
+
+        function selectQuickDiscount(btn, val) {
+            document.querySelectorAll('.percent-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('custom-percent-input').classList.remove('active');
+            btn.classList.add('active');
+            currentDiscountPercent = val;
+        }
+
+        function selectCustomDiscount(input) {
+            const val = parseInt(input.value);
+            if (val >= 0 && val <= 100) {
+                document.querySelectorAll('.percent-btn').forEach(b => b.classList.remove('active'));
+                input.classList.add('active');
+                currentDiscountPercent = val;
+            }
+        }
+
+        function toggleAddTextField() {
+            const container = document.getElementById('add-text-input-container');
+            const input1 = document.getElementById('additional-text-input-1');
+            const selectedTile = document.getElementById('tile-selector').value;
+
+            if (container.style.display === 'flex') {
+                container.style.display = 'none';
+                // Remove empty discount section when closing
+                const targetTextarea = document.getElementById(`code-input-${selectedTile}`);
+                if (targetTextarea && targetTextarea.value) {
+                    let val = targetTextarea.value;
+                    if (val.includes("Additional Text:")) {
+                        val = val.replace(/Additional Text:.*?(?=\n|$)/, '');
+                        targetTextarea.value = val;
+                    }
+                }
+            } else {
+                container.style.display = 'flex';
+                input1.focus();
+
+                // Add placeholder to trigger discount section display
+                const targetTextarea = document.getElementById(`code-input-${selectedTile}`);
+                if (targetTextarea && targetTextarea.value) {
+                    let val = targetTextarea.value;
+                    if (!val.includes("Additional Text:")) {
+                        val += `\nAdditional Text: `;
+                        targetTextarea.value = val;
+                    }
+                }
+            }
+
+            // Trigger visual update
+            document.getElementById('visualize-btn').click();
+        }
+
+        function applyAdditionalText() {
+            const textInput1 = document.getElementById('additional-text-input-1');
+            const textInput2 = document.getElementById('additional-text-input-2');
+            const selectedTile = document.getElementById('tile-selector').value;
+
+            if (!textInput1.value.trim() && !textInput2.value.trim()) return;
+
+            // Combine both fields with a separator
+            additionalText = textInput1.value.trim() + (textInput1.value.trim() && textInput2.value.trim() ? '|' : '') + textInput2.value.trim();
+
+            if (selectedTile === 'all') {
+                // Apply to all tiles
+                const allTextareas = document.querySelectorAll('textarea[id^="code-input-"]');
+                allTextareas.forEach(ta => {
+                    if (ta.value) {
+                        let val = ta.value;
+                        if (val.includes("Additional Text:")) {
+                            val = val.replace(/Additional Text:.*?(?=\n|$)/, `Additional Text: ${additionalText}`);
+                        } else {
+                            val += `\nAdditional Text: ${additionalText}`;
+                        }
+                        ta.value = val;
+                    }
+                });
+            } else {
+                // Apply text only to selected tile
+                const targetTextarea = document.getElementById(`code-input-${selectedTile}`);
+                if (targetTextarea && targetTextarea.value) {
+                    let val = targetTextarea.value;
+                    if (val.includes("Additional Text:")) {
+                        val = val.replace(/Additional Text:.*?(?=\n|$)/, `Additional Text: ${additionalText}`);
+                    } else {
+                        val += `\nAdditional Text: ${additionalText}`;
+                    }
+                    targetTextarea.value = val;
+                }
+            }
+
+            // Hide input container and clear fields
+            document.getElementById('add-text-input-container').style.display = 'none';
+            textInput1.value = '';
+            textInput2.value = '';
+
+            // Visual feedback
+            const btn = document.getElementById('floating-add-text-btn');
+            btn.innerText = "Text Added!";
+            btn.style.background = 'linear-gradient(135deg, #34d399 0%, #059669 100%)';
+            setTimeout(() => {
+                btn.innerText = "Add Text";
+                btn.style.background = '';
+            }, 2000);
+
+            document.getElementById('visualize-btn').click();
+        }
+
+        function applyFloatingDeal() {
+            const date = document.getElementById('floating-date').value;
+            const selectedTile = document.getElementById('tile-selector').value;
+            const btn = document.getElementById('floating-apply-btn');
+            const builder = document.getElementById('deal-builder');
+
+            if (!currentDiscountPercent || !date) {
+                builder.style.animation = 'shake 0.5s';
+                setTimeout(() => builder.style.animation = '', 500);
+                return;
+            }
+
+            const discountStr = `${currentDiscountPercent}% OFF (Valid until: ${date})`;
+
+            if (selectedTile === 'all') {
+                // Apply to all tiles
+                const allTextareas = document.querySelectorAll('textarea[id^="code-input-"]');
+                allTextareas.forEach(ta => {
+                    if (ta.value) {
+                        let val = ta.value;
+                        if (val.includes("Discount:")) {
+                            val = val.replace(/Discount:.*?(?=\n|$)/, `Discount: ${discountStr}`);
+                        } else {
+                            val += `\nDiscount: ${discountStr}`;
+                        }
+                        ta.value = val;
+                    }
+                });
+            } else {
+                // Apply discount only to selected tile
+                const targetTextarea = document.getElementById(`code-input-${selectedTile}`);
+                if (targetTextarea && targetTextarea.value) {
+                    let val = targetTextarea.value;
+                    if (val.includes("Discount:")) {
+                        val = val.replace(/Discount:.*?(?=\n|$)/, `Discount: ${discountStr}`);
+                    } else {
+                        val += `\nDiscount: ${discountStr}`;
+                    }
+                    targetTextarea.value = val;
+                }
+            }
+
+            btn.innerText = "Applied";
+            btn.classList.add('success-bg');
+            setTimeout(() => {
+                btn.innerText = "Apply Deal";
+                btn.classList.remove('success-bg');
+            }, 2000);
+
+            document.getElementById('visualize-btn').click();
+        }
+
+        document.getElementById('add-card-btn').addEventListener('click', () => {
+            if (cardCount >= 5) return;
+            const id = cardCount;
+            const div = document.createElement('div');
+            div.className = 'input-section';
+            div.id = `section-${id}`;
+            div.style.marginTop = '1rem';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; align-items:center;">
+                    <span style="font-weight:600; color:rgba(127,219,255,0.9);">Tile ${id + 1}</span>
+                    <button class="shortcut-btn" onclick="document.getElementById('section-${id}').remove(); updateTileSelector(); cardCount--;">×</button>
+                </div>
+                <textarea id="code-input-${id}" placeholder="Paste order code here..."></textarea>
+            `;
+            document.getElementById('input-sections').appendChild(div);
+            document.getElementById(`code-input-${id}`).addEventListener('input', updateCodeDisplay);
+            updateTileSelector();
+            cardCount++;
+        });
+
+        function updateTileSelector() {
+            const selector = document.getElementById('tile-selector');
+            const textareas = document.querySelectorAll('textarea[id^="code-input-"]');
+
+            selector.innerHTML = '';
+
+            // Add "All Tiles" option first
+            const allOption = document.createElement('option');
+            allOption.value = 'all';
+            allOption.textContent = 'All Tiles';
+            selector.appendChild(allOption);
+
+            // Add individual tile options
+            textareas.forEach((ta, index) => {
+                const option = document.createElement('option');
+                option.value = ta.id.split('-')[2];
+                option.textContent = `Tile ${index + 1}`;
+                selector.appendChild(option);
+            });
+        }
+
+        document.getElementById('clear-all-btn').addEventListener('click', () => {
+            if (confirm("Clear everything?")) location.reload();
+        });
+
+        function updateCodeDisplay() {
+            const codeDisplaySection = document.getElementById('code-display-section');
+            const codeDisplay = document.getElementById('code-display');
+            const textareas = document.querySelectorAll('textarea[id^="code-input-"]');
+            let allCardsHTML = [];
+
+            textareas.forEach((ta, i) => {
+                const code = ta.value;
+                if (!code) return;
+                const data = parseCode(code);
+                const tempWrapper = createCardUI(data, i);
+                const cardHTML = tempWrapper.querySelector('.asset-card').outerHTML;
+                allCardsHTML.push(cardHTML);
+            });
+
+            if (allCardsHTML.length > 0) {
+                codeDisplaySection.style.display = 'block';
+                codeDisplay.value = generateCompleteWrap(allCardsHTML.join('\n\n'));
+                document.getElementById('char-count').innerText = `${codeDisplay.value.length} characters`;
+
+                // Fire the synchronization flash
+                codeDisplaySection.classList.remove('update-flash');
+                void codeDisplaySection.offsetWidth; // Force Reflow
+                codeDisplaySection.classList.add('update-flash');
+            } else {
+                codeDisplaySection.style.display = 'none';
+            }
+        }
+
+        function generateCompleteWrap(cardsHTML) {
+            // Capture ALL styles from the main page to be sure nothing is missed
+            const allStyles = Array.from(document.querySelectorAll('style'))
+                .map(s => s.textContent)
+                .join('\n');
+
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualized Cards Showcase</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Embedded Styles */
+        ${allStyles}
+        
+        /* Layout Reinforcements */
+        body { 
+            padding: 4rem 2rem; 
+            margin: 0;
+            background: linear-gradient(135deg, #0077be, #004d7a) fixed; /* Ocean blue background anchor */
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            position: relative; 
+            z-index: 10; 
+            width: 100%;
+        }
+        .card-grid { 
+            justify-content: center; 
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 2rem 1rem; }
+            .asset-card { transform: scale(0.95); margin-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles-canvas"></canvas>
+    
+    <div class="container">
+        <div class="card-grid">
+            ${cardsHTML}
+        </div>
+    </div>
+
+    <script>
+        // Injected Particle Logic
+        ${ParticleSystem.toString()}
+        
+        // Safety initialization - only run if canvas exists
+        const canvas = document.getElementById('particles-canvas');
+        if (canvas) {
+            new ParticleSystem();
+        }
+
+        // Mobile-aware 3D Interaction
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+        
+        document.querySelectorAll('.asset-card').forEach(card => {
+            if (!isMobile) {
+                card.addEventListener('mousemove', (e) => {
+                    const r = card.getBoundingClientRect();
+                    const x = e.clientX - r.left, y = e.clientY - r.top;
+                    const xc = r.width/2, yc = r.height/2;
+                    card.style.transform = \`perspective(1000px) rotateX(\${(yc - y) / 20}deg) rotateY(\${(x - xc) / 20}deg) scale3d(1.02, 1.02, 1.02)\`;
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                });
+            }
+        });
+    <\/script>
+</body>
+</html>`;
+        }
+
+        function copyCompleteCode() {
+            const codeDisplay = document.getElementById('code-display');
+            if (!codeDisplay.value) return;
+
+            navigator.clipboard.writeText(codeDisplay.value).then(() => {
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = '✅ Copied Full Site!';
+                btn.style.background = 'linear-gradient(135deg, #34d399 0%, #059669 100%)';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+
+        document.getElementById('visualize-btn').addEventListener('click', () => {
+            const grid = document.getElementById('visualization-grid');
+            grid.innerHTML = '';
+            const textareas = document.querySelectorAll('textarea[id^="code-input-"]');
+
+            textareas.forEach((ta, i) => {
+                const code = ta.value;
+                if (!code) return;
+                const data = parseCode(code);
+                const cardWrapper = createCardUI(data, i);
+                grid.appendChild(cardWrapper);
+            });
+
+            // Trigger the synchronized code update
+            updateCodeDisplay();
+        });
+
+        document.getElementById('copy-all-btn').addEventListener('click', copyCompleteCode);
+
+        function removeCheckIcons(element) {
+            // Check if the element itself has check marks and remove it and its parent button
+            if (element.textContent &&
+                (element.textContent.includes('✓') ||
+                    element.textContent.includes('✅') ||
+                    element.textContent.includes('☑') ||
+                    element.textContent.includes('✔'))) {
+
+                // Remove the entire parent card if it contains checks
+                const parentCard = element.closest('.asset-card');
+                if (parentCard) {
+                    parentCard.remove();
+                    return;
+                }
+
+                // Remove the parent button or container
+                const parentButton = element.closest('button') || element.closest('.btn') || element.closest('.footer-action') || element.parentElement;
+                if (parentButton && parentButton !== element) {
+                    parentButton.remove();
+                    return;
+                }
+
+                element.remove();
+                return;
+            }
+
+            // Remove check marks and icons from child elements
+            const checkElements = element.querySelectorAll('*');
+            checkElements.forEach(el => {
+                if (el.textContent &&
+                    (el.textContent.includes('✓') ||
+                        el.textContent.includes('✅') ||
+                        el.textContent.includes('☑') ||
+                        el.textContent.includes('✔'))) {
+
+                    // Find and remove the parent card containing this check
+                    const parentCard = el.closest('.asset-card');
+                    if (parentCard) {
+                        parentCard.remove();
+                        return;
+                    }
+
+                    // Remove the parent button or container
+                    const parentButton = el.closest('button') || el.closest('.btn') || el.closest('.footer-action') || el.parentElement;
+                    if (parentButton && parentButton !== element) {
+                        parentButton.remove();
+                        return;
+                    }
+
+                    el.remove();
+                }
+
+                // Also remove elements with check-related classes
+                if (el.className &&
+                    (el.className.includes('check') ||
+                        el.className.includes('tick') ||
+                        el.className.includes('verified'))) {
+                    el.remove();
+                }
+            });
+        }
+
+        function removeCheckIconsFromString(htmlString) {
+            // Remove check marks and icons from HTML strings
+            let cleaned = htmlString;
+
+            // Remove check mark characters
+            cleaned = cleaned.replace(/[✓✅☑✔]/g, '');
+
+            // Remove elements containing check marks
+            cleaned = cleaned.replace(/<[^>]*>[^<]*[✓✅☑✔][^<]*<\/[^>]*>/g, '');
+
+            return cleaned;
+        }
+
+        function parseCode(text) {
+            let snippetHTML = null;
+            // Check for snippets wrapped in cardHTML var
+            const htmlMatch = text.match(/const cardHTML = [`'"]([\s\S]*?)[`'"];/);
+            if (htmlMatch) {
+                snippetHTML = removeCheckIconsFromString(htmlMatch[1].trim());
+            }
+
+            const lines = text.split('\n');
+            const data = { title: "Untitled", artist: "Unknown", cost: "$0.00", discount: "None", link: "#", isSpotify: false, img: "", rawHTML: snippetHTML, additionalText: "" };
+
+            lines.forEach(line => {
+                const l = line.toLowerCase();
+                if (l.includes("song/release:")) {
+                    const songTitle = line.split(':')[1].trim();
+                    // If artist is already set, make song name match artist name
+                    if (data.artist && data.artist !== "Unknown") {
+                        data.title = data.artist; // Make song name match artist name
+                    } else {
+                        data.title = songTitle; // Use original if artist not set yet
+                    }
+                }
+                if (l.includes("artist id:")) {
+                    data.artist = line.split(':')[1].trim();
+                    if (data.artist.includes("spotify.com")) {
+                        data.isSpotify = true;
+                        data.img = "https://image-cdn-ak.spotifycdn.com/image/ab6761610000517481f47f44084e0a09b5f0fa13";
+                    }
+                    // Update song name to match artist name
+                    data.title = data.artist;
+                }
+                if (l.includes("payment link:")) data.link = line.split(':')[1].trim();
+                if (l.includes("cost:")) data.cost = line.split(':')[1].trim();
+                if (l.includes("discount:")) data.discount = line.split(':')[1].trim();
+                if (l.includes("additional text:")) data.additionalText = line.split(':')[1].trim();
+                if (l.includes("order:")) {
+                    try {
+                        const prs = JSON.parse(line.substring(line.indexOf(':') + 1));
+                        if (Array.isArray(prs)) {
+                            let total = prs.reduce((s, o) => s + parseFloat(o.amount.replace(/[^0-9.]/g, '')), 0);
+                            if (data.cost === "$0.00") data.cost = `$${total.toFixed(2)}`;
+                        }
+                    } catch (e) { }
+                }
+            });
+            return data;
+        }
+
+        function createCardUI(data, index) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card-wrapper';
+            wrapper.style.animationDelay = `${index * 0.1}s`;
+
+            let card;
+            if (data.rawHTML) {
+                const temp = document.createElement('div');
+                // Change only price spans (containing $) to greyish white in rawHTML snippets
+                let modifiedHTML = data.rawHTML.replace(/<span[^>]*style="[^"]*color:\s*#ffffff[^"]*"[^>]*>(\$\d+(?:\.\d{2})?)<\/span>/g, '<span style="color: #e6e6e6">$1</span>');
+                temp.innerHTML = modifiedHTML;
+                card = temp.querySelector('.asset-card') || temp.firstChild;
+                if (!card.classList.contains('asset-card')) card.classList.add('asset-card');
+                // Remove check marks and icons from pasted HTML
+                removeCheckIcons(card);
+                injectDealLogic(card, data);
+            }
+
+            card.addEventListener('mousemove', (e) => {
+                const r = card.getBoundingClientRect();
+                const x = e.clientX - r.left;
+                const y = e.clientY - r.top;
+                const xc = r.width / 2;
+                yc = r.height / 2;
+                card.style.transform = `perspective(1000px) rotateX(${(yc - y) / 20}deg) rotateY(${(x - xc) / 20}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+            });
+
+            wrapper.appendChild(card);
+            return wrapper;
+        }
+
+        function injectDealLogic(card, data) {
+            // Only show discount section if there's actual additional text content
+            const hasActualText = data.additionalText && data.additionalText.trim() !== '' && data.additionalText !== ' ';
+            if (!hasActualText) return;
+
+            console.log('Injecting discount tile - discount:', data.discount);
+
+            // Remove existing square tiles if re-injecting
+            card.querySelectorAll('.discount-square-tile').forEach(el => el.remove());
+
+            // Create square discount tile
+            const discountTile = document.createElement('div');
+            discountTile.className = 'discount-square-tile';
+            discountTile.style.cssText = 'margin-top: 15px; display: flex; justify-content: center; position: relative; z-index: 9999;';
+
+            // Strip check marks from discount data before creating tile
+            const cleanDiscount = data.discount.replace(/[✓✅☑✔]/g, '').replace(/<[^>]*>[^<]*[✓✅☑✔][^<]*<\/[^>]*>/g, '');
+
+            discountTile.innerHTML = `
+                <div class="footer-bar" style="background: rgba(0, 119, 190, 0.4); backdrop-filter: blur(25px); border: 2px solid rgba(127, 219, 255, 0.3); border-radius: 35px; padding: 30px; margin-top: 15px; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5); position: relative; z-index: 10000; width: calc(95% - 10px); margin-left: 0px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; width: 100%; aspect-ratio: 1;">
+                        <!-- Top Left: Discounted Price -->
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 8px; padding: 16px;">
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Discounted Price</div>
+                            <div style="color: #34d399; font-size: 1.3rem; font-weight: 700; letter-spacing: 0.5px;">
+                                ${(() => {
+                    const originalPrice = parseFloat(data.cost.replace(/[^0-9.]/g, '')) || 0;
+                    let discountPercent = 0;
+                    const match = data.discount.match(/(\d+)%/);
+                    if (match) discountPercent = parseInt(match[1]);
+                    const newPrice = originalPrice * (1 - discountPercent / 100);
+                    return `$${newPrice.toFixed(2)}`;
+                })()}
+                            </div>
+                        </div>
+                        
+                        <!-- Top Right: Discount Amount -->
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 8px; padding: 16px;">
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">You Save</div>
+                            <div style="color: #ff6b6b; font-size: 1.3rem; font-weight: 700; letter-spacing: 0.5px;">
+                                ${(() => {
+                    const originalPrice = parseFloat(data.cost.replace(/[^0-9.]/g, '')) || 0;
+                    let discountPercent = 0;
+                    const match = data.discount.match(/(\d+)%/);
+                    if (match) discountPercent = parseInt(match[1]);
+                    const discountAmount = originalPrice * (discountPercent / 100);
+                    return `$${discountAmount.toFixed(2)}`;
+                })()}
+                            </div>
+                            <div style="color: rgba(255, 107, 107, 0.8); font-size: 0.75rem; font-weight: 600; margin-top: 2px;">
+                                ${(() => {
+                    const match = data.discount.match(/(\d+)%/);
+                    return match ? `(${match[1]}%)` : '';
+                })()}
+                            </div>
+                        </div>
+                        
+                        <!-- Bottom Left: Expiration Date -->
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: rgba(79, 195, 247, 0.25); border: 2px solid rgba(79, 195, 247, 0.6); border-radius: 8px; padding: 16px;">
+                            <div style="color: rgba(255, 255, 255, 0.7); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Valid Until</div>
+                            <div style="color: #4FC3F7; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                ${(() => {
+                    // First try to get date from discount text
+                    let dateMatch = cleanDiscount.match(/Valid until: ([\d-]+)/);
+                    if (!dateMatch) {
+                        dateMatch = cleanDiscount.match(/(\d{4}-\d{2}-\d{2})/);
+                    }
+                    if (!dateMatch) {
+                        dateMatch = cleanDiscount.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+                    }
+                    if (dateMatch) {
+                        const date = dateMatch[1];
+                        const parts = date.split('-');
+                        if (parts.length === 3) {
+                            return `${parts[1]}/${parts[2]}/${parts[0]}`;
+                        }
+                        return date;
+                    }
+
+                    // If no date in discount text, try to get from floating date input
+                    const floatingDate = document.getElementById('floating-date');
+                    if (floatingDate && floatingDate.value) {
+                        const date = floatingDate.value;
+                        const parts = date.split('-');
+                        if (parts.length === 3) {
+                            return `${parts[1]}/${parts[2]}/${parts[0]}`;
+                        }
+                        return date;
+                    }
+
+                    // Also check modal date input if it exists
+                    const modalDate = document.getElementById('modal-discount-date');
+                    if (modalDate && modalDate.value) {
+                        const date = modalDate.value;
+                        const parts = date.split('-');
+                        if (parts.length === 3) {
+                            return `${parts[1]}/${parts[2]}/${parts[0]}`;
+                        }
+                        return date;
+                    }
+
+                    console.log('Discount data:', data.discount, 'Floating date:', floatingDate?.value, 'Modal date:', modalDate?.value);
+                    return 'NO DATE';
+                })()}
+                            </div>
+                        </div>
+                        
+                        <!-- Bottom Right: Additional Text or Discount -->
+                        <div style="display: flex; flex-direction: column; ${data.additionalText ? 'align-items: flex-start;' : 'align-items: center; justify-content: center;'} text-align: ${data.additionalText ? 'left;' : 'center;'} background: ${data.additionalText ? '#ff0000' : 'rgba(168, 85, 247, 0.1)'}; border: ${data.additionalText ? '2px solid #ffffff' : '1px solid rgba(168, 85, 247, 0.3)'}; border-radius: 8px; padding: 16px; backdrop-filter: ${data.additionalText ? 'none' : 'none'}; box-shadow: ${data.additionalText ? '0 10px 30px rgba(255, 0, 0, 0.5)' : 'none'};">
+                            <div style="color: ${data.additionalText ? '#ffffff' : 'rgba(255, 255, 255, 0.7)'}; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: ${data.additionalText ? '8px' : '4px'};">${data.additionalText ? 'Bonus' : 'Discount'}</div>
+                            ${data.additionalText ? (() => {
+                    const parts = data.additionalText.split('|');
+                    const field1 = parts[0] || '';
+                    const field2 = parts[1] || '';
+                    return `
+                                    <div style="color: #ffffff; font-size: 0.65rem; font-weight: 500; letter-spacing: 0.3px; margin-bottom: 6px;">
+                                        ${field1.trim()}
+                                    </div>
+                                    ${field2 ? `
+                                    <div style="color: #ffffff; font-size: 0.65rem; font-weight: 500; letter-spacing: 0.3px; margin-bottom: 0px;">
+                                        ${field2.trim()}
+                                    </div>
+                                    ` : ''}
+                                `;
+                })() : `
+                            <div style="color: #a855f7; font-size: 1.3rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                ${(() => {
+                    const match = data.discount.match(/(\d+)%/);
+                    return match ? `${match[1]}% OFF` : 'NO DISCOUNT';
+                })()}
+                            </div>`}
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    @keyframes discountPulse {
+                        0%, 100% { transform: scale(1); box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4); }
+                        50% { transform: scale(1.02); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
+                    }
+                </style>
+            `;
+
+            // Append to the card (not to specific stack to ensure it shows)
+            card.appendChild(discountTile);
+
+
+
+            const hasDeal = data.discount !== 'None' && data.discount.includes("Valid until:");
+            if (!hasDeal) return;
+
+            // Remove existing badges/deals if re-injecting
+            card.querySelectorAll('.deal-badge, .deal-card').forEach(el => el.remove());
+
+            const badge = document.createElement('div');
+            badge.className = 'deal-badge';
+            badge.innerText = 'Special Deal';
+            card.prepend(badge);
+
+            const originalPrice = parseFloat(data.cost.replace(/[^0-9.]/g, '')) || 0;
+            let discountPercent = 0;
+            const match = data.discount.match(/(\d+)%/);
+            if (match) discountPercent = parseInt(match[1]);
+            const newPrice = originalPrice * (1 - discountPercent / 100);
+
+            const dealCard = document.createElement('div');
+            dealCard.className = 'deal-card';
+            dealCard.innerHTML = `
+                <div class="deal-price" style="color: #ffffff;">$${newPrice.toFixed(2)}</div>
+                <div class="footer-divider"></div>
+                <div class="deal-percent">${discountPercent}% OFF</div>
+            `;
+
+            const stack = card.querySelector('.price-stack');
+            if (stack) {
+                stack.appendChild(dealCard);
+            } else {
+                const lastFooter = card.querySelector('.footer-bar');
+                if (lastFooter) {
+                    lastFooter.after(dealCard);
+                } else {
+                    card.appendChild(dealCard);
+                }
+            }
+        }
+
+        document.getElementById('floating-date').value = new Date().toISOString().split('T')[0];
+
+        document.getElementById('copy-all-btn').addEventListener('click', copyCompleteCode);
+    </script>
+
+
+</body>
+
+</html>

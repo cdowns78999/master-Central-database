@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Protocol | Reports</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tile-component.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .reports-container {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+            height: calc(100vh - 120px);
+        }
+
+        /* Generation Header */
+        .gen-header {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            margin-bottom: 2rem;
+        }
+
+        .gen-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(250, 93, 41, 0.05) 0%, transparent 70%);
+            animation: pulse-bg 8s infinite alternate;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-bg {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: scale(1.1);
+                opacity: 0.6;
+            }
+        }
+
+        .btn-generate {
+            padding: 1rem 2.5rem;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 30px rgba(250, 93, 41, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2;
+        }
+
+        .btn-generate:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 0 50px rgba(250, 93, 41, 0.5);
+        }
+
+        .btn-generate.pulsing {
+            animation: pulse-button 1.5s infinite;
+        }
+
+        @keyframes pulse-button {
+            0% {
+                box-shadow: 0 0 0 0 rgba(250, 93, 41, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px rgba(250, 93, 41, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(250, 93, 41, 0);
+            }
+        }
+
+        /* Active Campaigns List */
+        .campaign-ledger {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .ledger-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .client-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .client-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .client-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .client-name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .report-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+        }
+
+        .badge-new {
+            background: var(--primary);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 800;
+        }
+
+        /* Report Preview Area */
+        .report-preview {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+
+        .preview-header {
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .report-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #f3f4f6;
+        }
+
+        .comparison-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .compare-column {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .col-title {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        .diff-text {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon" style="background: var(--primary);"></div>
+            <span style="font-family: 'Outfit', sans-serif; font-weight: 800; letter-spacing: 0.1em;">OCEAN</span>
+        </div>
+        <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 8px;">
+            <a href="cards.html" class="nav-link">Cards</a>
+            <a href="actions.html" class="nav-link">Actions</a>
+            <a href="contacts.html" class="nav-link">Contacts</a>
+            <a href="reports.html" class="nav-link active">Reports</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+    <main class="main-view animate-in">
+        <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1 style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.2rem; margin: 0;">Weekly
+                    Report Phase</h1>
+                <p style="color: var(--text-dim); font-family: 'Outfit', sans-serif; margin-top: 4px;">Strategic summary
+                    and performance comparison</p>
+            </div>
+            <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div
+                    style="width: 6px; height: 6px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary);">
+                </div>
+                Report Engine Active
+            </div>
+        </header>
+
+        <div class="reports-container">
+            <!-- Left: Generator and Preview -->
+            <div style="display: flex; flex-direction: column;">
+                <div class="gen-header">
+                    <h2 style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff;">Roll-up Active
+                        Campaigns</h2>
+                    <p style="color: var(--text-dim); max-width: 400px;">Bake current platform activity into
+                        standardized weekly reports per client entity.</p>
+                    <button class="btn-generate" id="genBtn" onclick="triggerGeneration()">
+                        <span>✨</span> GENERATE SUMMARY
+                    </button>
+                    <div class="loading-overlay" id="loader">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 15px; font-family: 'JetBrains Mono'; color: var(--primary);">PHASE 1:
+                            PARSING PLATFORM SYNC...</p>
+                    </div>
+                </div>
+
+                <div class="report-preview" id="previewArea" style="flex: 1;">
+                    <div class="preview-header">
+                        <div style="font-family: 'Outfit'; font-weight: 700;" id="reportTitle">Report Preview</div>
+                        <div style="font-family: 'JetBrains Mono'; font-size: 0.7rem; color: var(--text-dim);"
+                            id="reportDate">-- / -- / --</div>
+                    </div>
+                    <div class="report-body" id="reportBody">
+                        <!-- Placeholder -->
+                        <div style="opacity: 0.3; text-align: center; margin-top: 4rem;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+                            <p>Generate a summary to begin analysis</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Client Ledger -->
+            <div class="campaign-ledger">
+                <div class="ledger-title">Client Distribution</div>
+                <div id="clientList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let contacts = [];
+        let activeReport = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadContacts();
+            renderClients();
+        });
+
+        function loadContacts() {
+            const saved = localStorage.getItem('ocean_contacts_page');
+            if (saved) {
+                contacts = JSON.parse(saved);
+            }
+        }
+
+        function renderClients() {
+            const list = document.getElementById('clientList');
+            if (contacts.length === 0) {
+                list.innerHTML = `<p style="color: var(--text-dim); font-size: 0.8rem; padding: 20px;">No clients found in Contacts.</p>`;
+                return;
+            }
+
+            list.innerHTML = contacts.map(c => `
+                <div class="client-card" onclick="loadClientReport('${c.id}')">
+                    <div class="client-info">
+                        <span class="client-name">${c.name}</span>
+                        <span class="report-status">Last Report: ${c.lastReport || 'None'}</span>
+                    </div>
+                    ${!c.lastReport ? `<span class="badge-new">NEW</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function triggerGeneration() {
+            const btn = document.getElementById('genBtn');
+            const loader = document.getElementById('loader');
+
+            btn.classList.add('pulsing');
+            loader.style.display = 'flex';
+
+            // Simulate parsing/generation delay
+            setTimeout(() => {
+                loader.style.display = 'none';
+                btn.classList.remove('pulsing');
+                showGlobalSummary();
+            }, 2000);
+        }
+
+        function showGlobalSummary() {
+            const body = document.getElementById('reportBody');
+            const title = document.getElementById('reportTitle');
+            const date = document.getElementById('reportDate');
+
+            date.textContent = new Date().toLocaleDateString();
+            title.textContent = "Global Activity Roll-up";
+
+            body.innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    [SYSTEM_LOG]: PLATFORM COMPRESSION COMPLETE<br>
+                    [STATUS]: 14 ACTIVE CAMPAIGNS ACROSS ${contacts.length} CLIENTS
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="padding: 1rem; background: rgba(250,93,41,0.05); border-left: 3px solid var(--primary);">
+                        <strong>TOP PERFORMER:</strong> SOCIAL LISTENER<br>
+                        <span style="opacity: 0.7;">+24% Engagement delta vs previous snapshot</span>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(255,255,255,0.02); border-left: 3px solid var(--border);">
+                        <strong>PENDING:</strong> QUARTERLY BAKE<br>
+                        <span style="opacity: 0.7;">3 Assets awaiting final approval in Actions</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadClientReport(id) {
+            const client = contacts.find(c => c.id === id);
+            const body = document.getElementById('reportBody');
+            const title = document.getElementById('reportTitle');
+
+            title.textContent = `Client Report: ${client.name}`;
+
+            body.innerHTML = `
+                <div style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <strong>CORE FOCUS:</strong> STRATEGIC ASSET MANAGEMENT<br>
+                    <strong>ID:</strong> ${client.id}
+                </div>
+                
+                <div class="comparison-block">
+                    <div class="compare-column">
+                        <div class="col-title">Last Week (V1)</div>
+                        <div style="opacity: 0.6;">
+                            [Grid Entries]: 12<br>
+                            [Approval]: 85%<br>
+                            [Velocity]: 0.8
+                        </div>
+                    </div>
+                    <div class="compare-column" style="border-color: var(--primary);">
+                        <div class="col-title" style="color: var(--primary);">This Week (V2)</div>
+                        <div>
+                            [Grid Entries]: <span class="diff-text">18 (+6)</span><br>
+                            [Approval]: <span class="diff-text">92% (+7)</span><br>
+                            [Velocity]: <span class="diff-text">1.2 (+0.4)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <div class="ledger-title" style="border: none;">PARSED ANALYSIS</div>
+                    <p style="opacity: 0.8;">Client activity has scaled significantly in the last 7 days. Automations are handling the brunt of the task load, allowing for 40% more throughput in the Content pipeline.</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Event Calendar — VRChat Ultimate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/styles.css">
+  <style>
+    .event-card {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 1.25rem;
+      position: relative;
+      transition: all var(--transition);
+    }
+    .event-card:hover { transform: translateX(4px); box-shadow: var(--shadow-hover); }
+    .event-card.featured {
+      border-color: var(--vrc-lavender);
+      box-shadow: var(--glow-purple);
+    }
+    .event-card.editors-pick {
+      border-left: 4px solid var(--yellow);
+    }
+    .event-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+    .event-name { font-size: 1.1rem; font-weight: 700; color: var(--text-bright); }
+    .event-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+    .date-badge {
+      background: var(--bg-4);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--vrc-lavender);
+    }
+    .type-badge { font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: var(--badge-radius); font-weight: 600; }
+    .type-music { background: rgba(189,147,249,0.15); color: var(--vrc-lavender); }
+    .type-roleplay { background: rgba(208,135,112,0.15); color: var(--orange); }
+    .type-game { background: rgba(163,190,140,0.15); color: var(--green); }
+    .type-meetup { background: rgba(94,129,172,0.15); color: var(--blue); }
+    .type-seasonal { background: rgba(235,203,139,0.15); color: var(--yellow); }
+    .countdown-display {
+      display: flex; gap: 1rem; justify-content: center;
+      margin: 1.25rem 0;
+    }
+    .countdown-unit {
+      text-align: center;
+    }
+    .countdown-num {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--vrc-lavender);
+      line-height: 1;
+    }
+    .countdown-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .ext-links { margin-top: 2.5rem; }
+  </style>
+</head>
+<body>
+  <div id="sidebar-mount"></div>
+  <button id="hamburger" class="hamburger">&#9776;</button>
+  <main id="main-content">
+
+    <h1 class="section-title">Event Calendar</h1>
+    <p style="color:var(--text-muted);margin-bottom:1.5rem;">Upcoming events across the VRChat metaverse.</p>
+
+    <!-- Filter Pills -->
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:2rem;" id="event-filters">
+      <button class="filter-pill active" data-filter="all">All</button>
+      <button class="filter-pill" data-filter="music">Music / DJ</button>
+      <button class="filter-pill" data-filter="roleplay">Roleplay</button>
+      <button class="filter-pill" data-filter="game">Game Night</button>
+      <button class="filter-pill" data-filter="meetup">Meetup</button>
+      <button class="filter-pill" data-filter="seasonal">Seasonal</button>
+    </div>
+
+    <!-- Featured: Furality Ultra -->
+    <div class="event-card featured glass" data-type="seasonal" style="margin-bottom:1.5rem;padding:2rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+        <div>
+          <span class="type-badge type-seasonal" style="margin-bottom:0.5rem;display:inline-block;">SEASONAL</span>
+          <h2 style="font-size:1.5rem;font-weight:800;color:var(--text-bright);">Furality Ultra</h2>
+          <p style="color:var(--text-dim);font-size:0.9rem;margin-top:0.35rem;">The largest VR convention in VRChat. Multi-world festival with DJs, panels, avatars, and more.</p>
+        </div>
+        <div class="date-badge" style="font-size:0.95rem;padding:0.5rem 1rem;">June 4, 2026</div>
+      </div>
+      <div class="countdown-display" id="countdown">
+        <div class="countdown-unit"><div class="countdown-num" id="cd-days">--</div><div class="countdown-label">Days</div></div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-hours">--</div><div class="countdown-label">Hours</div></div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-mins">--</div><div class="countdown-label">Mins</div></div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-secs">--</div><div class="countdown-label">Secs</div></div>
+      </div>
+      <div style="text-align:center;">
+        <span style="color:var(--text-muted);font-size:0.85rem;">Hosted by Furality &bull; Multiple Worlds</span>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-vertical" id="event-list">
+
+      <div class="tl-node" data-type="music">
+        <div class="event-card">
+          <div class="event-header">
+            <span class="event-name">Club Void: Midnight Set</span>
+            <span class="type-badge type-music">MUSIC / DJ</span>
+          </div>
+          <p style="color:var(--text-dim);font-size:0.9rem;">Underground electronic music night featuring rotating DJs. Dark ambient world with reactive visuals.</p>
+          <div class="event-meta">
+            <span class="date-badge">Apr 12, 2026 &bull; 11PM EST</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">Host: DJ_Spectra</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-node" data-type="roleplay">
+        <div class="event-card">
+          <div class="event-header">
+            <span class="event-name">Aetherian Chronicles: Season Finale</span>
+            <span class="type-badge type-roleplay">ROLEPLAY</span>
+          </div>
+          <p style="color:var(--text-dim);font-size:0.9rem;">The grand conclusion to a 6-month fantasy RP campaign. Open to spectators in the gallery seating.</p>
+          <div class="event-meta">
+            <span class="date-badge">Apr 15, 2026 &bull; 7PM EST</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">Host: TheLoreKeeper</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-node" data-type="game">
+        <div class="event-card editors-pick">
+          <div class="event-header">
+            <span class="event-name">&#11088; Murder Mystery Marathon</span>
+            <span class="type-badge type-game">GAME NIGHT</span>
+          </div>
+          <p style="color:var(--text-dim);font-size:0.9rem;">Editor's Pick: 4-hour murder mystery tournament across 3 custom worlds. Prizes for top detectives.</p>
+          <div class="event-meta">
+            <span class="date-badge">Apr 19, 2026 &bull; 6PM EST</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">Host: GameMasterVR</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-node" data-type="meetup">
+        <div class="event-card">
+          <div class="event-header">
+            <span class="event-name">Deaf/HoH Community Social</span>
+            <span class="type-badge type-meetup">MEETUP</span>
+          </div>
+          <p style="color:var(--text-dim);font-size:0.9rem;">Weekly meetup for deaf and hard-of-hearing VRChat users. ASL-friendly world with visual cues and pen tools.</p>
+          <div class="event-meta">
+            <span class="date-badge">Every Saturday &bull; 3PM EST</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">Host: SignsInVR</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-node" data-type="music">
+        <div class="event-card">
+          <div class="event-header">
+            <span class="event-name">Lo-Fi Chill Room: Study Session</span>
+            <span class="type-badge type-music">MUSIC / DJ</span>
+          </div>
+          <p style="color:var(--text-dim);font-size:0.9rem;">Drop in, relax, and study or vibe to a curated lo-fi mix. No mic required. Cozy cabin world.</p>
+          <div class="event-meta">
+            <span class="date-badge">Apr 11, 2026 &bull; 2PM EST</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">Host: ChillZoneVR</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- External Links -->
+    <div class="ext-links">
+      <h3 style="font-size:1.1rem;font-weight:700;color:var(--text-bright);margin-bottom:1rem;">&#128279; Event Directories</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:0.75rem;">
+        <a href="https://vrc.tl" target="_blank" class="btn btn-ghost">vrc.tl</a>
+        <a href="https://vrchatevents.com" target="_blank" class="btn btn-ghost">vrchatevents.com</a>
+        <a href="https://vrclist.com/events" target="_blank" class="btn btn-ghost">vrclist.com/events</a>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="../shared/nav.js"></script>
+  <script src="../shared/components.js"></script>
+  <script>
+    (function() {
+      // Countdown to Furality Ultra: June 4, 2026 18:00 UTC
+      const target = new Date('2026-06-04T18:00:00Z').getTime();
+      function updateCountdown() {
+        const now = Date.now();
+        const diff = target - now;
+        if (diff <= 0) {
+          document.getElementById('cd-days').textContent = '0';
+          document.getElementById('cd-hours').textContent = '0';
+          document.getElementById('cd-mins').textContent = '0';
+          document.getElementById('cd-secs').textContent = '0';
+          return;
+        }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('cd-days').textContent = d;
+        document.getElementById('cd-hours').textContent = String(h).padStart(2, '0');
+        document.getElementById('cd-mins').textContent = String(m).padStart(2, '0');
+        document.getElementById('cd-secs').textContent = String(s).padStart(2, '0');
+      }
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+
+      // Filter
+      const pills = document.querySelectorAll('#event-filters .filter-pill');
+      const nodes = document.querySelectorAll('.tl-node');
+      const featured = document.querySelector('.event-card.featured');
+      pills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          pills.forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          const f = pill.dataset.filter;
+
+          nodes.forEach(node => {
+            node.style.display = (f === 'all' || node.dataset.type === f) ? 'block' : 'none';
+          });
+          if (featured) {
+            featured.style.display = (f === 'all' || f === 'seasonal') ? 'block' : 'none';
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

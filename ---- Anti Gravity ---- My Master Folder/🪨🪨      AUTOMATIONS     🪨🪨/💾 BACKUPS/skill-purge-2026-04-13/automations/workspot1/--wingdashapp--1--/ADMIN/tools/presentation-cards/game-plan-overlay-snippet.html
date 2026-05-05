@@ -1,0 +1,968 @@
+<!--
+  ============================================================
+  GAME PLAN OVERLAY — Self-Contained Snippet
+  Ahead Artist Solutions
+  ============================================================
+  Drop this entire block into any Home Base HTML page.
+  No external dependencies except Google Fonts Outfit.
+  All CSS is scoped with .gp-overlay prefix.
+  ============================================================
+-->
+
+<!-- Google Fonts — skip if Outfit is already loaded on the page -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ══════════════════════════════════════════════════════════
+   GAME PLAN OVERLAY — Scoped Styles (.gp-overlay prefix)
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Backdrop ── */
+.gp-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  background: rgba(10, 8, 30, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gp-overlay-backdrop.gp-visible {
+  display: flex;
+}
+
+.gp-overlay-backdrop.gp-active {
+  opacity: 1;
+}
+
+/* ── Card Shell ── */
+.gp-overlay-card {
+  font-family: 'Outfit', sans-serif;
+  position: relative;
+  width: 100%;
+  max-width: 860px;
+  max-height: 88vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: linear-gradient(
+    155deg,
+    rgba(99, 102, 241, 0.14) 0%,
+    rgba(46, 16, 101, 0.92) 35%,
+    rgba(30, 27, 75, 0.97) 100%
+  );
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  border-radius: 24px;
+  box-shadow:
+    0 4px 32px rgba(99, 102, 241, 0.30),
+    0 1px 0 rgba(167, 139, 250, 0.12) inset,
+    0 48px 100px -24px rgba(0, 0, 0, 0.55);
+  padding: 44px 48px 40px;
+  color: #f1f0ff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+
+  /* Entry animation */
+  transform: translateY(40px) scale(0.96);
+  opacity: 0;
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.35s ease;
+}
+
+.gp-overlay-backdrop.gp-active .gp-overlay-card {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* Exit animation class */
+.gp-overlay-backdrop.gp-closing .gp-overlay-card {
+  transform: translateY(30px) scale(0.97);
+  opacity: 0;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 1, 1),
+    opacity 0.25s ease;
+}
+
+.gp-overlay-backdrop.gp-closing {
+  opacity: 0;
+  transition: opacity 0.3s ease 0.05s;
+}
+
+/* Top-edge glow */
+.gp-overlay-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #a78bfa 30%,
+    #c4b5fd 50%,
+    #a78bfa 70%,
+    transparent
+  );
+  opacity: 0.6;
+  border-radius: 1px;
+}
+
+/* Corner orb */
+.gp-overlay-card::after {
+  content: '';
+  position: absolute;
+  top: -70px;
+  right: -70px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Scrollbar */
+.gp-overlay-card::-webkit-scrollbar { width: 6px; }
+.gp-overlay-card::-webkit-scrollbar-track { background: transparent; }
+.gp-overlay-card::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.35);
+  border-radius: 3px;
+}
+
+/* ── Header ── */
+.gp-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 2;
+}
+
+.gp-overlay-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  background: linear-gradient(
+    135deg,
+    #f1f0ff 0%,
+    #c4b5fd 55%,
+    #a78bfa 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.gp-overlay-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  background: rgba(139, 92, 246, 0.10);
+  color: #a5a2d0;
+  font-size: 18px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  line-height: 1;
+  padding: 0;
+}
+
+.gp-overlay-close:hover {
+  background: rgba(139, 92, 246, 0.22);
+  border-color: rgba(167, 139, 250, 0.45);
+  color: #f1f0ff;
+  transform: scale(1.08);
+}
+
+/* ── Section Headings ── */
+.gp-overlay-section-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: #a78bfa;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gp-overlay-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(167, 139, 250, 0.35), transparent);
+}
+
+/* ── Dividers ── */
+.gp-overlay-divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(167, 139, 250, 0.30) 20%,
+    rgba(167, 139, 250, 0.30) 80%,
+    transparent
+  );
+  margin: 28px 0;
+}
+
+/* ── Objective Section ── */
+.gp-overlay-objective {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.gp-overlay-objective p {
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #a5a2d0;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.gp-overlay-objective p strong {
+  color: #f1f0ff;
+  font-weight: 600;
+}
+
+/* ── Strategy Timeline — 3 Phase Cards ── */
+.gp-overlay-phases {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.gp-overlay-phase {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 14px;
+  padding: 22px 20px;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gp-overlay-phase:hover {
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(167, 139, 250, 0.38);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.18);
+}
+
+/* Phase top shimmer */
+.gp-overlay-phase::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+
+.gp-overlay-phase[data-phase="1"]::before {
+  background: linear-gradient(90deg, #818cf8, #6366f1);
+}
+.gp-overlay-phase[data-phase="2"]::before {
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+.gp-overlay-phase[data-phase="3"]::before {
+  background: linear-gradient(90deg, #c4b5fd, #e9d5ff);
+}
+
+.gp-overlay-phase-number {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #6e6b99;
+}
+
+.gp-overlay-phase-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #f1f0ff;
+  line-height: 1.2;
+}
+
+.gp-overlay-phase-desc {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #a5a2d0;
+  line-height: 1.55;
+}
+
+.gp-overlay-phase-timeline {
+  font-family: 'Outfit', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #818cf8;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.gp-overlay-phase-timeline .gp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #818cf8;
+  flex-shrink: 0;
+}
+
+/* Arrow connectors between phases */
+.gp-overlay-phases-wrap {
+  position: relative;
+}
+
+.gp-overlay-phase-arrows {
+  display: none; /* Hidden on mobile, shown on desktop */
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── Key Milestones — Checkboxes ── */
+.gp-overlay-milestones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.gp-overlay-milestone {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.14);
+  border-radius: 10px;
+  padding: 14px 18px;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.gp-overlay-milestone:hover {
+  background: rgba(139, 92, 246, 0.11);
+  border-color: rgba(167, 139, 250, 0.30);
+}
+
+.gp-overlay-milestone-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2px solid rgba(139, 92, 246, 0.35);
+  background: rgba(139, 92, 246, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: transparent;
+  transition: all 0.2s ease;
+}
+
+.gp-overlay-milestone.gp-checked .gp-overlay-milestone-check {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-color: #8b5cf6;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
+.gp-overlay-milestone-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #c4c0e8;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.gp-overlay-milestone.gp-checked .gp-overlay-milestone-text {
+  color: #a5a2d0;
+  text-decoration: line-through;
+  text-decoration-color: rgba(139, 92, 246, 0.40);
+}
+
+.gp-overlay-milestone-tag {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gp-overlay-milestone-tag.gp-tag-done {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.22);
+}
+
+.gp-overlay-milestone-tag.gp-tag-active {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.22);
+}
+
+.gp-overlay-milestone-tag.gp-tag-upcoming {
+  color: #818cf8;
+  background: rgba(129, 140, 248, 0.12);
+  border: 1px solid rgba(129, 140, 248, 0.22);
+}
+
+/* ── Budget Allocation — Stacked Bar ── */
+.gp-overlay-budget-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+.gp-overlay-budget-bar {
+  display: flex;
+  height: 32px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  margin-bottom: 14px;
+}
+
+.gp-overlay-budget-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.90);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 8px;
+  transition: flex 0.4s ease;
+}
+
+.gp-overlay-budget-seg:nth-child(1) {
+  flex: 35;
+  background: linear-gradient(90deg, #6366f1, #7c7ff7);
+}
+
+.gp-overlay-budget-seg:nth-child(2) {
+  flex: 25;
+  background: linear-gradient(90deg, #8b5cf6, #9d75f8);
+}
+
+.gp-overlay-budget-seg:nth-child(3) {
+  flex: 20;
+  background: linear-gradient(90deg, #a78bfa, #b89dfc);
+}
+
+.gp-overlay-budget-seg:nth-child(4) {
+  flex: 20;
+  background: linear-gradient(90deg, #c4b5fd, #d0c5fe);
+  color: rgba(30, 27, 75, 0.80);
+}
+
+.gp-overlay-budget-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.gp-overlay-budget-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #a5a2d0;
+}
+
+.gp-overlay-budget-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Success Metrics — 4 Mini Stat Cards ── */
+.gp-overlay-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.gp-overlay-metric {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 12px;
+  padding: 18px 16px;
+  transition: all 0.25s ease;
+  text-align: center;
+}
+
+.gp-overlay-metric:hover {
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(167, 139, 250, 0.38);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+}
+
+.gp-overlay-metric-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 800;
+  color: #f1f0ff;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.gp-overlay-metric-value .gp-unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: #a5a2d0;
+}
+
+.gp-overlay-metric-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #6e6b99;
+}
+
+.gp-overlay-metric-delta {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 6px;
+  color: #34d399;
+}
+
+/* ── Footer ── */
+.gp-overlay-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.gp-overlay-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gp-overlay-footer-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.gp-overlay-footer-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a5a2d0;
+  letter-spacing: 0.3px;
+}
+
+.gp-overlay-footer-meta {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #6e6b99;
+}
+
+/* ── Trigger Button ── */
+.gp-trigger-btn {
+  font-family: 'Outfit', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f1f0ff;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: 1px solid rgba(167, 139, 250, 0.30);
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow:
+    0 4px 16px rgba(99, 102, 241, 0.30),
+    0 1px 0 rgba(167, 139, 250, 0.15) inset;
+  transition: all 0.25s ease;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.gp-trigger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 28px rgba(99, 102, 241, 0.40),
+    0 1px 0 rgba(167, 139, 250, 0.20) inset;
+  background: linear-gradient(135deg, #7577f5, #9d75f8);
+}
+
+.gp-trigger-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .gp-overlay-card {
+    padding: 32px 28px 28px;
+    border-radius: 20px;
+    max-height: 92vh;
+  }
+
+  .gp-overlay-phases {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .gp-overlay-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gp-overlay-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gp-overlay-milestone-tag {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .gp-overlay-backdrop {
+    padding: 12px;
+  }
+
+  .gp-overlay-card {
+    padding: 24px 20px 22px;
+    border-radius: 16px;
+  }
+
+  .gp-overlay-title {
+    font-size: 22px;
+  }
+
+  .gp-overlay-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gp-overlay-budget-seg {
+    font-size: 9px;
+  }
+
+  .gp-overlay-budget-legend {
+    gap: 10px;
+  }
+}
+</style>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     GAME PLAN OVERLAY — HTML Structure
+     ══════════════════════════════════════════════════════════ -->
+
+<div class="gp-overlay-backdrop" id="gpOverlay" onclick="if(event.target===this)closeGamePlan()">
+  <div class="gp-overlay-card">
+
+    <!-- ─── HEADER ─── -->
+    <div class="gp-overlay-header">
+      <h2 class="gp-overlay-title">&#127919; The Game Plan</h2>
+      <button class="gp-overlay-close" onclick="closeGamePlan()" aria-label="Close overlay">&times;</button>
+    </div>
+
+    <!-- ─── OBJECTIVE ─── -->
+    <div class="gp-overlay-section-label">Objective</div>
+    <div class="gp-overlay-objective">
+      <p>
+        <strong>Build a sustainable, scalable music career</strong> by combining strategic playlist placements,
+        targeted PR campaigns, and audience growth initiatives &mdash; turning streams into superfans
+        and visibility into long-term revenue.
+      </p>
+    </div>
+
+    <hr class="gp-overlay-divider" />
+
+    <!-- ─── STRATEGY TIMELINE — 3 Phases ─── -->
+    <div class="gp-overlay-section-label">Strategy Timeline</div>
+    <div class="gp-overlay-phases-wrap">
+      <div class="gp-overlay-phases">
+
+        <div class="gp-overlay-phase" data-phase="1">
+          <div class="gp-overlay-phase-number">Phase 01</div>
+          <div class="gp-overlay-phase-name">Foundation</div>
+          <div class="gp-overlay-phase-desc">
+            Establish baseline metrics, optimize profiles, and launch initial playlist &amp; PR campaigns.
+          </div>
+          <div class="gp-overlay-phase-timeline">
+            <span class="gp-dot"></span> Weeks 1&ndash;4
+          </div>
+        </div>
+
+        <div class="gp-overlay-phase" data-phase="2">
+          <div class="gp-overlay-phase-number">Phase 02</div>
+          <div class="gp-overlay-phase-name">Growth</div>
+          <div class="gp-overlay-phase-desc">
+            Scale winning campaigns, expand into new playlists, and build social content momentum.
+          </div>
+          <div class="gp-overlay-phase-timeline">
+            <span class="gp-dot"></span> Weeks 5&ndash;10
+          </div>
+        </div>
+
+        <div class="gp-overlay-phase" data-phase="3">
+          <div class="gp-overlay-phase-number">Phase 03</div>
+          <div class="gp-overlay-phase-name">Scale</div>
+          <div class="gp-overlay-phase-desc">
+            Compound audience growth, activate sync &amp; licensing, and lock in recurring revenue streams.
+          </div>
+          <div class="gp-overlay-phase-timeline">
+            <span class="gp-dot"></span> Weeks 11&ndash;16
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <hr class="gp-overlay-divider" />
+
+    <!-- ─── KEY MILESTONES ─── -->
+    <div class="gp-overlay-section-label">Key Milestones</div>
+    <div class="gp-overlay-milestones">
+
+      <div class="gp-overlay-milestone gp-checked">
+        <div class="gp-overlay-milestone-check">&#10003;</div>
+        <span class="gp-overlay-milestone-text">Artist profile optimization &amp; brand assets delivered</span>
+        <span class="gp-overlay-milestone-tag gp-tag-done">Done</span>
+      </div>
+
+      <div class="gp-overlay-milestone gp-checked">
+        <div class="gp-overlay-milestone-check">&#10003;</div>
+        <span class="gp-overlay-milestone-text">First playlist campaign live &mdash; 15+ placements secured</span>
+        <span class="gp-overlay-milestone-tag gp-tag-done">Done</span>
+      </div>
+
+      <div class="gp-overlay-milestone">
+        <div class="gp-overlay-milestone-check">&#10003;</div>
+        <span class="gp-overlay-milestone-text">PR coverage in 3+ targeted publications</span>
+        <span class="gp-overlay-milestone-tag gp-tag-active">In Progress</span>
+      </div>
+
+      <div class="gp-overlay-milestone">
+        <div class="gp-overlay-milestone-check">&#10003;</div>
+        <span class="gp-overlay-milestone-text">10,000 new monthly listeners milestone</span>
+        <span class="gp-overlay-milestone-tag gp-tag-upcoming">Upcoming</span>
+      </div>
+
+      <div class="gp-overlay-milestone">
+        <div class="gp-overlay-milestone-check">&#10003;</div>
+        <span class="gp-overlay-milestone-text">Sync licensing submission &amp; placement pipeline active</span>
+        <span class="gp-overlay-milestone-tag gp-tag-upcoming">Upcoming</span>
+      </div>
+
+    </div>
+
+    <hr class="gp-overlay-divider" />
+
+    <!-- ─── BUDGET ALLOCATION ─── -->
+    <div class="gp-overlay-section-label">Budget Allocation</div>
+    <div class="gp-overlay-budget-wrap">
+      <div class="gp-overlay-budget-bar">
+        <div class="gp-overlay-budget-seg">35%</div>
+        <div class="gp-overlay-budget-seg">25%</div>
+        <div class="gp-overlay-budget-seg">20%</div>
+        <div class="gp-overlay-budget-seg">20%</div>
+      </div>
+      <div class="gp-overlay-budget-legend">
+        <div class="gp-overlay-budget-item">
+          <span class="gp-overlay-budget-dot" style="background:#6366f1;"></span>
+          Playlist &amp; Streaming
+        </div>
+        <div class="gp-overlay-budget-item">
+          <span class="gp-overlay-budget-dot" style="background:#8b5cf6;"></span>
+          PR &amp; Press
+        </div>
+        <div class="gp-overlay-budget-item">
+          <span class="gp-overlay-budget-dot" style="background:#a78bfa;"></span>
+          Social &amp; Content
+        </div>
+        <div class="gp-overlay-budget-item">
+          <span class="gp-overlay-budget-dot" style="background:#c4b5fd;"></span>
+          Strategy &amp; Management
+        </div>
+      </div>
+    </div>
+
+    <hr class="gp-overlay-divider" />
+
+    <!-- ─── SUCCESS METRICS ─── -->
+    <div class="gp-overlay-section-label">Success Metrics</div>
+    <div class="gp-overlay-metrics">
+
+      <div class="gp-overlay-metric">
+        <div class="gp-overlay-metric-value">50<span class="gp-unit">K+</span></div>
+        <div class="gp-overlay-metric-label">Stream Target</div>
+        <div class="gp-overlay-metric-delta">&#9650; Per release cycle</div>
+      </div>
+
+      <div class="gp-overlay-metric">
+        <div class="gp-overlay-metric-value">15<span class="gp-unit">+</span></div>
+        <div class="gp-overlay-metric-label">Playlist Adds</div>
+        <div class="gp-overlay-metric-delta">&#9650; Editorial + indie</div>
+      </div>
+
+      <div class="gp-overlay-metric">
+        <div class="gp-overlay-metric-value">3<span class="gp-unit">x</span></div>
+        <div class="gp-overlay-metric-label">Social Growth</div>
+        <div class="gp-overlay-metric-delta">&#9650; Engagement rate</div>
+      </div>
+
+      <div class="gp-overlay-metric">
+        <div class="gp-overlay-metric-value">5<span class="gp-unit">+</span></div>
+        <div class="gp-overlay-metric-label">Press Features</div>
+        <div class="gp-overlay-metric-delta">&#9650; Targeted outlets</div>
+      </div>
+
+    </div>
+
+    <hr class="gp-overlay-divider" />
+
+    <!-- ─── FOOTER ─── -->
+    <div class="gp-overlay-footer">
+      <div class="gp-overlay-footer-brand">
+        <div class="gp-overlay-footer-logo">A</div>
+        <span class="gp-overlay-footer-name">Ahead Artist Solutions</span>
+      </div>
+      <span class="gp-overlay-footer-meta">Game Plan &bull; <span id="gpDate"></span></span>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- Place this button wherever you want the Game Plan trigger -->
+<button class="gp-trigger-btn" onclick="openGamePlan()">&#127919; The Game Plan</button>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     GAME PLAN OVERLAY — JavaScript
+     ══════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  // Auto-fill date
+  var dateEl = document.getElementById('gpDate');
+  if (dateEl) {
+    dateEl.textContent = new Date().toISOString().split('T')[0];
+  }
+
+  // --- Open ---
+  window.openGamePlan = function() {
+    var overlay = document.getElementById('gpOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('gp-closing');
+    overlay.classList.add('gp-visible');
+    // Force reflow so transition triggers
+    void overlay.offsetWidth;
+    overlay.classList.add('gp-active');
+    document.body.style.overflow = 'hidden';
+  };
+
+  // --- Close ---
+  window.closeGamePlan = function() {
+    var overlay = document.getElementById('gpOverlay');
+    if (!overlay) return;
+    overlay.classList.add('gp-closing');
+    overlay.classList.remove('gp-active');
+    // Wait for exit animation to finish, then hide
+    setTimeout(function() {
+      overlay.classList.remove('gp-visible', 'gp-closing');
+      document.body.style.overflow = '';
+    }, 350);
+  };
+
+  // --- ESC key ---
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      var overlay = document.getElementById('gpOverlay');
+      if (overlay && overlay.classList.contains('gp-active')) {
+        closeGamePlan();
+      }
+    }
+  });
+
+})();
+</script>

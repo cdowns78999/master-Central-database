@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Music Industry Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5ee;
+    --paper: #fbfaf3;
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --ink-faint: #6a6a6a;
+    --rule: #d9d4c2;
+    --rule-soft: #ecead9;
+    --accent: #1e40af;
+    --accent-hover: #1e3a8a;
+    --accent-soft: #dbeafe;
+    --highlight: #fde68a;
+    --warn: #b45309;
+    --good: #047857;
+    --active-fill: #1a1a1a;
+    --shadow: 0 1px 2px rgba(20, 20, 20, 0.04), 0 8px 24px rgba(20, 20, 20, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(rgba(0,0,0,0.018) 1px, transparent 1px),
+      radial-gradient(rgba(0,0,0,0.012) 1px, transparent 1px);
+    background-size: 24px 24px, 48px 48px;
+    background-position: 0 0, 12px 12px;
+  }
+
+  .app {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 28px 40px 64px 40px;
+    aspect-ratio: auto;
+  }
+
+  /* ---------- HEADER ---------- */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 22px;
+    gap: 24px;
+  }
+  .header h1 {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--ink);
+  }
+  .header .subtitle {
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .sources-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 11px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 1px 2px rgba(30, 64, 175, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .sources-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.28);
+  }
+  .sources-btn::before {
+    content: "";
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #fbbf24;
+    display: inline-block;
+    box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.25);
+  }
+
+  /* ---------- MODE TOGGLE ---------- */
+  .mode-toggle {
+    display: inline-flex;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 5px;
+    gap: 4px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .mode-btn {
+    background: transparent;
+    border: none;
+    padding: 10px 22px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+    letter-spacing: 0.01em;
+  }
+  .mode-btn.active {
+    background: var(--active-fill);
+    color: #fbfaf3;
+  }
+  .mode-btn:not(.active):hover {
+    background: var(--rule-soft);
+    color: var(--ink);
+  }
+
+  /* ---------- NAV ROW ---------- */
+  .nav-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .nav-btn {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 14px 14px 14px 14px;
+    border-radius: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+  .nav-btn:hover {
+    border-color: var(--ink-soft);
+    background: #fdfcf5;
+    transform: translateY(-1px);
+  }
+  .nav-btn .num {
+    font-family: "Georgia", serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ink-faint);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+  }
+  .nav-btn .label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .nav-btn.active {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .nav-btn.active .num { color: rgba(255,255,255,0.55); }
+  .nav-btn.active .label { color: #fbfaf3; }
+
+  /* ---------- CONTENT PANEL ---------- */
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 36px 44px 40px 44px;
+    box-shadow: var(--shadow);
+    min-height: 480px;
+    animation: fadeIn 0.28s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel .topic-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 8px 0;
+  }
+  .panel h2 {
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.015em;
+  }
+  .panel .panel-intro {
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin: 0 0 28px 0;
+    max-width: 820px;
+    font-style: italic;
+  }
+
+  .section h3 {
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+    margin: 28px 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .section h3:first-of-type { margin-top: 6px; }
+
+  .findings {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .finding {
+    padding: 14px 16px 14px 18px;
+    border-left: 3px solid var(--accent);
+    background: rgba(30, 64, 175, 0.03);
+    border-radius: 0 8px 8px 0;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .finding strong { color: #0f172a; }
+  .finding a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(30, 64, 175, 0.4);
+  }
+  .finding a:hover { border-bottom-style: solid; }
+  .finding .cite {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  .why-it-matters {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: #422006;
+    margin-bottom: 8px;
+  }
+
+  .implications {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .implication {
+    padding: 14px 16px;
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    background: #fdfcf5;
+  }
+  .implication strong { color: #064e3b; }
+
+  /* ---------- STARTER GUIDE VIEW ---------- */
+  .playbook-step {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 18px;
+    padding: 18px 20px;
+    background: #fdfcf5;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    transition: border-color 0.15s ease;
+  }
+  .playbook-step:hover { border-color: var(--ink-soft); }
+  .playbook-step .step-num {
+    font-family: "Georgia", serif;
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .playbook-step .step-body h4 {
+    font-size: 15.5px;
+    font-weight: 700;
+    margin: 2px 0 6px 0;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .playbook-step .step-body p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+  .playbook-intro {
+    background: linear-gradient(180deg, #f0f7ff 0%, #eef4fd 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    color: #1e3a8a;
+    font-size: 14.5px;
+    line-height: 1.65;
+  }
+  .playbook-intro strong { color: #172554; }
+
+  /* ---------- MODAL ---------- */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 24px;
+    overflow-y: auto;
+  }
+  .modal-backdrop.open { display: flex; animation: fadeIn 0.22s ease; }
+  .modal {
+    background: var(--paper);
+    border-radius: 14px;
+    max-width: 900px;
+    width: 100%;
+    padding: 32px 40px 36px 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    border: 1px solid var(--rule);
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 20px;
+  }
+  .modal-head h2 {
+    font-family: "Georgia", serif;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  .modal-head .hint {
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .modal-close {
+    background: transparent;
+    border: 1px solid var(--rule);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--rule-soft); }
+
+  .registry-section {
+    margin-bottom: 26px;
+  }
+  .registry-section h3 {
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .registry-section h3 .count {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .registry-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .registry-list li {
+    font-size: 13.5px;
+    line-height: 1.5;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #fdfcf5;
+    border: 1px solid var(--rule-soft);
+  }
+  .registry-list li:hover { background: #fffbeb; }
+  .registry-list a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .registry-list a:hover { text-decoration: underline; }
+  .registry-list .pub {
+    color: var(--ink-faint);
+    font-size: 12px;
+    margin-left: 4px;
+  }
+
+  /* ---------- FOOTER NOTE ---------- */
+  .footnote {
+    margin-top: 20px;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    text-align: center;
+    letter-spacing: 0.06em;
+  }
+
+  @media (max-width: 1100px) {
+    .nav-row { grid-template-columns: repeat(3, 1fr); }
+    .app { padding: 20px; }
+    .panel { padding: 26px; }
+  }
+  @media (max-width: 640px) {
+    .nav-row { grid-template-columns: repeat(2, 1fr); }
+    .header { flex-direction: column; align-items: flex-start; }
+    .panel h2 { font-size: 24px; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     SPOTIFY-STYLE OVERRIDES — ONLY activate when Music Industry HIW
+     tab is active. Scoped under body[data-active-mode="koi"].
+     All new classes prefixed with `hiw-scoped-` or `view--hiw-`.
+     Other tabs (research, starter, koiplan) remain untouched.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  body[data-active-mode="koi"] {
+    background: #0a0a0a;
+    background-image: none;
+    color: #e8e8e8;
+  }
+  body[data-active-mode="koi"] .app {
+    padding-top: 40px;
+  }
+
+  /* --- HEADER when HIW active --- */
+  body[data-active-mode="koi"] .header {
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  body[data-active-mode="koi"] .header h1 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: #fff;
+    font-size: 30px;
+  }
+  body[data-active-mode="koi"] .header .subtitle {
+    color: #1ed760;
+    letter-spacing: 3px;
+    font-weight: 800;
+    font-size: 10px;
+  }
+  body[data-active-mode="koi"] .sources-btn {
+    background: rgba(30,215,96,0.08);
+    border: 1px solid rgba(30,215,96,0.15);
+    color: #1ed760;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 11px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body[data-active-mode="koi"] .sources-btn:hover {
+    background: rgba(30,215,96,0.12);
+    border-color: rgba(30,215,96,0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30,215,96,0.1);
+  }
+  body[data-active-mode="koi"] .sources-btn::before {
+    background: #1ed760;
+    box-shadow: 0 0 0 2px rgba(30,215,96,0.25);
+  }
+
+  /* --- MODE TOGGLE pill strip when HIW active --- */
+  body[data-active-mode="koi"] .mode-toggle {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: none;
+  }
+  body[data-active-mode="koi"] .mode-btn {
+    color: rgba(255,255,255,0.45);
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.02em;
+  }
+  body[data-active-mode="koi"] .mode-btn:not(.active):hover {
+    background: rgba(255,255,255,0.04);
+    color: #e8e8e8;
+  }
+  body[data-active-mode="koi"] .mode-btn.active {
+    background: #1ed760;
+    color: #0a0a0a;
+    font-weight: 800;
+  }
+
+  /* --- NAV ROW (01/02/03 slot buttons) when HIW active --- */
+  body[data-active-mode="koi"] .nav-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  body[data-active-mode="koi"] .nav-btn {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 28px 22px 22px;
+    text-align: center;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body[data-active-mode="koi"] .nav-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #1ed760, transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  body[data-active-mode="koi"] .nav-btn:hover {
+    border-color: rgba(30,215,96,0.25);
+    background: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(30,215,96,0.06);
+  }
+  body[data-active-mode="koi"] .nav-btn:hover::before { opacity: 1; }
+  body[data-active-mode="koi"] .nav-btn .num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.08);
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    line-height: 1;
+  }
+  body[data-active-mode="koi"] .nav-btn .label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+    z-index: 2;
+    position: relative;
+    margin-top: 8px;
+  }
+  body[data-active-mode="koi"] .nav-btn.active {
+    background: linear-gradient(135deg, #141414 0%, rgba(30,215,96,0.08) 100%);
+    border-color: rgba(30,215,96,0.35);
+  }
+  body[data-active-mode="koi"] .nav-btn.active::before { opacity: 1; }
+  body[data-active-mode="koi"] .nav-btn.active .num { color: rgba(30,215,96,0.35); }
+  body[data-active-mode="koi"] .nav-btn.active .label { color: #1ed760; }
+
+  /* --- PANEL (big explanation tile) when HIW active --- */
+  body[data-active-mode="koi"] .panel {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    padding: 42px 48px 46px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  body[data-active-mode="koi"] .panel::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 340px;
+    height: 340px;
+    background: radial-gradient(circle, rgba(30,215,96,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  body[data-active-mode="koi"] .panel .topic-eyebrow {
+    display: inline-block;
+    color: #1ed760;
+    background: rgba(30,215,96,0.06);
+    border: 1px solid rgba(30,215,96,0.15);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  body[data-active-mode="koi"] .panel h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 14px;
+  }
+  body[data-active-mode="koi"] .panel .panel-intro {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.45);
+    max-width: 720px;
+    font-style: normal;
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+  body[data-active-mode="koi"] .panel .section {
+    position: relative;
+    z-index: 2;
+  }
+  body[data-active-mode="koi"] .panel .section p {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    line-height: 1.75;
+    margin: 0 0 14px 0;
+  }
+
+  /* HIW-scoped custom building blocks (the skill may add these later) */
+  body[data-active-mode="koi"] .hiw-scoped-quote {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: rgba(30,215,96,0.04);
+    border-left: 2px solid #1ed760;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.55);
+    font-style: italic;
+  }
+
+  /* Footer footnote dim for HIW */
+  body[data-active-mode="koi"] .footnote {
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 1.5px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     SPOTIFY-STYLE OVERRIDES — KOI PLAN TAB ONLY
+     Scoped under body[data-active-mode="koiplan"]. All new custom
+     classes prefixed with `koiplan-scoped-` to avoid collision with
+     the parallel HIW-scoped / hiw-scoped- rules above. Other tabs
+     (research, starter, koi) remain untouched.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  body[data-active-mode="koiplan"] {
+    background: #0a0a0a;
+    background-image: none;
+    color: #e8e8e8;
+  }
+  body[data-active-mode="koiplan"] .app { padding-top: 40px; }
+
+  body[data-active-mode="koiplan"] .header {
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  body[data-active-mode="koiplan"] .header h1 {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    letter-spacing: -1px;
+    color: #fff;
+    font-size: 30px;
+  }
+  body[data-active-mode="koiplan"] .header .subtitle {
+    color: #1ed760;
+    letter-spacing: 3px;
+    font-weight: 800;
+    font-size: 10px;
+  }
+
+  body[data-active-mode="koiplan"] .sources-btn {
+    background: rgba(30,215,96,0.08);
+    border: 1px solid rgba(30,215,96,0.15);
+    color: #1ed760;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 11px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body[data-active-mode="koiplan"] .sources-btn:hover {
+    background: rgba(30,215,96,0.12);
+    border-color: rgba(30,215,96,0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30,215,96,0.1);
+  }
+  body[data-active-mode="koiplan"] .sources-btn::before {
+    background: #1ed760;
+    box-shadow: 0 0 0 2px rgba(30,215,96,0.25);
+  }
+
+  body[data-active-mode="koiplan"] .mode-toggle {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: none;
+  }
+  body[data-active-mode="koiplan"] .mode-btn {
+    color: rgba(255,255,255,0.45);
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.02em;
+  }
+  body[data-active-mode="koiplan"] .mode-btn:not(.active):hover {
+    background: rgba(255,255,255,0.04);
+    color: #e8e8e8;
+  }
+  body[data-active-mode="koiplan"] .mode-btn.active {
+    background: #1ed760;
+    color: #0a0a0a;
+    font-weight: 800;
+  }
+
+  body[data-active-mode="koiplan"] .nav-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  body[data-active-mode="koiplan"] .nav-btn {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 28px 22px 22px;
+    text-align: center;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body[data-active-mode="koiplan"] .nav-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #1ed760, transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  body[data-active-mode="koiplan"] .nav-btn:hover {
+    border-color: rgba(30,215,96,0.25);
+    background: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(30,215,96,0.06);
+  }
+  body[data-active-mode="koiplan"] .nav-btn:hover::before { opacity: 1; }
+  body[data-active-mode="koiplan"] .nav-btn .num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.08);
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    line-height: 1;
+  }
+  body[data-active-mode="koiplan"] .nav-btn .label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.01em;
+    z-index: 2;
+    position: relative;
+    margin-top: 8px;
+  }
+  body[data-active-mode="koiplan"] .nav-btn.active {
+    background: linear-gradient(135deg, #141414 0%, rgba(30,215,96,0.08) 100%);
+    border-color: rgba(30,215,96,0.35);
+  }
+  body[data-active-mode="koiplan"] .nav-btn.active::before { opacity: 1; }
+  body[data-active-mode="koiplan"] .nav-btn.active .num { color: rgba(30,215,96,0.35); }
+  body[data-active-mode="koiplan"] .nav-btn.active .label { color: #1ed760; }
+
+  body[data-active-mode="koiplan"] .panel {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    padding: 42px 48px 46px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  body[data-active-mode="koiplan"] .panel::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 340px;
+    height: 340px;
+    background: radial-gradient(circle, rgba(30,215,96,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  body[data-active-mode="koiplan"] .panel .topic-eyebrow {
+    display: inline-block;
+    color: #1ed760;
+    background: rgba(30,215,96,0.06);
+    border: 1px solid rgba(30,215,96,0.15);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  body[data-active-mode="koiplan"] .panel h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 14px;
+  }
+  body[data-active-mode="koiplan"] .panel .panel-intro {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.45);
+    max-width: 720px;
+    font-style: normal;
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+
+  /* KOIPLAN custom building blocks */
+  body[data-active-mode="koiplan"] .koiplan-scoped-section-header {
+    margin: 44px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 2;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1ed760;
+    flex-shrink: 0;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-dot.amber  { background: #f59e0b; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-dot.blue   { background: #3b82f6; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-dot.purple { background: #a855f7; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-dot.red    { background: #ef4444; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    position: relative;
+    z-index: 2;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-card {
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 28px 22px 22px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-card:hover {
+    border-color: rgba(30,215,96,0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(30,215,96,0.06);
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #1ed760, transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-card:hover::before { opacity: 1; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #1ed760;
+    line-height: 1.1;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-value.amber  { color: #f59e0b; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-value.blue   { color: #3b82f6; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-value.purple { color: #a855f7; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: rgba(255,255,255,0.45);
+    font-weight: 800;
+    margin-top: 10px;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-bench-note {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.25);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  body[data-active-mode="koiplan"] .koiplan-scoped-multiplier {
+    background: linear-gradient(135deg, #1a1a1a 0%, rgba(30,215,96,0.04) 100%);
+    border: 1px solid rgba(30,215,96,0.15);
+    border-radius: 20px;
+    padding: 32px 40px;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-top: 16px;
+    position: relative;
+    z-index: 2;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-multiplier-left {
+    text-align: center;
+    flex-shrink: 0;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-multiplier-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: 4rem;
+    font-weight: 900;
+    color: #1ed760;
+    line-height: 1;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-multiplier-sub {
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.45);
+    font-weight: 800;
+    margin-top: 4px;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-multiplier-right h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-multiplier-right p {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.65;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-quote {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: rgba(30,215,96,0.04);
+    border-left: 2px solid #1ed760;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.55);
+    font-style: italic;
+  }
+
+  body[data-active-mode="koiplan"] .koiplan-scoped-sequence {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-top: 8px;
+    position: relative;
+    z-index: 2;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-step {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-step:first-child { border-radius: 16px 0 0 16px; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-step:last-child  { border-radius: 0 16px 16px 0; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-step::after {
+    content: '';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 8px solid #1ed760;
+    z-index: 2;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-step:last-child::after { display: none; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-phase {
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #1ed760;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-tool {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-note {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.5;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-seq-lift {
+    margin-top: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #f59e0b;
+  }
+
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    position: relative;
+    z-index: 2;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-card {
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 24px;
+    transition: border-color 0.3s ease;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-card:hover {
+    border-color: rgba(255,255,255,0.1);
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-card.full {
+    grid-column: 1 / -1;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 800;
+    margin-bottom: 14px;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-icon.green  { background: rgba(30,215,96,0.15);  color: #1ed760; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-icon.amber  { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-icon.blue   { background: rgba(59,130,246,0.15); color: #3b82f6; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-icon.purple { background: rgba(168,85,247,0.15); color: #a855f7; }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-card h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-analysis-card p {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.65;
+  }
+  body[data-active-mode="koiplan"] .koiplan-scoped-stat {
+    color: #1ed760;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  body[data-active-mode="koiplan"] .footnote {
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 1.5px;
+  }
+
+  @media (max-width: 900px) {
+    body[data-active-mode="koiplan"] .koiplan-scoped-bench-grid,
+    body[data-active-mode="koiplan"] .koiplan-scoped-analysis-grid {
+      grid-template-columns: 1fr;
+    }
+    body[data-active-mode="koiplan"] .koiplan-scoped-sequence {
+      flex-direction: column;
+    }
+    body[data-active-mode="koiplan"] .koiplan-scoped-seq-step { border-radius: 0 !important; }
+    body[data-active-mode="koiplan"] .koiplan-scoped-seq-step::after { display: none; }
+    body[data-active-mode="koiplan"] .koiplan-scoped-multiplier {
+      flex-direction: column;
+      gap: 20px;
+      padding: 24px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div>
+      <div class="subtitle">Whiteboard Research Deliverable</div>
+      <h1>Music Industry Intelligence Dashboard</h1>
+    </div>
+    <button class="sources-btn" onclick="window.open('file:///C:/Users/chad/OneDrive/Documents/GitHub/master-Central-database/---- Anti Gravity ---- My Master Folder/%F0%9F%AA%A8 2026 Ultimate File Manager/-- Results folder master forever/Regular projects - 2/%E2%AD%90 stack-board projects/index.html?v=' + Date.now(), '_blank')">🟡 STACK BOARDS</button>
+    <button class="sources-btn" onclick="window.location.href='pretty.html'">🟣 PRETTY</button>
+    <button class="sources-btn" onclick="window.location.href='community-sample.html'">🟢 COMMUNITY SAMPLE</button>
+    <button class="sources-btn" id="openSources">Sources Registry</button>
+  </header>
+
+  <!-- MODE TOGGLE -->
+  <div class="mode-toggle" role="tablist" aria-label="View mode">
+    <button class="mode-btn active" data-mode="research">Research Results</button>
+    <button class="mode-btn" data-mode="starter">Artist Starter Guide</button>
+    <button class="mode-btn" data-mode="koi">Music Industry HIW</button>
+    <button class="mode-btn" data-mode="koiplan">Koi Plan</button>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav-row" id="navRow"></nav>
+
+  <!-- CONTENT PANEL -->
+  <section class="panel" id="panel"></section>
+
+  <div class="footnote">Research compiled April 2026 — hover any blue link for citation; click "Sources Registry" for the full index.</div>
+</div>
+
+<!-- SOURCES MODAL -->
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="hint">Full Source Index · 6 topics</div>
+        <h2 id="modalTitle">Sources Registry</h2>
+      </div>
+      <button class="modal-close" id="closeModal" aria-label="Close">&times;</button>
+    </div>
+    <div id="registry"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA — all content inlined from the 6 research markdown files
+   ============================================================ */
+
+const DATA = {
+  streaming: {
+    num: "01",
+    title: "Streaming",
+    blurb: "The unit economics of streaming have fractured — growth lives in subscription pricing power while per-stream value keeps sliding.",
+    findings: [
+      {text: `Global recorded music revenue reached <strong>$31.7B in 2025, up 6.4% YoY, with paid streaming subscribers hitting 837 million</strong> — streaming accounts for ~69% of recorded-music trade revenue, and paid subs drove most of 2024's growth (+9.5%).`, cite: "IFPI Global Music Report 2026 / Music Business Worldwide, 2026"},
+      {text: `<strong>Spotify paid a record $11B in royalties in 2025</strong> (lifetime ~$70B). 1,500 artists generated over $1M and 13,800+ generated at least $100K on Spotify alone — but payouts grew only ~10% YoY while per-stream rates kept sliding.`, cite: "Spotify Loud & Clear 2026 / Hypebot / Billboard"},
+      {text: `Per-stream payouts diverge by an order of magnitude: <strong>Tidal ~$0.013, Apple ~$0.007–0.01, Amazon ~$0.004–0.008, Spotify ~$0.003–0.005, YouTube Music ~$0.00069.</strong> Apple and Tidal are premium-only, which mechanically lifts their averages.`, cite: "Royalty Exchange, 2025 / Rebel Music Distribution / Dynamoi"},
+      {text: `Spotify's <strong>1,000-stream-per-12-months threshold</strong> (live since April 2024) demonetized ~87% of the catalog at introduction, redirecting ~$1B to artists above the bar. Impala reports disproportionate harm to classical, jazz, regional, and non-English repertoire.`, cite: "Spotify for Artists, 2023 / Music Ally, Dec 2025 / MBW 2024"},
+      {text: `Deezer's <strong>artist-centric model</strong> removed ~26M tracks (~13% of catalog) and caps any single user's contribution at 1,000 monthly streams. 44% of daily Deezer uploads are now fully AI-generated (~75,000/day); up to 85% of streams on fully-AI tracks were fraudulent in 2025.`, cite: "Deezer Newsroom 2023–2026 / MBW / TechCrunch"},
+      {text: `<strong>The top 1% of artists capture ~90% of global streams; the top 10% capture ~99.4%.</strong> Breaking into the top 1% on Spotify requires ~240,000 monthly listeners; only ~12,000 artists worldwide exceed 1M. Academic work (Tofalvy & Koltai, 2023) argues the recommender structurally reproduces this inequality.`, cite: "Rolling Stone Pro, 2024 / New Media & Society, 2023"},
+      {text: `<strong>Non-major (indie) labels grew 8.2% to $10.7B in 2024</strong>, taking 29.7% ownership share; counting self-releasing artists, "non-major" is 46.7% of the global market. But self-release "Artists Direct" revenue lagged the market ($2.0B) after thresholds kicked in.`, cite: "MIDiA 'Recorded Music Market Shares 2024,' March 2025"},
+      {text: `<strong>Streaming fraud drains ~$1B annually from the royalty pool.</strong> Spotify removed 75M fraudulent tracks in the past year; ~106,000 new tracks hit DSPs daily in 2025. Regulators and DSPs are pushing artist-centric / engagement-weighted models partly to neutralize bot farms.`, cite: "MBW, 2025 / Billboard Pro / WIPO Magazine"}
+    ],
+    why: `The streaming market is still growing, but growth is now concentrated in subscription-pricing power and a shrinking per-stream unit value — so the "earn more by streaming more" playbook only works for artists already above platform monetization thresholds (1,000 streams/track on Spotify; 1,000 streams + 500 unique listeners/month on Deezer). For independent artists the ground is shifting twice at once: royalty models are being rewritten to favor "professional" and engaged-fan streams (good for niche artists with real fanbases), while AI-generated content and bot-driven streaming inflate the denominator of the pro-rata pool (bad for everyone legit). Long-tail artists who rely on passive algorithmic placements are the most exposed; artists with identifiable superfan audiences are the most structurally advantaged.`,
+    implications: [
+      `<strong>Clear the 1,000-stream monetization bar on each track before promoting the next one.</strong> On Spotify, tracks under 1,000 annual streams earn $0 — budget marketing per-release to cross the threshold rather than spreading thin.`,
+      `<strong>Prioritize platforms and distribution deals that route to artist-centric pools</strong> (Deezer via Merlin, SoundCloud Fan Powered Royalties). MIDiA data shows mid-tail artists move into higher income brackets under user-centric models.`,
+      `<strong>Treat superfan conversion as a revenue line, not a vibe.</strong> MIDiA estimates a ~2–3% superfan share is needed to double income vs. pro-rata — bundle direct-to-fan offers (Bandcamp, paid tiers, vinyl) on top of streaming.`,
+      `<strong>Tag and document human-made work</strong> to stay on the safe side of AI-detection sweeps. Deezer already tags AI music and excludes suspicious streams; expect Spotify and Apple to add similar filters.`,
+      `<strong>Diversify off the Spotify unit economic.</strong> Apple, Tidal, and Amazon pay 2x–4x per stream; even modest listener migration shifts revenue materially. Pitch for Apple editorial, Tidal HiFi features, and Amazon follow-ups — not only Spotify.`
+    ],
+    playbook: {
+      intro: `<strong>You're not "an artist on Spotify" — you're a small business on nine different distribution rails, each with its own unit economics.</strong> The single move that separates artists who earn from artists who vanish is treating every release like a product launch with a revenue target, not a vibe check. Here's your starter playbook.`,
+      steps: [
+        {title: "Cross the 1,000-stream bar on purpose, every release.", body: "Before you upload, write down how the track is going to hit 1,000 streams inside 12 months. Spotify and Deezer both zero out tracks under this line. If you don't have a concrete answer — a playlist you've pitched, ad spend reserved, a TikTok clip queued, a live set where you'll debut it — hold the release and build the plan first. Budget marketing per track, not per catalog."},
+        {title: "Route to artist-centric pools where you can.", body: "Work with a distributor that delivers to Deezer (via Merlin) and SoundCloud's Fan Powered Royalties. These pools reward real fans over raw volume — if you have 200 listeners who stream you daily, you're the exact artist these models were built for. Don't wait for Spotify to copy it."},
+        {title: "Build a superfan tier inside your first 500 fans.", body: "Your top 2–3% of listeners will out-earn the other 97 combined. Open a simple Bandcamp for vinyl/lossless, add a paid Discord or Patreon tier for early demos and show pre-sales, and ship one limited-edition item per album cycle. This is the line that doubles your income — not more streams."},
+        {title: "Tag your human-made work in metadata.", body: "When you deliver to your distributor, check the boxes for production credits, co-writers, human-performance tags. Deezer is already pulling AI tracks out of the royalty pool, Spotify is adding DDEX AI disclosure fields, and the audits are getting stricter each quarter. Clean metadata = protected payouts."},
+        {title: "Pitch every release to Apple, Tidal, and Amazon — not just Spotify.", body: "Those three pay 2–4x per stream. Use your distributor's editorial pitching tools for Apple (Apple Music for Artists) and submit the track to Tidal Rising and Amazon's Breakthrough. A 20% listener migration from Spotify to Apple can be a larger revenue boost than doubling your Spotify streams."}
+      ]
+    }
+  },
+
+  branding: {
+    num: "02",
+    title: "Branding",
+    blurb: "The artist is a 'human brand' — a co-created identity that converts streams into tickets and tickets into superfans.",
+    findings: [
+      {text: `The artist is now a <strong>full "human brand"</strong> — a co-created identity, not just a recording persona. Academic work (Thomson, <em>J. of Marketing</em>) established the construct; Centeno & Wang show celebrity identity is co-created by artist, publicists, cultural intermediaries, and fans.`, cite: "Journal of Marketing 2006 / J. of Business Research"},
+      {text: `<strong>Visual + narrative world-building drives 2024–2025 breakouts.</strong> Sabrina Carpenter's "Short n' Sweet" era rode a tight palette (vintage blue, espresso brown, cherry red) and a Dunkin' "Brown Sugar Shakin' Espresso" co-brand. Chappell Roan's "drag-queen version of myself" thesis turned a decade-long grind into an overnight breakout.`, cite: "USC Annenberg / Rolling Stone Oct 2024 / Salon Jul 2024"},
+      {text: `<strong>Sonic identity is now measurable — and it moves the needle.</strong> Spence's 2024 narrative review in <em>Psychology & Marketing</em> pulled the field toward science. Audio Branding Academy: consistent sonic identity produces <strong>65% higher emotional engagement</strong> vs. visual-only exposure. Sonic-branding market: $1.12B in 2024 (13.9% CAGR).`, cite: "Psychology & Marketing, 2024 / Audio Branding Academy"},
+      {text: `<strong>TikTok is the top-of-funnel for nearly every modern chart hit.</strong> <strong>84% of songs that entered the Billboard Global 200 in 2024 went viral on TikTok first</strong>, and TikTok-correlated artists see 11% week-over-week streaming growth vs. 3% for peers — a distinctive short-form hook is now a precondition for mainstream signal.`, cite: "TikTok Newsroom 2025 / SoundCamps 2026"},
+      {text: `<strong>Brand partnerships are a billion-dollar artist revenue pillar.</strong> Live Nation sponsorship grew from $590.3M (2019) to $1.2B (2024); sync revenue recovered to $632M (2023), with 50% of Super Bowl LIX ads using synched music (license fees $400K–$2.5M per spot).`, cite: "Billboard Pro — Music Brand Partnerships"},
+      {text: `<strong>Superfans carry the economics of the mid-tier.</strong> Luminate 2024: superfans spend $113/month on live music (+66%) and $39 on physical merch (+105%); 70% will buy merch vs. 26% of general listeners. D2C drove <strong>63% of first-week physical album sales</strong> in the US Top 200. Merch is forecast to reach $16.3B by 2030 (MIDiA).`, cite: "Luminate 2024 Year-End / atVenu / MIDiA"},
+      {text: `<strong>Parasocial intimacy is the modern brand mechanism — AI visuals are its authenticity limit.</strong> Taylor Swift is the paradigm case (fan-name recognition, Easter-egg lore); "parasocial" was Collins' 2025 word of the year. Audiences have "an almost supernatural ability to detect AI slop" — CTR drops <strong>40%+</strong> when viewers suspect fully-AI imagery.`, cite: "Media Asia 2024 / Northeastern / AMPLYFI"}
+    ],
+    why: `Branding is no longer decoration on top of the music — it is the compounding asset that converts a stream into a ticket, a ticket into a merch buy, and a merch buy into a parasocial superfan who subsidizes the entire career. In a market where <strong>84% of hits break on TikTok first</strong> and superfans spend <strong>2x what casuals spend</strong>, an artist without a tight visual/sonic/narrative identity is effectively invisible to the algorithms and to the brands paying the bills. The winners of 2024–2026 (Carpenter, Roan, Rodrigo, Swift) treat identity like product: a consistent, co-created, repeatable world that fans can step inside.`,
+    implications: [
+      `<strong>Lock three pillars before release:</strong> visual palette (3–5 codified colors/motifs), sonic signature (recurring production/vocal/instrumental tic), and a one-sentence narrative thesis short enough to brief a stylist in one breath.`,
+      `<strong>Design every drop for short-form capture first.</strong> With 84% of Global 200 entrants going viral on TikTok before charting, the hook, visual, and 15-second payoff belong in the pre-production brief — not the post-release panic.`,
+      `<strong>Build superfan architecture deliberately:</strong> a Discord/Patreon inner ring, a limited-edition D2C merch pipeline, and parasocial touches (handwritten notes, lore, fan-name callouts). The 20% superfan cohort is where the money lives.`,
+      `<strong>Pursue brand partnerships as identity extension, not cash grabs.</strong> Carpenter × Dunkin' worked because "Espresso" already meant her — partnerships that don't ladder into existing brand codes dilute rather than monetize.`,
+      `<strong>Use AI visuals as accelerant, not substitute — and disclose.</strong> Pair AI ideation with named human collaborators so the final artifact keeps the 40%+ click-through that fully-AI work loses.`
+    ],
+    playbook: {
+      intro: `<strong>Your brand is the machine that turns a stream into a $40 hoodie and a $40 hoodie into a parasocial superfan who'll pre-order your next record blind.</strong> It's not merch, it's not vibes — it's a product. Nail the pillars before you drop a single note into distribution.`,
+      steps: [
+        {title: "Write your one-sentence thesis and tape it to the wall.", body: "Chappell Roan's is \"the drag-queen version of myself.\" Sabrina's is \"retro showgirl with a wink.\" Yours should be short enough to tell a stylist, a director, and your mom in one breath — and the same sentence should produce the same mental picture in all three. If you can't write it, you don't have a brand yet."},
+        {title: "Codify 3–5 colors, 3 motifs, and one sonic signature.", body: "Open a doc called \"Brand Bible\" and lock it. Hex codes. A reference mood board. A recurring production tic (reverb tail, vocal processing, a specific bass tone). Consistency across 12 months of drops is what moves branding from decoration to compounding asset."},
+        {title: "Pre-production every release for TikTok before you hit record.", body: "Before the song is even cut, know the 15-second hook moment, the visual bit that goes with it, and the dance/caption/POV that makes it steal-able. If you add TikTok capture after release you're a month behind the 84% of hits that broke there first."},
+        {title: "Open a superfan ring in your first 500 fans.", body: "A private Discord, a Patreon tier, a fan-club email list — pick one and commit. Ship one piece of \"inner ring only\" content per month (demo, lore drop, handwritten note photo). Your top 20% will double your income if you give them a door to step through."},
+        {title: "Only take brand partnerships that extend your codes.", body: "Don't take a sneaker deal if your brand is indoor-kid nostalgia. A sponsor should make your existing thesis louder, not make you a different artist for 90 days. If a partnership requires you to rewrite your thesis, pass — the fee is never worth the dilution."}
+      ]
+    }
+  },
+
+  dsp: {
+    num: "03",
+    title: "DSP",
+    blurb: "DSPs are curatorial gatekeepers — their algorithms and policy levers decide whether a release is heard at all.",
+    findings: [
+      {text: `<strong>Spotify dominates a top-heavy global market.</strong> The top five DSPs (Spotify, Tencent, Apple, Amazon, YouTube Music) collectively held ~72% of global music subscription revenue in 2024. Spotify is at ~32.2% share and added 28M subscribers in 2024 — more than Tencent, Apple, and Amazon combined.`, cite: "MIDiA Research, 2025"},
+      {text: `<strong>Spotify's 1,000-stream threshold redirected ~$47M away from small artists in 2024.</strong> Tracks must accumulate at least 1,000 streams in the prior 12 months to earn. Spotify says sub-threshold tracks represent ~0.5% of total streams while 87% of all ~202M tracks fall below the line.`, cite: "Music Ally 2025 / Spotify for Artists 2024"},
+      {text: `<strong>Spotify's recommender is a multi-signal stack fronted by BaRT</strong> ("Bandits for Recommendations as Treatments"), which uses contextual multi-armed bandits to populate Home. A 30-second listen is a positive signal. BaRT fuses collaborative filtering, NLP over web text/metadata, and raw-audio analysis so new tracks can still surface.`, cite: "Spotify Research 2018 / Music Tomorrow 2025"},
+      {text: `<strong>Editorial pitches feed algorithmic playlists even when rejected.</strong> Spotify for Artists requires a pitch 7+ days pre-release; 14+ days early roughly doubles editorial consideration, and ~1 in 5 pitched tracks historically land editorial. Pitch metadata trains Release Radar and Discover Weekly regardless of outcome.`, cite: "Spotify for Artists 2024 / Chartlex 2026"},
+      {text: `<strong>Independents now capture ~50% of the Spotify royalty pool.</strong> Spotify paid $11B to rights-holders in 2025 (up from $10B in 2024). ~13,800 artists earned $100K+ and ~1,500 earned $1M+ on Spotify alone; more than a third of artists earning $10K+ are DIY or started DIY.`, cite: "Spotify Newsroom 2026 / Music Week 2025"},
+      {text: `<strong>Spotify purged 75M+ "spammy" tracks in the 12 months leading to Sept 2025</strong> and adopted DDEX AI disclosures. The Sept 2025 bundle added an impersonation ban (vocal cloning only with consent), a spam filter that down-ranks abusive uploaders, and an AI-usage disclosure field in credits.`, cite: "MBW 2025 / Spotify Newsroom 2025"},
+      {text: `<strong>Regional DSPs still own their home markets.</strong> Tencent Music holds ~72% of China by user volume (124.4M paying subs Q2 2025); NetEase Cloud Music has ~218M MAU. Anghami grew MENA premium +18% YoY; MENA streaming revenue jumped +22.8% in 2024. India is now Spotify (~26%) and YouTube Music, with JioSaavn and Gaana as the only remaining domestic players.`, cite: "Variety 2025 / Music Ally 2025 / Mordor Intelligence"}
+    ],
+    why: `DSPs are no longer neutral pipes — they are curatorial gatekeepers whose algorithms decide whether a release is heard at all, and whose policy levers (stream thresholds, AI filters, editorial pitching windows) can add or subtract meaningful income overnight. The pro-rata pool model means every artist is competing for a slice of the same royalty pie, so velocity in the first 72 hours of a release and consistent engagement signals are worth more than absolute stream counts. Platform diversification — especially into YouTube Music, Tencent, Anghami, Boomplay, and JioSaavn — is increasingly a revenue strategy, not a vanity metric, because subscriber growth is now <strong>78% outside North America and Europe</strong>.`,
+    implications: [
+      `<strong>Pitch to Spotify for Artists at least 14 days early</strong> with complete metadata (genre, mood, instruments, cultural tags) — this roughly doubles editorial consideration and trains Release Radar/Discover Weekly even without a pick.`,
+      `<strong>Front-load promotion to cross 1,000 streams per track within 12 months.</strong> Run pre-save campaigns 3–4 weeks pre-release; concentrate ad spend in the first 48–72 hours where up to 70% of week-one listening and algorithmic signal accumulate.`,
+      `<strong>Treat BaRT's 30-second mark as the real success metric.</strong> A skip before 30s is a negative signal. Prioritize hook-forward intros, strong first-10-second retention, and monitor "Listeners that skipped" per track.`,
+      `<strong>Disclose any AI usage via your distributor's DDEX fields</strong> to stay ahead of Spotify's 2025 transparency rules and avoid spam-filter tagging (silent down-ranking).`,
+      `<strong>Distribute beyond the big three.</strong> Regional DSPs (Anghami, Boomplay, JioSaavn, Tencent sub-platforms) and YouTube Music's content-aware recommender use different signals (tempo, instrumentation, video behavior) that may surface catalog Spotify misses.`
+    ],
+    playbook: {
+      intro: `<strong>The DSPs are not waiting for you to learn them — they run experiments on you in real time.</strong> Treat each platform as a separate employer with its own job interview, dress code, and KPI. Your job is to give each one exactly the metadata, timing, and first-72-hour velocity it needs to put you in front of strangers.`,
+      steps: [
+        {title: "Pitch Spotify 14+ days before release, every time.", body: "7 days is the minimum; 14+ doubles your shot at editorial consideration. Fill every metadata field — genre, mood, instruments, language, cultural tags, vocal type, era. Even if you don't get the playlist, that metadata trains Release Radar and Discover Weekly for your existing listeners, which is where real streams come from anyway."},
+        {title: "Design a pre-save + first-72-hour ad burst.", body: "Open the pre-save campaign 3–4 weeks out. Concentrate 60%+ of your ad budget in the 72 hours around release. That window is where algorithmic signal accumulates — hit it hard, skip the slow drip, and you give BaRT reason to push you into Home feeds for weeks after."},
+        {title: "Hook the first 10 seconds, or lose the algo.", body: "A skip before 30 seconds is a negative signal on Spotify. The intro to your single is the most important 10 seconds you'll ever produce. Check Spotify for Artists weekly for \"Listeners that skipped\" by track — if it's over 25%, re-edit the intro before your next push."},
+        {title: "Check the AI disclosure box in your distributor.", body: "If you used AI for anything (mastering assist, stems, visuals — anything), check the DDEX field in your distributor. Spotify isn't trying to punish you for using AI; it's punishing you for hiding it. The spam filter silently down-ranks offenders with no notification. Clean disclosure = no penalty."},
+        {title: "Distribute to YouTube Music, Anghami, Boomplay, JioSaavn, Tencent.", body: "Your distributor already delivers to these — you just have to check the boxes. 78% of subscriber growth is outside US/EU. YouTube Music's recommender uses your video behavior (which Spotify can't see) and the regional platforms surface you to audiences the big three will never show you to."}
+      ]
+    }
+  },
+
+  live: {
+    num: "04",
+    title: "Live Shows",
+    blurb: "Merch at the venue is the single highest-margin revenue an artist can touch — but 64% of indie venues are unprofitable.",
+    findings: [
+      {text: `<strong>Independent venues are the backbone of the live ecosystem but structurally unprofitable.</strong> NIVA's 2025 <em>State of Live</em> (TEConomy Partners) found 64% of independent venues nationwide were unprofitable in 2024, even as the sector contributed over $86B to US GDP and powers a $153B broader economy. State-level unprofitability: 69% California, 80% Ohio, 81% New York.`, cite: "NIVA State of Live 2025"},
+      {text: `<strong>Pollstar's 2025 data shows a "hollowing-out."</strong> Stadiums (30,000+ cap) posted record grosses while clubs and theaters contracted, with NIVA, NITO, and IEBA jointly reporting "greater difficulty selling tickets, lower bar sales, rising expenses." Demand for 2026 club/theater shows is projected flat-to-down.`, cite: "Pollstar Year-End 2025"},
+      {text: `<strong>Ticketmaster consent decree extended 8 years; $280M settlement; 15% service-fee cap on amphitheaters.</strong> Live Nation settled with DOJ in March 2026 to cap amphitheater fees at 15%, let promoters distribute up to 50% of tickets, and divest 13 exclusive booking arrangements. 30+ state AGs rejected as insufficient. A federal jury separately found Live Nation an illegal monopoly in April 2026.`, cite: "MBW — Live Nation antitrust verdict"},
+      {text: `<strong>Mid-tier festivals are collapsing — 100+ festivals canceled worldwide in 2025.</strong> 40+ US/UK festivals were canceled before summer 2025 started; GA prices on majors climbed 55% since 2014. Coachella 2024 took 27 days to sell out Weekend 1 (vs. hours); 2025 failed to sell out. Bonnaroo 2025 was weather-canceled; Pitchfork Music Festival ended its run.`, cite: "CNN / Billboard 2025"},
+      {text: `<strong>Merch at the venue is the highest-margin revenue an artist can touch.</strong> Industry-average merch $/head rose +14% in 2024; K-pop +13% in 2025. Average touring artist grossed $10K per show in merch. One T-shirt sold ≈ 8,750 streams in net revenue, and 61% of Spotify artists earned less in a full year of royalties than a single show grosses in merch.`, cite: "atVenu — Merch vs Streaming"},
+      {text: `<strong>Door-split and guarantee structures are well-defined at the club level.</strong> Standard club deals are 70/30 or 80/20 of NET door to the artist. "Versus deals" (greater of guarantee-or-percentage) are now the dominant hybrid for developing acts. Pure guarantees are reserved for established headliners; openers almost always take door splits or a flat bar-minimum.`, cite: "DIY Musician / CD Baby / Ticket Fairy 2026"},
+      {text: `<strong>Insurance is now a top-three existential cost for small venues post-Astroworld.</strong> In Austin, a mid-size venue with a $2M liability requirement reported paying $80K/year in premiums. NIVA flagged insurance alongside rent, artist fees, and staffing as top cost-growth categories; 60% of venues expect artist fees to rise and 58% expect staffing costs to climb in 2025.`, cite: "Austin Monitor 2023 / NIVA 2025"},
+      {text: `<strong>Ticketing alternatives are consolidating around the indie circuit.</strong> DICE works only with independent venues 200–10,000 cap; 90% of fans say it's easier than Ticketmaster. June 2025: Fever acquired DICE. UK voluntary £1 LIVE Trust levy on 5,000+ cap shows raised £500K+ in pledges as a grassroots-venue rescue.`, cite: "Music Ally 2025 / IQ Magazine 2025"}
+    ],
+    why: `For an independent artist in 2026, live shows are simultaneously the most viable revenue floor (merch beats streaming by orders of magnitude) and the most economically fragile surface — the 200–2,000 cap room where most developing acts play is the exact tier that is <strong>unprofitable at 64% of venues and contracting YoY</strong>. The consolidation of ticketing power, the collapse of mid-tier festivals that used to function as exposure engines, and skyrocketing insurance + artist-fee costs mean the economics of "play more shows" no longer scales linearly. The artist-actionable reality: lean into direct-to-fan ticketing, maximize merch per head at every show, and treat the club/theater circuit as a margin-thin retail moment where the margin comes from what you sell on the table — not the guarantee.`,
+    implications: [
+      `<strong>Treat merch as the primary revenue line on a club tour, not an afterthought.</strong> Industry average is now $10K gross/show and growing +14% YoY. Build the setlist flow around a merch callout, staff the table, and negotiate 0% venue merch-cut into your rider.`,
+      `<strong>Default to "versus" deals (greater of guarantee or % of door)</strong> at the 200–1,000 cap level rather than pure door-splits that leave all risk on the artist, or guarantees that cap upside. Ask for 80/20 net door whenever possible.`,
+      `<strong>Use DICE, See Tickets, or Eventbrite for direct-to-fan tickets.</strong> Fee transparency, data ownership, no Ticketmaster lock-in. In a 200–2,000 cap world, Ticketmaster is no longer the distribution requirement it is at arena level.`,
+      `<strong>Skip the mid-tier festival bet; prioritize destination clubs + city-anchored runs.</strong> With 100+ festivals canceled in 2025 and sponsors retreating, festivals are a shakier exposure vehicle than a 4-to-6-city regional club run.`,
+      `<strong>Budget for weather/force-majeure cancellation and refunds</strong> in artist side-deals. Bonnaroo 2025 and a string of UK festivals cratered; contracts should specify cancellation-fee treatment and whether the guarantee is paid regardless.`
+    ],
+    playbook: {
+      intro: `<strong>A club tour is a retail pop-up that happens to have a concert attached to it.</strong> The ticket pays the venue; the merch pays your rent. Build every show around that math and you'll survive the 64% of indie venues that are underwater.`,
+      steps: [
+        {title: "Build the show around the merch call.", body: "Somewhere in your set — ideally the penultimate song — walk up to the mic and tell people where the merch table is, who's staffing it, and what you've got. Restocking at soundcheck, not at load-in. $10K gross/show is the current average and you'll only hit it if you treat merch as the plan, not the afterthought."},
+        {title: "Negotiate 0% venue merch-cut into every rider.", body: "NIVA-member indie rooms usually don't take a cut. Larger venues routinely try for 10–25%. Put the clause in your rider, negotiate it up front, and walk away from the venues that won't move. The cut you save is usually more than the guarantee."},
+        {title: "Ask for 'versus' deals — greater of guarantee or % of door.", body: "At 200–1,000 cap, a pure guarantee caps your upside on a hot night and a pure door-split puts all the risk on you. 'Versus' means you get the guarantee as a floor, or 80/20 of net door if the night over-performs. It's the fair deal — ask for it."},
+        {title: "Sell tickets direct through DICE or See Tickets.", body: "Fee transparency, fan data you actually own, and no Ticketmaster lock-in. For 200–2,000 cap rooms, direct-to-fan ticketing is a better fan experience AND a better backend. The old reflex to route through Ticketmaster doesn't apply at your level."},
+        {title: "Route city-anchored runs, not festival bets.", body: "100+ festivals were canceled in 2025 and the survivors are tightening lineups. A 4-to-6-city regional club run with local openers, local press, and a strong merch table out-earns a single festival slot and doesn't evaporate when the sponsor pulls out. Stop chasing festival stages in 2026."}
+      ]
+    }
+  },
+
+  touring: {
+    num: "05",
+    title: "Touring",
+    blurb: "Billion-dollar stadium tours and the Sphere residency model sit alongside indie tours that average $3,800 net profit.",
+    findings: [
+      {text: `<strong>The Eras Tour rewrote the ceiling of live music.</strong> Taylor Swift's Eras Tour closed Dec 8, 2024 as the first tour in history to cross $2B, finishing at <strong>$2,077,618,725 and 10,168,008 tickets</strong> across 149 shows in 51 stadiums, 19 countries, 5 continents (Billboard Boxscore figures; Pollstar extrapolated estimate is $2.2B).`, cite: "Billboard 2024 / Pollstar 2024"},
+      {text: `<strong>Stadium pop is now a two-horse race with Coldplay setting the sustainability template.</strong> Coldplay's Music of the Spheres is the only other tour to cross $1B and cut per-show direct CO₂e <strong>59% vs. 2016–17</strong> (MIT-verified) via a BMW rechargeable show battery, solar/kinetic floors, HVO fuel, biodegradable confetti, and a SAP fan-travel app that cut average fan footprint ~50%.`, cite: "Pollstar 2024 / Variety / Coldplay Sustainability"},
+      {text: `<strong>The Sphere residency model is a new, high-margin revenue lane.</strong> Sphere posted <strong>>$420M in 2024 concert revenue</strong> from 1.3M tickets — top venue gross in Billboard Boxscore's 50-year history. U2:UV Achtung Baby grossed $244.5M / 40 shows (avg ticket $391; $600 RED Zone). Dead & Company $131.8M / 477K tickets. U2 reportedly spent >$20M on custom visual content for the room.`, cite: "Billboard / Pollstar / LV Review-Journal"},
+      {text: `<strong>2025 normalized downward — tickets sales dropped, prices rose.</strong> Pollstar's 2025 "Return to Earth" crowned Beyoncé's Cowboy Carter #1 at $407.6M on 1.57M tickets / 32 shows (avg $255.36). Oasis's 36-show reunion was #2 at est. $405.4M on 2.23M tickets (avg $181.93); Coldplay #3 at $390.5M on 2.91M tickets (avg $133.80) — Beyoncé beat Oasis on fewer tickets via premium pricing.`, cite: "Pollstar 2025 / IQ Magazine"},
+      {text: `<strong>The Live Nation/Ticketmaster antitrust case reached verdict and settlement in 2026.</strong> DOJ and 40 state AGs filed May 23, 2024 alleging ~86% ticketing control at major venues and ~78% of large amphitheaters. April 15, 2026: federal jury found Live Nation violated antitrust laws. Settlement: $280M fine, 15% service-fee cap, divestiture of 13 amphitheaters — but 26 states + DC rejected the terms.`, cite: "DOJ / Axios / NPR 2026"},
+      {text: `<strong>The market below the top line is a Live Nation–AEG duopoly, but Live Nation dwarfs AEG ~5:1.</strong> In 2023–24 Live Nation sold ~40M tickets vs. AEG Presents' ~8.2M. AEG's CEO Jay Marciano publicly called Live Nation/Ticketmaster a monopoly in 2024. Live Nation layers promotion, ticketing, venue ownership, and artist management (>500 artists) in one stack.`, cite: "Variety / Statista 2024"},
+      {text: `<strong>For developing artists, touring is still mostly a money-losing proposition.</strong> Only ~57% of indie touring musicians turned a profit post-pandemic, and the ones who did averaged <strong>~$3,800 net</strong>. Bus pricing has risen "astronomically"; 2022–23 crew shortages forced tour managers to lock crew/vehicles 6 months ahead vs. days pre-pandemic. 69% of live-event companies still report shortfalls.`, cite: "Side Door / Billboard / GRAMMY.com"},
+      {text: `<strong>Brexit has structurally damaged UK artists' EU touring.</strong> UK artists touring the EU in summer 2023 were down <strong>32% vs. 2017–19</strong>. ISM: ~50% of UK music pros report declines in EU work; ~30% report no work at all since Brexit. The 90-in-180-day Schengen limit knocks crew out mid-tour; UK trucking (~85% of European haulage) is being rebuilt in Amsterdam and Dublin.`, cite: "NME / UK Music"}
+    ],
+    why: `Touring — not recorded music — is where the overwhelming majority of modern artist income lives, but access to that money is gated by who owns the venue, the ticketing pipe, the promoter, and the crew. The 2023–25 era revealed a <strong>barbell</strong>: billion-dollar stadium and Sphere-scale tours are printing historic grosses for ~30 superstars, while developing acts face shrinking margins from van/bus inflation, crew shortages, and (if UK-based) Brexit friction — all while the same company (Live Nation) effectively sits on both sides of the table. For independent artists, the DOJ settlement's 15% venue-fee cap and amphitheater divestitures could meaningfully reshape routing economics over the next 3–5 years.`,
+    implications: [
+      `<strong>Route around the duopoly when you can.</strong> Independent promoters, AEG-operated rooms, and non-Live-Nation regional venues will become more price-competitive as DOJ divestitures and the 15% fee cap roll in — track which venues on your route are covered.`,
+      `<strong>Stay in the van longer than your ego wants.</strong> ~57% of indie tours turn a profit and only by ~$3,800 avg. Bus upgrades should wait until guarantees + merch reliably clear the delta. Cluster 3–4 shows around a central Airbnb and book crew/vehicles ≥6 months out.`,
+      `<strong>Negotiate tour support as a tour-income-only recoupment</strong>, not a cross-collateralized advance. Typical development-deal advance: $50K–$350K. In 360 deals, support can recoup against record royalties AND touring — insist in writing it only recoups from tour revenue.`,
+      `<strong>Treat sustainability as a sponsor unlock, not just a moral one.</strong> Coldplay's 59% emissions cut was co-financed by BMW, SAP, and DHL — a credible MIT-verified plan unlocks corporate sponsorship dollars that offset production costs.`,
+      `<strong>UK-based? Build EU dates with a visa/carnet budget line from day one</strong>, and consider basing your trucking partner in Dublin or Amsterdam. The 90/180 Schengen cap means back-to-back EU tours will run out of days.`
+    ],
+    playbook: {
+      intro: `<strong>Touring is where the money actually is — but it's also where the money actually dies if you don't run it like a business from day one.</strong> The same month Taylor Swift crossed $2B, the average indie tour cleared $3,800 in profit. You need to pick which one of those numbers you're building toward.`,
+      steps: [
+        {title: "Pick non-Live-Nation rooms when you can.", body: "As the DOJ settlement rolls in, independent promoters, AEG rooms, and non-LN regional venues will get more price-competitive. Before you route a tour, mark each venue LN / AEG / Independent. Leaning independent keeps your bargaining power on fees, merch cuts, and settlement terms."},
+        {title: "Stay in the van — the bus math doesn't work yet.", body: "57% of indie tours profit. Those that do, average $3,800 net. A bus is $1,500–$2,500/day on top of that. Don't upgrade until guarantees + merch reliably clear the delta. Cluster 3–4 shows around a central Airbnb, drive day-of, and pocket the difference."},
+        {title: "Lock crew and vehicles 6 months out.", body: "Post-pandemic, 69% of live-event companies still report crew shortfalls — engineers, techs, drivers. If you wait till a month out to book you're paying surge pricing for the people who are left. Sign crew 6 months ahead with a deposit. It costs nothing to reserve and saves everything on availability."},
+        {title: "If there's a label tour-support line, cap it to tour revenue.", body: "Development-deal advances for tour support run $50K–$350K. In 360 structures the label can recoup that against your record royalties too — meaning you pay for your tour with your streams. In writing, in ink: tour support only recoups from tour revenue. Non-negotiable."},
+        {title: "Use sustainability as a sponsorship pitch, not a vibe.", body: "Coldplay's 59% emissions cut was co-financed by BMW, SAP, and DHL. If you publish a credible, measurable climate plan (even a small one), you unlock corporate sponsor dollars that offset your production costs. Sustainability = checks, not just virtue."},
+        {title: "UK act? Budget visa/carnet from day one.", body: "EU touring is down 32% for UK artists since Brexit. The 90/180 Schengen cap knocks crew out mid-tour — rotate UK + EU crew, base your trucking partner in Dublin or Amsterdam, and put a visa/carnet line in every budget spreadsheet. This is a structural cost now, not a surprise."}
+      ]
+    }
+  },
+
+  charts: {
+    num: "06",
+    title: "Top Charts",
+    blurb: "Charts are the official gatekeepers for radio, sync, and award eligibility — and the landscape is fracturing.",
+    findings: [
+      {text: `<strong>Billboard Hot 100 / Billboard 200</strong> — the single most-cited charts in global music business. A multi-metric consumption model (on-demand streams + radio impressions + sales) compiled by Luminate, the industry's de facto data spine. Rule changes (bundling bans, AI/bot exclusions, stream-weight rebalances) literally redraw how labels market records.`, cite: "Wikipedia / Orphiq 2025"},
+      {text: `<strong>Billboard Global 200</strong> — the only chart aggregating streaming + downloads from 200+ territories into one weighted, revenue-reflective global ranking (1 track sale = 200 premium streams = 900 ad-supported). Compiled by Luminate via Music Connect; excludes D2C sales to reduce manipulation.`, cite: "Wikipedia / Billboard Pro"},
+      {text: `<strong>Official Charts Company (UK Top 40/100)</strong> — surveys 15,000+ retailers and digital services daily, capturing ~99.9% of UK singles consumption. Streaming-to-sale ratio is 150:1 for the first 10 weeks, then 300:1 — a deliberate design to keep the chart "alive" rather than locked.`, cite: "Official Charts Co."},
+      {text: `<strong>Spotify Global Top 50 (Daily)</strong> — updated daily (sometimes hourly); A&Rs consider it the closest real-time pulse of global consumption. Algorithm weights total streams, duration, and listener geography to resist manipulation. Labels openly use it to predict trends and shape marketing.`, cite: "Spotify / Vocal Media"},
+      {text: `<strong>Oricon (Japan) + Circle Chart (Korea)</strong> — counted as one entry because together they govern the world's 2nd- and 4th-largest recorded-music markets. Oricon's combined chart uses album-equivalent units (1 CD sale = 1 download = 300 streams) across 17,806 physical retailers. Circle rebranded from Gaon in 2022.`, cite: "Wikipedia 2026"},
+      {text: `<strong>Luminate is the invisible backbone of Western charts.</strong> Formed 2020 (Nielsen Music / Alpha Data / VIP JV), rebranded from MRC Data in 2022 under Eldridge. It supplies stream, sales, and radio audience data to both the Billboard Hot 100 and Global 200 — one private company's definitions shape the dominant global chart.`, cite: "Wikipedia / Billboard Pro 2022"},
+      {text: `<strong>Billboard weights paid streams higher than free — gap widening.</strong> Effective Jan 17, 2026: 1 album unit = 1,000 paid streams OR 2,500 ad-supported (a 2.5:1 ratio). Paid-subscriber intent treated as stronger signal than free listening.`, cite: "Billboard Pro 2025 / Hypebeast"},
+      {text: `<strong>YouTube exited the US Billboard charts as of January 2026.</strong> YouTube objected to paid-vs-free re-weighting and withdrew its data — a relationship since 2013 for songs and 2019 for albums. Materially changes how video-driven hits (Latin, hip-hop, viral pop) rank.`, cite: "Variety / YouTube Blog 2025"},
+      {text: `<strong>Streaming fraud is a $2B/year problem; charts now actively police it.</strong> Beatdapp estimates $2B in annual fraudulent royalties. March 2024: a Danish man became the first person criminally convicted of streaming fraud. Billboard excludes "mass looping, paid streaming farms, AI-generated traffic anomalies"; 3 flagged submissions in 12 months = 90-day suspension.`, cite: "MBW / Whiskey Riff 2025"},
+      {text: `<strong>Billboard banned album-bundling with tickets and merchandise.</strong> As of Oct 9, merch-bundled album sales no longer report — killing a tactic Swift, Travis Scott, and many others used to juice debut-week numbers.`, cite: "Billboard Pro"},
+      {text: `<strong>The TikTok Billboard Top 50 is dead.</strong> Launched Sept 2023; discontinued March 7, 2025 after 18 months. TikTok discovery still matters (67% of users look up songs on DSPs after hearing them) but the formal chart is gone. Pros now watch in-app sounds library + Chartmetric cross-platform synergy.`, cite: "Wikipedia / Chartmetric 2024"},
+      {text: `<strong>Shazam is the quietest, most accurate predictor.</strong> Shazam counts often precede streaming and radio growth by days to weeks. Warner runs a Shazam-branded A&R label. Apple Music launched a Shazam Discovery Top 50 to surface early-warning data publicly.`, cite: "MBW / Harvard Digital / Soundcharts"}
+    ],
+    why: `Charts are not vanity — they are the official gatekeepers for radio programming, playlist editorial consideration, Grammy/BMA eligibility in certain categories, booking-agent leverage, and sync licensing rates. A Billboard Hot 100 entry or UK Top 40 placement triggers a cascade of secondary opportunities (radio adds, press interest, agent meetings) that a Spotify-only hit often does not. But the chart landscape is <strong>fracturing</strong>: YouTube has exited Billboard, TikTok's formal chart is gone, and platform-native charts (Spotify, Apple, Shazam) now often lead the legacy charts by 1–4 weeks — meaning independent artists who understand both tiers can time marketing for maximum compounding effect.`,
+    implications: [
+      `<strong>Optimize for paid/subscription streams, not ad-supported plays.</strong> Under the new 2.5:1 Billboard ratio, 1,000 paid streams moves the needle as much as 2,500 free ones. Pitching Spotify editorial (Premium-heavy listenership) beats chasing raw ad-supported volume.`,
+      `<strong>Watch Shazam counts as your earliest signal.</strong> A spike in Shazams on a new release means organic discovery is happening — time radio pitches, press outreach, and ad spend to that window before the stream curve catches up.`,
+      `<strong>Abandon the bundle playbook — it's been neutered.</strong> Album-plus-merch and album-plus-ticket bundles no longer move Billboard position. Redirect budget toward à la carte promo and playlist pitching.`,
+      `<strong>Treat UK Top 40 and Circle Chart as separate strategic plays.</strong> Different ratios (UK 150:1), different gatekeepers (BBC Radio 1 for UK; fandom pre-orders for Korea), different decay rules — don't assume US tactics translate.`,
+      `<strong>Never buy streams or pay for "chart placement" services.</strong> Billboard's AI-pattern detection, hCaptcha on D2C, and the Beatdapp/Beatport fraud-detection partnership mean detection is increasingly automated. A 90-day suspension kills a release cycle.`
+    ],
+    playbook: {
+      intro: `<strong>Charts aren't trophies — they're permission slips.</strong> A Hot 100 entry gets you radio, sync calls, and agent meetings a Spotify-only hit never produces. But the game changed in 2026: paid streams count more, YouTube left, bundles are dead, and Shazam is the early-warning system. Here's how to play the new board.`,
+      steps: [
+        {title: "Chase paid-subscription streams, not total streams.", body: "Billboard now weights paid streams 2.5x vs. ad-supported. That means Spotify Premium and Apple Music pulls — where your Premium-only editorial pitches land — move charts faster than big ad-supported YouTube pulls. Redirect your marketing dollars toward the platforms where paying subscribers live."},
+        {title: "Put a Shazam tracker on every release day.", body: "Soundcharts and Chartmetric both show Shazam data. A spike there precedes streaming and radio by days — sometimes weeks. When you see the Shazam bump, hit your publicist, your radio rep, your ad buyer that same day. That window is where the compounding starts."},
+        {title: "Kill all bundle plans — album + merch, album + ticket, all of it.", body: "As of Oct 9, merch-bundled album sales don't report to Billboard. Ticket bundles are no longer approved. The whole debut-week-juicing playbook is dead. Take the budget you would have spent on bundle logistics and put it into playlist pitching and à la carte promo instead."},
+        {title: "Run the UK and Korean charts as separate campaigns.", body: "UK Top 40 uses a 150:1 streams-to-sales ratio for the first 10 weeks — BBC Radio 1 is the gatekeeper. Korea's Circle Chart rewards fandom pre-orders and physical. Don't assume a US-style Spotify push works abroad. Budget separate local publicists, local ad spend, and local playlists for each market you're serious about."},
+        {title: "Never buy streams or 'chart placement.'", body: "Billboard's AI detection, hCaptcha on D2C, and the Beatdapp fraud system catch more every quarter. 3 flagged submissions in 12 months = 90-day reporting suspension. A single shady service can erase an album campaign. If anyone offers you guaranteed chart placement, walk."}
+      ]
+    }
+  }
+};
+
+/* ============================================================
+   SOURCES — every URL from every research file, grouped by topic
+   ============================================================ */
+
+const SOURCES = {
+  streaming: [
+    {title: "IFPI Global Music Report 2026 — Global Recorded Music Revenues Grow 6.4%", url: "https://www.ifpi.org/global-music-report-2026-global-recorded-music-revenues-grow-6-4-as-record-companies-drive-innovation/", pub: "IFPI, 2026"},
+    {title: "Global recorded music revenues hit $31.7B in 2025, up 6.4% YoY", url: "https://www.musicbusinessworldwide.com/global-recorded-music-revenues-hit-31-7bn-in-2025-up-6-4-yoy-users-of-paid-music-subscriptions-reach-837m/", pub: "Music Business Worldwide, 2026"},
+    {title: "Loud and Clear — official Spotify royalty-economics microsite", url: "https://loudandclear.byspotify.com", pub: "Spotify, 2026"},
+    {title: "Spotify Loud & Clear 2026: $11B Paid As Global Musical Middle Class Expands", url: "https://www.hypebot.com/spotify-loud-clear-report-2026-11b-paid-as-global-musical-middle-class-expands/", pub: "Hypebot, March 2026"},
+    {title: "Spotify Says Over 13,800 Artists Generated $100,000 on the Platform Last Year", url: "https://www.billboard.com/pro/spotify-paid-music-industry-2025-loud-clear-report/", pub: "Billboard Pro, 2025"},
+    {title: "Modernizing Our Royalty System ($1B toward Emerging Artists)", url: "https://artists.spotify.com/en/blog/modernizing-our-royalty-system", pub: "Spotify for Artists, 2023"},
+    {title: "Spotify defends 1000-stream royalties threshold after critical report", url: "https://musically.com/2025/12/16/spotify-defends-1000-stream-royalties-threshold-after-critical-report/", pub: "Music Ally, December 2025"},
+    {title: "Universal Music Group and Deezer launch first comprehensive artist-centric model", url: "https://newsroom-deezer.com/2023/09/universal-music-group-and-deezer-to-launch-the-first-comprehensive-artist-centric-music-streaming-model/", pub: "Deezer Newsroom, 2023"},
+    {title: "Indie artists shift to artist-centric payments on Deezer (Merlin deal)", url: "https://www.musicbusinessworldwide.com/indie-artists-shift-to-artist-centric-payments-on-deezer-as-streaming-service-signs-new-deal-with-merlin/", pub: "Music Business Worldwide, 2024"},
+    {title: "Deezer: AI-generated tracks now represent 44% of all new uploaded music", url: "http://newsroom-deezer.com/2026/04/ai-generated-tracks-represent-44-of-new-uploaded-music/", pub: "Deezer Newsroom, April 2026"},
+    {title: "75,000 AI-generated tracks now flood Deezer daily", url: "https://www.musicbusinessworldwide.com/75000-ai-generated-tracks-now-flood-deezer-daily-representing-44-of-all-new-music-uploaded-to-the-platform-says-streamer/", pub: "Music Business Worldwide, April 2026"},
+    {title: "How Music Streaming Platforms Calculate Payouts Per Stream 2025", url: "https://royaltyexchange.com/blog/how-music-streaming-platforms-calculate-payouts-per-stream-2025", pub: "Royalty Exchange, 2025"},
+    {title: "Which Streaming Services Pay Artists the Most: 2025", url: "https://rebelmusicdistribution.com/2025/10/31/which-streaming-services-pay-artists-the-most-in-2025/", pub: "Rebel Music Distribution, Oct 2025"},
+    {title: "Per-Stream Payouts from 388K Royalty Transactions", url: "https://dynamoi.com/learn/statistics/what-streaming-platforms-actually-pay-per-stream", pub: "Dynamoi, 2025"},
+    {title: "Global Recorded Music Revenues Reach $36.2B in 2024", url: "https://www.midiaresearch.com/blog/global-recorded-music-revenues-reach-362-billion-in-2024-amid-slower-growth", pub: "MIDiA Research, March 2025"},
+    {title: "Indies Own Nearly Half the Global Recorded Music Market", url: "https://www.billboard.com/pro/indie-labels-own-half-recorded-music-market-midia-report/", pub: "Billboard Pro / MIDiA, 2024"},
+    {title: "Changing streaming's royalty model will unlock a new music economy", url: "https://www.midiaresearch.com/blog/changing-streamings-royalty-model-will-unlock-a-new-music-economy", pub: "MIDiA Research, 2024"},
+    {title: "What is the value of a stream in 2025?", url: "https://www.midiaresearch.com/blog/what-is-the-value-of-a-stream-in-2025", pub: "MIDiA Research, 2025"},
+    {title: "100M Paid Subscriptions Drives US — RIAA 2024 Year-End", url: "https://www.riaa.com/2024-year-end-music-industry-revenue-report-riaa/", pub: "RIAA, March 2025"},
+    {title: "RIAA Mid-Year 2025 US Recorded Music Revenues", url: "https://www.riaa.com/growth-in-paid-subscription-streaming-drives-mid-year-2025-us-recorded-music-revenues-to-new-high-reports-riaa/", pub: "RIAA, 2025"},
+    {title: "90 Percent of Streams Go to the Top 1 Percent of Artists", url: "https://www.rollingstone.com/pro/news/top-1-percent-streaming-1055005/", pub: "Rolling Stone Pro, 2024"},
+    {title: "\"Splendid Isolation\": Inequalities in Spotify's Recommendation", url: "https://journals.sagepub.com/doi/10.1177/14614448211022161", pub: "Tofalvy & Koltai, New Media & Society, 2023"},
+    {title: "Alternative payment models in music streaming (stream-level data)", url: "https://www.sciencedirect.com/science/article/pii/S0167624524000258", pub: "Information Economics & Policy (Elsevier), 2024"},
+    {title: "Inside the Rise of Bots and Streaming Fraud in Music", url: "https://www.rollingstone.com/music/music-features/bots-streaming-fraud-music-protection-1235537602/", pub: "Rolling Stone, 2024"},
+    {title: "How AI-generated songs are fueling the rise of streaming farms", url: "https://www.wipo.int/en/web/wipo-magazine/articles/how-ai-generated-songs-are-fueling-the-rise-of-streaming-farms-74310", pub: "WIPO Magazine, 2025"},
+    {title: "The Number of New Tracks Uploaded to DSPs Fell in 2024", url: "https://www.billboard.com/pro/new-tracks-streaming-services-fell-2024-why/", pub: "Billboard Pro, 2024"}
+  ],
+  branding: [
+    {title: "Human Brands: Investigating Antecedents to Strong Celebrity Attachments", url: "https://journals.sagepub.com/doi/10.1509/jmkg.70.3.104", pub: "Journal of Marketing (Thomson, 2006)"},
+    {title: "Celebrities as human brands: stakeholder-actor co-creation", url: "https://www.sciencedirect.com/science/article/abs/pii/S0148296316306440", pub: "Journal of Business Research (Centeno & Wang)"},
+    {title: "Sonic branding: narrative review at intersection of art and science", url: "https://onlinelibrary.wiley.com/doi/full/10.1002/mar.21995", pub: "Psychology & Marketing (Spence, 2024)"},
+    {title: "Taylor Swift / Swifties parasocial relationships study", url: "https://www.tandfonline.com/doi/abs/10.1080/01296612.2024.2304422", pub: "Media Asia Vol. 51 No. 4, 2024"},
+    {title: "Music Brand Partnerships: How It Became a Billion-Dollar Industry", url: "https://www.billboard.com/pro/music-branding-billion-dollar-industry/", pub: "Billboard Pro"},
+    {title: "How big can music merch get? $16B by 2030", url: "https://www.midiaresearch.com/blog/how-big-can-music-merch-get-midias-latest-report-charts-the-course-to-16b-by-2030", pub: "MIDiA Research"},
+    {title: "Luminate 2024 Year-End Music Report", url: "https://view.ceros.com/luminate-data/music-year-end-report-2024", pub: "Luminate Data"},
+    {title: "An Updated Look At Artist Merch Trends In 2025", url: "https://www.atvenu.com/post/an-updated-look-at-artist-merch-trends", pub: "atVenu"},
+    {title: "Short N' Sweet Tour: Sabrina Carpenter's brand", url: "https://www.uscannenbergmedia.com/2025/11/24/short-n-sweet-tour-how-branding-has-turned-sabrina-carpenter-into-a-mainstream-pop-princess/", pub: "USC Annenberg Media, 2025"},
+    {title: "Visual storytelling: Sabrina Carpenter Short n' Sweet era", url: "https://nylonmanila.com/pop-culture/visual-storytelling-sabrina-carpenter-short-n-sweet-era/", pub: "Nylon Manila"},
+    {title: "Chappell Roan's Campy, Glittery Music Is the Future of Pop", url: "https://www.rollingstone.com/music/music-features/chappell-roan-pop-lgbtq-olivia-rodrigo-1234981099/", pub: "Rolling Stone, 2024"},
+    {title: "Chappell Roan drag queer liberation", url: "https://www.salon.com/2024/07/04/chappell-roan-drag-queer-liberation-juiccy-misdemeanor/", pub: "Salon, Jul 2024"},
+    {title: "TikTok reveals the Top Artists and Songs of 2025", url: "https://newsroom.tiktok.com/tiktok-reveals-the-top-artists-and-songs-of-2025?lang=en", pub: "TikTok Newsroom"},
+    {title: "TikTok statistics 2026", url: "https://soundcamps.com/blog/tiktok-statistics/", pub: "SoundCamps 2026"},
+    {title: "The Direct-to-Fan Era (Patreon/Discord/Weverse)", url: "https://downtownmusic.com/news/the-direct-to-fan-era/", pub: "Downtown Music"},
+    {title: "How To Make It in the New Music Business (3rd Ed.)", url: "https://book.aristake.com/", pub: "Ari Herstand (W.W. Norton)"},
+    {title: "How AI is Reshaping Art, Music and Brand Storytelling", url: "https://amplyfi.com/blog/how-ai-is-reshaping-art-music-and-brand-storytelling/", pub: "AMPLYFI"},
+    {title: "Leaked names of 16,000+ artists used to train Midjourney", url: "https://www.theartnewspaper.com/2024/01/04/leaked-names-of-16000-artists-used-to-train-midjourney-ai", pub: "The Art Newspaper"},
+    {title: "Northeastern — parasocial relationships explainer (Taylor Swift)", url: "https://news.northeastern.edu/2023/10/26/parasocial-relationships-taylor-swift/", pub: "Northeastern"}
+  ],
+  dsp: [
+    {title: "Music Subscriber Market Shares 2024: Slowdown? What Slowdown?", url: "https://www.midiaresearch.com/blog/music-subscriber-market-shares-2024-slowdown-what-slowdown", pub: "MIDiA Research (Mulligan), 2025"},
+    {title: "Loud & Clear — Music Economics Highlights", url: "https://newsroom.spotify.com/2026-03-11/loud-and-clear-music-economics-highlights/", pub: "Spotify Newsroom, 2026"},
+    {title: "Spotify Loud & Clear 2025: $10B Streaming Economy", url: "https://www.musicweek.com/digital/read/spotify-loud-clear-2025-report-breaks-down-its-10-billion-role-in-the-streaming-economy/091558", pub: "Music Week, 2025"},
+    {title: "Modernizing Our Royalty System ($1B)", url: "https://artists.spotify.com/en/blog/modernizing-our-royalty-system", pub: "Spotify for Artists, 2024"},
+    {title: "Spotify Defends 1000-Stream Royalties Threshold", url: "https://musically.com/2025/12/16/spotify-defends-1000-stream-royalties-threshold-after-critical-report/", pub: "Music Ally, 2025"},
+    {title: "Explore, Exploit, Explain: BaRT bandits", url: "https://research.atspotify.com/publications/explore-exploit-explain-personalizing-explainable-recommendations-with-bandits/", pub: "Spotify Research, 2018"},
+    {title: "Inside Spotify's Recommendation System (2025 Update)", url: "https://www.music-tomorrow.com/blog/how-spotify-recommendation-system-works-complete-guide", pub: "Music Tomorrow, 2025"},
+    {title: "Pitching Music to Spotify Playlist Editors", url: "https://support.spotify.com/us/artists/article/pitching-music-to-playlist-editors/", pub: "Spotify for Artists, 2024"},
+    {title: "How to Pitch to Spotify Playlists in 2026", url: "https://www.chartlex.com/blog/streaming/how-to-pitch-to-spotify-playlists-2026-step-by-step-guide", pub: "Chartlex, 2026"},
+    {title: "Spotify Has Deleted 75M+ Tracks in Spammy AI Crackdown", url: "https://www.musicbusinessworldwide.com/spotify-has-deleted-75m-spammy-tracks-as-it-unveils-new-ai-music-policies/", pub: "MBW, 2025"},
+    {title: "Spotify Strengthens AI Protections", url: "https://newsroom.spotify.com/2025-09-25/spotify-strengthens-ai-protections/", pub: "Spotify Newsroom, 2025"},
+    {title: "Tencent Music Q3 2025: 27% Revenue Growth", url: "https://variety.com/2025/music/news/tencent-music-q3-revenue-2025-1236577827/", pub: "Variety, 2025"},
+    {title: "India's DSP Market Today", url: "https://musically.com/2025/04/02/shut-downs-watching-vs-listening-and-future-growth-indias-dsp-market-today/", pub: "Music Ally, 2025"},
+    {title: "Music Streaming Market Research Report, 2031", url: "https://www.mordorintelligence.com/industry-reports/music-streaming-market", pub: "Mordor Intelligence, 2025"},
+    {title: "Complete Guide to YouTube's Recommendations for Music (2025)", url: "https://www.music-tomorrow.com/blog/a-complete-guide-to-youtube-recommendation-algorithms-for-music-and-artists", pub: "Music Tomorrow, 2025"},
+    {title: "Ultimate Guide to Spotify Pre-Save Campaigns in 2026", url: "https://artistrack.com/spotify-pre-save-campaign-guide/", pub: "Artistrack, 2026"}
+  ],
+  live: [
+    {title: "NIVA's State of Live Report: Independent Venues Essential Under Threat", url: "https://www.nivassoc.org/news/2025/nivas-state-of-live-report-shows-independent-venues-are-essential-but-under-threat", pub: "NIVA / TEConomy Partners, 2025"},
+    {title: "2025 NIVA State of Live Report (PDF)", url: "https://static1.squarespace.com/static/5e91157c96fe495a4baf48f2/t/68e58e39bce25b729b47932e/1759874617679/2025-NIVA-State-of-Live-Report.pdf", pub: "NIVA / TEConomy, 2025"},
+    {title: "Pollstar 2025 Year-End Business Analysis — A Return To Earth", url: "https://news.pollstar.com/2025/12/23/year-end-business-analysis-a-return-to-earth-2025-grosses-ticket-sales-drop-averages-increase-beyonce-oasis-coldplay-have-top-tours-venues-stadiums-rock/", pub: "Pollstar, 2025"},
+    {title: "Magna Charta: Small Venues Look To Pay It Back", url: "http://news.pollstar.com/2026/02/23/magna-charta-clubs-theatres-amphitheaters-small-venues-look-to-pay-it-back/", pub: "Pollstar, 2026"},
+    {title: "Live Nation/Ticketmaster Antitrust Verdict", url: "https://www.musicbusinessworldwide.com/live-nation-antitrust-verdict-what-happened-what-it-means-and-what-comes-next/", pub: "MBW, 2026"},
+    {title: "Canceling the Antitrust Show? LN-Ticketmaster's Latest Attempt", url: "https://www.promarket.org/2025/12/11/canceling-the-antitrust-show-live-nation-ticketmasters-latest-attempt-to-keep-its-monopoly/", pub: "ProMarket (Stigler Center / UChicago), 2025"},
+    {title: "Coachella Ticket Sales Lower Than Usual — 2024 Festival Trend", url: "https://www.billboard.com/business/touring/coachella-ticket-sales-lower-than-usual-2024-festival-trend-1235655410/", pub: "Billboard, 2024"},
+    {title: "Dwindling Ticket Sales: Decline of Music Festivals", url: "https://www.cnn.com/2025/06/01/entertainment/music-festivals-cancellations-pitchfork-cec", pub: "CNN, 2025"},
+    {title: "Bonnaroo Pivots to Full Refunds for Canceled Festival", url: "https://www.rollingstone.com/music/music-news/bonnaroo-canceled-refunds-future-dates-1235369338/", pub: "Rolling Stone, 2025"},
+    {title: "How Much Artists Make in Streaming Royalties vs. Merchandise", url: "https://www.atvenu.com/post/how-much-money-artists-make-in-streaming-vs-merchandise-sales", pub: "atVenu, 2024"},
+    {title: "2025 Mid-Year Venue Merchandise Insights", url: "https://www.atvenu.com/post/mid-year-venue-merchandise-insights-how-fan-spending-is-evolving", pub: "atVenu, 2025"},
+    {title: "Band Booking: Guarantees vs. Door Splits", url: "https://diymusician.cdbaby.com/music-career/band-booking-guarantees-vs-door-splits/", pub: "DIY Musician / CD Baby"},
+    {title: "Deal or No Deal: Booking Contracts & Settlements 2026", url: "https://www.ticketfairy.com/blog/deal-or-no-deal-navigating-booking-contracts-settlements-for-venues-in-2026", pub: "Ticket Fairy, 2026"},
+    {title: "Insurance Costs Among Music Venues' Biggest Challenges", url: "https://austinmonitor.com/stories/2023/08/insurance-costs-listed-among-music-venues-biggest-challenges-at-city-summit/", pub: "Austin Monitor, 2023"},
+    {title: "Fever Acquires Ticketing Firm DICE", url: "https://musically.com/2025/06/05/fever-acquires-ticketing-firm-dice-in-live-tech-consolidation/", pub: "Music Ally, 2025"},
+    {title: "Tixel to Introduce Levy for LIVE Trust", url: "https://www.iqmagazine.com/2025/05/tixel-to-introduce-levy-for-live-trust/", pub: "IQ Magazine, 2025"},
+    {title: "A Lifeline for Indie Venues: UK Grassroots Levy", url: "https://variety.com/2025/music/global/indie-venues-levy-arena-concert-tickets-1236327834/", pub: "Variety, 2025"},
+    {title: "Venues Closing Across U.S.: What We Lose", url: "https://www.rollingstone.com/music/music-features/concert-venues-covid-safety-live-events-1066561/", pub: "Rolling Stone"}
+  ],
+  touring: [
+    {title: "Taylor Swift's Eras Tour Wraps as First Tour to Pass $2B", url: "https://www.billboard.com/music/chart-beat/taylor-swift-eras-tour-earnings-2-billion-sales-1235847513/", pub: "Billboard, 2024"},
+    {title: "Eras Tour Smashes All-Time Touring Record", url: "https://news.pollstar.com/2024/12/09/taylor-swifts-eras-tour-sets-all-time-touring-record-breaking-2b/", pub: "Pollstar, 2024"},
+    {title: "Pollstar 2024 Year-End Analysis — Swift & Coldplay Records", url: "https://news.pollstar.com/2024/12/13/2024bizanalysis/", pub: "Pollstar, 2024"},
+    {title: "Pollstar 2025 Year-End — A Return To Earth", url: "https://news.pollstar.com/2025/12/23/year-end-business-analysis-a-return-to-earth-2025-grosses-ticket-sales-drop-averages-increase-beyonce-oasis-coldplay-have-top-tours-venues-stadiums-rock/", pub: "Pollstar, 2025"},
+    {title: "Beyoncé pips Oasis to claim 2025's highest-grossing tour", url: "https://www.iqmagazine.com/2025/12/beyonce-pips-oasis-in-highest-grossing-tour-stakes/", pub: "IQ Magazine, 2025"},
+    {title: "Beyoncé's Renaissance Concert Tour Grosses $579M", url: "https://variety.com/2023/music/news/beyonces-renaissance-world-tour-revenue-1235743490/", pub: "Variety (Jem Aswad), 2023"},
+    {title: "U2's First Sphere Shows — Nearly $110M in Ticket Sales", url: "https://www.billboard.com/pro/u2-shows-sphere-110-million-ticket-sales/", pub: "Billboard Pro, 2024"},
+    {title: "Sphere Entertainment Revenue Tops $1B Fiscal Year", url: "https://news.pollstar.com/2024/08/15/sphere-entertainment-revenue-tops-1b-for-fiscal-year/", pub: "Pollstar, 2024"},
+    {title: "Sphere sets record with $420M+ revenue from U2, Eagles, Phish", url: "https://neon.reviewjournal.com/kats/how-sphere-posted-record-breaking-numbers-for-24-3250826/", pub: "LV Review-Journal (Katsilometes), 2024"},
+    {title: "Coldplay Tour Carbon Footprint / Sustainability", url: "https://variety.com/2023/music/news/coldplay-tour-carbon-footprint-sustainability-green-1235632704/", pub: "Variety, 2023"},
+    {title: "Tour Emissions Update 2024 — Coldplay Sustainability", url: "https://sustainability.coldplay.com/", pub: "Coldplay / MIT ESI, 2024"},
+    {title: "DOJ Sues Live Nation-Ticketmaster for Monopolizing Live Concert Industry", url: "https://www.justice.gov/archives/opa/pr/justice-department-sues-live-nation-ticketmaster-monopolizing-markets-across-live-concert", pub: "U.S. DOJ, 2024"},
+    {title: "Live Nation and Ticketmaster lose antitrust case", url: "https://www.axios.com/2026/04/15/live-nation-ticketmaster-lose-antitrust-case", pub: "Axios, 2026"},
+    {title: "Live Nation and DOJ reach settlement in antitrust case", url: "https://www.npr.org/2026/03/09/nx-s1-5742433/live-nation-ticketmaster-doj-antitrust-case", pub: "NPR, 2026"},
+    {title: "'Ticketmaster and Live Nation Are a Monopoly,' AEG Chief Says", url: "https://variety.com/2024/music/news/ticketmaster-live-nation-monopoly-aeg-chief-jay-marciano-says-1236021356/", pub: "Variety, 2024"},
+    {title: "Leading music promoters worldwide 2023–2024", url: "https://www.statista.com/statistics/304982/leading-music-promoters-worldwide/", pub: "Statista, 2024"},
+    {title: "How Artists Tour On a Budget: Stolen Vans, Ancient Gear", url: "https://www.billboard.com/pro/how-artists-tour-budget-stolen-vans-ancient-gear-livable-basics/", pub: "Billboard Pro, 2022"},
+    {title: "How Much Do Indie Artists Make on Tour?", url: "https://news.sidedooraccess.com/news/touring-by-the-numbers", pub: "Side Door Access, 2023"},
+    {title: "Touring In A Post-Pandemic World (Costs, Personnel, Festivals)", url: "https://www.grammy.com/news/2023-post-pandemic-touring-changes-festivals-costs-personnel-backstage-behind-the-scenes", pub: "GRAMMY.com, 2023"},
+    {title: "Tour Support — Music Glossary", url: "https://amworldgroup.com/glossary/entertainment/tour-support", pub: "AMW Group"},
+    {title: "Understanding Label Advances and Recoupment", url: "https://blog.promise.legal/startup-central/understanding-label-advances-and-recoupment-what-recording-artists-actually-owe/", pub: "Promise Legal"},
+    {title: "Brexit 'strangling next generation of UK talent'", url: "https://www.nme.com/news/music/brexit-touring-europe-strangling-talent-carnets-visa-merch-crew-government-response-summer-2022-3288735", pub: "NME, 2022"},
+    {title: "Touring and Working in the EU", url: "https://www.ukmusic.org/policy-campaigns/brexit/", pub: "UK Music"}
+  ],
+  charts: [
+    {title: "Billboard Hot 100 — Wikipedia", url: "https://en.wikipedia.org/wiki/Billboard_Hot_100", pub: "Wikipedia, 2026"},
+    {title: "How Billboard Charts Work: Methodology Explained", url: "https://orphiq.com/resources/how-billboard-charts-work", pub: "Orphiq, 2025"},
+    {title: "Billboard Charts Add More Weight to On-Demand Streaming in 2026", url: "https://www.billboard.com/pro/billboard-charts-add-more-weight-on-demand-streaming-2026/", pub: "Billboard Pro, 2025"},
+    {title: "Billboard Made 'Free' Streams Worth More on US Charts", url: "https://www.musicbusinessworldwide.com/billboard-just-made-free-streams-worth-more-on-its-us-charts-youtube-is-still-not-happy-and-is-pulling-its-data/", pub: "MBW, 2025"},
+    {title: "Billboard Global 200 — Wikipedia", url: "https://en.wikipedia.org/wiki/Billboard_Global_200", pub: "Wikipedia, 2026"},
+    {title: "How Billboard Formulated the New Global Charts", url: "https://www.billboard.com/pro/how-billboard-formulated-new-global-charts/", pub: "Billboard Pro"},
+    {title: "Luminate (company) — Wikipedia", url: "https://en.wikipedia.org/wiki/Luminate_(company)", pub: "Wikipedia, 2026"},
+    {title: "P-MRC Data Rebrands as Luminate", url: "https://www.billboard.com/pro/p-mrc-data-rebrand-luminate/", pub: "Billboard Pro, 2022"},
+    {title: "Official Charts — Streaming and the Official Singles Chart", url: "https://www.officialcharts.com/chart-news/streaming-and-the-official-singles-chart-everything-you-need-to-know-__4253/", pub: "Official Charts Co."},
+    {title: "Official Charts (UK) — Wikipedia", url: "https://en.wikipedia.org/wiki/Official_Charts", pub: "Wikipedia, 2026"},
+    {title: "Spotify Charts — Official", url: "https://charts.spotify.com/charts/overview/global", pub: "Spotify, 2026"},
+    {title: "The Impact of Spotify's Global Charts", url: "https://vocal.media/beat/the-impact-of-spotify-s-global-charts", pub: "Vocal Media / Beat"},
+    {title: "Oricon Combined Singles Chart — Wikipedia", url: "https://en.wikipedia.org/wiki/Oricon_Combined_Singles_Chart", pub: "Wikipedia, 2026"},
+    {title: "Circle Chart — Wikipedia", url: "https://en.wikipedia.org/wiki/Circle_Chart", pub: "Wikipedia, 2026"},
+    {title: "TikTok Billboard Top 50 — Wikipedia", url: "https://en.wikipedia.org/wiki/TikTok_Billboard_Top_50", pub: "Wikipedia, 2026"},
+    {title: "TikTok Billboard Top 50 Chart — Look Back at First Year", url: "https://www.billboard.com/lists/tiktok-billboard-top-50-chart-turns-1-look-back/", pub: "Billboard, 2024"},
+    {title: "Shazam to Help Fuel Warner Music's A&R Activity", url: "https://www.musicbusinessworldwide.com/shazam-to-help-fuel-warner-musics-ar-activity/", pub: "MBW"},
+    {title: "Shazam: Predictive Analysis for the Music Industry", url: "https://d3.harvard.edu/platform-digit/submission/shazam-predictive-analysis-for-the-music-industry/", pub: "Harvard DIT"},
+    {title: "Shazam Analytics", url: "https://soundcharts.com/en/shazam-analytics", pub: "Soundcharts"},
+    {title: "Apple Music Launches 116 Global Top 100 Charts", url: "https://www.musicbusinessworldwide.com/apple-music-launches-116-global-top-100-charts/", pub: "MBW"},
+    {title: "Streaming Fraud Costs $2B/Year (Beatdapp + Beatport)", url: "https://www.musicbusinessworldwide.com/streaming-fraud-costs-the-global-music-industry-2bn-a-year-according-to-beatdapp-now-its-partnering-with-beatport-to-combat-the-trend/", pub: "MBW"},
+    {title: "Billboard Just Cracked Down on Bots & Chart Manipulation", url: "https://www.whiskeyriff.com/2025/03/18/billboard-just-cracked-down-on-bots-chart-manipulation-heres-exactly-what-they-did/", pub: "Whiskey Riff, March 2025"},
+    {title: "How Billboard Aims to Stop Chart Manipulation", url: "https://americansongwriter.com/how-billboard-aims-to-stop-chart-manipulation-with-new-rules/", pub: "American Songwriter"},
+    {title: "Billboard's New Bundle-Banning Chart Rules", url: "https://www.billboard.com/pro/billboards-new-bundle-chart-rules-start-date/", pub: "Billboard Pro"},
+    {title: "YouTube Will Stop Submitting Data to US Billboard Charts in 2026", url: "https://variety.com/2025/digital/news/youtube-will-stop-submitting-data-to-billboard-charts-1236611347/", pub: "Variety, Dec 2025"},
+    {title: "YouTube to Stop Submitting Data to Billboard Charts", url: "https://www.rollingstone.com/music/music-features/what-will-billboards-new-streaming-rules-really-mean-124168/", pub: "Rolling Stone"},
+    {title: "Why YouTube Data is Leaving the U.S. Billboard Charts", url: "https://blog.youtube/news-and-events/youtube-billboard-chart-update/", pub: "YouTube Blog, 2025"},
+    {title: "Chartmetric Year in Music 2024", url: "https://reports.chartmetric.com/2024/chartmetric-year-in-music-2024", pub: "Chartmetric"}
+  ]
+};
+
+const TOPIC_LABELS = {
+  streaming: "01 · Streaming",
+  branding: "02 · Branding",
+  dsp: "03 · DSP",
+  live: "04 · Live Shows",
+  touring: "05 · Touring",
+  charts: "06 · Top Charts"
+};
+
+/* ============================================================
+   KOI BOARD DATA — 3 starter slots (this / that / next)
+   ============================================================ */
+
+const KOI_DATA = {
+  "this": {
+    num: "01",
+    title: "Streaming",
+    blurb: "How streaming royalties actually pay",
+    body: `<p>Streaming platforms distribute royalties via a pro-rata market-share model — your percentage of total platform streams determines your cut of the royalty pool. Payouts flow from the DSP to the label or distributor, then to the artist per contract. Streaming platforms collect subscription fees and ad revenue, then distribute approximately 65–70% of that total as royalties through a market-share payment system that pools all revenue and distributes based on each artist's share of total streams.</p>
+           <ol>
+             <li>Verify your per-stream rate is not fixed — rates fluctuate monthly based on royalty pool size.</li>
+             <li>Register with the MLC or a publishing admin to capture 15–25% in mechanical royalties.</li>
+             <li>Ensure tracks hit 1,000 streams in 12 months on Spotify to generate any royalties.</li>
+             <li>Track streams by territory — US/UK/Western Europe pay significantly more per stream.</li>
+             <li>Never use stream-farming or bot services — platforms detect fraud and claw back royalties.</li>
+           </ol>`,
+    sources: [
+      "https://dittomusic.com/en/blog/how-much-does-spotify-pay-per-stream",
+      "https://www.chartlex.com/blog/money/how-much-does-spotify-pay-per-stream-2026",
+      "https://www.sounds.co/en/post/royalties-streaming-pro-rata-model",
+      "https://orphiq.com/resources/how-streaming-royalties-calculated",
+      "https://musically.com/2025/12/16/spotify-defends-1000-stream-royalties-threshold-after-critical-report/",
+      "https://artistrack.com/spotify-royalty-model-threshold/",
+      "https://support.spotify.com/us/artists/article/how-your-streams-are-counted/",
+      "https://www.themlc.com/digital-music-royalties-landscape",
+      "https://www.rollingstone.com/music/music-features/bots-streaming-fraud-music-protection-1235537602/",
+      "https://fraudblocker.com/articles/what-are-streaming-farms-how-spotify-is-overrun-with-bots"
+    ]
+  },
+  "that": {
+    num: "02",
+    title: "Social Media",
+    blurb: "How TikTok, Reels, and Shorts actually surface artists",
+    body: `<p>TikTok, Instagram Reels, and YouTube Shorts each run distinct algorithms that reward different behaviors, but all three prioritize watch-time, completion rate, and engagement velocity over raw follower count. TikTok dominates discovery — 84% of songs entering the Billboard Global 200 in 2024 went viral there first. Consistent 3–5x/week posting plus niche-specific content beats sporadic spray-and-pray.</p>
+           <ol>
+             <li>Make platform-native content — never repost watermarked TikToks to Reels or Shorts.</li>
+             <li>Engage with comments, duets, and stitches — algorithms reward conversation, not megaphone mode.</li>
+             <li>Tie posts to brand coherence — random viral sounds without a brand link don't convert to followers.</li>
+             <li>Post on a predictable cadence — multi-week gaps reset algorithmic momentum.</li>
+             <li>Check analytics weekly — watch-time drop-offs and best hooks are your most actionable signal.</li>
+           </ol>`,
+    sources: [
+      "https://www.musicmarketingmonday.com/p/why-organic-social-media-content-matters-for-music-artists",
+      "https://musically.com/2025/11/18/music-marketing-strategies-for-2026-eight-key-takeaways/",
+      "https://www.berklee.edu/berklee-now/news/music-marketing-strategies"
+    ]
+  },
+  "next": {
+    num: "03",
+    title: "Royalties",
+    blurb: "Two parallel money flows — master + publishing",
+    body: `<p>Music generates two distinct copyright royalty tracks: master royalties (for the sound recording) and publishing royalties (for the underlying composition). They flow through completely separate collection pipelines. Publishing splits further into performance, mechanical, and sync — each collected by different entities. Most artists unknowingly leave publishing royalties uncollected because they haven't registered with a PRO and the MLC.</p>
+           <ol>
+             <li>Register with a PRO (ASCAP, BMI, or SESAC) BEFORE releasing music — performance royalties accumulate from day one but can't be paid to an unregistered writer.</li>
+             <li>Treat master and publishing as fully separate streams — different entities, different timelines, different paperwork.</li>
+             <li>File a split sheet on every co-write before release — verbal agreements are legally unenforceable once money is in play.</li>
+             <li>Register with the MLC or a publishing admin to claim mechanical royalties from streams.</li>
+             <li>Know admin vs. publisher — an admin collects and registers; a true publisher also pitches for sync at higher commission.</li>
+           </ol>`,
+    sources: [
+      "https://blog.songtrust.com/mechanical-vs-performance-royalties",
+      "https://royaltyexchange.com/blog/understanding-music-royalty-types-a-beginners-guide-2025",
+      "https://www.copyright.gov/music-modernization/"
+    ]
+  },
+  "sync": {
+    num: "04",
+    title: "Sync / Music Licensing",
+    blurb: "How songs land in TV, film, ads, and games",
+    body: `<p>Sync licensing places music alongside visual media — film, TV, ads, games, digital content — in exchange for an upfront placement fee. Both the master recording AND the publishing composition must be cleared separately. The sync market hit $650M in trade revenue in 2024 and is projected to grow significantly through the decade. Music supervisors are the gatekeepers, and they overwhelmingly prefer one-stop tracks where a single party controls both rights.</p>
+           <ol>
+             <li>Always deliver vocal + instrumental versions — many placements need the instrumental because the song sits under dialogue.</li>
+             <li>Lock down split clearance — single-contact tracks are clearable in one email; split-ownership tracks are frequently passed over on tight deadlines.</li>
+             <li>Tag complete metadata (mood, tempo, genre, instrumentation) — supervisors and AI search tools rely on this to find your track.</li>
+             <li>Price realistically as an unknown artist — supervisors work to budget; major-artist fees from a no-name = instant pass.</li>
+             <li>Don't cold-pitch supervisors — go through libraries and agents. Most supervisors have explicit no-cold-submission policies.</li>
+           </ol>`,
+    sources: [
+      "https://syncsongwriter.com/what-is-sync-licensing",
+      "https://thatpitch.com/blog/sync-license-cost/",
+      "https://www.musicgateway.com/blog/sync-licensing/sync-licensing-in-2026-your-golden-ticket-to-actually-getting-paid-and-heard"
+    ]
+  },
+  "distro": {
+    num: "05",
+    title: "Music Distribution",
+    blurb: "The pipeline between you and every DSP",
+    body: `<p>Music distributors are the pipeline between artists and DSPs — they handle delivery, metadata formatting, content ID, royalty collection, and (in some cases) publishing administration. The four dominant indie distributors in 2025 are DistroKid, TuneCore, CD Baby, and UnitedMasters, each using different pricing models (flat annual fee vs. per-release vs. revenue share). Choosing the wrong model at the wrong career stage is one of the most costly mistakes emerging artists make.</p>
+           <ol>
+             <li>Register ISRCs for every track — without them, streaming plays may not be accurately tracked or attributed.</li>
+             <li>Use separate distributor accounts (or proper royalty splits) for personal vs. collaborative releases — avoids payout disputes.</li>
+             <li>Match the pricing model to your release volume — flat-fee for high-volume artists, per-release for infrequent releasers.</li>
+             <li>Enable the publishing admin add-on, or use a separate publishing admin — distributors don't auto-collect mechanicals.</li>
+             <li>Verify metadata exactly — typos, missing songwriter credits, or wrong release dates cause months of royalty failures.</li>
+           </ol>`,
+    sources: [
+      "https://aristake.com/digital-distribution-comparison/",
+      "https://symphonic.com/best-music-distribution-services/",
+      "https://unitedmasters.com/en/unitedmasters-vs-distrokid"
+    ]
+  },
+  "pub": {
+    num: "06",
+    title: "Music Publishing",
+    blurb: "Owning, collecting, and licensing the composition",
+    body: `<p>Music publishing is the business of managing, licensing, and monetizing the underlying composition (melody + lyrics) — separate from the sound recording. A publisher registers your works globally, collects all publishing royalties (performance, mechanical, sync), pitches songs for licensing, and polices unauthorized use. Three main deal types: admin deals (you keep ownership, pay 10–25% commission), co-publishing (you split ownership 50/50), and full publishing (publisher takes all copyrights for advances + services).</p>
+           <ol>
+             <li>Register with a PRO (ASCAP, BMI, or SESAC) before release — performance royalties accrue from day one but only flow to registered writers.</li>
+             <li>Avoid full publishing deals — the publisher can hold the copyright for 70+ years after your death without a strong reversion clause.</li>
+             <li>Distinguish a publishing admin (collects + registers only) from a true publisher (also pitches sync, takes ownership).</li>
+             <li>Register all co-writers with their respective PROs — unregistered shares don't pay anyone.</li>
+             <li>Negotiate publishing rights separately from any recording deal — they're legally distinct and should be valued independently.</li>
+           </ol>`,
+    sources: [
+      "https://www.ascap.com/help/career-development/whats-the-deal-michael-eames-pen-music",
+      "https://blog.onerpm.com/onepublishing/understanding-music-publishing-deals/",
+      "https://acfreedmanlaw.com/understanding-music-publishing-the-differences-between-co-publishing-deals-vs-publishing-administration-deals/"
+    ]
+  },
+  "labels": {
+    num: "07",
+    title: "Record Labels (Major vs Indie)",
+    blurb: "Funding, master ownership, and the deal structures behind them",
+    body: `<p>Record labels fund recording, manufacturing, marketing, and distribution in exchange for a share of revenue and often ownership of the master recording. The three majors (Universal, Sony, Warner) control approximately 70% of global recorded music revenue. Deal structures have evolved — traditional ownership, 360 deals, licensing deals, and joint ventures are all on the table for artists with proven traction. Major-label royalty rates run 10–20% of revenue; indie labels typically return 50–70% of net.</p>
+           <ol>
+             <li>Have an entertainment attorney review every label deal — contract language is intentionally complex and often contains indefinite-extension clauses.</li>
+             <li>Reject 360 deals that capture touring and merch — those streams are your guaranteed money, and giving away 15–25% of them is often financially devastating.</li>
+             <li>Always negotiate a reversion clause — if the label doesn't promote or release within a set timeframe, masters revert to you.</li>
+             <li>Push for a JV (50/50 after recoupment) over a traditional ownership deal when you have leverage — most equitable traditional structure.</li>
+             <li>Treat the option clause as the real deal length — a "1-album" deal can lock you into 6–8 albums over a decade at the label's discretion.</li>
+           </ol>`,
+    sources: [
+      "https://djbooth.net/features/2021-08-04-different-types-of-record-deals-explains-amuse/",
+      "https://dahrkwidahhrk.com/indie-vs-major-labels/360-deals-explained-how-they-differ-on-major-labels-vs-indie-labels/",
+      "https://orphiq.com/resources/record-deals-explained"
+    ]
+  },
+  "mgmt": {
+    num: "08",
+    title: "Artist Management",
+    blurb: "The 15–20% commission, the sunset clause, and when to actually sign",
+    body: `<p>An artist manager is the primary business advisor and career architect — handling strategy, deal negotiations, team coordination, and opportunity vetting. Managers typically earn 15–20% commission on gross income across all revenue streams, including streaming, touring, merch, sync, and brand deals. The right time to bring on a manager is when business demands are actively competing with creative output and costing real opportunities. Initial contract terms are 1–3 years.</p>
+           <ol>
+             <li>Don't sign a manager until business demand is actively costing you opportunities — early commissions on small income provide limited ROI.</li>
+             <li>Bake in a sunset clause — commission on tenure-era deals tapers to zero over 3–5 years post-term, instead of paying a former manager indefinitely.</li>
+             <li>Define commissionable income explicitly (gross vs net, what's deducted) — vague clauses cause disputes about touring expenses, production, and co-writer splits.</li>
+             <li>Have an entertainment attorney review the management agreement before signing — default language is often artist-unfavorable.</li>
+             <li>Choose belief and communication discipline over connections — a bad manager statistically costs more than no manager at all.</li>
+           </ol>`,
+    sources: [
+      "https://www.artist.tools/post/artist-management-contract-template-and-guide",
+      "https://stagent.com/blog/how-to-manage-an-artist",
+      "https://www.corderolawgroup.com/blog/2025/artist-management-contracts"
+    ]
+  },
+  "brand": {
+    num: "09",
+    title: "Artist Branding",
+    blurb: "Identity architecture, parasocial depth, and the superfan top 1–5%",
+    body: `<p>Artist branding is the deliberate construction of a consistent identity system — visual, sonic, behavioral, and narrative — that creates instant recognition and emotional gravity. Academic research on parasocial relationships shows fans develop genuine one-sided emotional bonds with artists that activate the same neurological systems as real friendships, driving streaming, attendance, and merch behavior. The most durable artist brands begin with authentic identity excavation, not manufactured aesthetics.</p>
+           <ol>
+             <li>Excavate identity FIRST — visuals chosen without a defined core identity shift constantly and never compound into recognition.</li>
+             <li>Lock 2–3 primary colors, signature typography, and a photographic style; codify them in a one-page guide so every touchpoint is recognizably connected.</li>
+             <li>Post non-music content — process, vulnerability, opinions, behind-the-scenes — that is what builds parasocial depth and converts casual listeners.</li>
+             <li>Build for the superfan top 1–5% — depth, exclusivity, and insider access generate disproportionate revenue vs chasing broad casual reach.</li>
+             <li>Keep core identity consistent across platforms; modulate tone per platform (TikTok raw, IG curated, YouTube narrative) without contradicting the core.</li>
+           </ol>`,
+    sources: [
+      "https://daimoon.media/knowledge/music-branding-psychology-superfans/",
+      "https://musically.com/2025/11/18/music-marketing-strategies-for-2026-eight-key-takeaways/",
+      "https://pdxscholar.library.pdx.edu/cgi/viewcontent.cgi?article=2371&context=honorstheses"
+    ]
+  }
+};
+
+const NAV_MAP = {
+  research: [
+    { key: "streaming", num: "01", label: "Streaming" },
+    { key: "branding",  num: "02", label: "Branding" },
+    { key: "dsp",       num: "03", label: "DSP" },
+    { key: "live",      num: "04", label: "Live Shows" },
+    { key: "touring",   num: "05", label: "Touring" },
+    { key: "charts",    num: "06", label: "Top Charts" }
+  ],
+  starter: [
+    { key: "streaming", num: "01", label: "Streaming" },
+    { key: "branding",  num: "02", label: "Branding" },
+    { key: "dsp",       num: "03", label: "DSP" },
+    { key: "live",      num: "04", label: "Live Shows" },
+    { key: "touring",   num: "05", label: "Touring" },
+    { key: "charts",    num: "06", label: "Top Charts" }
+  ],
+  koi: [
+    { key: "this", num: "01", label: "Streaming" },
+    { key: "that", num: "02", label: "Social Media" },
+    { key: "next", num: "03", label: "Royalties" },
+    { key: "sync", num: "04", label: "Sync" },
+    { key: "distro", num: "05", label: "Distro" },
+    { key: "pub", num: "06", label: "Publishing" },
+    { key: "labels", num: "07", label: "Labels" },
+    { key: "mgmt", num: "08", label: "Management" },
+    { key: "brand", num: "09", label: "Branding" }
+  ],
+  koiplan: [
+    { key: "plan", num: "01", label: "Plan" }
+  ]
+};
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+
+let state = { mode: "research", topic: "streaming" };
+
+function renderNav() {
+  const navRow = document.getElementById("navRow");
+  const items = NAV_MAP[state.mode];
+  navRow.innerHTML = items.map(it =>
+    `<button class="nav-btn${it.key === state.topic ? " active" : ""}" data-topic="${it.key}">
+       <span class="num">${it.num}</span><span class="label">${it.label}</span>
+     </button>`
+  ).join("");
+}
+
+function renderPanel() {
+  const panel = document.getElementById("panel");
+
+  if (state.mode === "koi") {
+    const k = KOI_DATA[state.topic];
+    panel.innerHTML = `
+      <div class="topic-eyebrow">Slot ${k.num} · Music Industry HIW</div>
+      <h2>${k.title}</h2>
+      <p class="panel-intro">${k.blurb}</p>
+      <div class="section">${k.body}</div>
+    `;
+    return;
+  }
+
+  if (state.mode === "koiplan") {
+    panel.innerHTML = `
+      <div class="topic-eyebrow">Verified Release Plan</div>
+      <h2>Koi <span style="color:#1ed760">Plan</span></h2>
+      <p class="panel-intro">Every number below is extracted from Spotify's own published case studies and research. No guesses. No projections. Just verified conversion data that changes how you plan a release.</p>
+
+      <div class="koiplan-scoped-section-header">
+        <div class="koiplan-scoped-dot"></div>
+        <div class="koiplan-scoped-section-title">Verified Conversion Benchmarks</div>
+      </div>
+      <div class="koiplan-scoped-bench-grid">
+        <div class="koiplan-scoped-bench-card">
+          <div class="koiplan-scoped-bench-value">24-38%</div>
+          <div class="koiplan-scoped-bench-label">Marquee Save / Playlist Rate</div>
+          <div class="koiplan-scoped-bench-note">Jelani Aryeh (38%), Magic City Hippies (24–30%)</div>
+        </div>
+        <div class="koiplan-scoped-bench-card">
+          <div class="koiplan-scoped-bench-value">10x</div>
+          <div class="koiplan-scoped-bench-label">More Listeners Per Dollar vs Social Ads</div>
+          <div class="koiplan-scoped-bench-note">Spotify's own 10-release study</div>
+        </div>
+        <div class="koiplan-scoped-bench-card">
+          <div class="koiplan-scoped-bench-value blue">100%</div>
+          <div class="koiplan-scoped-bench-label">Higher Click-to-Listen Rate</div>
+          <div class="koiplan-scoped-bench-note">Marquee vs social ad clicks &rarr; actual streams</div>
+        </div>
+      </div>
+
+      <div class="koiplan-scoped-multiplier">
+        <div class="koiplan-scoped-multiplier-left">
+          <div class="koiplan-scoped-multiplier-num">40x</div>
+          <div class="koiplan-scoped-multiplier-sub">Active Listener Lift</div>
+        </div>
+        <div class="koiplan-scoped-multiplier-right">
+          <h3>The Sequence is the Strategy</h3>
+          <p>Marquee alone drives an <strong style="color:#fff">8x lift</strong> in new active listeners. Sequence Marquee first, then follow with Showcase, and the lift jumps to <strong style="color:#1ed760">40x</strong> &mdash; 5x more impact from adding one tool. True regardless of spend.</p>
+          <div class="koiplan-scoped-quote">"The real magic happens when pairing tools... regardless of how much you spend." &mdash; Spotify Campaign Kit</div>
+        </div>
+      </div>
+
+      <div class="koiplan-scoped-section-header">
+        <div class="koiplan-scoped-dot blue"></div>
+        <div class="koiplan-scoped-section-title">The Optimal Release Sequence</div>
+      </div>
+      <div class="koiplan-scoped-sequence">
+        <div class="koiplan-scoped-seq-step">
+          <div class="koiplan-scoped-seq-phase">Months Before</div>
+          <div class="koiplan-scoped-seq-tool">Discovery Mode</div>
+          <div class="koiplan-scoped-seq-note">15–20 catalog songs<br/>Broad / algorithmic</div>
+          <div class="koiplan-scoped-seq-lift">+385% streams</div>
+        </div>
+        <div class="koiplan-scoped-seq-step">
+          <div class="koiplan-scoped-seq-phase">Singles 1–3</div>
+          <div class="koiplan-scoped-seq-tool">Marquee</div>
+          <div class="koiplan-scoped-seq-note">Lapsed + Previously Active<br/>Pitch to playlists (free)</div>
+          <div class="koiplan-scoped-seq-lift">24% save rate</div>
+        </div>
+        <div class="koiplan-scoped-seq-step">
+          <div class="koiplan-scoped-seq-phase">Release Day</div>
+          <div class="koiplan-scoped-seq-tool">Marquee</div>
+          <div class="koiplan-scoped-seq-note">Recently Active listeners<br/>Full-screen recommendation</div>
+          <div class="koiplan-scoped-seq-lift">8x listener lift</div>
+        </div>
+        <div class="koiplan-scoped-seq-step">
+          <div class="koiplan-scoped-seq-phase">+1–2 Weeks</div>
+          <div class="koiplan-scoped-seq-tool">Showcase</div>
+          <div class="koiplan-scoped-seq-note">"Getting buzz" or "New music"<br/>Light + Moderate + Lapsed</div>
+          <div class="koiplan-scoped-seq-lift">40x total lift</div>
+        </div>
+        <div class="koiplan-scoped-seq-step">
+          <div class="koiplan-scoped-seq-phase">Post-Release</div>
+          <div class="koiplan-scoped-seq-tool">Discovery Mode</div>
+          <div class="koiplan-scoped-seq-note">Album/EP tracks<br/>Global algorithmic reach</div>
+          <div class="koiplan-scoped-seq-lift">+440% streams</div>
+        </div>
+      </div>
+
+      <div class="koiplan-scoped-section-header">
+        <div class="koiplan-scoped-dot purple"></div>
+        <div class="koiplan-scoped-section-title">What This Data Actually Means</div>
+      </div>
+      <div class="koiplan-scoped-analysis-grid">
+        <div class="koiplan-scoped-analysis-card">
+          <div class="koiplan-scoped-analysis-icon green">$</div>
+          <h3>Social Ads Are Burning Money</h3>
+          <p>At <span class="koiplan-scoped-stat">10x</span> more listeners per dollar, every $100 on Marquee delivers what $1,000 on Instagram/TikTok ads would. The floor of Marquee beats the ceiling of social &mdash; not marginal, a different tier of ROI.</p>
+        </div>
+        <div class="koiplan-scoped-analysis-card">
+          <div class="koiplan-scoped-analysis-icon amber">&#8644;</div>
+          <h3>The Sequence Multiplier is Real</h3>
+          <p>Marquee alone = <span class="koiplan-scoped-stat">8x lift</span>. Marquee then Showcase = <span class="koiplan-scoped-stat">40x lift</span>. Not additive &mdash; multiplicative. Never run Marquee without planning a Showcase follow-up.</p>
+        </div>
+        <div class="koiplan-scoped-analysis-card">
+          <div class="koiplan-scoped-analysis-icon blue">&#127758;</div>
+          <h3>58% of Discovery is International</h3>
+          <p>More than half of the listeners Discovery Mode brings you have never heard you before &mdash; and they're overseas. A US artist with no international marketing can still build a global fanbase at zero upfront cost.</p>
+        </div>
+        <div class="koiplan-scoped-analysis-card">
+          <div class="koiplan-scoped-analysis-icon purple">&#128200;</div>
+          <h3>The 2% That Drives 50%</h3>
+          <p>Jillian Rossi's data: monthly active listeners (just 2% of total) drove over 50% of her streams. The game isn't follower count &mdash; it's activating the right listeners at the right time.</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const d = DATA[state.topic];
+
+  if (state.mode === "research") {
+    panel.innerHTML = `
+      <div class="topic-eyebrow">Topic ${d.num} · Research Results</div>
+      <h2>${d.title}</h2>
+      <p class="panel-intro">${d.blurb}</p>
+
+      <div class="section">
+        <h3>Key Findings</h3>
+        <ul class="findings">
+          ${d.findings.map(f => `
+            <li class="finding">
+              ${f.text}
+              <span class="cite">Source: ${f.cite}</span>
+            </li>`).join("")}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>Why It Matters for Artists</h3>
+        <div class="why-it-matters">${d.why}</div>
+      </div>
+
+      <div class="section">
+        <h3>Artist-Actionable Implications</h3>
+        <ul class="implications">
+          ${d.implications.map(i => `<li class="implication">${i}</li>`).join("")}
+        </ul>
+      </div>
+    `;
+  } else {
+    const pb = d.playbook;
+    panel.innerHTML = `
+      <div class="topic-eyebrow">Topic ${d.num} · Your Starter Playbook for ${d.title}</div>
+      <h2>Your Starter Playbook for ${d.title}</h2>
+      <p class="panel-intro">A mentor-style breakdown — turn the research into moves you can make this week.</p>
+
+      <div class="playbook-intro">${pb.intro}</div>
+
+      <div class="section">
+        <h3>The Playbook</h3>
+        ${pb.steps.map((s, i) => `
+          <div class="playbook-step">
+            <div class="step-num">${String(i + 1).padStart(2, "0")}</div>
+            <div class="step-body">
+              <h4>${s.title}</h4>
+              <p>${s.body}</p>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+}
+
+function renderRegistry() {
+  const reg = document.getElementById("registry");
+  let total = 0;
+  const html = Object.keys(SOURCES).map(key => {
+    const list = SOURCES[key];
+    total += list.length;
+    return `
+      <div class="registry-section">
+        <h3>${TOPIC_LABELS[key]} <span class="count">${list.length} sources</span></h3>
+        <ul class="registry-list">
+          ${list.map(s => `
+            <li>
+              <a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.title}</a>
+              <span class="pub">— ${s.pub}</span>
+            </li>`).join("")}
+        </ul>
+      </div>`;
+  }).join("");
+  reg.innerHTML = html + `<div class="footnote">${total} total sources across 6 topics.</div>`;
+}
+
+/* ============================================================
+   EVENT WIRING
+   ============================================================ */
+
+function applyActiveModeAttr() {
+  // Scopes the Spotify-style CSS to only activate when viewing HIW tab.
+  document.body.setAttribute("data-active-mode", state.mode);
+}
+
+document.querySelectorAll(".mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.mode = btn.dataset.mode;
+    // ensure topic belongs to the new mode's nav set
+    const navKeys = NAV_MAP[state.mode].map(n => n.key);
+    if (!navKeys.includes(state.topic)) state.topic = navKeys[0];
+    applyActiveModeAttr();
+    renderNav();
+    renderPanel();
+  });
+});
+
+// event delegation on the nav row so dynamically-rendered buttons still respond
+document.getElementById("navRow").addEventListener("click", e => {
+  const btn = e.target.closest(".nav-btn");
+  if (!btn) return;
+  state.topic = btn.dataset.topic;
+  renderNav();
+  renderPanel();
+});
+
+const modal = document.getElementById("modal");
+document.getElementById("openSources").addEventListener("click", () => {
+  modal.classList.add("open");
+  document.body.style.overflow = "hidden";
+});
+document.getElementById("closeModal").addEventListener("click", closeModal);
+modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+function closeModal() {
+  modal.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+// init
+applyActiveModeAttr();
+renderRegistry();
+renderNav();
+renderPanel();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payback List</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800;900&family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:           #f7f5ef;
+  --surface:      #faf9f5;
+  --surface2:     #f0ede4;
+  --border:       #e8e4d9;
+  --border-light: #f0ede4;
+  --text-primary: #1a1814;
+  --text-second:  #4a4640;
+  --text-muted:   #9a958c;
+  --text-ghost:   #c8c3ba;
+  --blue:         #2e7be8;
+  --blue-soft:    rgba(46,123,232,0.08);
+  --blue-glow:    rgba(46,123,232,0.18);
+  --green:        #1a9e6e;
+  --green-soft:   rgba(26,158,110,0.08);
+  --green-glow:   rgba(26,158,110,0.18);
+  --amber:        #c07a1a;
+  --amber-soft:   rgba(192,122,26,0.08);
+  --red:          #d94040;
+  --red-soft:     rgba(217,64,64,0.08);
+  --purple:       #7c5cbf;
+  --purple-soft:  rgba(124,92,191,0.08);
+  --mono:         'JetBrains Mono', monospace;
+  --sans:         'Outfit', system-ui, sans-serif;
+  --r:            6px;
+  --r-lg:         10px;
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:    0 4px 16px rgba(0,0,0,0.08);
+  --transition:   all 0.22s cubic-bezier(0.4,0,0.2,1);
+  --sidebar-w:    58px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  font-family: var(--mono);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── AMBIENT GLOWS ── */
+.ambient-glow { position:fixed; border-radius:50%; filter:blur(90px); pointer-events:none; z-index:0; }
+.glow-1 { top:-10%; left:4%; width:440px; height:440px; background:radial-gradient(circle,rgba(46,123,232,0.08) 0%,transparent 70%); animation:glow-breathe 9s ease-in-out infinite; }
+.glow-2 { bottom:-20%; right:-4%; width:520px; height:520px; background:radial-gradient(circle,rgba(26,158,110,0.07) 0%,transparent 70%); animation:glow-breathe 11s ease-in-out infinite 1.5s; }
+.glow-3 { top:42%; left:50%; width:340px; height:340px; background:radial-gradient(circle,rgba(124,92,191,0.05) 0%,transparent 70%); animation:glow-breathe 14s ease-in-out infinite 3s; }
+@keyframes glow-breathe { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:.7;transform:scale(1.06)} }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0 16px;
+  z-index: 300;
+  gap: 2px;
+}
+.sidebar-logo {
+  font-size: 1.25rem;
+  margin-bottom: 22px;
+  opacity: 0.75;
+  line-height: 1;
+  cursor: default;
+  user-select: none;
+}
+.nav-btn {
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-ghost);
+  font-size: 1.05rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  position: relative;
+  outline: none;
+}
+.nav-btn:hover { background: var(--surface2); color: var(--text-muted); }
+.nav-btn.active {
+  background: var(--blue-soft);
+  color: var(--blue);
+  border-color: rgba(46,123,232,0.15);
+}
+/* tooltip */
+.nav-btn::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--text-primary);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.585rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: var(--r);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 400;
+}
+.nav-btn:hover::after { opacity: 1; }
+
+.sidebar-spacer { flex: 1; }
+.sidebar-version {
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: var(--text-ghost);
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  opacity: 0.5;
+  user-select: none;
+}
+
+/* ── MAIN WRAP ── */
+.main-wrap {
+  margin-left: var(--sidebar-w);
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+/* ── PAGES ── */
+.page { display: none; animation: page-in 0.28s ease-out both; }
+.page.active { display: block; }
+@keyframes page-in {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.page-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 48px 40px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
+}
+.header-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 7px;
+}
+.header-title {
+  font-family: var(--sans);
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.header-title span { color: var(--blue); }
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.675rem;
+  color: var(--text-muted);
+}
+.meta-dot { width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:4px; }
+.meta-dot.blue  { background:var(--blue); box-shadow:0 0 6px var(--blue-glow); }
+.meta-dot.green { background:var(--green); box-shadow:0 0 6px var(--green-glow); }
+.meta-dot.amber { background:var(--amber); }
+.meta-pill {
+  display: flex; align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--surface);
+}
+
+/* ── STAT STRIP ── */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(6,1fr);
+  gap: 10px;
+}
+@media(max-width:900px){ .stat-strip { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:560px){ .stat-strip { grid-template-columns:repeat(2,1fr); } }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  transition: var(--transition);
+  cursor: default;
+}
+.stat-card:hover { border-color:transparent; box-shadow:0 0 0 1.5px var(--blue),var(--shadow-md),0 0 20px var(--blue-glow); transform:translateY(-1px); }
+.stat-card.green:hover { box-shadow:0 0 0 1.5px var(--green),var(--shadow-md),0 0 20px var(--green-glow); }
+.stat-card.amber:hover { box-shadow:0 0 0 1.5px var(--amber),var(--shadow-md),0 0 16px var(--amber-soft); }
+.stat-tag { font-size:0.575rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-ghost); margin-bottom:6px; }
+.stat-value { font-family:var(--sans); font-size:1.3rem; font-weight:800; color:var(--text-primary); line-height:1; margin-bottom:2px; }
+.stat-value.blue   { color:var(--blue); }
+.stat-value.green  { color:var(--green); }
+.stat-value.amber  { color:var(--amber); }
+.stat-value.red    { color:var(--red); }
+.stat-value.purple { color:var(--purple); }
+.stat-sub { font-size:0.6rem; color:var(--text-muted); }
+
+/* ── OVERVIEW GRID ── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media(max-width:640px){ .overview-grid { grid-template-columns:1fr; } }
+.overview-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.ov-card-header {
+  padding: 11px 18px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.575rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ov-card-body { padding: 18px; display:flex; flex-direction:column; gap:10px; }
+.breakdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--border-light);
+  font-size: 0.72rem;
+}
+.breakdown-row .br-label { display:flex; align-items:center; gap:7px; color:var(--text-second); }
+.breakdown-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.breakdown-dot.red    { background:var(--red); box-shadow:0 0 6px rgba(217,64,64,0.4); }
+.breakdown-dot.green  { background:var(--green); box-shadow:0 0 6px rgba(26,158,110,0.4); }
+.breakdown-dot.amber  { background:var(--amber); }
+.breakdown-dot.purple { background:var(--purple); }
+.breakdown-count { font-family:var(--sans); font-weight:800; font-size:1rem; color:var(--text-primary); }
+.qa-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+  outline: none;
+}
+.qa-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-soft); }
+.qa-btn.green:hover { border-color:var(--green); color:var(--green); background:var(--green-soft); }
+.qa-btn-icon { font-size:0.85rem; flex-shrink:0; }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 0.6rem; font-weight:700; letter-spacing:0.22em; text-transform:uppercase;
+  color:var(--text-muted); display:flex; align-items:center; gap:10px; margin-bottom:12px;
+}
+.section-label::after { content:''; flex:1; height:1px; background:var(--border-light); }
+
+/* ── SORT BAR ── */
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+.sb-btn {
+  display: inline-flex; align-items:center; gap:4px;
+  padding: 4px 10px;
+  font-family: var(--mono); font-size:0.585rem; font-weight:700;
+  letter-spacing:0.08em; color:var(--text-muted);
+  background:transparent; border:1px solid transparent;
+  border-radius:var(--r); cursor:pointer; transition:var(--transition);
+  white-space:nowrap; outline:none;
+}
+.sb-btn:hover { color:var(--blue); border-color:var(--blue-glow); background:var(--blue-soft); }
+.sb-btn.active { color:var(--blue); border-color:var(--blue-glow); background:var(--blue-soft); }
+.sb-btn.urgent-active { color:var(--red); border-color:rgba(217,64,64,0.25); background:var(--red-soft); }
+.sb-btn.add-btn { color:var(--blue); border-color:var(--blue-glow); background:var(--blue-soft); }
+.sb-btn.add-btn:hover { background:rgba(46,123,232,0.14); }
+.sb-divider { width:1px; height:14px; background:var(--border); flex-shrink:0; margin:0 2px; }
+.sb-spacer { flex:1; }
+.sb-btn-save { background:var(--green); color:#fff; border:none; border-radius:var(--r); padding:5px 12px; font-family:var(--mono); font-size:0.585rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; transition:var(--transition); white-space:nowrap; outline:none; }
+.sb-btn-save:hover { background:#168f62; box-shadow:0 2px 10px rgba(26,158,110,0.3); }
+.sb-btn-load { background:var(--blue); color:#fff; border:none; border-radius:var(--r); padding:5px 12px; font-family:var(--mono); font-size:0.585rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; cursor:pointer; transition:var(--transition); white-space:nowrap; outline:none; }
+.sb-btn-load:hover { background:#2568c8; box-shadow:0 2px 10px rgba(46,123,232,0.3); }
+
+/* ── TABLE ── */
+.table-wrap {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-lg); overflow:hidden; box-shadow:var(--shadow-sm);
+}
+.pricing-table { width:100%; border-collapse:collapse; font-size:0.74rem; }
+.pricing-table thead th {
+  background:var(--surface2); color:var(--text-muted);
+  font-size:0.575rem; font-weight:700; letter-spacing:0.18em;
+  text-transform:uppercase; padding:11px 14px;
+  text-align:left; border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.pricing-table thead th.col-num { text-align:right; }
+.pricing-table thead th.th-blue   { color:var(--blue); }
+.pricing-table thead th.th-green  { color:var(--green); }
+.pricing-table thead th.th-amber  { color:var(--amber); }
+.pricing-table thead th.th-purple { color:var(--purple); }
+.pricing-table thead th.th-red    { color:var(--red); }
+.pricing-table thead th.sortable { cursor:pointer; user-select:none; }
+.pricing-table thead th.sortable:hover { color:var(--text-second); background:var(--surface); }
+.pricing-table thead th.sort-asc::after  { content:'↑'; margin-left:4px; opacity:.7; color:var(--blue); }
+.pricing-table thead th.sort-desc::after { content:'↓'; margin-left:4px; opacity:.7; color:var(--blue); }
+.pricing-table tbody tr.data-row { border-bottom:1px solid var(--border-light); transition:var(--transition); }
+.pricing-table tbody tr.data-row:last-child { border-bottom:none; }
+.pricing-table tbody tr.data-row:hover { background:rgba(46,123,232,0.03); }
+.pricing-table tbody tr.data-row.urgent-glow { box-shadow:0 0 0 1px rgba(217,64,64,0.35),0 0 10px rgba(217,64,64,0.12); position:relative; z-index:1; }
+.pricing-table td { padding:10px 14px; vertical-align:middle; color:var(--text-second); line-height:1; transition:var(--transition); }
+.pricing-table td.item-name { font-weight:500; color:var(--text-primary); font-size:0.7rem; }
+.pricing-table td.item-name::before { content:'// '; color:var(--text-ghost); font-size:0.6rem; opacity:.5; transition:var(--transition); }
+.pricing-table tbody tr:hover td.item-name::before { opacity:1; color:var(--blue); }
+.pricing-table td.num { text-align:right; font-variant-numeric:tabular-nums; }
+.pricing-table td.blue-val   { color:var(--blue); }
+.pricing-table td.green-val  { color:var(--green); }
+.pricing-table td.amber-val  { color:var(--amber); }
+.pricing-table td.purple-val { color:var(--purple); }
+.cell-edit {
+  background:transparent; border:none; border-bottom:1px dashed var(--border);
+  color:inherit; font-family:var(--mono); font-size:0.74rem;
+  width:100%; min-width:55px; padding:0 2px; outline:none;
+  text-align:right; transition:var(--transition);
+}
+.cell-edit:focus { border-bottom-color:var(--blue); background:var(--blue-soft); border-radius:2px; color:var(--text-primary); }
+.cell-edit::placeholder { color:var(--text-ghost); }
+.badge {
+  display:inline-flex; align-items:center;
+  padding:2px 8px; border-radius:999px;
+  font-size:0.575rem; font-weight:700; letter-spacing:0.08em;
+  text-transform:uppercase; white-space:nowrap;
+  cursor:pointer; transition:var(--transition); border:none; outline:none;
+  font-family:var(--mono);
+}
+.badge.pending  { background:var(--amber-soft); color:var(--amber); }
+.badge.active   { background:var(--blue-soft);  color:var(--blue);  }
+.badge.settled  { background:var(--green-soft); color:var(--green); }
+.badge.hold     { background:var(--red-soft);   color:var(--red);   }
+.badge:hover { opacity:.75; }
+
+/* ── NOTES PAGE ── */
+.notes-wrap { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:700px){ .notes-wrap { grid-template-columns:1fr; } }
+.notes-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; box-shadow:var(--shadow-sm); }
+.notes-card-header { padding:10px 16px; background:var(--surface2); border-bottom:1px solid var(--border); font-size:0.575rem; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-muted); }
+.notes-textarea { width:100%; min-height:200px; background:transparent; border:none; outline:none; font-family:var(--mono); font-size:0.72rem; color:var(--text-second); padding:14px 16px; resize:vertical; line-height:1.7; transition:var(--transition); }
+.notes-textarea::placeholder { color:var(--text-ghost); }
+.notes-textarea:focus { background:rgba(46,123,232,0.02); }
+.fields-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+.field-cell { padding:12px 16px; border-bottom:1px solid var(--border-light); border-right:1px solid var(--border-light); transition:var(--transition); }
+.field-cell:nth-child(2n) { border-right:none; }
+.field-cell:nth-last-child(-n+2) { border-bottom:none; }
+.field-cell:hover { background:rgba(46,123,232,0.02); }
+.field-label { font-size:0.555rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-ghost); margin-bottom:5px; }
+.field-input { width:100%; background:transparent; border:none; border-bottom:1px dashed var(--border); outline:none; font-family:var(--mono); font-size:0.74rem; color:var(--text-primary); padding:2px 0; transition:var(--transition); }
+.field-input:focus { border-bottom-color:var(--blue); background:var(--blue-soft); padding:2px 4px; border-radius:3px; }
+
+/* Notepad */
+.notepad-wrap {
+  background: #fefce8;
+  border: 1px solid #e5e3d0;
+  border-radius: var(--r-lg);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7);
+  overflow: hidden;
+  background-image: linear-gradient(#fefce8 0px,#fefce8 23px,#e5e3d0 23px,#e5e3d0 24px);
+  background-size: 100% 24px;
+  background-attachment: local;
+}
+.notepad-title-bar {
+  background: #fffbeb; border-bottom: 2px solid #e5e3d0;
+  padding: 12px 20px 10px; display:flex; align-items:center; gap:10px;
+  background-image:none; position:relative;
+}
+.notepad-title-bar::before { content:''; position:absolute; left:52px; top:0; bottom:0; width:1.5px; background:rgba(217,64,64,0.18); }
+.notepad-title { font-family:'Caveat',cursive; font-size:1.2rem; font-weight:600; color:#6b6248; letter-spacing:.01em; user-select:none; }
+.notepad-pin { width:10px; height:10px; border-radius:50%; background:radial-gradient(circle at 35% 35%,#f59e0b,#c07a1a); box-shadow:0 1px 3px rgba(0,0,0,0.25); flex-shrink:0; }
+.notepad-textarea { width:100%; min-height:180px; background:transparent; border:none; outline:none; font-family:'Caveat',cursive; font-size:1.05rem; font-weight:400; color:#3d3520; padding:10px 20px 20px 58px; resize:none; line-height:24px; display:block; box-sizing:border-box; overflow:hidden; }
+.notepad-textarea::placeholder { color:#b8af94; font-style:italic; }
+
+/* ── FOOTER ── */
+.page-footer { padding-top:18px; border-top:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; font-size:0.575rem; color:var(--text-ghost); letter-spacing:.12em; }
+.footer-dots { display:flex; gap:5px; align-items:center; }
+.footer-dot { width:5px; height:5px; border-radius:50%; opacity:.55; }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(10px);
+  background:var(--green); color:#fff; font-family:var(--mono); font-size:0.64rem;
+  font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  padding:7px 18px; border-radius:999px; box-shadow:0 4px 14px rgba(26,158,110,0.35);
+  z-index:500; opacity:0; transition:opacity .3s ease,transform .3s ease; pointer-events:none;
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+#toast.error { background:var(--red); }
+
+/* ── ANIMATIONS ── */
+@keyframes fade-up { from{opacity:0;transform:translateY(10px);filter:blur(3px)} to{opacity:1;transform:translateY(0);filter:blur(0)} }
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:999px; }
+::-webkit-scrollbar-thumb:hover { background:var(--text-ghost); }
+</style>
+</head>
+<body>
+
+<!-- AMBIENT -->
+<div class="ambient-glow glow-1"></div>
+<div class="ambient-glow glow-2"></div>
+<div class="ambient-glow glow-3"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">💸</div>
+  <button class="nav-btn" data-page="overview" data-tip="Overview">▦</button>
+  <button class="nav-btn" data-page="list"     data-tip="The List">≡</button>
+  <button class="nav-btn" data-page="notes"    data-tip="Notes">✎</button>
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-version">v2</div>
+</nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+
+  <!-- ══ PAGE: OVERVIEW ══ -->
+  <div class="page" id="page-overview">
+    <div class="page-wrap">
+      <header class="page-header">
+        <div class="header-left">
+          <div class="header-label">// payback list · overview</div>
+          <h1 class="header-title">Payback <span>/ Overview</span></h1>
+        </div>
+        <div class="header-meta">
+          <span class="meta-pill"><span class="meta-dot blue"></span>Owed to Me</span>
+          <span class="meta-pill"><span class="meta-dot amber"></span>I Owe</span>
+          <span class="meta-pill"><span class="meta-dot green"></span>Settled</span>
+        </div>
+      </header>
+
+      <div class="stat-strip">
+        <div class="stat-card"><div class="stat-tag">Owed to Me</div><div class="stat-value blue" id="stat-owed-to-me">$0</div><div class="stat-sub">total incoming</div></div>
+        <div class="stat-card amber"><div class="stat-tag">I Owe</div><div class="stat-value amber" id="stat-i-owe">$0</div><div class="stat-sub">total outgoing</div></div>
+        <div class="stat-card green"><div class="stat-tag">Net</div><div class="stat-value green" id="stat-net">$0</div><div class="stat-sub">owed to me − i owe</div></div>
+        <div class="stat-card"><div class="stat-tag">Settled</div><div class="stat-value" id="stat-settled">0</div><div class="stat-sub">items closed</div></div>
+        <div class="stat-card"><div class="stat-tag">Open Items</div><div class="stat-value purple" id="stat-open">0</div><div class="stat-sub">pending resolution</div></div>
+        <div class="stat-card"><div class="stat-tag">Urgent</div><div class="stat-value red" id="stat-urgent-count">0</div><div class="stat-sub">high priority</div></div>
+      </div>
+
+      <div class="overview-grid">
+        <div class="overview-card">
+          <div class="ov-card-header">// status breakdown</div>
+          <div class="ov-card-body">
+            <div class="breakdown-row"><span class="br-label"><span class="breakdown-dot red"></span>Pending</span><span class="breakdown-count" id="bd-pending">0</span></div>
+            <div class="breakdown-row"><span class="br-label"><span class="breakdown-dot amber"></span>Active</span><span class="breakdown-count" id="bd-active">0</span></div>
+            <div class="breakdown-row"><span class="br-label"><span class="breakdown-dot green"></span>Settled</span><span class="breakdown-count" id="bd-settled">0</span></div>
+            <div class="breakdown-row"><span class="br-label"><span class="breakdown-dot purple"></span>Hold</span><span class="breakdown-count" id="bd-hold">0</span></div>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="ov-card-header">// quick actions</div>
+          <div class="ov-card-body">
+            <button class="qa-btn" onclick="switchPage('list')"><span class="qa-btn-icon">≡</span> Go to The List</button>
+            <button class="qa-btn" onclick="switchPage('list'); addRow()"><span class="qa-btn-icon">＋</span> Add a Person</button>
+            <button class="qa-btn green" onclick="saveData()"><span class="qa-btn-icon">↓</span> Save JSON</button>
+            <button class="qa-btn" onclick="switchPage('notes')"><span class="qa-btn-icon">✎</span> Open Notes</button>
+          </div>
+        </div>
+      </div>
+
+      <footer class="page-footer">
+        <div>payback · list · v2</div>
+        <div class="footer-dots">
+          <div class="footer-dot" style="background:var(--blue)"></div>
+          <div class="footer-dot" style="background:var(--green)"></div>
+          <div class="footer-dot" style="background:var(--amber)"></div>
+          <div class="footer-dot" style="background:var(--purple)"></div>
+          <div class="footer-dot" style="background:var(--red)"></div>
+        </div>
+        <div>ahead · artist solutions</div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: LIST ══ -->
+  <div class="page" id="page-list">
+    <div class="page-wrap" style="gap:0; padding-bottom:0;">
+      <header class="page-header" style="margin-bottom:28px;">
+        <div class="header-left">
+          <div class="header-label">// payback list · the list</div>
+          <h1 class="header-title">Payback <span>/ List</span></h1>
+        </div>
+        <div class="header-meta">
+          <span class="meta-pill"><span class="meta-dot blue"></span>Owed to Me</span>
+          <span class="meta-pill"><span class="meta-dot amber"></span>I Owe</span>
+          <span class="meta-pill"><span class="meta-dot green"></span>Settled</span>
+        </div>
+      </header>
+    </div>
+
+    <div style="max-width:1180px; margin:0 auto; padding:0 40px 80px;">
+      <div class="section-label">Payback Entries</div>
+      <div class="table-wrap">
+        <div class="sort-bar">
+          <button class="sb-btn" id="sb-az">A→Z</button>
+          <button class="sb-btn" id="sb-za">Z→A</button>
+          <div class="sb-divider"></div>
+          <button class="sb-btn" id="sb-urgent">⚡ Urgent</button>
+          <div class="sb-divider"></div>
+          <button class="sb-btn add-btn" onclick="addRow()">＋ Add Row</button>
+          <div class="sb-spacer"></div>
+          <button class="sb-btn-save" onclick="saveData()">↓ Save</button>
+          <input type="file" id="file-input" accept=".json" style="display:none">
+          <button class="sb-btn-load" onclick="document.getElementById('file-input').click()">↑ Load</button>
+        </div>
+        <table class="pricing-table">
+          <thead>
+            <tr>
+              <th class="sortable" id="th-name">Person / Item</th>
+              <th class="col-num th-blue sortable" id="th-amount">Amount</th>
+              <th class="col-num sortable" id="th-direction">Direction</th>
+              <th class="col-num th-amber sortable" id="th-date">Due / Date</th>
+              <th class="col-num th-purple sortable" id="th-category">Category</th>
+              <th class="col-num">Notes</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="main-tbody">
+            <tr class="data-row">
+              <td class="item-name" contenteditable="true">Randy Perez</td>
+              <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r0-amount"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r0-dir"></td>
+              <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r0-date"></td>
+              <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r0-cat"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r0-notes"></td>
+              <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>
+            </tr>
+            <tr class="data-row">
+              <td class="item-name" contenteditable="true">Cape Studio</td>
+              <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r1-amount"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r1-dir"></td>
+              <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r1-date"></td>
+              <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r1-cat"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r1-notes"></td>
+              <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>
+            </tr>
+            <tr class="data-row">
+              <td class="item-name" contenteditable="true">Bearcat</td>
+              <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r2-amount"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r2-dir"></td>
+              <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r2-date"></td>
+              <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r2-cat"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r2-notes"></td>
+              <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>
+            </tr>
+            <tr class="data-row">
+              <td class="item-name" contenteditable="true">Oliver</td>
+              <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r3-amount"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r3-dir"></td>
+              <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r3-date"></td>
+              <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r3-cat"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r3-notes"></td>
+              <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>
+            </tr>
+            <tr class="data-row">
+              <td class="item-name" contenteditable="true">Rich Furness</td>
+              <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r4-amount"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r4-dir"></td>
+              <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r4-date"></td>
+              <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r4-cat"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r4-notes"></td>
+              <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>
+            </tr>
+            <tr class="data-row">
+              <td class="item-name" contenteditable="true">Eric</td>
+              <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r5-amount"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r5-dir"></td>
+              <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r5-date"></td>
+              <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r5-cat"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r5-notes"></td>
+              <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>
+            </tr>
+            <tr class="data-row">
+              <td class="item-name" contenteditable="true">John Gilman — Artist 1</td>
+              <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r6-amount"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r6-dir"></td>
+              <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r6-date"></td>
+              <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r6-cat"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r6-notes"></td>
+              <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>
+            </tr>
+            <tr class="data-row">
+              <td class="item-name" contenteditable="true">John Gilman — Artist 2</td>
+              <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r7-amount"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r7-dir"></td>
+              <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r7-date"></td>
+              <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r7-cat"></td>
+              <td class="num"><input class="cell-edit" placeholder="—" data-key="r7-notes"></td>
+              <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: NOTES ══ -->
+  <div class="page" id="page-notes">
+    <div class="page-wrap">
+      <header class="page-header">
+        <div class="header-left">
+          <div class="header-label">// payback list · notes</div>
+          <h1 class="header-title">Payback <span>/ Notes</span></h1>
+        </div>
+      </header>
+
+      <div>
+        <div class="section-label">Scratch Pad</div>
+        <div class="notepad-wrap">
+          <div class="notepad-title-bar">
+            <div class="notepad-pin"></div>
+            <div class="notepad-title">Notes</div>
+          </div>
+          <textarea class="notepad-textarea" id="notepad-main" placeholder="People, context, follow-ups, agreements...&#10;&#10;// type freely"></textarea>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Quick Fields</div>
+        <div class="notes-wrap">
+          <div class="notes-card">
+            <div class="notes-card-header">// session notes</div>
+            <textarea class="notes-textarea" id="session-notes" placeholder="Tiers, adjustments, client context..."></textarea>
+          </div>
+          <div class="notes-card">
+            <div class="notes-card-header">// quick fields</div>
+            <div class="fields-grid">
+              <div class="field-cell"><div class="field-label">Last Updated</div><input class="field-input" id="f-updated" placeholder="—"></div>
+              <div class="field-cell"><div class="field-label">Focus Period</div><input class="field-input" id="f-period" placeholder="—"></div>
+              <div class="field-cell"><div class="field-label">Total Goal</div><input class="field-input" id="f-goal" placeholder="$0"></div>
+              <div class="field-cell"><div class="field-label">Priority Note</div><input class="field-input" id="f-priority" placeholder="—"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="page-footer">
+        <div>payback · list · v2</div>
+        <div class="footer-dots">
+          <div class="footer-dot" style="background:var(--blue)"></div>
+          <div class="footer-dot" style="background:var(--green)"></div>
+          <div class="footer-dot" style="background:var(--amber)"></div>
+          <div class="footer-dot" style="background:var(--purple)"></div>
+          <div class="footer-dot" style="background:var(--red)"></div>
+        </div>
+        <div>ahead · artist solutions</div>
+      </footer>
+    </div>
+  </div>
+
+</div><!-- /main-wrap -->
+
+<div id="toast"></div>
+
+<script>
+// ── PAGE SWITCHING ──
+function switchPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  const btn  = document.querySelector(`.nav-btn[data-page="${id}"]`);
+  if (page) page.classList.add('active');
+  if (btn)  btn.classList.add('active');
+  history.replaceState(null, '', '#' + id);
+  recalc();
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchPage(btn.dataset.page));
+});
+
+// ── BADGE CYCLE ──
+const BADGE_CYCLE = { pending:'active', active:'settled', settled:'hold', hold:'pending' };
+const BADGE_LABEL = { pending:'Pending', active:'Active', settled:'Settled', hold:'Hold' };
+function cycleBadge(btn) {
+  const next = BADGE_CYCLE[btn.dataset.status] || 'pending';
+  btn.className = 'badge ' + next;
+  btn.dataset.status = next;
+  btn.textContent = BADGE_LABEL[next];
+  recalc();
+}
+
+// ── RECALC ──
+function parseMoney(v) { return parseFloat(String(v).replace(/[$,%\s]/g,'')) || 0; }
+
+function recalc() {
+  let owedIn = 0, iOwe = 0, settled = 0, open = 0, urgent = 0, active = 0, hold = 0, pending = 0;
+  document.querySelectorAll('#main-tbody tr.data-row').forEach(row => {
+    const amtInput = row.querySelector('td:nth-child(2) input');
+    const dirInput = row.querySelector('td:nth-child(3) input');
+    const badge    = row.querySelector('.badge');
+    const amt  = parseMoney(amtInput ? amtInput.value : 0);
+    const dir  = (dirInput ? dirInput.value : '').toLowerCase();
+    const stat = badge ? badge.dataset.status : 'pending';
+    if (dir.includes('in') || dir.includes('to me') || dir.includes('incoming')) owedIn += amt;
+    else if (dir.includes('out') || dir.includes('i owe') || dir.includes('owe')) iOwe += amt;
+    if (stat === 'settled') settled++;
+    else if (stat === 'active') { active++; open++; }
+    else if (stat === 'pending') { pending++; open++; }
+    else if (stat === 'hold') { hold++; urgent++; }
+  });
+  const net = owedIn - iOwe;
+  const fmt = n => '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('stat-owed-to-me').textContent = fmt(owedIn);
+  document.getElementById('stat-i-owe').textContent = fmt(iOwe);
+  const netEl = document.getElementById('stat-net');
+  netEl.textContent = (net < 0 ? '-' : '') + fmt(net);
+  netEl.className = 'stat-value ' + (net >= 0 ? 'green' : 'red');
+  document.getElementById('stat-settled').textContent = settled;
+  document.getElementById('stat-open').textContent = open;
+  document.getElementById('stat-urgent-count').textContent = urgent;
+  const s = n => (n || 0);
+  document.getElementById('bd-pending') && (document.getElementById('bd-pending').textContent = s(pending));
+  document.getElementById('bd-active')  && (document.getElementById('bd-active').textContent  = s(active));
+  document.getElementById('bd-settled') && (document.getElementById('bd-settled').textContent = s(settled));
+  document.getElementById('bd-hold')    && (document.getElementById('bd-hold').textContent    = s(hold));
+}
+document.querySelectorAll('.cell-edit').forEach(el => el.addEventListener('input', recalc));
+
+// ── ADD ROW ──
+let rowCount = 8;
+function addRow() {
+  const tbody = document.getElementById('main-tbody');
+  const idx = rowCount++;
+  const tr = document.createElement('tr');
+  tr.className = 'data-row';
+  tr.innerHTML = `
+    <td class="item-name" contenteditable="true">New Person</td>
+    <td class="num blue-val"><input class="cell-edit" placeholder="—" data-key="r${idx}-amount"></td>
+    <td class="num"><input class="cell-edit" placeholder="—" data-key="r${idx}-dir"></td>
+    <td class="num amber-val"><input class="cell-edit" placeholder="—" data-key="r${idx}-date"></td>
+    <td class="num purple-val"><input class="cell-edit" placeholder="—" data-key="r${idx}-cat"></td>
+    <td class="num"><input class="cell-edit" placeholder="—" data-key="r${idx}-notes"></td>
+    <td><button class="badge pending" data-status="pending" onclick="cycleBadge(this)">Pending</button></td>`;
+  tbody.insertBefore(tr, tbody.firstChild);
+  tr.querySelectorAll('.cell-edit').forEach(el => el.addEventListener('input', recalc));
+  tr.style.background = 'rgba(46,123,232,0.06)';
+  setTimeout(() => tr.style.background = '', 600);
+  const nameCell = tr.querySelector('.item-name');
+  const range = document.createRange();
+  range.selectNodeContents(nameCell);
+  window.getSelection().removeAllRanges();
+  window.getSelection().addRange(range);
+  nameCell.focus();
+  switchPage('list');
+  recalc();
+}
+
+// ── SORT ──
+let sortMode = null;
+function getRows() { return Array.from(document.querySelectorAll('#main-tbody tr.data-row')); }
+function getMoney(row) { const i = row.querySelector('td:nth-child(2) input'); return parseMoney(i ? i.value : 0); }
+function getName(row)  { const td = row.querySelector('.item-name'); return td ? td.textContent.trim().toLowerCase() : ''; }
+
+document.getElementById('sb-az').addEventListener('click', function() {
+  const rows = getRows();
+  const tbody = document.getElementById('main-tbody');
+  const asc = sortMode !== 'az';
+  rows.sort((a,b) => asc ? getMoney(b)-getMoney(a) : getMoney(a)-getMoney(b));
+  rows.forEach(r => { r.classList.remove('urgent-glow'); tbody.appendChild(r); });
+  document.getElementById('sb-za').classList.remove('active');
+  document.getElementById('sb-urgent').classList.remove('urgent-active');
+  this.classList.toggle('active', asc);
+  sortMode = asc ? 'az' : null;
+});
+
+document.getElementById('sb-za').addEventListener('click', function() {
+  const rows = getRows();
+  const tbody = document.getElementById('main-tbody');
+  const asc = sortMode !== 'za';
+  rows.sort((a,b) => asc ? getMoney(a)-getMoney(b) : getMoney(b)-getMoney(a));
+  rows.forEach(r => { r.classList.remove('urgent-glow'); tbody.appendChild(r); });
+  document.getElementById('sb-az').classList.remove('active');
+  document.getElementById('sb-urgent').classList.remove('urgent-active');
+  this.classList.toggle('active', asc);
+  sortMode = asc ? 'za' : null;
+});
+
+document.getElementById('sb-urgent').addEventListener('click', function() {
+  const rows = getRows();
+  const tbody = document.getElementById('main-tbody');
+  rows.forEach(r => r.classList.remove('urgent-glow'));
+  if (sortMode === 'urgent') {
+    this.classList.remove('urgent-active');
+    sortMode = null;
+    return;
+  }
+  rows.sort((a,b) => getMoney(b)-getMoney(a));
+  rows.forEach(r => tbody.appendChild(r));
+  rows.slice(0,5).forEach(r => r.classList.add('urgent-glow'));
+  document.getElementById('sb-az').classList.remove('active');
+  document.getElementById('sb-za').classList.remove('active');
+  this.classList.add('urgent-active');
+  sortMode = 'urgent';
+});
+
+// ── SAVE / LOAD ──
+function collectData() {
+  const data = { _version: 2, _exported: new Date().toISOString(), rows: [], notes: {}, fields: {} };
+  document.querySelectorAll('#main-tbody tr.data-row').forEach((row, i) => {
+    const name   = row.querySelector('.item-name') ? row.querySelector('.item-name').textContent.trim() : '';
+    const badge  = row.querySelector('.badge');
+    const inputs = row.querySelectorAll('.cell-edit');
+    data.rows.push({
+      name,
+      amount:    inputs[0] ? inputs[0].value : '',
+      direction: inputs[1] ? inputs[1].value : '',
+      date:      inputs[2] ? inputs[2].value : '',
+      category:  inputs[3] ? inputs[3].value : '',
+      notes:     inputs[4] ? inputs[4].value : '',
+      status:    badge ? badge.dataset.status : 'pending'
+    });
+  });
+  data.notes.notepad = document.getElementById('notepad-main') ? document.getElementById('notepad-main').value : '';
+  data.notes.session = document.getElementById('session-notes') ? document.getElementById('session-notes').value : '';
+  data.fields.updated = document.getElementById('f-updated') ? document.getElementById('f-updated').value : '';
+  data.fields.period  = document.getElementById('f-period')  ? document.getElementById('f-period').value  : '';
+  data.fields.goal    = document.getElementById('f-goal')    ? document.getElementById('f-goal').value    : '';
+  data.fields.priority= document.getElementById('f-priority')? document.getElementById('f-priority').value: '';
+  return data;
+}
+
+function saveData() {
+  const data = collectData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'payback-list-data.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Saved!', false);
+}
+
+document.getElementById('file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      applyData(data);
+      showToast('Data loaded!', false);
+    } catch { showToast('Invalid file', true); }
+  };
+  reader.readAsText(file);
+  this.value = '';
+});
+
+function applyData(data) {
+  if (!data.rows) return;
+  const tbody = document.getElementById('main-tbody');
+  tbody.innerHTML = '';
+  data.rows.forEach((row, i) => {
+    const stat = row.status || 'pending';
+    const tr = document.createElement('tr');
+    tr.className = 'data-row';
+    tr.innerHTML = `
+      <td class="item-name" contenteditable="true">${row.name || ''}</td>
+      <td class="num blue-val"><input class="cell-edit" value="${row.amount||''}" placeholder="—" data-key="r${i}-amount"></td>
+      <td class="num"><input class="cell-edit" value="${row.direction||''}" placeholder="—" data-key="r${i}-dir"></td>
+      <td class="num amber-val"><input class="cell-edit" value="${row.date||''}" placeholder="—" data-key="r${i}-date"></td>
+      <td class="num purple-val"><input class="cell-edit" value="${row.category||''}" placeholder="—" data-key="r${i}-cat"></td>
+      <td class="num"><input class="cell-edit" value="${row.notes||''}" placeholder="—" data-key="r${i}-notes"></td>
+      <td><button class="badge ${stat}" data-status="${stat}" onclick="cycleBadge(this)">${BADGE_LABEL[stat]||'Pending'}</button></td>`;
+    tbody.appendChild(tr);
+    tr.querySelectorAll('.cell-edit').forEach(el => el.addEventListener('input', recalc));
+  });
+  rowCount = data.rows.length;
+  if (data.notes) {
+    if (data.notes.notepad && document.getElementById('notepad-main')) document.getElementById('notepad-main').value = data.notes.notepad;
+    if (data.notes.session && document.getElementById('session-notes')) document.getElementById('session-notes').value = data.notes.session;
+  }
+  if (data.fields) {
+    if (document.getElementById('f-updated')) document.getElementById('f-updated').value = data.fields.updated || '';
+    if (document.getElementById('f-period'))  document.getElementById('f-period').value  = data.fields.period  || '';
+    if (document.getElementById('f-goal'))    document.getElementById('f-goal').value    = data.fields.goal    || '';
+    if (document.getElementById('f-priority'))document.getElementById('f-priority').value= data.fields.priority|| '';
+  }
+  recalc();
+}
+
+// ── NOTEPAD AUTO-GROW ──
+function autoGrow(el) { el.style.height = 'auto'; el.style.height = Math.max(180, el.scrollHeight) + 'px'; }
+document.getElementById('notepad-main').addEventListener('input', function(){ autoGrow(this); });
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 2400);
+}
+
+// ── LEAVE WARN ──
+window.addEventListener('beforeunload', e => {
+  e.preventDefault(); e.returnValue = '';
+});
+
+// ── INIT ──
+const initPage = (location.hash.replace('#','') || 'list');
+switchPage(['overview','list','notes'].includes(initPage) ? initPage : 'list');
+recalc();
+</script>
+</body>
+</html>

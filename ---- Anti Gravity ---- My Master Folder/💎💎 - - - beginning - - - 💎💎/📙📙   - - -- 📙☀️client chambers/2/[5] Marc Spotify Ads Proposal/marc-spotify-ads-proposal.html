@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Ad Placement — Marc Antonix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body {
+            background: #020617;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.06) 0%, transparent 40%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            font-family: 'Outfit', sans-serif;
+        }
+        .card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            border-radius: 32px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 600px;
+            height: fit-content;
+            backdrop-filter: blur(40px);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            color: white;
+            animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: visible;
+            margin-right: 165px; /* wing (150) + 15px buffer = true right end */
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 1.5rem;
+        }
+        .header img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 3px solid #1ed760;
+            box-shadow: 0 0 20px rgba(30,215,96,0.3);
+            object-fit: cover;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+        .header .badge {
+            color: #1ed760;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        /* Section labels */
+        .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 0.75rem;
+        }
+
+        /* Description */
+        .desc {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 2.5rem;
+        }
+
+        /* Line items */
+        .items { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2.5rem; }
+        .item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .item .name { font-weight: 600; }
+        .item .price {
+            color: #38bdf8;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .item.base-item {
+            border-color: rgba(56, 189, 248, 0.2);
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        /* Sliding scale */
+        .scale-section { margin-bottom: 2.5rem; }
+        .scale-header {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 1rem;
+        }
+        .scale-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 0.5rem;
+        }
+        .scale-tile {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 1rem 0.75rem;
+            text-align: center;
+        }
+        .scale-tile .budget {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 4px;
+        }
+        .scale-tile .fee {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #38bdf8;
+            font-size: 0.95rem;
+        }
+
+        /* Note */
+        .note {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(56, 189, 248, 0.15));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 14px;
+            padding: 1.1rem 1.5rem;
+            margin-bottom: 2.5rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.75);
+        }
+        .note strong { color: #a5b4fc; }
+
+        /* Total */
+        .total-row {
+            padding-top: 2rem;
+            border-top: 2px solid #38bdf8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .total-row .total-label {
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-size: 1rem;
+        }
+        .total-row .total-amount {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #38bdf8;
+            text-shadow: 0 0 20px rgba(56,189,248,0.3);
+        }
+
+        /* PayPal */
+        .paypal-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 2rem;
+            padding: 1.1rem 2rem;
+            background: rgba(0, 112, 186, 0.15);
+            border: 1.5px solid rgba(0, 112, 186, 0.5);
+            border-radius: 14px;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .paypal-btn:hover {
+            background: rgba(0, 112, 186, 0.3);
+            border-color: rgba(0, 112, 186, 0.8);
+            box-shadow: 0 0 25px rgba(0, 112, 186, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.15);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Receipt-style pricing */
+        .receipt {
+            margin-bottom: 2.5rem;
+            padding: 0 0.25rem;
+            position: relative;
+            overflow: visible;
+        }
+        .receipt-header {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 1.25rem;
+        }
+        .receipt-line {
+            display: flex;
+            align-items: baseline;
+            gap: 0;
+            padding: 0.6rem 0;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.65);
+        }
+        .receipt-line span:first-child {
+            white-space: nowrap;
+        }
+        .receipt-dots {
+            flex: 1;
+            border-bottom: 1px dotted rgba(255,255,255,0.1);
+            margin: 0 0.75rem;
+            position: relative;
+            top: -3px;
+        }
+        .receipt-amt {
+            font-family: 'JetBrains Mono', monospace;
+            color: #38bdf8;
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        .receipt-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(56,189,248,0.2);
+        }
+        /* Boost badge — hover reveal */
+        .boost-row {
+            position: relative;
+        }
+        .receipt-add {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(56, 189, 248, 0.25);
+            white-space: nowrap;
+            margin-right: 0.75rem;
+        }
+        .wing-badge {
+            position: absolute;
+            right: -150px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #1ed760;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            padding: 3px 0;
+            background: none;
+            border: none;
+            opacity: 0.5;
+            cursor: default;
+            transition: opacity 0.3s ease;
+            text-decoration: none;
+        }
+        .wing-badge:hover {
+            opacity: 1;
+            color: #1ed760;
+        }
+        .wing-info {
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            padding: 0;
+            background: rgba(8, 12, 24, 0.97);
+            border: 1px solid rgba(30, 215, 96, 0.12);
+            border-radius: 14px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            z-index: 9999;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            width: 220px;
+            overflow: hidden;
+        }
+        .wing-info.visible {
+            opacity: 1;
+        }
+        .wi-tool {
+            padding: 8px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .wi-tool:last-child {
+            border-bottom: none;
+        }
+        .wi-tool-head {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .wi-dot {
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .wi-tool-name {
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.5);
+        }
+        .wi-tool-price {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.5rem;
+            margin-left: auto;
+            color: rgba(255,255,255,0.25);
+        }
+        .wi-stat-row {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+            padding: 1px 0;
+        }
+        .wi-stat-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .wi-stat-lbl {
+            font-size: 0.48rem;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 0.2px;
+        }
+
+        .receipt-tier {
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(255,255,255,0.5);
+            font-weight: 600;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            margin-right: 1rem;
+        }
+        .receipt-subtotal {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0;
+            margin-top: 0.25rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.8);
+        }
+        .receipt-subtotal span:last-child {
+            font-family: 'JetBrains Mono', monospace;
+            color: #38bdf8;
+            font-weight: 800;
+        }
+        .receipt-divider {
+            border-top: 1px dashed rgba(255,255,255,0.08);
+            margin: 0.5rem 0;
+        }
+        .receipt-total span:first-child {
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .receipt-total-amt {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #38bdf8;
+            text-shadow: 0 0 20px rgba(56,189,248,0.3);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Mapper p-btn — exact replica from Critical Mapper */
+        .svc-btn {
+            --shimmer-speed: 4s;
+            --delay: 0s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 100px;
+            color: #0f172a;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1),
+                        border-color 0.4s cubic-bezier(0.4,0,0.2,1),
+                        background 0.4s cubic-bezier(0.4,0,0.2,1),
+                        box-shadow 0.4s cubic-bezier(0.4,0,0.2,1);
+            box-shadow:
+                0 4px 6px -1px rgba(0,0,0,0.05),
+                0 2px 4px -1px rgba(0,0,0,0.03),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+        .svc-btn:nth-child(2) { --delay: 0.5s; }
+        .svc-btn:nth-child(3) { --delay: 1s; }
+        .svc-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 300%; height: 100%;
+            background: linear-gradient(90deg,
+                rgba(14,165,233,0) 0%,
+                rgba(14,165,233,0.12) 10%,
+                rgba(99,102,241,0.15) 20%,
+                rgba(168,85,247,0.12) 30%,
+                rgba(244,63,94,0.1) 40%,
+                rgba(245,158,11,0.08) 50%,
+                rgba(244,63,94,0.1) 60%,
+                rgba(168,85,247,0.12) 70%,
+                rgba(99,102,241,0.15) 80%,
+                rgba(14,165,233,0.12) 90%,
+                rgba(14,165,233,0) 100%);
+            transform: translateX(-100%) translateZ(0);
+            animation: svcShimmer var(--shimmer-speed) ease-in-out infinite;
+            animation-delay: var(--delay);
+            pointer-events: none;
+            z-index: 2;
+        }
+        @keyframes svcShimmer {
+            0% { transform: translateX(-100%) translateZ(0); }
+            100% { transform: translateX(100%) translateZ(0); }
+        }
+        .svc-btn:hover {
+            transform: translateY(-4px) scale(1.01);
+            background: rgba(255,255,255,0.7);
+            border-color: rgba(255,255,255,1);
+            box-shadow:
+                0 20px 25px -5px rgba(0,0,0,0.08),
+                0 10px 10px -5px rgba(0,0,0,0.04),
+                0 0 20px rgba(14,165,233,0.1);
+        }
+        .svc-dot {
+            width: 4px; height: 4px; min-width: 4px;
+            border-radius: 50%;
+            position: relative;
+            z-index: 5;
+            animation: dotPulse 3s ease-in-out infinite;
+        }
+        @keyframes dotPulse {
+            0%, 100% { box-shadow: 0 0 8px var(--dot-color, #0ea5e9), 0 0 16px rgba(76,201,240,0.3); }
+            50% { box-shadow: 0 0 12px var(--dot-color, #0ea5e9), 0 0 24px rgba(76,201,240,0.5); }
+        }
+        .svc-btn:hover .svc-dot {
+            transform: scale(1.5);
+        }
+        .svc-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+            min-width: 0;
+            position: relative;
+            z-index: 5;
+        }
+        .svc-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .svc-url {
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(15,23,42,0.5);
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.4s, opacity 0.4s;
+        }
+        .svc-btn:hover .svc-url {
+            color: #0ea5e9;
+            opacity: 0.9;
+        }
+
+        /* Step blocks */
+        .step-block {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .step-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.25);
+            padding-left: 2px;
+        }
+        .step-source {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 4px;
+            margin-bottom: 0.5rem;
+        }
+        .source-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 100px;
+            padding: 3px 10px;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        }
+        .source-insight {
+            font-size: 0.6rem;
+            font-style: italic;
+            color: rgba(255,255,255,0.3);
+            line-height: 1.4;
+        }
+
+        @media (max-width: 850px) {
+            .wing-badge { right: -120px; font-size: 0.55rem; }
+            .card { margin-right: 135px; } /* 120 + 15 */
+        }
+        @media (max-width: 700px) {
+            .wing-badge { right: -95px; font-size: 0.5rem; }
+            .card { margin-right: 110px; } /* 95 + 15 */
+        }
+        @media (max-width: 550px) {
+            .wing-badge { right: -75px; font-size: 0.45rem; }
+            .card { margin-right: 90px; padding: 2rem 1.5rem; } /* 75 + 15 */
+            .header h1 { font-size: 1.4rem; }
+            .scale-grid { grid-template-columns: 1fr 1fr; }
+            .total-row .total-amount { font-size: 1.6rem; }
+        }
+        @media (max-width: 420px) {
+            .wing-badge { right: -60px; font-size: 0.4rem; }
+            .card { margin-right: 75px; } /* 60 + 15 */
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <div>
+                <h1>Marc Antonix</h1>
+                <div class="badge">SPOTIFY AD PLACEMENT</div>
+            </div>
+            <img src="https://i.scdn.co/image/ab6761610000e5ebc52f07dbae2484cb7ce7499e" alt="Marc Antonix" style="margin-left: auto;">
+        </div>
+
+        <div class="label">Song</div>
+        <div class="desc" style="margin-bottom: 1.5rem; font-weight: 600; font-size: 1.1rem;">Say I'm Yours</div>
+
+        <div class="label">Service Overview</div>
+        <div class="desc" style="margin-bottom: 2.5rem;">A 3-step plan utilizing new, now-available tools.</div>
+
+        <div class="receipt">
+            <div class="receipt-header">Investment</div>
+            <div class="receipt-line">
+                <span>Service Fee — Ad Placement</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-amt">$250</span>
+            </div>
+            <div class="receipt-line">
+                <span>Spotify Ad Budget (min)</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-amt">$100</span>
+            </div>
+            <div class="receipt-line" style="color: rgba(245, 189, 65, 0.55);">
+                <span>1-Time Set Up Fee</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-amt" style="color: rgba(245, 189, 65, 0.7);">$100</span>
+            </div>
+            <div class="receipt-subtotal">
+                <span>Subtotal</span>
+                <span>$450</span>
+            </div>
+            <div class="receipt-divider"></div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$200 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$100</span>
+                <span class="receipt-amt">$450</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+85% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">440%</span><span class="wi-stat-lbl">stream lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">58%</span><span class="wi-stat-lbl">overseas reach</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">10x</span><span class="wi-stat-lbl">vs social ads</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">24%</span><span class="wi-stat-lbl">save rate</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$300 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$90</span>
+                <span class="receipt-amt">$540</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+130% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">440%</span><span class="wi-stat-lbl">stream lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">3x</span><span class="wi-stat-lbl">audience multiplier</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">8x</span><span class="wi-stat-lbl">listener lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">25%</span><span class="wi-stat-lbl">lapsed reactivation</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#f59e0b;"></span><span class="wi-tool-name">Showcase</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">6x</span><span class="wi-stat-lbl">more streams</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$400 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$80</span>
+                <span class="receipt-amt">$620</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+185% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">385%</span><span class="wi-stat-lbl">pre-release lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">31%</span><span class="wi-stat-lbl">first-time listeners</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">10x</span><span class="wi-stat-lbl">vs social ads</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">30x</span><span class="wi-stat-lbl">streams after 30 days</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#f59e0b;"></span><span class="wi-tool-name">Showcase</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">6x</span><span class="wi-stat-lbl">more streams</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">50%</span><span class="wi-stat-lbl">new-to-artist</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$500 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$70</span>
+                <span class="receipt-amt">$690</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+250% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">440%</span><span class="wi-stat-lbl">stream lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">500K</span><span class="wi-stat-lbl">new listeners possible</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">38%</span><span class="wi-stat-lbl">save rate (3 singles)</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">13.5</span><span class="wi-stat-lbl">streams per listener</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#f59e0b;"></span><span class="wi-tool-name">Showcase</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">40x</span><span class="wi-stat-lbl">lift with Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">5x</span><span class="wi-stat-lbl">more than Marquee alone</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$600 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$60</span>
+                <span class="receipt-amt">$750</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+320% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">3x</span><span class="wi-stat-lbl">audience multiplier</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">58%</span><span class="wi-stat-lbl">overseas discovery</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">24-38%</span><span class="wi-stat-lbl">save / playlist rate</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">25%</span><span class="wi-stat-lbl">lapsed reactivation</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#f59e0b;"></span><span class="wi-tool-name">Showcase</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">6x</span><span class="wi-stat-lbl">streams vs non-reached</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">50%</span><span class="wi-stat-lbl">new-to-artist listeners</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$700 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$50</span>
+                <span class="receipt-amt">$800</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+385% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">440%</span><span class="wi-stat-lbl">stream lift</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">10x</span><span class="wi-stat-lbl">vs social ads</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">8x</span><span class="wi-stat-lbl">new active listeners</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#f59e0b;"></span><span class="wi-tool-name">Showcase</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">40x</span><span class="wi-stat-lbl">combined lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">1 in 4</span><span class="wi-stat-lbl">saved/playlisted</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$800 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$40</span>
+                <span class="receipt-amt">$840</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+440% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">440%</span><span class="wi-stat-lbl">stream lift (verified)</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">385%</span><span class="wi-stat-lbl">pre-release boost</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">30x</span><span class="wi-stat-lbl">streams after 30 days</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">13.5</span><span class="wi-stat-lbl">streams per listener</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#f59e0b;"></span><span class="wi-tool-name">Showcase</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">40x</span><span class="wi-stat-lbl">combined lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">6x</span><span class="wi-stat-lbl">more streams</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$900 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$30</span>
+                <span class="receipt-amt">$870</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+500% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">3x</span><span class="wi-stat-lbl">audience multiplier</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">500K</span><span class="wi-stat-lbl">new listeners (3 mo)</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">38%</span><span class="wi-stat-lbl">peak save rate</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">25%</span><span class="wi-stat-lbl">lapsed reactivation</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#f59e0b;"></span><span class="wi-tool-name">Showcase</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">5x</span><span class="wi-stat-lbl">more than Marquee alone</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">50%</span><span class="wi-stat-lbl">new-to-artist</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-line boost-row" style="color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+                <span>$1,000 ad spend</span>
+                <span class="receipt-dots"></span>
+                <span class="receipt-add">+$20</span>
+                <span class="receipt-amt">$890</span>
+                <a class="wing-badge" href="https://artists.spotify.com/en/campaign-kit" target="_blank">+550% reach
+                    <span class="wing-info">
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#1ed760;"></span><span class="wi-tool-name">Discovery Mode</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">440%</span><span class="wi-stat-lbl">stream lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#1ed760;">58%</span><span class="wi-stat-lbl">overseas reach</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#6366f1;"></span><span class="wi-tool-name">Marquee</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">10x</span><span class="wi-stat-lbl">vs $5K social ads</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#a78bfa;">40x</span><span class="wi-stat-lbl">with Showcase sequence</span></div>
+                        </div>
+                        <div class="wi-tool">
+                            <div class="wi-tool-head"><span class="wi-dot" style="background:#f59e0b;"></span><span class="wi-tool-name">Showcase</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">40x</span><span class="wi-stat-lbl">total combined lift</span></div>
+                            <div class="wi-stat-row"><span class="wi-stat-val" style="color:#f59e0b;">1 in 4</span><span class="wi-stat-lbl">saved/playlisted</span></div>
+                        </div>
+                    </span>
+                </a>
+            </div>
+            <div class="receipt-total">
+                <span>Starting At</span>
+                <span class="receipt-total-amt">$450.00</span>
+            </div>
+        </div>
+
+        <div class="note">
+            <strong>Premium Note:</strong> Standard rate is $150/song. The $100 increase reflects access to upgraded proprietary ad placement technology not available elsewhere.
+        </div>
+
+        <a href="" class="paypal-btn" target="_blank">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.773.773 0 0 1 .763-.658h6.567c2.18 0 3.727.587 4.598 1.744.408.543.667 1.134.77 1.757.109.654.054 1.432-.165 2.378l-.005.023v.006c-.566 2.878-2.344 4.342-5.294 4.342h-1.34a.773.773 0 0 0-.763.658l-.858 5.367z" fill="#009cde"/><path d="M18.429 7.613c-.028.181-.06.362-.1.55-.894 4.598-3.961 6.187-7.88 6.187h-1.993a.969.969 0 0 0-.957.82l-1.02 6.467-.29 1.833a.51.51 0 0 0 .504.59h3.543a.85.85 0 0 0 .84-.723l.035-.178.667-4.222.043-.233a.85.85 0 0 1 .84-.723h.529c3.422 0 6.103-1.39 6.886-5.412.327-1.68.158-3.084-.708-4.07a3.38 3.38 0 0 0-.94-.686z" fill="#012169"/></svg>
+            Pay with PayPal
+        </a>
+
+        <div class="footer">Ahead Artist Solutions &copy; 2026</div>
+    </div>
+    <script>
+        document.querySelectorAll('.wing-badge').forEach(badge => {
+            const info = badge.querySelector('.wing-info');
+            // Move info to body so it's not clipped by any parent
+            document.body.appendChild(info);
+
+            // Prevent left-click navigation — right-click "Open link" still works
+            badge.addEventListener('click', (e) => e.preventDefault());
+
+            badge.addEventListener('mouseenter', () => info.classList.add('visible'));
+            badge.addEventListener('mouseleave', () => info.classList.remove('visible'));
+            badge.addEventListener('mousemove', (e) => {
+                info.style.left = (e.clientX + 16) + 'px';
+                info.style.top = (e.clientY - info.offsetHeight - 12) + 'px';
+            });
+            badge.addEventListener('touchstart', (e) => {
+                document.querySelectorAll('.wing-info').forEach(i => i.classList.remove('visible'));
+                info.classList.add('visible');
+                const t = e.touches[0];
+                info.style.left = (t.clientX + 16) + 'px';
+                info.style.top = (t.clientY - info.offsetHeight - 40) + 'px';
+            });
+        });
+        document.addEventListener('touchstart', (e) => {
+            if (!e.target.closest('.wing-badge')) {
+                document.querySelectorAll('.wing-info').forEach(i => i.classList.remove('visible'));
+            }
+        });
+    </script>
+</body>
+</html>

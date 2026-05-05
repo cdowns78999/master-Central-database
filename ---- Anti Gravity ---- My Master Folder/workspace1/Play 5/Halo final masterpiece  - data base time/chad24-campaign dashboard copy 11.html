@@ -1,0 +1,3583 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #0a0a0a;
+            --border-primary: #333;
+            --border-secondary: #2a2a2a;
+            --text-primary: #fafafa;
+            --text-secondary: #a3a3a3;
+            --text-tertiary: #525252;
+            --particle-color: 200, 200, 220;
+        }
+
+        body.light-mode {
+            --bg-primary: #f8f9fc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f3f8;
+            --border-primary: #e2e4ec;
+            --border-secondary: #d0d3de;
+            --text-primary: #1a1d2b;
+            --text-secondary: #4a4f63;
+            --text-tertiary: #7c8197;
+            --particle-color: 100, 100, 120;
+        }
+
+        body {
+            background: var(--bg-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* Particle Background — hidden, replaced by gradient shimmer */
+        canvas#particles {
+            display: none;
+        }
+
+        /* Smooth Gradient Shimmer Background — deep blue/teal + purple-pink arc */
+        .gradient-shimmer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 90% at 35% 60%, rgba(20, 80, 160, 0.5) 0%, transparent 60%),
+                radial-gradient(ellipse 70% 80% at 70% 70%, rgba(140, 30, 180, 0.35) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 50% at 80% 85%, rgba(200, 30, 140, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse 90% 60% at 20% 40%, rgba(15, 60, 110, 0.6) 0%, transparent 60%),
+                linear-gradient(160deg, #0a0f1a 0%, #0d1525 30%, #101828 50%, #150d20 80%, #1a0a1e 100%);
+            background-size: 200% 200%, 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+            animation: shimmerGradient 20s ease-in-out infinite;
+        }
+
+        body.light-mode .gradient-shimmer {
+            background:
+                radial-gradient(ellipse 80% 90% at 35% 60%, rgba(100, 160, 230, 0.15) 0%, transparent 60%),
+                radial-gradient(ellipse 70% 80% at 70% 70%, rgba(180, 120, 220, 0.1) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 50% at 80% 85%, rgba(220, 130, 200, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 90% 60% at 20% 40%, rgba(100, 150, 210, 0.12) 0%, transparent 60%),
+                linear-gradient(160deg, #f0f2f8 0%, #eef0f7 30%, #f2f0f6 50%, #f5f0f5 80%, #f3f1f6 100%);
+            background-size: 200% 200%, 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+            animation: shimmerGradient 20s ease-in-out infinite;
+        }
+
+        @keyframes shimmerGradient {
+            0% { background-position: 0% 30%, 100% 70%, 80% 90%, 20% 40%, 0% 0%; }
+            33% { background-position: 40% 60%, 60% 40%, 50% 70%, 60% 30%, 0% 0%; }
+            66% { background-position: 80% 40%, 30% 80%, 30% 50%, 40% 60%, 0% 0%; }
+            100% { background-position: 0% 30%, 100% 70%, 80% 90%, 20% 40%, 0% 0%; }
+        }
+
+        /* Auto-Suggest Dropdown */
+        .suggest-results {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            z-index: 100;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s ease, border 0.3s ease;
+        }
+
+        .suggest-results.active {
+            display: block;
+        }
+
+        .suggest-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid #2a2a2a;
+            font-size: 14px;
+            color: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .suggest-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggest-item:hover {
+            background: #252525;
+        }
+
+        .suggest-item.add-custom {
+            color: #60a5fa;
+            font-weight: 600;
+            border-bottom: 1px solid #60a5fa;
+        }
+
+        .suggest-item .price-badge {
+            background: #fafafa;
+            color: #0a0a0a;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+
+        .suggest-item .service-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        /* Light-mode suggest dropdown overrides */
+        body.light-mode .suggest-item {
+            border-bottom-color: var(--border-primary);
+            color: var(--text-primary);
+        }
+
+        body.light-mode .suggest-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        body.light-mode .suggest-item.add-custom {
+            border-bottom-color: #3b82f6;
+        }
+
+        body.light-mode .suggest-item .price-badge {
+            background: var(--text-primary);
+            color: var(--bg-secondary);
+        }
+
+        /* Common Section Styles */
+        .dashboard-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-input {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .dashboard-input:focus {
+            outline: none;
+            border-color: #1DB954;
+        }
+
+        .dashboard-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        body.light-mode .stage-dot.inactive {
+            background: #ef4444;
+            border-color: #dc2626;
+        }
+
+        /* Collapsible Campaign Stages Toggle */
+        .stages-toggle-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+        }
+
+        .stages-toggle-btn .toggle-chevron {
+            transition: transform 0.3s ease;
+            color: var(--text-tertiary);
+            font-size: 0.7rem;
+        }
+
+        .stages-toggle-btn.expanded .toggle-chevron {
+            transform: rotate(180deg);
+        }
+
+        .stages-collapsible {
+            max-height: 800px;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        .stages-collapsible.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        /* Collapsed wrapper — the whole section becomes a shortcut pill */
+        #masterStageContainer.stages-collapsed {
+            padding: 0;
+            background: transparent;
+            border-color: transparent;
+            box-shadow: none;
+        }
+
+        #masterStageContainer.stages-collapsed .stages-toggle-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-secondary);
+            padding: 0.6rem 1.25rem;
+            border-radius: 999px;
+            max-width: 240px;
+            margin: 0 auto;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        #masterStageContainer.stages-collapsed .stages-toggle-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: #3b82f6;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+            color: var(--text-primary);
+        }
+
+        /* Master Stage Reference Dots */
+        .master-stage-item {
+            padding: 0.5rem 0.75rem;
+            border-radius: 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            min-width: 130px;
+            justify-content: center;
+        }
+
+        .master-stage-item:hover {
+            transform: translateY(-3px);
+            background: var(--bg-secondary);
+            border-color: #3b82f6;
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Accepted Branch Sub-Workflow */
+        .accepted-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            padding: 0 0 10px 0;
+        }
+
+        .branch-connector {
+            width: 2px;
+            height: 16px;
+            background: var(--text-tertiary);
+            border-radius: 1px;
+            opacity: 0.5;
+        }
+
+        .branch-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            box-shadow: 0 0 6px rgba(100, 100, 100, 0.3);
+            flex-shrink: 0;
+        }
+
+        .branch-sub-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            margin-top: 2px;
+        }
+
+        .branch-dash {
+            width: 18px;
+            height: 2px;
+            background: var(--border-secondary);
+            border-radius: 1px;
+        }
+
+        .branch-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .branch-status {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .branch-countdown {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            margin-top: 2px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #22c55e;
+            letter-spacing: 0.04em;
+            text-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .master-stage-item.selected-path {
+            background: rgba(59, 130, 246, 0.05);
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+        }
+
+        #masterStageContainer.selection-active {
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.05);
+        }
+
+        .master-stage-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2.5px solid;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .master-stage-inactive {
+            background: linear-gradient(145deg, #ef4444 0%, #dc2626 100%);
+            border-color: #b91c1c;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.6),
+                0 0 24px rgba(239, 68, 68, 0.3),
+                0 2px 4px rgba(0, 0, 0, 0.2),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+        }
+
+        .master-stage-active {
+            background: linear-gradient(145deg, #60a5fa 0%, #3b82f6 100%);
+            border-color: #2563eb;
+            box-shadow: 0 0 12px rgba(96, 165, 250, 0.7),
+                0 0 24px rgba(96, 165, 250, 0.4),
+                0 2px 4px rgba(0, 0, 0, 0.15),
+                inset 0 1px 1px rgba(255, 255, 255, 0.4),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Platform Stage Dots - Sharp Dimensional Look */
+        .platform-stage-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-secondary);
+            border: 2px solid var(--border-primary);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15),
+                0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .platform-stage-dot:hover {
+            transform: scale(1.5) translateY(-2px);
+            filter: brightness(1.3) contrast(1.1);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25),
+                0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .platform-stage-dot.inactive {
+            background: linear-gradient(145deg, #ef4444 0%, #dc2626 100%);
+            border-color: #b91c1c;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.85),
+                0 0 40px rgba(239, 68, 68, 0.45),
+                0 5px 10px rgba(220, 38, 38, 0.35),
+                0 2px 5px rgba(0, 0, 0, 0.25),
+                inset 0 2px 3px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .platform-stage-dot.active {
+            background: linear-gradient(145deg, #60a5fa 0%, #3b82f6 100%);
+            border-color: #2563eb;
+            box-shadow: 0 0 22px rgba(96, 165, 250, 0.95),
+                0 0 44px rgba(96, 165, 250, 0.55),
+                0 5px 10px rgba(59, 130, 246, 0.35),
+                0 2px 5px rgba(0, 0, 0, 0.2),
+                inset 0 2px 3px rgba(255, 255, 255, 0.5),
+                inset 0 -2px 3px rgba(0, 0, 0, 0.25);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .stage-connector-line {
+            flex: 1;
+            height: 3px;
+            background: linear-gradient(90deg,
+                    var(--border-primary) 0%,
+                    var(--border-secondary) 50%,
+                    var(--border-primary) 100%);
+            min-width: 20px;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 22px rgba(96, 165, 250, 0.95),
+                    0 0 44px rgba(96, 165, 250, 0.55),
+                    0 5px 10px rgba(59, 130, 246, 0.35),
+                    0 2px 5px rgba(0, 0, 0, 0.2),
+                    inset 0 2px 3px rgba(255, 255, 255, 0.5),
+                    inset 0 -2px 3px rgba(0, 0, 0, 0.25);
+            }
+
+            50% {
+                opacity: 0.85;
+                box-shadow: 0 0 30px rgba(96, 165, 250, 1),
+                    0 0 60px rgba(96, 165, 250, 0.65),
+                    0 6px 12px rgba(59, 130, 246, 0.4),
+                    0 3px 6px rgba(0, 0, 0, 0.25),
+                    inset 0 2px 4px rgba(255, 255, 255, 0.6),
+                    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-3px);
+            }
+        }
+
+        .platform-stage-dot {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .platform-stage-dot.active {
+            animation: float 4s ease-in-out infinite, pulse 3s ease-in-out infinite;
+        }
+
+        /* Campaign Row */
+        .campaign-row {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            animation: rowIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            overflow: visible;
+        }
+
+        @keyframes rowIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .campaign-row:hover {
+            border-color: var(--border-secondary);
+            background: rgba(255, 255, 255, 0.02);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            transform: translateX(4px);
+        }
+
+        .campaign-row:active {
+            transform: translateX(2px) scale(0.995);
+        }
+
+        .campaign-row.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+            box-shadow: 0 0 0 1px #3b82f6, 0 8px 24px rgba(59, 130, 246, 0.15);
+        }
+
+        .campaign-row.row-safe {
+            background: rgba(34, 197, 94, 0.03);
+            border-color: rgba(34, 197, 94, 0.1);
+        }
+
+        .campaign-row.row-tagged {
+            background: rgba(239, 68, 68, 0.03);
+            border-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .campaign-row.selected::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #3b82f6;
+            box-shadow: 0 0 10px #3b82f6;
+        }
+
+        .campaign-stage-indicator {
+            display: flex;
+            gap: 0.35rem;
+            align-items: center;
+            padding: 0 0.5rem;
+            border-left: 1px solid var(--border-primary);
+        }
+
+        .campaign-stage-indicator .mini-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--border-secondary);
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2);
+        }
+
+        .campaign-stage-indicator .mini-dot.active {
+            background: #60a5fa;
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.6),
+                0 0 20px rgba(96, 165, 250, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.4);
+        }
+
+        .campaign-stage-indicator .mini-dot.inactive {
+            background: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.6),
+                0 0 20px rgba(239, 68, 68, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.4);
+        }
+
+        .campaign-stage-indicator .mini-dot.current {
+            animation: dotStepGlow 2s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        .campaign-stage-indicator .mini-dot.current.active {
+            box-shadow: 0 0 15px #60a5fa, 0 0 30px rgba(96, 165, 250, 0.5);
+        }
+
+        .campaign-stage-indicator .mini-dot.current.inactive {
+            box-shadow: 0 0 15px #ef4444, 0 0 30px rgba(239, 68, 68, 0.5);
+        }
+
+        @keyframes dotStepGlow {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            50% {
+                transform: scale(1.4);
+                filter: brightness(1.3);
+            }
+        }
+
+        /* Stage Change Glow Flash */
+        @keyframes stageGlowFlash {
+            0% {
+                filter: brightness(1);
+                box-shadow: 0 0 0px rgba(96, 165, 250, 0);
+            }
+
+            25% {
+                filter: brightness(2.2);
+                box-shadow: 0 0 25px rgba(96, 165, 250, 0.9), 0 0 50px rgba(96, 165, 250, 0.5), 0 0 80px rgba(96, 165, 250, 0.25);
+            }
+
+            50% {
+                filter: brightness(1.8);
+                box-shadow: 0 0 18px rgba(96, 165, 250, 0.7), 0 0 40px rgba(96, 165, 250, 0.35);
+            }
+
+            100% {
+                filter: brightness(1);
+                box-shadow: none;
+            }
+        }
+
+        @keyframes stageGlowFlashRed {
+            0% {
+                filter: brightness(1);
+                box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+            }
+
+            25% {
+                filter: brightness(2.2);
+                box-shadow: 0 0 25px rgba(239, 68, 68, 0.9), 0 0 50px rgba(239, 68, 68, 0.5), 0 0 80px rgba(239, 68, 68, 0.25);
+            }
+
+            50% {
+                filter: brightness(1.8);
+                box-shadow: 0 0 18px rgba(239, 68, 68, 0.7), 0 0 40px rgba(239, 68, 68, 0.35);
+            }
+
+            100% {
+                filter: brightness(1);
+                box-shadow: none;
+            }
+        }
+
+        .stage-glow-flash {
+            animation: stageGlowFlash 0.7s ease-out forwards !important;
+        }
+
+        .stage-glow-flash-red {
+            animation: stageGlowFlashRed 0.7s ease-out forwards !important;
+        }
+
+        .master-stage-glow {
+            animation: stageGlowFlash 0.7s ease-out forwards;
+            transform: translateY(-3px) scale(1.05);
+            transition: transform 0.3s ease;
+        }
+
+        .master-stage-glow-red {
+            animation: stageGlowFlashRed 0.7s ease-out forwards;
+            transform: translateY(-3px) scale(1.05);
+            transition: transform 0.3s ease;
+        }
+
+        .campaign-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .campaign-song-name {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: -0.01em;
+        }
+
+        .campaign-type {
+            font-size: 0.625rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .campaign-delete {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .campaign-delete:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Progress Dots */
+        .stage-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-secondary);
+            border: 2px solid var(--border-primary);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .stage-dot.inactive {
+            background: #ef4444;
+            border-color: #dc2626;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.5),
+                0 0 24px rgba(239, 68, 68, 0.3);
+        }
+
+        .stage-dot.active.spotify {
+            background: #1DB954;
+            border-color: #1ed760;
+            box-shadow: 0 0 12px rgba(29, 185, 84, 0.6),
+                0 0 24px rgba(29, 185, 84, 0.4);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .stage-dot.active.soundcloud {
+            background: #FF5500;
+            border-color: #ff6a1f;
+            box-shadow: 0 0 12px rgba(255, 85, 0, 0.6),
+                0 0 24px rgba(255, 85, 0, 0.4);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .stage-dot.active.press {
+            background: #fafafa;
+            border-color: #e5e5e5;
+            box-shadow: 0 0 12px rgba(250, 250, 250, 0.6),
+                0 0 24px rgba(250, 250, 250, 0.4);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .stage-dot.active.global {
+            background: #60a5fa;
+            border-color: #93c5fd;
+            box-shadow: 0 0 12px rgba(96, 165, 250, 0.6),
+                0 0 24px rgba(96, 165, 250, 0.4);
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .stage-connector {
+            flex: 1;
+            height: 2px;
+            background: var(--border-secondary);
+            margin: 0 4px;
+            align-self: center;
+            margin-bottom: 32px;
+            transition: background 0.3s ease;
+        }
+
+        /* Quick Glance — Registry Tile */
+        .quick-glance-tile {
+            margin-top: 1rem;
+            padding: 0.5rem 0.6rem;
+            background: rgba(74, 222, 128, 0.02);
+            border: 1px solid rgba(74, 222, 128, 0.06);
+            border-radius: 0.5rem;
+            box-shadow: inset 0 0 12px rgba(74, 222, 128, 0.02);
+        }
+
+        .quick-glance-tile:empty {
+            display: none;
+        }
+
+        body.light-mode .quick-glance-tile {
+            background: rgba(22, 163, 74, 0.03);
+            border-color: rgba(22, 163, 74, 0.08);
+            box-shadow: none;
+        }
+
+        .quick-campaign-row {
+            padding: 0.15rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Menlo', 'Monaco', monospace;
+        }
+
+        .quick-campaign-row:last-child {
+            border-bottom: none;
+        }
+
+        .quick-campaign-row:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        body.light-mode .quick-campaign-row {
+            border-bottom-color: rgba(0, 0, 0, 0.03);
+        }
+
+        body.light-mode .quick-campaign-row:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .quick-campaign-name {
+            font-size: 0.5rem;
+            font-weight: 500;
+            color: #4ade80;
+            text-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.04em;
+            text-transform: lowercase;
+            animation: registryGlow 3s ease-in-out infinite alternate;
+        }
+
+        .quick-campaign-type {
+            font-size: 0.45rem;
+            color: #86efac;
+            opacity: 0.5;
+            text-shadow: 0 0 4px rgba(134, 239, 172, 0.15);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.02em;
+            text-transform: lowercase;
+        }
+
+        .quick-campaign-date {
+            font-size: 0.4rem;
+            color: #4ade80;
+            opacity: 0.25;
+            text-shadow: 0 0 3px rgba(74, 222, 128, 0.1);
+            white-space: nowrap;
+            margin-left: auto;
+            flex-shrink: 0;
+            letter-spacing: 0.02em;
+        }
+
+        body.light-mode .quick-campaign-name {
+            color: #16a34a;
+            text-shadow: none;
+        }
+
+        body.light-mode .quick-campaign-type {
+            color: #22c55e;
+            text-shadow: none;
+        }
+
+        body.light-mode .quick-campaign-date {
+            color: #16a34a;
+            text-shadow: none;
+        }
+
+        .quick-stage-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-secondary);
+            border: 2px solid var(--border-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .quick-stage-dot.inactive {
+            background: linear-gradient(145deg, #ef4444 0%, #dc2626 100%);
+            border-color: #b91c1c;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5),
+                0 0 16px rgba(239, 68, 68, 0.3);
+        }
+
+        .quick-stage-dot.active {
+            background: linear-gradient(145deg, #60a5fa 0%, #3b82f6 100%);
+            border-color: #2563eb;
+            box-shadow: 0 0 8px rgba(96, 165, 250, 0.6),
+                0 0 16px rgba(96, 165, 250, 0.4);
+        }
+
+        .quick-stage-dot:hover {
+            transform: scale(1.3);
+            filter: brightness(1.2);
+        }
+
+        .quick-stage-connector {
+            flex: 1;
+            height: 1.5px;
+            background: var(--border-secondary);
+            min-width: 12px;
+            border-radius: 1px;
+        }
+
+        /* Campaign Row Tags */
+        .campaign-tags {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            flex-shrink: 0;
+            position: relative;
+            flex-wrap: wrap;
+            max-width: 220px;
+        }
+
+        .campaign-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            font-size: 0.65rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: default;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            letter-spacing: 0.02em;
+            animation: tagPillIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .campaign-tag.tag-removing {
+            animation: tagPillOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+            pointer-events: none;
+        }
+
+        .campaign-tags.tags-editing .campaign-tag {
+            transform: translateX(-6px);
+            opacity: 0.7;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .campaign-tag:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .campaign-tag .tag-x {
+            cursor: pointer;
+            font-size: 10px;
+            line-height: 1;
+            opacity: 0.5;
+            transition: opacity 0.15s ease;
+            margin-left: 2px;
+        }
+
+        .campaign-tag .tag-x:hover {
+            opacity: 1;
+        }
+
+        .tag-add-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1px dashed rgba(239, 68, 68, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: rgba(239, 68, 68, 0.4);
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0;
+        }
+
+        .tag-add-btn:hover {
+            border-color: #f87171;
+            color: #f87171;
+            background: rgba(239, 68, 68, 0.12);
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(248, 113, 113, 0.25);
+            border-style: solid;
+        }
+
+        .tag-add-btn:active {
+            transform: scale(0.9);
+            box-shadow: 0 0 6px rgba(248, 113, 113, 0.4);
+        }
+
+        .tag-input-wrapper {
+            position: relative;
+            display: inline-flex;
+            animation: tagPillIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .tag-input {
+            width: 120px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.06);
+            color: #f87171;
+            font-size: 0.65rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tag-input:focus {
+            border-color: #f87171;
+            background: rgba(248, 113, 113, 0.15);
+            box-shadow: 0 0 12px rgba(248, 113, 113, 0.35), 0 0 4px rgba(248, 113, 113, 0.2);
+        }
+
+        .tag-suggest-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 160px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: 8px;
+            z-index: 200;
+            max-height: 180px;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            animation: tagDropIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+            transform-origin: top left;
+        }
+
+        .tag-suggest-item {
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #f87171;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.08);
+            background: transparent;
+        }
+
+        .tag-suggest-item:last-child {
+            border-bottom: none;
+        }
+
+        .tag-suggest-item:hover {
+            background: rgba(239, 68, 68, 0.1);
+            padding-left: 14px;
+            color: #fca5a5;
+        }
+
+        .tag-suggest-item.add-custom-tag {
+            color: #fb923c;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .stage-connector {
+                margin-bottom: 28px;
+            }
+
+            .stage-dot {
+                width: 10px;
+                height: 10px;
+            }
+
+            /* Make campaign grid more mobile-friendly */
+            #campaignsGrid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.5rem;
+            }
+
+            /* Stack artist display on mobile */
+            #artistDisplay {
+                display: flex !important;
+                margin-top: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #campaignsGrid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        /* === Tag Flutter Animations (POS-Inspired) === */
+        @keyframes tagPillIn {
+            0% {
+                opacity: 0;
+                transform: translateX(20px) scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes tagPillOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(0.4);
+                max-width: 0;
+                padding: 0;
+                margin: 0;
+                border-width: 0;
+            }
+        }
+
+        @keyframes tagDropIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-8px) scale(0.95);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes tagAddPulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.15);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes registryGlow {
+            0% {
+                text-shadow: 0 0 6px rgba(74, 222, 128, 0.3);
+                opacity: 0.85;
+            }
+
+            100% {
+                text-shadow: 0 0 10px rgba(74, 222, 128, 0.5), 0 0 2px rgba(74, 222, 128, 0.2);
+                opacity: 1;
+            }
+        }
+
+        /* === Featured Dock === */
+        .featured-dock {
+            margin: 1rem 0 0.5rem 0;
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dock-empty {
+            border: 2px dashed var(--border-secondary);
+            background: transparent;
+        }
+
+        .dock-empty .dock-placeholder {
+            color: var(--text-tertiary);
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .dock-filled {
+            border: 1px solid var(--border-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .dock-filled .dock-placeholder {
+            display: none;
+        }
+
+        .dock-drop-hover {
+            border-color: #3b82f6 !important;
+            border-style: solid !important;
+            background: rgba(59, 130, 246, 0.05) !important;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), inset 0 0 20px rgba(59, 130, 246, 0.05);
+            animation: dockPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes dockPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+            50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.25), inset 0 0 20px rgba(59, 130, 246, 0.08); }
+        }
+
+        .dock-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            animation: dockFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes dockFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .dock-platform-bar {
+            width: 4px;
+            height: 40px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .dock-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dock-song {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dock-meta {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dock-tags {
+            display: flex;
+            gap: 0.35rem;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .dock-stage-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: rgba(96, 165, 250, 0.1);
+            color: #60a5fa;
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            white-space: nowrap;
+        }
+
+        .dock-close {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .dock-close:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        #masterStageContainer.stages-collapsed .featured-dock.dock-empty {
+            display: none;
+        }
+
+        /* === Drag States === */
+        .campaign-row.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .campaign-row[draggable="true"] {
+            cursor: grab;
+        }
+
+        .campaign-row[draggable="true"]:active {
+            cursor: grabbing;
+        }
+
+        /* === Blue Tag System === */
+        .campaign-tags-blue {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .campaign-tag-blue {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            font-size: 0.65rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: default;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            letter-spacing: 0.02em;
+            animation: tagPillIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .campaign-tag-blue.tag-removing {
+            animation: tagPillOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+            pointer-events: none;
+        }
+
+        .campaign-tag-blue:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .campaign-tag-blue .tag-x {
+            cursor: pointer;
+            font-size: 10px;
+            line-height: 1;
+            opacity: 0.5;
+            transition: opacity 0.15s ease;
+            margin-left: 2px;
+        }
+
+        .campaign-tag-blue .tag-x:hover {
+            opacity: 1;
+        }
+
+        .tag-add-btn-blue {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1px dashed rgba(59, 130, 246, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0;
+        }
+
+        .tag-add-btn-blue:hover {
+            border-color: #60a5fa;
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.12);
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.25);
+            border-style: solid;
+        }
+
+        .tag-add-btn-blue:active {
+            transform: scale(0.9);
+        }
+
+        .tag-input-blue {
+            width: 120px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: rgba(59, 130, 246, 0.06);
+            color: #60a5fa;
+            font-size: 0.65rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tag-input-blue:focus {
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, 0.15);
+            box-shadow: 0 0 12px rgba(96, 165, 250, 0.35);
+        }
+
+        .tag-suggest-dropdown-blue {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            width: 160px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 8px;
+            z-index: 200;
+            max-height: 180px;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            animation: tagDropIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+            transform-origin: top left;
+        }
+
+        .tag-suggest-item-blue {
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #60a5fa;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.08);
+            background: transparent;
+        }
+
+        .tag-suggest-item-blue:last-child {
+            border-bottom: none;
+        }
+
+        .tag-suggest-item-blue:hover {
+            background: rgba(59, 130, 246, 0.1);
+            padding-left: 14px;
+            color: #93c5fd;
+        }
+
+        .tag-suggest-item-blue.add-custom-tag {
+            color: #818cf8;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        /* === Branch Sub-Dots (Accepted Sub-Workflow) === */
+        .branch-sub-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-secondary);
+            border: 2px solid var(--border-primary);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .branch-sub-dot.active {
+            background: var(--text-tertiary);
+            border-color: var(--text-tertiary);
+            box-shadow: 0 0 6px rgba(100, 100, 100, 0.4);
+        }
+
+        .branch-sub-clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .branch-sub-clickable:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-secondary);
+        }
+
+        .branch-date-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .branch-date-badge:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .branch-date-input {
+            width: 130px;
+            height: 24px;
+            padding: 0 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border-primary);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 0.7rem;
+            outline: none;
+        }
+
+        .branch-date-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .countdown-zero {
+            color: #f59e0b !important;
+            text-shadow: 0 0 12px rgba(245, 158, 11, 0.4) !important;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particles"></canvas>
+    <div class="gradient-shimmer"></div>
+
+    <div class="relative z-10 max-w-[1400px] mx-auto px-6 py-10">
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-semibold" style="color: var(--text-primary);">Campaign Dashboard</h1>
+                <p class="text-sm" style="color: var(--text-secondary);">Manage campaigns with global progress tracking
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="clearCard()"
+                    class="h-9 px-3 rounded-lg border transition-all text-xs font-medium flex items-center gap-2"
+                    style="background: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-secondary);"
+                    title="Clear All Data">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"/>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                    </svg>
+                    <span class="hidden sm:inline">Clear</span>
+                </button>
+                <button onclick="downloadJSON()"
+                    class="h-9 px-3 rounded-lg border transition-all text-xs font-medium flex items-center gap-2"
+                    style="background: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-secondary);"
+                    title="Download Data">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <span class="hidden sm:inline">Export</span>
+                </button>
+                <button onclick="document.getElementById('jsonUpload').click()"
+                    class="h-9 px-3 rounded-lg border transition-all text-xs font-medium flex items-center gap-2"
+                    style="background: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-secondary);"
+                    title="Upload Data">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span class="hidden sm:inline">Import</span>
+                </button>
+                <input type="file" id="jsonUpload" accept=".json" style="display: none;" onchange="uploadJSON(event)">
+                <div class="h-6 w-px" style="background: var(--border-primary);"></div>
+                <button onclick="toggleTheme()"
+                    class="h-9 w-9 rounded-lg border transition-all flex items-center justify-center"
+                    style="background: var(--bg-secondary); border-color: var(--border-primary); color: var(--text-secondary);"
+                    title="Toggle Theme">
+                    <svg id="themeIconDark" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                    <svg id="themeIconLight" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" style="display: none;">
+                        <circle cx="12" cy="12" r="5" />
+                        <line x1="12" y1="1" x2="12" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="23" />
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                        <line x1="1" y1="12" x2="3" y2="12" />
+                        <line x1="21" y1="12" x2="23" y2="12" />
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Artist Identity Section -->
+        <div class="dashboard-section mb-8">
+            <div class="grid md:grid-cols-[1fr_auto_auto] gap-6 items-center">
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider mb-2 block"
+                        style="color: var(--text-secondary);">Spotify URL</label>
+                    <input type="text" id="spotifyUrl" placeholder="Paste Spotify artist/track/album URL..."
+                        class="dashboard-input w-full h-12 rounded-xl px-4 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wider mb-2 block"
+                        style="color: var(--text-secondary);">&nbsp;</label>
+                    <button onclick="openCustomArtist()"
+                        class="h-12 px-5 rounded-xl border transition-all text-xs font-semibold flex items-center gap-2 whitespace-nowrap"
+                        style="background: var(--bg-tertiary); border-color: var(--border-primary); color: var(--text-secondary);"
+                        title="Add custom artist name & Dropbox image">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="8.5" cy="7" r="4"/>
+                            <line x1="20" y1="8" x2="20" y2="14"/>
+                            <line x1="23" y1="11" x2="17" y2="11"/>
+                        </svg>
+                        Custom
+                    </button>
+                </div>
+                <div id="artistDisplay" class="hidden md:flex items-center gap-4 dashboard-input rounded-2xl p-4">
+                    <img id="artistImage" src="" alt=""
+                        class="w-16 h-16 rounded-full border-2 border-[#1DB954] shadow-lg" style="display: none;">
+                    <div>
+                        <div class="text-xs uppercase tracking-wider mb-1" style="color: var(--text-tertiary);">Artist
+                        </div>
+                        <div id="artistName" class="text-base font-semibold" style="color: var(--text-primary);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Master Progress Reference & Campaign Grid -->
+        <div class="dashboard-section p-8 mb-8 stages-collapsed" id="masterStageContainer">
+            <!-- Toggle Button — default collapsed -->
+            <div class="stages-toggle-btn" id="stagesToggleBtn" onclick="toggleCampaignStages()">
+                <span class="text-xs font-bold uppercase tracking-widest"
+                    style="color: var(--text-secondary); letter-spacing: 0.15em;">Campaign Stages</span>
+                <span class="toggle-chevron">&#9662;</span>
+            </div>
+
+            <!-- Featured Dock -->
+            <div id="featuredDock" class="featured-dock dock-empty"
+                ondragover="handleDockDragOver(event)"
+                ondragleave="handleDockDragLeave(event)"
+                ondrop="handleDockDrop(event)">
+                <div class="dock-placeholder">Drag a campaign here</div>
+                <div class="dock-content" id="dockContent" style="display: none;">
+                    <div class="dock-platform-bar" id="dockPlatformBar"></div>
+                    <div class="dock-info">
+                        <div class="dock-song" id="dockSong"></div>
+                        <div class="dock-meta" id="dockMeta"></div>
+                    </div>
+                    <div class="dock-tags" id="dockTags"></div>
+                    <div class="dock-stage-label" id="dockStageLabel">Not Activated</div>
+                    <div class="dock-close" onclick="undockCampaign()" title="Remove from dock">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collapsible Content — default collapsed -->
+            <div class="stages-collapsible collapsed" id="stagesCollapsible">
+                <div class="flex items-center justify-center gap-4 flex-wrap mb-8 mt-6" style="padding: 15px 0; margin-left: -15px;">
+                    <div class="flex items-center gap-3 master-stage-item" onclick="updateStageFromMaster(0)">
+                        <div class="master-stage-dot master-stage-inactive"></div>
+                        <div class="text-xs font-semibold" style="color: var(--text-primary); letter-spacing: 0.02em;">Not
+                            Activated</div>
+                    </div>
+                    <div class="text-sm font-bold" style="color: var(--text-tertiary);">→</div>
+                    <div class="flex items-center gap-3 master-stage-item" onclick="updateStageFromMaster(1)">
+                        <div class="master-stage-dot master-stage-active"></div>
+                        <div class="text-xs font-semibold" style="color: var(--text-primary); letter-spacing: 0.02em;">
+                            Pitched</div>
+                    </div>
+                    <div class="text-sm font-bold" style="color: var(--text-tertiary);">→</div>
+                    <div class="flex items-center gap-3 master-stage-item" onclick="updateStageFromMaster(2)">
+                        <div class="master-stage-dot master-stage-active"></div>
+                        <div class="text-xs font-semibold" style="color: var(--text-primary); letter-spacing: 0.02em;">
+                            Accepted</div>
+                    </div>
+                    <div class="text-sm font-bold" style="color: var(--text-tertiary);">→</div>
+                    <div class="flex items-center gap-3 master-stage-item" onclick="updateStageFromMaster(3)">
+                        <div class="master-stage-dot master-stage-active"></div>
+                        <div class="text-xs font-semibold" style="color: var(--text-primary); letter-spacing: 0.02em;">
+                            Placed</div>
+                    </div>
+                    <div class="text-sm font-bold" style="color: var(--text-tertiary);">→</div>
+                    <div class="flex items-center gap-3 master-stage-item" onclick="updateStageFromMaster(4)">
+                        <div class="master-stage-dot master-stage-active"></div>
+                        <div class="text-xs font-semibold" style="color: var(--text-primary); letter-spacing: 0.02em;">
+                            Complete</div>
+                    </div>
+                </div>
+
+                <!-- Accepted Branch — Release Day Sub-Workflow (Dynamic) -->
+                <div class="accepted-branch" id="acceptedBranch" style="display: none;">
+                    <div class="branch-dot"></div>
+                    <div class="branch-connector"></div>
+                    <!-- Sub-stage: Waiting -->
+                    <div class="branch-sub-row branch-sub-clickable" id="branchWaiting" onclick="setAcceptedSubStage(0)">
+                        <div class="branch-sub-dot active" id="waitingDot"></div>
+                        <span class="branch-label">Waiting...</span>
+                    </div>
+                    <div class="branch-connector" style="height: 10px;"></div>
+                    <!-- Sub-stage: Release Day -->
+                    <div class="branch-sub-row branch-sub-clickable" id="branchReleaseDay" onclick="setAcceptedSubStage(1)">
+                        <div class="branch-sub-dot" id="releaseDayDot"></div>
+                        <span class="branch-label">Release Day</span>
+                        <span class="branch-date-badge" id="releaseDateBadge" style="display: none;" onclick="event.stopPropagation(); editReleaseDate()"></span>
+                        <input type="date" class="branch-date-input" id="releaseDateInput" style="display: none;" onchange="applyReleaseDate(this.value)">
+                    </div>
+                    <div class="branch-connector" style="height: 10px;"></div>
+                    <!-- Countdown -->
+                    <div class="branch-countdown" id="branchCountdown" style="display: none;">
+                        <span id="countdownTicker">7d 0h 0m</span>
+                    </div>
+                </div>
+
+                <!-- Master Campaign Grid -->
+                <div class="border-t pt-6" style="border-color: var(--border-primary);">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider" style="color: var(--text-primary);">All
+                            Campaigns</h3>
+                        <div class="text-xs font-semibold px-3 py-1 rounded-lg"
+                            style="background: var(--bg-tertiary); color: var(--text-secondary);" id="masterCampaignCount">0
+                            campaigns</div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2" id="masterCampaignsGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Input Sections -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Spotify -->
+            <div class="relative">
+                <!-- Platform Section -->
+                <div class="dashboard-section">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-8 h-8 bg-[#1DB954] rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="white" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold" style="color: var(--text-primary);">Spotify</div>
+                    </div>
+                    <div class="space-y-3 mb-3">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm"
+                            id="spotifySongName" placeholder="Song name..." autocomplete="off">
+                        <div class="relative">
+                            <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm"
+                                id="spotifyInput" placeholder="Type campaign name..." autocomplete="off">
+                            <div class="suggest-results" id="spotifyResults"></div>
+                        </div>
+                    </div>
+                    <button
+                        class="justify-center transition-colors duration-200 rounded-full cursor-pointer font-medium px-[1.25rem] ring-offset-transparent relative bg-[#1DB954] text-white border border-[#1ed760] shadow-[0_1.50px_0_0_rgba(255,255,255,0.20)_inset] hover:bg-[#1ed760] text-sm h-[40px] flex items-center gap-2 w-full"
+                        onclick="addCampaign('spotify')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="size-3.5">
+                            <path d="M12 4v16m8-8H4" />
+                        </svg>
+                        Launch Campaign
+                    </button>
+
+                    <!-- Quick Glance Registry -->
+                    <div class="quick-glance-tile" id="spotifyQuickGlance"></div>
+                </div>
+            </div>
+
+            <!-- SoundCloud -->
+            <div class="relative">
+                <!-- Platform Section -->
+                <div class="dashboard-section">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-8 h-8 bg-[#FF5500] rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="white" viewBox="0 0 24 24">
+                                <path
+                                    d="M1.175 12.225c-.051 0-.094.046-.101.1l-.233 2.154.233 2.105c.007.058.05.098.101.098.053 0 .096-.04.103-.098l.27-2.105-.27-2.154c-.007-.057-.05-.1-.103-.1zm1.246.047c-.058 0-.1.047-.106.107l-.191 1.984.191 1.927c.006.057.048.107.106.107.059 0 .103-.046.112-.107l.23-1.927-.23-1.984c-.009-.06-.053-.107-.112-.107zm1.477-.585c-.062 0-.108.05-.115.11l-.159 2.563.159 2.453c.007.065.053.112.115.112.063 0 .109-.047.117-.112l.186-2.453-.186-2.563c-.008-.06-.054-.11-.117-.11zm1.572-.237c-.065 0-.115.053-.122.117l-.132 2.787.132 2.525c.007.067.057.118.122.118.066 0 .116-.05.123-.118l.155-2.525-.155-2.787c-.007-.064-.057-.117-.123-.117zm1.617-.174c-.07 0-.123.057-.128.124l-.106 2.961.106 2.584c.005.07.058.125.128.125.071 0 .125-.055.13-.125l.124-2.584-.124-2.961c-.005-.067-.059-.124-.13-.124zm1.688.04c-.073 0-.128.06-.133.13l-.08 2.798.08 2.618c.005.073.06.13.133.13.074 0 .129-.057.134-.13l.092-2.618-.092-2.799c-.005-.07-.06-.13-.134-.13zm1.755-.17c-.077 0-.135.063-.14.137l-.054 2.964.054 2.637c.005.076.063.138.14.138.078 0 .136-.062.14-.138l.063-2.637-.063-2.964c-.004-.074-.062-.137-.14-.137zm1.82-.09c-.08 0-.14.067-.144.143l-.033 3.054.033 2.644c.004.08.064.144.144.144.082 0 .141-.064.146-.144l.038-2.644-.038-3.054c-.005-.076-.064-.143-.146-.143zm1.896.015c-.084 0-.146.07-.15.15l-.01 2.884.01 2.648c.004.083.066.15.15.15.085 0 .147-.067.152-.15l.01-2.648-.01-2.884c-.005-.08-.067-.15-.152-.15zm1.932-.574c-.086 0-.15.073-.155.156l.001 3.457.003 2.644c.004.086.069.155.155.155.087 0 .152-.069.156-.155l.012-2.649-.014-3.452c-.004-.083-.069-.156-.158-.156zm2.858-.53c-.09 0-.16.077-.163.164l-.001 3.986.004 2.636c.004.09.073.163.163.163.091 0 .16-.073.164-.163l.005-2.636-.008-3.986c-.004-.087-.073-.164-.164-.164zm.937-.208c-.048-.004-.097.004-.143.025-.71-.454-1.56-.72-2.473-.746-.197-.005-.393.01-.586.05-.12.025-.194.07-.216.16v7.49c.023.096.095.166.192.18h3.227c1.36 0 2.462-1.101 2.462-2.462 0-1.36-1.102-2.462-2.463-2.462z" />
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold" style="color: var(--text-primary);">SoundCloud</div>
+                    </div>
+                    <div class="space-y-3 mb-3">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm"
+                            id="soundcloudSongName" placeholder="Song name..." autocomplete="off">
+                        <div class="relative">
+                            <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm"
+                                id="soundcloudInput" placeholder="Type campaign name..." autocomplete="off">
+                            <div class="suggest-results" id="soundcloudResults"></div>
+                        </div>
+                    </div>
+                    <button
+                        class="justify-center transition-colors duration-200 rounded-full cursor-pointer font-medium px-[1.25rem] ring-offset-transparent relative bg-[#FF5500] text-white border border-[#ff6a1f] shadow-[0_1.50px_0_0_rgba(255,255,255,0.20)_inset] hover:bg-[#ff6a1f] text-sm h-[40px] flex items-center gap-2 w-full"
+                        onclick="addCampaign('soundcloud')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="size-3.5">
+                            <path d="M12 4v16m8-8H4" />
+                        </svg>
+                        Launch Campaign
+                    </button>
+
+                    <!-- Quick Glance Registry -->
+                    <div class="quick-glance-tile" id="soundcloudQuickGlance"></div>
+                </div>
+            </div>
+
+            <!-- Press -->
+            <div class="relative">
+                <!-- Platform Section -->
+                <div class="dashboard-section">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="#0a0a0a" viewBox="0 0 24 24">
+                                <path
+                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z" />
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold" style="color: var(--text-primary);">Press</div>
+                    </div>
+                    <div class="space-y-3 mb-3">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm"
+                            id="pressSongName" placeholder="Song name..." autocomplete="off">
+                        <div class="relative">
+                            <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm"
+                                id="pressInput" placeholder="Type campaign name..." autocomplete="off">
+                            <div class="suggest-results" id="pressResults"></div>
+                        </div>
+                    </div>
+                    <button
+                        class="justify-center transition-colors duration-200 rounded-full cursor-pointer font-medium px-[1.25rem] ring-offset-transparent relative bg-gray-900 text-white border border-gray-800 shadow-[0_1.50px_0_0_rgba(255,255,255,0.20)_inset] hover:bg-gray-800 text-sm h-[40px] flex items-center gap-2 w-full"
+                        onclick="addCampaign('press')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="size-3.5">
+                            <path d="M12 4v16m8-8H4" />
+                        </svg>
+                        Launch Campaign
+                    </button>
+
+                    <!-- Quick Glance Registry -->
+                    <div class="quick-glance-tile" id="pressQuickGlance"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2 — 4 Tiles -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Instagram -->
+            <div class="relative">
+                <div class="dashboard-section">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">
+                            <svg class="w-5 h-5" fill="white" viewBox="0 0 24 24">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold" style="color: var(--text-primary);">Instagram</div>
+                    </div>
+                    <div class="space-y-3 mb-3">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm" placeholder="Song name..." autocomplete="off">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm" placeholder="Campaign name..." autocomplete="off">
+                    </div>
+                    <button class="justify-center transition-colors duration-200 rounded-full cursor-pointer font-medium px-[1.25rem] ring-offset-transparent relative text-white border shadow-[0_1.50px_0_0_rgba(255,255,255,0.20)_inset] text-sm h-[40px] flex items-center gap-2 w-full" style="background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); border-color: #dc2743;" disabled>
+                        Coming Soon
+                    </button>
+                </div>
+            </div>
+
+            <!-- TikTok -->
+            <div class="relative">
+                <div class="dashboard-section">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: #010101;">
+                            <svg class="w-5 h-5" fill="white" viewBox="0 0 24 24">
+                                <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.46V13a8.28 8.28 0 005.58 2.15V11.7a4.85 4.85 0 01-3.77-1.82V6.69h3.77z"/>
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold" style="color: var(--text-primary);">TikTok</div>
+                    </div>
+                    <div class="space-y-3 mb-3">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm" placeholder="Song name..." autocomplete="off">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm" placeholder="Campaign name..." autocomplete="off">
+                    </div>
+                    <button class="justify-center transition-colors duration-200 rounded-full cursor-pointer font-medium px-[1.25rem] ring-offset-transparent relative text-white border shadow-[0_1.50px_0_0_rgba(255,255,255,0.20)_inset] text-sm h-[40px] flex items-center gap-2 w-full" style="background: #010101; border-color: #333;" disabled>
+                        Coming Soon
+                    </button>
+                </div>
+            </div>
+
+            <!-- Facebook -->
+            <div class="relative">
+                <div class="dashboard-section">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: #1877F2;">
+                            <svg class="w-5 h-5" fill="white" viewBox="0 0 24 24">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold" style="color: var(--text-primary);">Facebook</div>
+                    </div>
+                    <div class="space-y-3 mb-3">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm" placeholder="Song name..." autocomplete="off">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm" placeholder="Campaign name..." autocomplete="off">
+                    </div>
+                    <button class="justify-center transition-colors duration-200 rounded-full cursor-pointer font-medium px-[1.25rem] ring-offset-transparent relative text-white border shadow-[0_1.50px_0_0_rgba(255,255,255,0.20)_inset] text-sm h-[40px] flex items-center gap-2 w-full" style="background: #1877F2; border-color: #4293f5;" disabled>
+                        Coming Soon
+                    </button>
+                </div>
+            </div>
+
+            <!-- YouTube Shorts -->
+            <div class="relative">
+                <div class="dashboard-section">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: #FF0000;">
+                            <svg class="w-5 h-5" fill="white" viewBox="0 0 24 24">
+                                <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                        </div>
+                        <div class="text-base font-semibold" style="color: var(--text-primary);">YouTube Shorts</div>
+                    </div>
+                    <div class="space-y-3 mb-3">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm" placeholder="Song name..." autocomplete="off">
+                        <input type="text" class="dashboard-input w-full h-10 rounded-xl px-4 text-sm" placeholder="Campaign name..." autocomplete="off">
+                    </div>
+                    <button class="justify-center transition-colors duration-200 rounded-full cursor-pointer font-medium px-[1.25rem] ring-offset-transparent relative text-white border shadow-[0_1.50px_0_0_rgba(255,255,255,0.20)_inset] text-sm h-[40px] flex items-center gap-2 w-full" style="background: #FF0000; border-color: #ff3333;" disabled>
+                        Coming Soon
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Master Pricing Database (from chad22 - proposal generator)
+        const serviceDatabase = {
+            spotify: [
+                { name: 'Spotify Playlisting Campaign (Third Party) - 10K', amount: '$325', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 15K', amount: '$390', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 20K', amount: '$490', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 25K', amount: '$590', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 30K', amount: '$690', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 40K', amount: '$790', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 50K', amount: '$890', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 60K', amount: '$990', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 75K', amount: '$1,200', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 100K', amount: '$1,500', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 125K', amount: '$1,875', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 150K', amount: '$2,250', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 200K', amount: '$3,000', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 250K', amount: '$3,550', type: 'spotify' },
+                { name: 'Spotify Playlisting Campaign (Third Party) - 500K', amount: '$6,500', type: 'spotify' }
+            ],
+            press: [
+                { name: 'Press Release Campaign - 3 Articles (In-Network)', amount: '$200', type: 'press' },
+                { name: 'Press Release Campaign - 4 Articles (In-Network)', amount: '$250', type: 'press' },
+                { name: 'Press Release Campaign - 5 Articles (In-Network)', amount: '$300', type: 'press' },
+                { name: 'Press Release Campaign - 4–7 Articles (Standard)', amount: '$550', type: 'press' },
+                { name: 'Press Release Campaign - 6–10 Articles (Standard)', amount: '$700', type: 'press' },
+                { name: 'Press Release Campaign - 10–15 Articles (Standard)', amount: '$900', type: 'press' },
+                { name: 'Press Release Campaign - 3 Articles (Premium)', amount: '$500', type: 'press' },
+                { name: 'Press Release Campaign - 4 Articles (Premium)', amount: '$650', type: 'press' },
+                { name: 'Press Release Campaign - 6 Articles (Premium)', amount: '$750', type: 'press' }
+            ],
+            soundcloud: [
+                { name: 'SoundCloud Repost Campaign - 4K', amount: '$180', type: 'soundcloud' },
+                { name: 'SoundCloud Repost Campaign - 8K', amount: '$240', type: 'soundcloud' },
+                { name: 'SoundCloud Repost Campaign - 16K', amount: '$350', type: 'soundcloud' }
+            ]
+        };
+
+        let totalCampaigns = 0;
+        let campaignsData = []; // Store all campaigns
+        let selectedCampaignId = null;
+        let dockedCampaignId = null;
+        let countdownInterval = null;
+        const blueTagSuggestions = ['Stalled', 'Priority', 'Hot', 'Follow Up', 'Pending', 'Approved', 'On Hold', 'Rush', 'VIP', 'Review', 'Confirmed', 'Waiting on Artist', 'Paid', 'Unpaid', 'Issue'];
+        let platformStages = {
+            spotify: 0,
+            soundcloud: 0,
+            press: 0
+        }; // Track stage for each platform (0 = Not Activated, 1-4 = active stages)
+
+        // Toggle Campaign Stages collapse
+        function toggleCampaignStages() {
+            const container = document.getElementById('masterStageContainer');
+            const content = document.getElementById('stagesCollapsible');
+            const btn = document.getElementById('stagesToggleBtn');
+
+            const isCollapsed = content.classList.contains('collapsed');
+
+            if (isCollapsed) {
+                content.classList.remove('collapsed');
+                btn.classList.add('expanded');
+                container.classList.remove('stages-collapsed');
+            } else {
+                content.classList.add('collapsed');
+                btn.classList.remove('expanded');
+                container.classList.add('stages-collapsed');
+            }
+        }
+
+        // Clear Card — wipe all campaigns and reset
+        function clearCard() {
+            if (!confirm('Clear all campaigns and reset the card?')) return;
+
+            document.getElementById('masterCampaignsGrid').innerHTML = '';
+            document.getElementById('spotifyQuickGlance').innerHTML = '';
+            document.getElementById('soundcloudQuickGlance').innerHTML = '';
+            document.getElementById('pressQuickGlance').innerHTML = '';
+
+            campaignsData = [];
+            totalCampaigns = 0;
+            selectedCampaignId = null;
+            platformStages = { spotify: 0, soundcloud: 0, press: 0 };
+
+            // Clear dock
+            undockCampaign();
+
+            document.getElementById('masterStageContainer').classList.remove('selection-active');
+            updateMasterCampaignCount();
+
+            // Reset artist
+            artistState.name = '';
+            artistState.image = '';
+            document.getElementById('artistDisplay').classList.add('hidden');
+            document.getElementById('artistImage').style.display = 'none';
+            document.getElementById('artistName').textContent = '';
+            document.getElementById('spotifyUrl').value = '';
+        }
+
+        // Custom Artist — manual name + Dropbox image URL
+        function openCustomArtist() {
+            const name = prompt('Enter artist name:');
+            if (!name) return;
+
+            const imageUrl = prompt('Paste Dropbox image link (direct dl.dropboxusercontent.com URL):');
+
+            artistState.name = name;
+            if (imageUrl) {
+                // Convert Dropbox share links to direct links
+                let directUrl = imageUrl;
+                if (directUrl.includes('dropbox.com')) {
+                    directUrl = directUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
+                }
+                artistState.image = directUrl;
+            }
+            updateArtistDisplay();
+        }
+
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = !body.classList.contains('light-mode');
+
+            if (isDark) {
+                body.classList.add('light-mode');
+                document.getElementById('themeIconDark').style.display = 'none';
+                document.getElementById('themeIconLight').style.display = 'block';
+            } else {
+                body.classList.remove('light-mode');
+                document.getElementById('themeIconDark').style.display = 'block';
+                document.getElementById('themeIconLight').style.display = 'none';
+            }
+
+            // Update particle colors
+            updateParticleColors();
+        }
+
+        // Removed localStorage loading logic
+
+        // JSON Export
+        function downloadJSON() {
+            const data = {
+                theme: document.body.classList.contains('light-mode') ? 'light' : 'dark',
+                artist: artistState,
+                campaigns: campaignsData,
+                platformStages: platformStages,
+                dockedCampaignId: dockedCampaignId,
+                timestamp: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `campaign-dashboard-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // JSON Import
+        function uploadJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // Restore theme
+                    if (data.theme) {
+                        if (data.theme === 'light') {
+                            document.body.classList.add('light-mode');
+                            document.getElementById('themeIconDark').style.display = 'none';
+                            document.getElementById('themeIconLight').style.display = 'block';
+                        } else {
+                            document.body.classList.remove('light-mode');
+                            document.getElementById('themeIconDark').style.display = 'block';
+                            document.getElementById('themeIconLight').style.display = 'none';
+                        }
+                        updateParticleColors();
+                    }
+
+                    // Restore artist
+                    if (data.artist) {
+                        artistState.name = data.artist.name;
+                        artistState.image = data.artist.image;
+                        if (artistState.name) {
+                            document.getElementById('spotifyUrl').value = '';
+                            updateArtistDisplay();
+                        }
+                    }
+
+                    // Restore campaigns - DEEP CLEAN
+                    if (data.campaigns) {
+                        document.getElementById('masterCampaignsGrid').innerHTML = '';
+                        document.getElementById('spotifyQuickGlance').innerHTML = '';
+                        document.getElementById('soundcloudQuickGlance').innerHTML = '';
+                        document.getElementById('pressQuickGlance').innerHTML = '';
+
+                        campaignsData = [];
+                        totalCampaigns = 0;
+                        selectedCampaignId = null;
+                        document.getElementById('masterStageContainer').classList.remove('selection-active');
+
+                        data.campaigns.forEach(campaign => {
+                            restoreCampaign(campaign);
+                        });
+                    }
+
+                    // Restore platform stages
+                    if (data.platformStages) {
+                        Object.keys(data.platformStages).forEach(platform => {
+                            setPlatformStage(platform, data.platformStages[platform]);
+                        });
+                    }
+
+                    // Restore docked campaign
+                    if (data.dockedCampaignId) {
+                        const dockedCamp = campaignsData.find(c => c.id === data.dockedCampaignId);
+                        if (dockedCamp) {
+                            dockCampaign(data.dockedCampaignId);
+                            // Resume countdown if active
+                            if (dockedCamp.acceptedSubStage === 1 && dockedCamp.countdownStartDate) {
+                                startCountdownTick();
+                            }
+                        }
+                    }
+
+                    alert('Dashboard data imported successfully!');
+                } catch (error) {
+                    alert('Error importing data. Please check the file format.');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Abbreviate campaign names for registry: "Spotify Playlisting Campaign (Third Party) - 25K" → "25K Spotify"
+        function shortCampaign(name, platform) {
+            const sizeMatch = name.match(/(\d+K?)\s*$/i) || name.match(/-\s*(\d+K)/i);
+            const artMatch = name.match(/-\s*(\d+[\u2013\-]?\d*)\s*Articles?/i);
+            const platLabel = { spotify: 'Spotify', soundcloud: 'SoundCloud', press: 'Press' }[platform] || platform;
+            if (sizeMatch) return sizeMatch[1] + ' ' + platLabel;
+            if (artMatch) return artMatch[1] + ' Articles ' + platLabel;
+            return name.split(' - ')[0].replace(/Campaign|Release|\(.*?\)/g, '').trim() || name;
+        }
+
+        function restoreCampaign(campaign) {
+            const masterGrid = document.getElementById('masterCampaignsGrid');
+            const campaignId = campaign.id || (Date.now() + Math.random());
+            totalCampaigns++;
+
+            const platformColors = {
+                spotify: { bg: '#1DB954', name: 'Spotify' },
+                soundcloud: { bg: '#FF5500', name: 'SoundCloud' },
+                press: { bg: '#fafafa', name: 'Press' }
+            };
+
+            const color = platformColors[campaign.platform];
+
+            // Add to master grid
+            const row = document.createElement('div');
+            row.className = 'campaign-row ' + ((campaign.tags && campaign.tags.length > 0) ? 'row-tagged' : 'row-safe');
+            row.id = `campaign-${campaignId}`;
+            row.setAttribute('draggable', 'true');
+
+            row.innerHTML = `
+                <div class="w-1.5 h-10 rounded-full flex-shrink-0" style="background: ${color.bg}; box-shadow: 0 0 10px ${color.bg}44;"></div>
+                <div class="campaign-info">
+                    <div class="campaign-song-name">${campaign.songName}</div>
+                    <div class="campaign-type">${color.name} · ${campaign.campaignName}${campaign.amount ? ` - ${campaign.amount}` : ''}</div>
+                </div>
+                <div class="campaign-tags" id="tags-${campaignId}">
+                    <div class="tag-add-btn" onclick="event.stopPropagation(); startAddTag(${campaignId})">+</div>
+                </div>
+                <div class="campaign-tags-blue" id="blueTags-${campaignId}">
+                    <div class="tag-add-btn-blue" onclick="event.stopPropagation(); startAddBlueTag(${campaignId})">+</div>
+                </div>
+                <div class="campaign-stage-indicator">
+                    <div class="mini-dot inactive"></div>
+                    <div class="mini-dot"></div>
+                    <div class="mini-dot"></div>
+                    <div class="mini-dot"></div>
+                    <div class="mini-dot"></div>
+                </div>
+                <div class="campaign-delete ml-2" onclick="event.stopPropagation(); deleteCampaign(${campaignId})">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            `;
+
+            // Drag events
+            setupDragEvents(row, campaignId);
+
+            // Add double-click to advance stage
+            row.addEventListener('dblclick', () => {
+                const camp = campaignsData.find(c => c.id === campaignId);
+                if (!camp) return;
+
+                const nextStage = (camp.stage + 1) % 5;
+                setCampaignStage(campaignId, nextStage);
+                updateCampaignCardIndicator(campaignId);
+
+                row.style.transform = 'scale(1.02)';
+                setTimeout(() => row.style.transform = '', 150);
+            });
+
+            masterGrid.appendChild(row);
+
+            // Click to select
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('.campaign-delete')) return;
+                selectCampaign(campaignId);
+            });
+
+            // Add to quick-glance section
+            const quickGlance = document.getElementById(`${campaign.platform}QuickGlance`);
+            if (quickGlance) {
+                const quickRow = document.createElement('div');
+                quickRow.className = 'quick-campaign-row';
+                quickRow.id = `quick-${campaignId}`;
+                const dateStr = campaign.dateAdded || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                quickRow.innerHTML = `
+                    <span class="quick-campaign-name">${campaign.songName}</span>
+                    <span class="quick-campaign-type">${shortCampaign(campaign.campaignName, campaign.platform)}</span>
+                    <span class="quick-campaign-date">${dateStr}</span>
+                `;
+                quickGlance.appendChild(quickRow);
+            }
+
+            campaignsData.push({
+                id: campaignId,
+                ...campaign,
+                tags: campaign.tags || [],
+                blueTags: campaign.blueTags || [],
+                acceptedSubStage: campaign.acceptedSubStage || 0,
+                countdownStartDate: campaign.countdownStartDate || null
+            });
+
+            // Render tags if any
+            if (campaign.tags && campaign.tags.length > 0) {
+                renderTagsForRow(campaignId);
+            }
+
+            // Render blue tags if any
+            if (campaign.blueTags && campaign.blueTags.length > 0) {
+                renderBlueTagsForRow(campaignId);
+            }
+
+            // Restore stage
+            if (campaign.stage) {
+                setCampaignStage(campaignId, campaign.stage);
+                updateCampaignCardIndicator(campaignId);
+            }
+
+            updateMasterCampaignCount();
+        }
+
+        // Enhanced Particle Background with Connections
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const connectionDistance = 100;
+        const mouse = { x: null, y: null, radius: 100 };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = Array.from({ length: 30 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 1.5 + 0.5,
+                vx: (Math.random() - 0.5) * 0.15,
+                vy: (Math.random() - 0.5) * 0.15,
+                opacity: Math.random() * 0.15 + 0.1
+            }));
+        }
+
+        function drawConnections() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < connectionDistance) {
+                        const opacity = (1 - distance / connectionDistance) * 0.25;
+                        const particleColor = getComputedStyle(document.documentElement).getPropertyValue('--particle-color').trim();
+                        ctx.strokeStyle = `rgba(${particleColor}, ${opacity})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw connections first
+            drawConnections();
+
+            // Draw and update particles
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Bounce off edges
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                // Mouse interaction
+                if (mouse.x !== null && mouse.y !== null) {
+                    const dx = p.x - mouse.x;
+                    const dy = p.y - mouse.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mouse.radius) {
+                        const force = (mouse.radius - distance) / mouse.radius;
+                        p.x += (dx / distance) * force * 0.5;
+                        p.y += (dy / distance) * force * 0.5;
+                    }
+                }
+
+                // Draw particle with enhanced glow and gradient
+                const particleColor = getComputedStyle(document.documentElement).getPropertyValue('--particle-color').trim();
+
+                // Create radial gradient for prettier particles
+                const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
+                gradient.addColorStop(0, `rgba(${particleColor}, ${p.opacity * 0.8})`);
+                gradient.addColorStop(0.5, `rgba(${particleColor}, ${p.opacity * 0.4})`);
+                gradient.addColorStop(1, `rgba(${particleColor}, 0)`);
+
+                // Draw with soft glow
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = `rgba(${particleColor}, ${p.opacity * 0.5})`;
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Mouse tracking for interactivity
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        window.addEventListener('resize', resize);
+        resize();
+        animate();
+
+        // Spotify URL - Artist Identity Extraction
+        const artistState = { name: '', image: '' };
+
+        document.getElementById('spotifyUrl').addEventListener('input', async (e) => {
+            const url = e.target.value.trim();
+            const info = extractSpotifyID(url);
+            if (info) {
+                const data = await fetchSpotifyOEmbed(url);
+                if (data) {
+                    artistState.name = data.title;
+                    artistState.image = data.thumbnail_url;
+                    updateArtistDisplay();
+                }
+            }
+        });
+
+        function extractSpotifyID(url) {
+            const matches = url.match(/spotify\.com\/(track|album|artist)\/([a-zA-Z0-9]+)/i);
+            return matches ? { type: matches[1], id: matches[2] } : null;
+        }
+
+        async function fetchSpotifyOEmbed(url) {
+            try {
+                const cleanUrl = url.split('?')[0];
+                const res = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(cleanUrl)}`);
+                return res.ok ? await res.json() : null;
+            } catch { return null; }
+        }
+
+        function updateArtistDisplay() {
+            const display = document.getElementById('artistDisplay');
+            const image = document.getElementById('artistImage');
+            const name = document.getElementById('artistName');
+
+            display.classList.remove('hidden');
+            image.src = artistState.image;
+            image.style.display = 'block';
+            name.textContent = artistState.name;
+        }
+
+        // Auto-Suggest Logic
+        function initAutoSuggest(platform) {
+            const input = document.getElementById(`${platform}Input`);
+            const results = document.getElementById(`${platform}Results`);
+
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                if (query.length > 0) {
+                    const matches = serviceDatabase[platform].filter(s =>
+                        s.name.toLowerCase().includes(query) || s.amount.toLowerCase().includes(query)
+                    );
+                    renderSuggestions(platform, matches, query);
+                } else {
+                    results.classList.remove('active');
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !results.contains(e.target)) {
+                    results.classList.remove('active');
+                }
+            });
+        }
+
+        function renderSuggestions(platform, matches, query) {
+            const results = document.getElementById(`${platform}Results`);
+            results.innerHTML = '';
+
+            const customDiv = document.createElement('div');
+            customDiv.className = 'suggest-item add-custom';
+            customDiv.innerHTML = `+ Add Custom Campaign...`;
+            customDiv.onclick = () => promptCustomCampaign(platform, query);
+            results.appendChild(customDiv);
+
+            if (matches.length > 0) {
+                results.classList.add('active');
+                matches.slice(0, 8).forEach(match => {
+                    const div = document.createElement('div');
+                    div.className = 'suggest-item';
+                    div.innerHTML = `<span class="service-name">${match.name}</span><span class="price-badge">${match.amount}</span>`;
+                    div.onclick = () => selectSuggestion(platform, match);
+                    results.appendChild(div);
+                });
+            } else if (query.length > 0) {
+                results.classList.add('active');
+            }
+        }
+
+        function selectSuggestion(platform, service) {
+            const input = document.getElementById(`${platform}Input`);
+            input.value = service.name;
+            input.dataset.amount = service.amount; // Store the amount in the input element
+            document.getElementById(`${platform}Results`).classList.remove('active');
+        }
+
+        function promptCustomCampaign(platform, defaultValue) {
+            const input = document.getElementById(`${platform}Input`);
+            const name = prompt("Enter Custom Campaign Name:", defaultValue || input.value);
+            if (!name) return;
+
+            const amount = prompt("Enter Amount (e.g. $500):", "$");
+            if (amount) {
+                input.value = name;
+                input.dataset.amount = amount;
+                document.getElementById(`${platform}Results`).classList.remove('active');
+            }
+        }
+
+        function addCampaign(platform) {
+            const songNameInput = document.getElementById(`${platform}SongName`);
+            const campaignInput = document.getElementById(`${platform}Input`);
+
+            const songName = songNameInput.value.trim();
+            const campaignName = campaignInput.value.trim();
+            const amount = campaignInput.dataset.amount || '';
+
+            if (!songName || !campaignName) {
+                alert('Please enter both song name and campaign type');
+                return;
+            }
+
+            const masterGrid = document.getElementById('masterCampaignsGrid');
+            const campaignId = Date.now();
+            totalCampaigns++;
+
+            // Platform color mapping for visual identification
+            const platformColors = {
+                spotify: { bg: '#1DB954', name: 'Spotify' },
+                soundcloud: { bg: '#FF5500', name: 'SoundCloud' },
+                press: { bg: '#fafafa', name: 'Press' }
+            };
+
+            const color = platformColors[platform];
+
+            const row = document.createElement('div');
+            row.className = 'campaign-row row-safe';
+            row.id = `campaign-${campaignId}`;
+            row.setAttribute('draggable', 'true');
+
+            row.innerHTML = `
+                <div class="w-1.5 h-10 rounded-full flex-shrink-0" style="background: ${color.bg}; box-shadow: 0 0 10px ${color.bg}44;"></div>
+                <div class="campaign-info">
+                    <div class="campaign-song-name">${songName}</div>
+                    <div class="campaign-type">${color.name} · ${campaignName}${amount ? ` - ${amount}` : ''}</div>
+                </div>
+                <div class="campaign-tags" id="tags-${campaignId}">
+                    <div class="tag-add-btn" onclick="event.stopPropagation(); startAddTag(${campaignId})">+</div>
+                </div>
+                <div class="campaign-tags-blue" id="blueTags-${campaignId}">
+                    <div class="tag-add-btn-blue" onclick="event.stopPropagation(); startAddBlueTag(${campaignId})">+</div>
+                </div>
+                <div class="campaign-stage-indicator">
+                    <div class="mini-dot inactive"></div>
+                    <div class="mini-dot"></div>
+                    <div class="mini-dot"></div>
+                    <div class="mini-dot"></div>
+                    <div class="mini-dot"></div>
+                </div>
+                <div class="campaign-delete ml-2" onclick="event.stopPropagation(); deleteCampaign(${campaignId})">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            `;
+
+            // Drag events
+            setupDragEvents(row, campaignId);
+
+            // Add double-click to advance stage
+            row.addEventListener('dblclick', () => {
+                const campaign = campaignsData.find(c => c.id === campaignId);
+                if (!campaign) return;
+
+                const nextStage = (campaign.stage + 1) % 5;
+                setCampaignStage(campaignId, nextStage);
+                updateCampaignCardIndicator(campaignId);
+
+                row.style.transform = 'scale(1.02)';
+                setTimeout(() => row.style.transform = '', 150);
+            });
+
+            masterGrid.appendChild(row);
+
+            // Click to select
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('.campaign-delete')) return;
+                selectCampaign(campaignId);
+            });
+
+            // Store campaign data
+            campaignsData.push({
+                id: campaignId,
+                songName: songName,
+                campaignName: campaignName,
+                amount: amount,
+                platform: platform,
+                stage: 0,
+                tags: [],
+                blueTags: [],
+                acceptedSubStage: 0,
+                countdownStartDate: null,
+                dateAdded: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            });
+
+            // Trigger visual update for stage 0 (glow)
+            setCampaignStage(campaignId, 0);
+            updateCampaignCardIndicator(campaignId);
+
+            // Add to platform's quick-glance section
+            const quickGlance = document.getElementById(`${platform}QuickGlance`);
+            const quickRow = document.createElement('div');
+            quickRow.className = 'quick-campaign-row';
+            quickRow.id = `quick-${campaignId}`;
+            const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            quickRow.innerHTML = `
+                <span class="quick-campaign-name">${songName}</span>
+                <span class="quick-campaign-type">${shortCampaign(campaignName, platform)}</span>
+                <span class="quick-campaign-date">${dateStr}</span>
+            `;
+            quickGlance.appendChild(quickRow);
+
+            // Auto-advance platform stage to "Pitched" when first campaign is added
+            const platformCampaigns = campaignsData.filter(c => c.platform === platform);
+            if (platformCampaigns.length === 1 && platformStages[platform] === 0) {
+                setPlatformStage(platform, 1); // Move to Pitched stage
+            }
+
+            songNameInput.value = '';
+            campaignInput.value = '';
+            delete campaignInput.dataset.amount;
+            document.getElementById(`${platform}Results`).classList.remove('active');
+            updateMasterCampaignCount();
+        }
+
+        // Global click to deselect
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.campaign-row') && !e.target.closest('.master-stage-item')) {
+                if (selectedCampaignId !== null) {
+                    selectedCampaignId = null;
+                    document.querySelectorAll('.campaign-row').forEach(row => row.classList.remove('selected'));
+                    document.getElementById('masterStageContainer').classList.remove('selection-active');
+                }
+            }
+        });
+
+        function updateMasterCampaignCount() {
+            document.getElementById('masterCampaignCount').textContent = `${totalCampaigns} campaign${totalCampaigns !== 1 ? 's' : ''}`;
+        }
+
+
+
+        function deleteCampaign(campaignId) {
+            // Undock if this campaign is docked
+            if (dockedCampaignId === campaignId) {
+                undockCampaign();
+            }
+            document.getElementById(`campaign-${campaignId}`).remove();
+            const quickRow = document.getElementById(`quick-${campaignId}`);
+            if (quickRow) quickRow.remove();
+            totalCampaigns--;
+            campaignsData = campaignsData.filter(c => c.id !== campaignId);
+            if (selectedCampaignId === campaignId) {
+                selectedCampaignId = null;
+                document.getElementById('masterStageContainer').classList.remove('selection-active');
+            }
+            updateMasterCampaignCount();
+        }
+
+        function selectCampaign(campaignId) {
+            // Remove previous selection
+            document.querySelectorAll('.campaign-row').forEach(row => row.classList.remove('selected'));
+
+            if (selectedCampaignId === campaignId) {
+                // Deselect if clicking the same one
+                selectedCampaignId = null;
+                document.getElementById('masterStageContainer').classList.remove('selection-active');
+                return;
+            }
+
+            // Set new selection
+            selectedCampaignId = campaignId;
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            const row = document.getElementById(`campaign-${campaignId}`);
+            if (row) row.classList.add('selected');
+
+            // Highlight Master Stage Container
+            document.getElementById('masterStageContainer').classList.add('selection-active');
+
+            // Visual feedback on the master stages could go here (e.g. highlighting current stage)
+        }
+
+        function updateStageFromMaster(stageIndex) {
+            // Use docked campaign if available, otherwise fall back to selected
+            const targetId = dockedCampaignId || selectedCampaignId;
+            if (targetId === null) return;
+
+            setCampaignStage(targetId, stageIndex);
+            updateCampaignCardIndicator(targetId);
+
+            // Update dock display if docked
+            if (dockedCampaignId) {
+                updateDockDisplay();
+                updateAcceptedBranch();
+            }
+
+            // Pulse the clicked stage for feedback
+            const stages = document.querySelectorAll('.master-stage-item');
+            stages[stageIndex].style.transform = 'scale(1.1) translateY(-5px)';
+            setTimeout(() => stages[stageIndex].style.transform = '', 200);
+        }
+
+        function setCampaignStage(campaignId, stageIndex) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            campaign.stage = stageIndex;
+
+            const quickRow = document.getElementById(`quick-${campaignId}`);
+            if (quickRow) {
+                const dots = quickRow.querySelectorAll('.quick-stage-dot');
+                dots.forEach((dot, index) => {
+                    dot.classList.remove('active', 'inactive', 'current');
+
+                    if (index === 0) {
+                        dot.classList.add('inactive');
+                    } else if (index <= stageIndex && stageIndex > 0) {
+                        dot.classList.add('active');
+                    }
+
+                    // Highlight the current step
+                    if (index === stageIndex) {
+                        dot.classList.add('current');
+                    }
+                });
+            }
+        }
+
+        function updateCampaignCardIndicator(campaignId) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            const card = document.getElementById(`campaign-${campaignId}`);
+            if (!card) return;
+
+            const miniDots = card.querySelectorAll('.mini-dot');
+            miniDots.forEach((dot, index) => {
+                dot.classList.remove('active', 'inactive', 'current');
+
+                if (index === 0) {
+                    dot.classList.add('inactive');
+                } else if (index <= campaign.stage && campaign.stage > 0) {
+                    dot.classList.add('active');
+                }
+
+                // Highlight the current step
+                if (index === campaign.stage) {
+                    dot.classList.add('current');
+                }
+            });
+
+            // Trigger synchronized glow flash
+            flashStageGlow(campaignId, campaign.stage);
+        }
+
+        function flashStageGlow(campaignId, stageIndex) {
+            const isRed = stageIndex === 0;
+            const glowClass = isRed ? 'stage-glow-flash-red' : 'stage-glow-flash';
+            const masterGlowClass = isRed ? 'master-stage-glow-red' : 'master-stage-glow';
+
+            // Flash the mini-dot on the campaign card
+            const card = document.getElementById(`campaign-${campaignId}`);
+            if (card) {
+                const miniDots = card.querySelectorAll('.mini-dot');
+                const targetDot = miniDots[stageIndex];
+                if (targetDot) {
+                    targetDot.classList.remove(glowClass);
+                    void targetDot.offsetWidth; // force reflow
+                    targetDot.classList.add(glowClass);
+                    setTimeout(() => targetDot.classList.remove(glowClass), 750);
+                }
+            }
+
+            // Flash the matching master stage button at the top
+            const masterStages = document.querySelectorAll('.master-stage-item');
+            const masterTarget = masterStages[stageIndex];
+            if (masterTarget) {
+                masterTarget.classList.remove(masterGlowClass);
+                void masterTarget.offsetWidth;
+                masterTarget.classList.add(masterGlowClass);
+                setTimeout(() => {
+                    masterTarget.classList.remove(masterGlowClass);
+                    masterTarget.style.transform = '';
+                }, 750);
+            }
+
+            // Also flash the quick-glance dot
+            const quickRow = document.getElementById(`quick-${campaignId}`);
+            if (quickRow) {
+                const quickDots = quickRow.querySelectorAll('.quick-stage-dot');
+                const quickTarget = quickDots[stageIndex];
+                if (quickTarget) {
+                    quickTarget.classList.remove(glowClass);
+                    void quickTarget.offsetWidth;
+                    quickTarget.classList.add(glowClass);
+                    setTimeout(() => quickTarget.classList.remove(glowClass), 750);
+                }
+            }
+        }
+
+        function updateParticleColors() {
+            // Particle colors will update on next animation frame
+            const root = getComputedStyle(document.documentElement);
+            const colorValue = root.getPropertyValue('--particle-color').trim();
+            // Colors will be applied in the animate function
+        }
+
+        // === Campaign Row Tags ===
+        const tagSuggestions = ['Stalled', 'Priority', 'Hot', 'Follow Up', 'Pending', 'Approved', 'On Hold', 'Rush', 'VIP', 'Review', 'Confirmed', 'Waiting on Artist', 'Paid', 'Unpaid', 'Issue'];
+
+        function startAddTag(campaignId) {
+            const container = document.getElementById(`tags-${campaignId}`);
+            if (!container || container.querySelector('.tag-input-wrapper')) return;
+
+            // Pulse the "+" button on click for satisfying feedback
+            const addBtn = container.querySelector('.tag-add-btn');
+            if (addBtn) {
+                addBtn.style.animation = 'tagAddPulse 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                addBtn.addEventListener('animationend', () => { addBtn.style.animation = ''; }, { once: true });
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'tag-input-wrapper';
+
+            const input = document.createElement('input');
+            input.className = 'tag-input';
+            input.type = 'text';
+            input.placeholder = 'Tag...';
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'tag-suggest-dropdown';
+            dropdown.style.display = 'none';
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(dropdown);
+
+            // Insert before the "+" button — scoot existing pills left
+            container.classList.add('tags-editing');
+            container.insertBefore(wrapper, addBtn);
+
+            input.focus();
+
+            // Show all suggestions immediately with flutter entrance
+            showTagSuggestions(input, dropdown, '', campaignId);
+            dropdown.style.display = 'block';
+            dropdown.style.animation = 'none';
+            dropdown.offsetHeight; // force reflow
+            dropdown.style.animation = '';
+
+            const cleanupEditing = () => container.classList.remove('tags-editing');
+
+            input.addEventListener('input', () => {
+                showTagSuggestions(input, dropdown, input.value.trim(), campaignId);
+                dropdown.style.display = 'block';
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const text = input.value.trim();
+                    if (text) {
+                        cleanupEditing();
+                        commitTag(campaignId, text, wrapper);
+                    }
+                } else if (e.key === 'Escape') {
+                    cleanupEditing();
+                    wrapper.remove();
+                }
+            });
+
+            // Close on outside click
+            const closeHandler = (e) => {
+                if (!wrapper.contains(e.target)) {
+                    cleanupEditing();
+                    wrapper.remove();
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
+
+        function showTagSuggestions(input, dropdown, query, campaignId) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            const existingTags = campaign ? campaign.tags : [];
+
+            dropdown.innerHTML = '';
+
+            // "+ custom" option at top
+            if (query.length > 0) {
+                const customItem = document.createElement('div');
+                customItem.className = 'tag-suggest-item add-custom-tag';
+                customItem.textContent = `+ "${query}"`;
+                customItem.onclick = (e) => {
+                    e.stopPropagation();
+                    commitTag(campaignId, query, input.closest('.tag-input-wrapper'));
+                };
+                dropdown.appendChild(customItem);
+            }
+
+            // Filter suggestions
+            const filtered = tagSuggestions.filter(s => {
+                const matchesQuery = query.length === 0 || s.toLowerCase().includes(query.toLowerCase());
+                const notAlreadyUsed = !existingTags.includes(s);
+                return matchesQuery && notAlreadyUsed;
+            });
+
+            filtered.forEach(suggestion => {
+                const item = document.createElement('div');
+                item.className = 'tag-suggest-item';
+                item.textContent = suggestion;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    commitTag(campaignId, suggestion, input.closest('.tag-input-wrapper'));
+                };
+                dropdown.appendChild(item);
+            });
+
+            if (dropdown.children.length === 0) {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function commitTag(campaignId, text, wrapper) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            // Max 1 red tag — replace if one exists
+            campaign.tags = [text];
+
+            // Add to suggestions if new
+            if (!tagSuggestions.includes(text)) {
+                tagSuggestions.push(text);
+            }
+
+            if (wrapper) wrapper.remove();
+            renderTagsForRow(campaignId);
+
+            // Update dock if this campaign is docked
+            if (dockedCampaignId === campaignId) updateDockDisplay();
+        }
+
+        function removeTagFromCampaign(campaignId, index) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            // Find the pill to animate out
+            const container = document.getElementById(`tags-${campaignId}`);
+            const pills = container ? container.querySelectorAll('.campaign-tag') : [];
+            const targetPill = pills[index];
+
+            if (targetPill) {
+                targetPill.classList.add('tag-removing');
+                setTimeout(() => {
+                    campaign.tags.splice(index, 1);
+                    renderTagsForRow(campaignId);
+                    if (dockedCampaignId === campaignId) updateDockDisplay();
+                }, 250);
+            } else {
+                campaign.tags.splice(index, 1);
+                renderTagsForRow(campaignId);
+                if (dockedCampaignId === campaignId) updateDockDisplay();
+            }
+        }
+
+        function editTagInRow(campaignId, index) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            const oldText = campaign.tags[index];
+            campaign.tags.splice(index, 1);
+            renderTagsForRow(campaignId);
+
+            // Open input pre-filled
+            const container = document.getElementById(`tags-${campaignId}`);
+            if (!container) return;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'tag-input-wrapper';
+
+            const input = document.createElement('input');
+            input.className = 'tag-input';
+            input.type = 'text';
+            input.value = oldText;
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'tag-suggest-dropdown';
+            dropdown.style.display = 'none';
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(dropdown);
+
+            const addBtn = container.querySelector('.tag-add-btn');
+            container.insertBefore(wrapper, addBtn);
+
+            input.focus();
+            input.select();
+
+            showTagSuggestions(input, dropdown, oldText, campaignId);
+            dropdown.style.display = 'block';
+            dropdown.style.animation = 'none';
+            dropdown.offsetHeight;
+            dropdown.style.animation = '';
+
+            input.addEventListener('input', () => {
+                showTagSuggestions(input, dropdown, input.value.trim(), campaignId);
+                dropdown.style.display = 'block';
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const text = input.value.trim();
+                    if (text) {
+                        commitTag(campaignId, text, wrapper);
+                    }
+                } else if (e.key === 'Escape') {
+                    // Restore original tag on cancel
+                    campaign.tags.splice(index, 0, oldText);
+                    wrapper.remove();
+                    renderTagsForRow(campaignId);
+                }
+            });
+
+            const closeHandler = (e) => {
+                if (!wrapper.contains(e.target)) {
+                    // Commit what's there or restore
+                    const text = input.value.trim();
+                    if (text) {
+                        commitTag(campaignId, text, wrapper);
+                    } else {
+                        campaign.tags.splice(index, 0, oldText);
+                        wrapper.remove();
+                        renderTagsForRow(campaignId);
+                    }
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
+
+        function renderTagsForRow(campaignId) {
+            const container = document.getElementById(`tags-${campaignId}`);
+            if (!container) return;
+
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            container.innerHTML = '';
+
+            campaign.tags.forEach((tag, index) => {
+                const pill = document.createElement('div');
+                pill.className = 'campaign-tag';
+                pill.style.animationDelay = `${index * 0.05}s`;
+                pill.innerHTML = `<span>${tag}</span><span class="tag-x" onclick="event.stopPropagation(); removeTagFromCampaign(${campaignId}, ${index})">✕</span>`;
+                pill.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    editTagInRow(campaignId, index);
+                });
+                container.appendChild(pill);
+            });
+
+            container.appendChild(createAddBtn(campaignId));
+
+            // Row hue: green = safe (no tags), red = tagged
+            const row = document.getElementById(`campaign-${campaignId}`);
+            if (row) {
+                row.classList.remove('row-safe', 'row-tagged');
+                row.classList.add(campaign.tags.length > 0 ? 'row-tagged' : 'row-safe');
+            }
+        }
+
+        function createAddBtn(campaignId) {
+            const btn = document.createElement('div');
+            btn.className = 'tag-add-btn';
+            btn.textContent = '+';
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                startAddTag(campaignId);
+            };
+            return btn;
+        }
+
+        // Platform Stage Management
+        function setPlatformStage(platform, stageIndex) {
+            platformStages[platform] = stageIndex;
+
+            const container = document.getElementById(`${platform}Stages`);
+            const dots = container.querySelectorAll('.platform-stage-dot');
+
+            dots.forEach((dot, index) => {
+                dot.classList.remove('active', 'inactive');
+
+                if (index === 0) {
+                    // First dot is always "Not Activated" (red)
+                    dot.classList.add('inactive');
+                } else if (index <= stageIndex && stageIndex > 0) {
+                    // Active stages (blue)
+                    dot.classList.add('active');
+                }
+            });
+        }
+
+        // Initialize auto-suggest for all platforms
+        ['spotify', 'soundcloud', 'press'].forEach(platform => {
+            initAutoSuggest(platform);
+
+            document.getElementById(`${platform}Input`).addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addCampaign(platform);
+            });
+        });
+
+        // === DRAG & DROP ===
+        function setupDragEvents(row, campaignId) {
+            row.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', campaignId.toString());
+                e.dataTransfer.effectAllowed = 'move';
+                row.classList.add('dragging');
+            });
+            row.addEventListener('dragend', () => {
+                row.classList.remove('dragging');
+            });
+        }
+
+        function handleDockDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const dock = document.getElementById('featuredDock');
+            dock.classList.add('dock-drop-hover');
+        }
+
+        function handleDockDragLeave(e) {
+            const dock = document.getElementById('featuredDock');
+            dock.classList.remove('dock-drop-hover');
+        }
+
+        function handleDockDrop(e) {
+            e.preventDefault();
+            const dock = document.getElementById('featuredDock');
+            dock.classList.remove('dock-drop-hover');
+
+            const campaignId = parseInt(e.dataTransfer.getData('text/plain'));
+            if (!campaignId) return;
+
+            dockCampaign(campaignId);
+        }
+
+        // === DOCK MANAGEMENT ===
+        function dockCampaign(campaignId) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            dockedCampaignId = campaignId;
+
+            const dock = document.getElementById('featuredDock');
+            dock.classList.remove('dock-empty');
+            dock.classList.add('dock-filled');
+
+            const placeholder = dock.querySelector('.dock-placeholder');
+            const content = document.getElementById('dockContent');
+            placeholder.style.display = 'none';
+            content.style.display = 'flex';
+
+            updateDockDisplay();
+            updateAcceptedBranch();
+
+            // If stages are collapsed, expand them
+            const collapsible = document.getElementById('stagesCollapsible');
+            if (collapsible.classList.contains('collapsed')) {
+                toggleCampaignStages();
+            }
+        }
+
+        function undockCampaign() {
+            dockedCampaignId = null;
+            stopCountdownTick();
+
+            const dock = document.getElementById('featuredDock');
+            dock.classList.remove('dock-filled');
+            dock.classList.add('dock-empty');
+
+            const placeholder = dock.querySelector('.dock-placeholder');
+            const content = document.getElementById('dockContent');
+            placeholder.style.display = '';
+            content.style.display = 'none';
+
+            // Hide accepted branch
+            document.getElementById('acceptedBranch').style.display = 'none';
+        }
+
+        function updateDockDisplay() {
+            if (!dockedCampaignId) return;
+            const campaign = campaignsData.find(c => c.id === dockedCampaignId);
+            if (!campaign) return;
+
+            const platformColors = {
+                spotify: { bg: '#1DB954', name: 'Spotify' },
+                soundcloud: { bg: '#FF5500', name: 'SoundCloud' },
+                press: { bg: '#fafafa', name: 'Press' }
+            };
+            const color = platformColors[campaign.platform] || { bg: '#60a5fa', name: 'Unknown' };
+            const stageNames = ['Not Activated', 'Pitched', 'Accepted', 'Placed', 'Complete'];
+
+            document.getElementById('dockPlatformBar').style.background = color.bg;
+            document.getElementById('dockPlatformBar').style.boxShadow = `0 0 10px ${color.bg}44`;
+            document.getElementById('dockSong').textContent = campaign.songName;
+            document.getElementById('dockMeta').textContent = `${color.name} · ${campaign.campaignName}${campaign.amount ? ` - ${campaign.amount}` : ''}`;
+            document.getElementById('dockStageLabel').textContent = stageNames[campaign.stage] || 'Unknown';
+
+            // Show tags in dock
+            const dockTags = document.getElementById('dockTags');
+            dockTags.innerHTML = '';
+            if (campaign.tags && campaign.tags.length > 0) {
+                campaign.tags.forEach(tag => {
+                    const pill = document.createElement('span');
+                    pill.className = 'campaign-tag';
+                    pill.style.margin = '0';
+                    pill.innerHTML = `<span>${tag}</span>`;
+                    dockTags.appendChild(pill);
+                });
+            }
+            if (campaign.blueTags && campaign.blueTags.length > 0) {
+                campaign.blueTags.forEach(tag => {
+                    const pill = document.createElement('span');
+                    pill.className = 'campaign-tag-blue';
+                    pill.style.margin = '0';
+                    pill.innerHTML = `<span>${tag}</span>`;
+                    dockTags.appendChild(pill);
+                });
+            }
+        }
+
+        // === ACCEPTED BRANCH LOGIC ===
+        function updateAcceptedBranch() {
+            const branch = document.getElementById('acceptedBranch');
+            if (!dockedCampaignId) {
+                branch.style.display = 'none';
+                return;
+            }
+
+            const campaign = campaignsData.find(c => c.id === dockedCampaignId);
+            if (!campaign || campaign.stage < 2) {
+                branch.style.display = 'none';
+                stopCountdownTick();
+                return;
+            }
+
+            branch.style.display = '';
+
+            // Update sub-dots
+            const waitingDot = document.getElementById('waitingDot');
+            const releaseDayDot = document.getElementById('releaseDayDot');
+            const dateBadge = document.getElementById('releaseDateBadge');
+            const countdown = document.getElementById('branchCountdown');
+
+            if (campaign.acceptedSubStage === 0) {
+                // Waiting
+                waitingDot.classList.add('active');
+                releaseDayDot.classList.remove('active');
+                dateBadge.style.display = 'none';
+                countdown.style.display = 'none';
+                stopCountdownTick();
+            } else {
+                // Release Day active
+                waitingDot.classList.remove('active');
+                releaseDayDot.classList.add('active');
+
+                if (campaign.countdownStartDate) {
+                    const d = new Date(campaign.countdownStartDate);
+                    dateBadge.textContent = `${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`;
+                    dateBadge.style.display = '';
+                    countdown.style.display = '';
+                    updateCountdownDisplay();
+                    startCountdownTick();
+                }
+            }
+        }
+
+        function setAcceptedSubStage(subStage) {
+            if (!dockedCampaignId) return;
+            const campaign = campaignsData.find(c => c.id === dockedCampaignId);
+            if (!campaign) return;
+
+            campaign.acceptedSubStage = subStage;
+
+            if (subStage === 1 && !campaign.countdownStartDate) {
+                // Snap current date as countdown start
+                campaign.countdownStartDate = new Date().toISOString();
+            } else if (subStage === 0) {
+                campaign.countdownStartDate = null;
+            }
+
+            updateAcceptedBranch();
+        }
+
+        function editReleaseDate() {
+            const input = document.getElementById('releaseDateInput');
+            const badge = document.getElementById('releaseDateBadge');
+            badge.style.display = 'none';
+            input.style.display = '';
+            input.focus();
+        }
+
+        function applyReleaseDate(value) {
+            if (!dockedCampaignId || !value) return;
+            const campaign = campaignsData.find(c => c.id === dockedCampaignId);
+            if (!campaign) return;
+
+            campaign.countdownStartDate = new Date(value).toISOString();
+
+            const input = document.getElementById('releaseDateInput');
+            input.style.display = 'none';
+            updateAcceptedBranch();
+        }
+
+        function startCountdownTick() {
+            stopCountdownTick();
+            countdownInterval = setInterval(updateCountdownDisplay, 60000);
+        }
+
+        function stopCountdownTick() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }
+
+        function updateCountdownDisplay() {
+            if (!dockedCampaignId) return;
+            const campaign = campaignsData.find(c => c.id === dockedCampaignId);
+            if (!campaign || !campaign.countdownStartDate) return;
+
+            const endDate = new Date(campaign.countdownStartDate).getTime() + (7 * 24 * 60 * 60 * 1000);
+            const remaining = endDate - Date.now();
+            const ticker = document.getElementById('countdownTicker');
+
+            if (remaining <= 0) {
+                ticker.textContent = '0';
+                ticker.classList.add('countdown-zero');
+                ticker.style.cursor = 'pointer';
+                ticker.onclick = () => {
+                    // Click to dismiss — reset sub-stage
+                    setAcceptedSubStage(0);
+                    ticker.classList.remove('countdown-zero');
+                    ticker.style.cursor = '';
+                    ticker.onclick = null;
+                };
+                stopCountdownTick();
+                return;
+            }
+
+            ticker.classList.remove('countdown-zero');
+            ticker.style.cursor = '';
+            ticker.onclick = null;
+
+            const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
+            const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+            const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+            ticker.textContent = `${days}d ${hours}h ${minutes}m`;
+        }
+
+        // === BLUE TAG SYSTEM ===
+        function startAddBlueTag(campaignId) {
+            const container = document.getElementById(`blueTags-${campaignId}`);
+            if (!container || container.querySelector('.tag-input-wrapper')) return;
+
+            const addBtn = container.querySelector('.tag-add-btn-blue');
+            if (addBtn) {
+                addBtn.style.animation = 'tagAddPulse 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                addBtn.addEventListener('animationend', () => { addBtn.style.animation = ''; }, { once: true });
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'tag-input-wrapper';
+
+            const input = document.createElement('input');
+            input.className = 'tag-input-blue';
+            input.type = 'text';
+            input.placeholder = 'Tag...';
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'tag-suggest-dropdown-blue';
+            dropdown.style.display = 'none';
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(dropdown);
+
+            container.insertBefore(wrapper, addBtn);
+            input.focus();
+
+            showBlueTagSuggestions(input, dropdown, '', campaignId);
+            dropdown.style.display = 'block';
+            dropdown.style.animation = 'none';
+            dropdown.offsetHeight;
+            dropdown.style.animation = '';
+
+            input.addEventListener('input', () => {
+                showBlueTagSuggestions(input, dropdown, input.value.trim(), campaignId);
+                dropdown.style.display = 'block';
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const text = input.value.trim();
+                    if (text) commitBlueTag(campaignId, text, wrapper);
+                } else if (e.key === 'Escape') {
+                    wrapper.remove();
+                }
+            });
+
+            const closeHandler = (e) => {
+                if (!wrapper.contains(e.target)) {
+                    wrapper.remove();
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 10);
+        }
+
+        function showBlueTagSuggestions(input, dropdown, query, campaignId) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            const existingTags = campaign ? (campaign.blueTags || []) : [];
+
+            dropdown.innerHTML = '';
+
+            if (query.length > 0) {
+                const customItem = document.createElement('div');
+                customItem.className = 'tag-suggest-item-blue add-custom-tag';
+                customItem.textContent = `+ "${query}"`;
+                customItem.onclick = (e) => {
+                    e.stopPropagation();
+                    commitBlueTag(campaignId, query, input.closest('.tag-input-wrapper'));
+                };
+                dropdown.appendChild(customItem);
+            }
+
+            const filtered = blueTagSuggestions.filter(s => {
+                const matchesQuery = query.length === 0 || s.toLowerCase().includes(query.toLowerCase());
+                const notAlreadyUsed = !existingTags.includes(s);
+                return matchesQuery && notAlreadyUsed;
+            });
+
+            filtered.forEach(suggestion => {
+                const item = document.createElement('div');
+                item.className = 'tag-suggest-item-blue';
+                item.textContent = suggestion;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    commitBlueTag(campaignId, suggestion, input.closest('.tag-input-wrapper'));
+                };
+                dropdown.appendChild(item);
+            });
+
+            if (dropdown.children.length === 0) dropdown.style.display = 'none';
+        }
+
+        function commitBlueTag(campaignId, text, wrapper) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            // Max 1 blue tag — replace
+            campaign.blueTags = [text];
+
+            if (!blueTagSuggestions.includes(text)) blueTagSuggestions.push(text);
+            if (wrapper) wrapper.remove();
+            renderBlueTagsForRow(campaignId);
+
+            // Update dock if this campaign is docked
+            if (dockedCampaignId === campaignId) updateDockDisplay();
+        }
+
+        function removeBlueTag(campaignId) {
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            const container = document.getElementById(`blueTags-${campaignId}`);
+            const pill = container ? container.querySelector('.campaign-tag-blue') : null;
+
+            if (pill) {
+                pill.classList.add('tag-removing');
+                setTimeout(() => {
+                    campaign.blueTags = [];
+                    renderBlueTagsForRow(campaignId);
+                    if (dockedCampaignId === campaignId) updateDockDisplay();
+                }, 250);
+            } else {
+                campaign.blueTags = [];
+                renderBlueTagsForRow(campaignId);
+                if (dockedCampaignId === campaignId) updateDockDisplay();
+            }
+        }
+
+        function renderBlueTagsForRow(campaignId) {
+            const container = document.getElementById(`blueTags-${campaignId}`);
+            if (!container) return;
+
+            const campaign = campaignsData.find(c => c.id === campaignId);
+            if (!campaign) return;
+
+            container.innerHTML = '';
+
+            (campaign.blueTags || []).forEach((tag) => {
+                const pill = document.createElement('div');
+                pill.className = 'campaign-tag-blue';
+                pill.innerHTML = `<span>${tag}</span><span class="tag-x" onclick="event.stopPropagation(); removeBlueTag(${campaignId})">✕</span>`;
+                container.appendChild(pill);
+            });
+
+            container.appendChild(createBlueAddBtn(campaignId));
+        }
+
+        function createBlueAddBtn(campaignId) {
+            const btn = document.createElement('div');
+            btn.className = 'tag-add-btn-blue';
+            btn.textContent = '+';
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                startAddBlueTag(campaignId);
+            };
+            return btn;
+        }
+
+        // Pre-load 4 demo campaigns
+        const demoCampaigns = [
+            { id: 1001, songName: 'Midnight Drive', campaignName: 'Spotify Playlisting Campaign (Third Party) - 25K', amount: '$590', platform: 'spotify', stage: 3, tags: ['Priority'], blueTags: ['VIP'], acceptedSubStage: 0, countdownStartDate: null },
+            { id: 1002, songName: 'Neon Skyline', campaignName: 'Spotify Playlisting Campaign (Third Party) - 50K', amount: '$890', platform: 'spotify', stage: 1, tags: [], blueTags: ['Rush'], acceptedSubStage: 0, countdownStartDate: null },
+            { id: 1003, songName: 'Midnight Drive', campaignName: 'SoundCloud Repost Campaign - 8K', amount: '$240', platform: 'soundcloud', stage: 2, tags: ['Follow Up'], blueTags: [], acceptedSubStage: 0, countdownStartDate: null },
+            { id: 1004, songName: 'Neon Skyline', campaignName: 'Press Release Campaign - 5 Articles (In-Network)', amount: '$300', platform: 'press', stage: 0, tags: [], blueTags: [], acceptedSubStage: 0, countdownStartDate: null }
+        ];
+
+        demoCampaigns.forEach(c => restoreCampaign(c));
+
+        // Set platform stages to reflect the demo data
+        setPlatformStage('spotify', 2);
+        setPlatformStage('soundcloud', 1);
+        setPlatformStage('press', 0);
+    </script>
+</body>
+
+</html>

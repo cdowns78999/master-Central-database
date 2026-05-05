@@ -1,0 +1,70 @@
+// ══ Step Overlay System ══════════════════════════════
+const SO_STEPS = [
+  { num:'01', title:'Scout Discovery',     desc:'Miles hears you perform live in VRChat',              body:'Miles hears hundreds of performers. When a voice stops him mid-scroll, he flags it. That\'s what happened with you.' },
+  { num:'02', title:'Direct Outreach',     desc:'You receive this personal invite link',               body:'This link was generated specifically for you. Not a mass invite, not an algorithm — a direct conversation.' },
+  { num:'03', title:'First Conversation',  desc:'One call — no contracts, just vibes',                 body:'One call covers your goals, your sound, and whether the fit makes sense. No pressure, no contracts yet.' },
+  { num:'04', title:'Song Selection',      desc:'You pick your best existing track',                   body:'Pick any existing track you love — or the one that best shows your range. That\'s the starting point.' },
+  { num:'05', title:'Production Begins',   desc:'Miles builds the full track from scratch in Ableton', body:'Miles builds the full instrumental from scratch in Ableton — tempo, key, and vibe matched to your voice.' },
+  { num:'06', title:'You Send Your Vocal', desc:'Clean WAV, any mic, quiet room',                     body:'Record in any quiet space, any mic. Export as WAV, no effects. Clean source is all that\'s needed.' },
+  { num:'07', title:'Mix & Master',        desc:'Final mix, mastered and ready for distribution',     body:'Vocal sits in the mix, balanced across every platform and speaker type. Mastered to streaming loudness standards.' },
+  { num:'08', title:'Distribution',        desc:'Pushed to Spotify, Apple Music, 40+ platforms',      body:'DistroKid delivers your track to every streaming platform within 1–5 days. Miles handles the submission — you approve the details.' },
+  { num:'09', title:'Revenue Share',       desc:'50/50 split, every dollar, automated payout',        body:'Every dollar split 50/50 automatically. Paid to PayPal or bank on the 15th of each month. No invoices needed.' },
+];
+
+let soIdx = 0;
+let soIsOpen = false;
+
+function soRender(idx) {
+  const s = SO_STEPS[idx];
+  const els = ['soCounter','soNum','soTitle','soDesc','soBody'];
+  const vals = [
+    'STEP ' + (idx+1) + ' OF ' + SO_STEPS.length,
+    s.num, s.title, s.desc, s.body
+  ];
+  els.forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = vals[i];
+  });
+  document.querySelectorAll('.so-dot').forEach((d,i) => {
+    d.classList.toggle('active', i === idx);
+  });
+}
+
+function soOpenOverlay() {
+  soIdx = 0;
+  soRender(0);
+  const ov = document.getElementById('step-overlay');
+  if (ov) { ov.classList.add('active'); soIsOpen = true; }
+}
+
+function soCloseOverlay() {
+  const ov = document.getElementById('step-overlay');
+  if (ov) { ov.classList.remove('active'); soIsOpen = false; }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const prev  = document.getElementById('soPrev');
+  const next  = document.getElementById('soNext');
+  const close = document.getElementById('soClose');
+  const dots  = document.querySelectorAll('.so-dot');
+
+  if (prev) prev.addEventListener('click', () => {
+    soIdx = (soIdx - 1 + SO_STEPS.length) % SO_STEPS.length;
+    soRender(soIdx);
+  });
+  if (next) next.addEventListener('click', () => {
+    soIdx = (soIdx + 1) % SO_STEPS.length;
+    soRender(soIdx);
+  });
+  if (close) close.addEventListener('click', soCloseOverlay);
+
+  dots.forEach((d, i) => d.addEventListener('click', () => { soIdx = i; soRender(i); }));
+
+  document.addEventListener('keydown', e => {
+    if (!soIsOpen) return;
+    if (e.key === 'ArrowRight') { soIdx = (soIdx+1) % SO_STEPS.length; soRender(soIdx); }
+    if (e.key === 'ArrowLeft')  { soIdx = (soIdx-1+SO_STEPS.length) % SO_STEPS.length; soRender(soIdx); }
+    if (e.key === 'Escape') soCloseOverlay();
+  });
+});
+// ══ End Step Overlay System ══════════════════════════

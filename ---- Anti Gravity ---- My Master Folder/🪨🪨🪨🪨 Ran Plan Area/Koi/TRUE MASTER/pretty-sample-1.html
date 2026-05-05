@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KOI // LOCKER — Pretty Sample 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background:
+      radial-gradient(ellipse at center, #11203a 0%, #0a0e1a 60%, #05070d 100%);
+    color: #e6f1ff;
+    min-height: 100vh;
+    padding: 24px;
+    overflow-x: hidden;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #1f2c4a;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+  .back-link {
+    color: #6fb6ff;
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+  }
+  .back-link:hover { opacity: 1; }
+
+  .tab-strip {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+  }
+  .tab-strip li {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #8aa1c6;
+    padding-bottom: 6px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-strip li.active {
+    color: #00e5ff;
+    border-bottom-color: #00e5ff;
+    text-shadow: 0 0 8px rgba(0,229,255,0.6);
+  }
+  .tab-strip li:hover { color: #fff; }
+
+  .wordmark {
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(0,229,255,0.5);
+  }
+  .wordmark .accent { color: #00e5ff; }
+
+  /* ===== MAIN GRID ===== */
+  .locker-grid {
+    display: grid;
+    grid-template-columns: 30% 1fr;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ===== LEFT COLUMN — STACK ===== */
+  .left-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .locker-card {
+    position: relative;
+    background: linear-gradient(160deg, #1a2647 0%, #0f1832 100%);
+    border: 2px solid #2a3a66;
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    overflow: hidden;
+  }
+
+  .locker-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 2px,
+      transparent 2px,
+      transparent 6px
+    );
+    pointer-events: none;
+  }
+
+  .locker-card:hover {
+    transform: translateY(-4px);
+    border-color: #4d6db5;
+    box-shadow:
+      0 8px 24px rgba(77,109,181,0.4),
+      0 0 30px rgba(77,109,181,0.25);
+  }
+
+  .locker-card.rare:hover {
+    border-color: #2196f3;
+    box-shadow:
+      0 8px 24px rgba(33,150,243,0.5),
+      0 0 30px rgba(33,150,243,0.35);
+  }
+
+  .card-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    background: #0a0e1a;
+  }
+  .card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .rarity-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 3px;
+    background: rgba(0,0,0,0.6);
+    color: #aab8d4;
+    border: 1px solid #2a3a66;
+    z-index: 2;
+  }
+  .rarity-badge.rare { color: #66c2ff; border-color: #2196f3; }
+  .rarity-badge.uncommon { color: #66ffaa; border-color: #2eaa6e; }
+  .rarity-badge.legendary {
+    color: #00e5ff;
+    border-color: #00e5ff;
+    background: rgba(0,229,255,0.15);
+    text-shadow: 0 0 6px rgba(0,229,255,0.8);
+  }
+
+  .card-name {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .card-genre {
+    font-size: 10px;
+    color: #8aa1c6;
+    letter-spacing: 0.5px;
+  }
+  .card-price {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #ffd54a;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-price::before {
+    content: '◆';
+    color: #00e5ff;
+    font-size: 10px;
+  }
+
+  /* ===== RIGHT — FEATURED HERO ===== */
+  .featured {
+    position: relative;
+    background: linear-gradient(160deg, #14213f 0%, #0a0e1a 100%);
+    border: 3px solid #00e5ff;
+    border-radius: 12px;
+    padding: 30px;
+    overflow: hidden;
+    box-shadow:
+      0 0 40px rgba(0,229,255,0.35),
+      0 0 80px rgba(0,229,255,0.2),
+      inset 0 0 60px rgba(0,229,255,0.08);
+    display: flex;
+    flex-direction: column;
+    min-height: 700px;
+  }
+
+  /* glow halo behind hero image */
+  .featured::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0,229,255,0.25) 0%, transparent 60%);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* diagonal hatching gloss overlay */
+  .featured::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.025) 0px,
+      rgba(255,255,255,0.025) 2px,
+      transparent 2px,
+      transparent 8px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .featured-header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .featured-badge {
+    font-size: 12px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    padding: 6px 14px;
+    background: rgba(0,229,255,0.2);
+    color: #00e5ff;
+    border: 1px solid #00e5ff;
+    border-radius: 4px;
+    text-shadow: 0 0 8px rgba(0,229,255,0.8);
+    box-shadow: 0 0 14px rgba(0,229,255,0.4);
+  }
+
+  .featured-meta-tag {
+    font-size: 11px;
+    color: #8aa1c6;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .featured-body {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 30px;
+    flex: 1;
+  }
+
+  .featured-img-wrap {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid rgba(0,229,255,0.4);
+    box-shadow:
+      0 0 30px rgba(0,229,255,0.3),
+      inset 0 0 30px rgba(0,0,0,0.5);
+  }
+  .featured-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .featured-img-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(0,229,255,0.04) 0px,
+      rgba(0,229,255,0.04) 2px,
+      transparent 2px,
+      transparent 10px
+    );
+    pointer-events: none;
+  }
+
+  .featured-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .featured-name {
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    color: #fff;
+    text-shadow:
+      0 0 20px rgba(0,229,255,0.8),
+      0 0 40px rgba(0,229,255,0.4);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .featured-genre {
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: #00e5ff;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    opacity: 0.9;
+  }
+
+  .stat-row {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .stat {
+    border-left: 3px solid #00e5ff;
+    padding: 6px 0 6px 14px;
+  }
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #8aa1c6;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 18px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .stat-value.big {
+    font-size: 28px;
+    color: #00e5ff;
+    text-shadow: 0 0 10px rgba(0,229,255,0.6);
+  }
+
+  .equip-btn {
+    margin-top: auto;
+    padding: 16px 32px;
+    background: linear-gradient(180deg, #00e5ff 0%, #00b8d4 100%);
+    color: #0a0e1a;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow:
+      0 4px 20px rgba(0,229,255,0.5),
+      inset 0 -4px 0 rgba(0,0,0,0.2);
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .equip-btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 6px 28px rgba(0,229,255,0.7),
+      inset 0 -4px 0 rgba(0,0,0,0.2);
+  }
+  .equip-btn:active { transform: translateY(0); }
+
+  .equip-btn.flash {
+    animation: equipFlash 0.5s ease-out;
+  }
+  @keyframes equipFlash {
+    0%   { background: linear-gradient(180deg, #00e5ff 0%, #00b8d4 100%); }
+    30%  { background: #fff; box-shadow: 0 0 60px rgba(255,255,255,0.95), 0 0 100px rgba(0,229,255,0.8); }
+    100% { background: linear-gradient(180deg, #00e5ff 0%, #00b8d4 100%); }
+  }
+
+  /* legendary card pulse halo */
+  @keyframes legendPulse {
+    0%, 100% { box-shadow: 0 0 40px rgba(0,229,255,0.35), 0 0 80px rgba(0,229,255,0.2), inset 0 0 60px rgba(0,229,255,0.08); }
+    50%      { box-shadow: 0 0 55px rgba(0,229,255,0.55), 0 0 110px rgba(0,229,255,0.3), inset 0 0 80px rgba(0,229,255,0.12); }
+  }
+  .featured { animation: legendPulse 4s ease-in-out infinite; }
+
+  /* responsive */
+  @media (max-width: 900px) {
+    .locker-grid { grid-template-columns: 1fr; }
+    .featured-body { grid-template-columns: 1fr; }
+    .featured-name { font-size: 44px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="pretty.html" class="back-link">&larr; Back to PRETTY hub</a>
+    <ul class="tab-strip">
+      <li class="active">Featured</li>
+      <li>Daily</li>
+      <li>Battle Pass</li>
+      <li>V-Bucks</li>
+    </ul>
+    <div class="wordmark">KOI <span class="accent">//</span> LOCKER</div>
+  </div>
+
+  <div class="locker-grid">
+
+    <!-- LEFT COLUMN — small stacked cards -->
+    <div class="left-stack">
+
+      <div class="locker-card rare">
+        <div class="card-img-wrap">
+          <span class="rarity-badge rare">RARE</span>
+          <img src="https://picsum.photos/seed/elijah/400/400" alt="Elijah Osbourne">
+        </div>
+        <div class="card-name">Elijah Osbourne</div>
+        <div class="card-genre">Indie Folk &middot; Portland</div>
+        <div class="card-price">185K listeners</div>
+      </div>
+
+      <div class="locker-card">
+        <div class="card-img-wrap">
+          <span class="rarity-badge uncommon">UNCOMMON</span>
+          <img src="https://picsum.photos/seed/marlowe/400/400" alt="Marlowe Vance">
+        </div>
+        <div class="card-name">Marlowe Vance</div>
+        <div class="card-genre">Synthwave &middot; Brooklyn</div>
+        <div class="card-price">62K listeners</div>
+      </div>
+
+      <div class="locker-card">
+        <div class="card-img-wrap">
+          <span class="rarity-badge">COMMON</span>
+          <img src="https://picsum.photos/seed/saoirse/400/400" alt="Saoirse Lane">
+        </div>
+        <div class="card-name">Saoirse Lane</div>
+        <div class="card-genre">Dream Pop &middot; Dublin</div>
+        <div class="card-price">28K listeners</div>
+      </div>
+
+      <div class="locker-card rare">
+        <div class="card-img-wrap">
+          <span class="rarity-badge rare">RARE</span>
+          <img src="https://picsum.photos/seed/jasperkho/400/400" alt="Jasper Khoury">
+        </div>
+        <div class="card-name">Jasper Khoury</div>
+        <div class="card-genre">Neo-Soul &middot; Atlanta</div>
+        <div class="card-price">142K listeners</div>
+      </div>
+
+      <div class="locker-card">
+        <div class="card-img-wrap">
+          <span class="rarity-badge uncommon">UNCOMMON</span>
+          <img src="https://picsum.photos/seed/nikoarc/400/400" alt="Niko Arc">
+        </div>
+        <div class="card-name">Niko Arc</div>
+        <div class="card-genre">Lo-Fi Hip-Hop &middot; Tokyo</div>
+        <div class="card-price">94K listeners</div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT — featured hero -->
+    <div class="featured" id="featured">
+      <div class="featured-header">
+        <div class="featured-badge">LEGENDARY</div>
+        <div class="featured-meta-tag">Featured &middot; Item No. 001</div>
+      </div>
+
+      <div class="featured-body">
+        <div class="featured-img-wrap">
+          <img src="https://picsum.photos/seed/koi/600/600" alt="KOI">
+        </div>
+
+        <div class="featured-info">
+          <div>
+            <div class="featured-name">KOI</div>
+            <div class="featured-genre">Future R&amp;B / Electronic Pop</div>
+
+            <div class="stat-row">
+              <div class="stat">
+                <div class="stat-label">Monthly Listeners</div>
+                <div class="stat-value big">2,400,000</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Signature Track</div>
+                <div class="stat-value">"Velvet Hours"</div>
+              </div>
+              <div class="stat">
+                <div class="stat-label">Location</div>
+                <div class="stat-value">Los Angeles</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="equip-btn" id="equipBtn">Equip</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  document.getElementById('equipBtn').addEventListener('click', function () {
+    var btn = this;
+    btn.classList.remove('flash');
+    // force reflow so animation re-triggers cleanly
+    void btn.offsetWidth;
+    btn.classList.add('flash');
+    setTimeout(function () { btn.classList.remove('flash'); }, 520);
+  });
+
+  // tab strip toggle (purely decorative)
+  document.querySelectorAll('.tab-strip li').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.tab-strip li').forEach(function (t) {
+        t.classList.remove('active');
+      });
+      tab.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

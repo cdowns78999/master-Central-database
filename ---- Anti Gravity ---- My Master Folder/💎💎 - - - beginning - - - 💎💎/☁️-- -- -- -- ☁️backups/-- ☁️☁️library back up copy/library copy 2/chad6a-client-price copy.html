@@ -1,0 +1,1998 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progressive Data Visualization</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&amp;family=Inter:wght@300;400;500&amp;display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0077be, #004d7a);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Particle Background */
+        ` #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            gram and find pointer-events: none;
+        }
+
+        /* Main Container */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Glassmorphism Card Styles */
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
+        }
+
+        #card4 {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        #card4 h2 {
+            display: none;
+        }
+
+        .card h2 {
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Progressive Form Styles */
+        .input-group {
+            margin-bottom: 1rem;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .input-group.active {
+            display: block;
+        }
+
+        .input-group label {
+            display: block;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4fc3f7;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Results Display */
+        #results-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            color: #ffffff;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Go Button */
+        .go-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .go-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .go-button:active {
+            transform: translateY(0);
+        }
+
+        .go-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 3D Asset Grid for Visualization */
+        #professional-visualization {
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 1140px;
+            min-height: 600px;
+            margin: -10px auto 40px;
+            padding: 60px 20px 110px;
+        }
+
+        #professional-visualization.active {
+            display: flex;
+        }
+
+        /* Purchase Card - High Dimension */
+        .asset-card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            z-index: 10;
+            overflow: visible;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            min-height: 550px;
+            max-width: 400px;
+            margin: 0 auto;
+            /* Transition only for when mouse leaves or for non-transform properties */
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease, min-height 0.5s ease;
+            will-change: transform;
+        }
+
+        #test-fill-4-btn {
+            display: none !important;
+        }
+        }
+
+        .asset-card:hover {
+            border-color: var(--ocean-light, #7FDBFF);
+            box-shadow:
+                0 45px 90px rgba(0, 53, 102, 0.45),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            transform: perspective(1000px) rotateX(-5deg) rotateY(5deg) scale(1.05);
+        }
+
+        .card-inner {
+            transform: translateZ(20px);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .tag {
+            font-size: 0.6rem;
+            font-weight: 500;
+            color: var(--ocean-light, #7FDBFF);
+            background: rgba(127, 219, 255, 0.08);
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+            letter-spacing: 0.08rem;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .asset-title {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin: 20px 0 25px 0;
+            line-height: 1.3;
+            letter-spacing: 0.05rem;
+            color: #ffffff;
+        }
+
+        /* Main field styling */
+        .asset-card.is-main {
+            background: var(--card-surface, linear-gradient(135deg, rgba(79, 195, 247, 0.15) 0%, rgba(79, 195, 247, 0.05) 100%));
+            border: 2px solid rgba(79, 195, 247, 0.4);
+            transform: scale(1.05);
+        }
+
+        .asset-card.is-main .asset-title {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: #ffffff;
+            /* Brightened to white */
+        }
+
+        .asset-card.is-main .cost {
+            font-size: 1.7rem;
+            font-weight: 600;
+            color: var(--ocean-light, #7FDBFF);
+        }
+
+        /* Sub-main field styling */
+        .asset-card.is-sub-main {
+            background: var(--card-surface, linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(102, 126, 234, 0.04) 100%));
+            border: 1.5px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .asset-card.is-sub-main .asset-title {
+            font-size: 1.4rem;
+            font-weight: 350;
+            color: #a5b4fc;
+        }
+
+        .asset-card.is-sub-main .cost {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #a5b4fc;
+        }
+
+        /* Grouped field styling */
+        .asset-card.is-grouped {
+            background: var(--card-surface, linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(168, 85, 247, 0.03) 100%));
+            border: 1px solid rgba(168, 85, 247, 0.25);
+        }
+
+        .asset-card.is-grouped .asset-title {
+            font-size: 1.3rem;
+            font-weight: 300;
+            color: #c4b5fd;
+        }
+
+        .asset-card.is-grouped .cost {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: #c4b5fd;
+        }
+
+        .asset-card .data-point {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .asset-card .data-point:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .asset-card .pt-label {
+            color: rgba(79, 195, 247, 0.6);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15rem;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .asset-card .pt-value {
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 400;
+            font-family: 'Inter', sans-serif;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+
+
+        .data-stack {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 20px;
+            margin-bottom: 30px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+
+
+        .price-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 10px;
+            width: 100%;
+            pointer-events: all;
+        }
+
+        .cost {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            display: inline-block;
+            min-width: 80px;
+        }
+
+        .cost:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.6);
+        }
+
+        .buy-action {
+            background: linear-gradient(135deg, #7FDBFF 0%, #4FC3F7 100%);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(127, 219, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            top: -2px;
+        }
+
+        .asset-card:hover .buy-action {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px) perspective(1000px) rotateX(15deg) scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) perspective(1000px) rotateX(0deg) scale(1);
+            }
+        }
+
+        /* Code Display */
+        .code-display {
+            background: #1e1e1e;
+            border-radius: 10px;
+            padding: 1.5rem;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .code-display.active {
+            display: block;
+        }
+
+        /* Reveal Code Button */
+        .reveal-code-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            margin: 15px auto 0 auto;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            max-width: 200px;
+        }
+
+        .reveal-code-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
+            background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+        }
+
+        .reveal-code-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Card Code Display */
+        .card-code-display {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 20px;
+            color: #e6edf3;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            display: none;
+            animation: fadeIn 0.5s ease;
+            max-height: 500px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .card-code-display.active {
+            display: block;
+        }
+
+        .card-code-display::before {
+            content: "Card Code";
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #238636;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Copy Button */
+        .copy-code-btn {
+            position: absolute;
+            top: 10px;
+            right: 85px;
+            background: #0969da;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-code-btn:hover {
+            background: #0550ae;
+        }
+
+        .copy-code-btn.copied {
+            background: #1a7f37;
+        }
+
+        /* Syntax Highlighting */
+        .keyword {
+            color: #569cd6;
+        }
+
+        .function {
+            color: #dcdcaa;
+        }
+
+        .string {
+            color: #ce9178;
+        }
+
+        .comment {
+            color: #6a9955;
+        }
+
+        .number {
+            color: #b5cea8;
+        }
+
+        .variable {
+            color: #9cdcfe;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .professional-middle {
+                grid-template-columns: 1fr;
+            }
+
+            .professional-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .badges {
+                justify-content: center;
+            }
+        }
+
+        /* Progress Indicator */
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: #4fc3f7;
+            transform: scale(1.3);
+        }
+
+        .progress-dot.completed {
+            background: #66bb6a;
+        }
+
+        /* Hierarchical Dropdown Styles */
+        .hierarchical-dropdown {
+            display: none;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hierarchical-dropdown.active {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+        }
+
+        .dropdown-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .dropdown-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            font-weight: 400;
+            margin-bottom: 0.3rem;
+        }
+
+        .service-select,
+        .type-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .service-select:focus,
+        .type-select:focus {
+            outline: none;
+            border-color: #4fc3f7;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+        }
+
+        .service-select option,
+        .type-select option {
+            background: #004d7a;
+            color: #ffffff;
+            padding: 0.5rem;
+        }
+
+        .service-select:disabled,
+        .type-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .selection-summary {
+            background: rgba(79, 195, 247, 0.1);
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.9);
+            display: none;
+        }
+
+        .selection-summary.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particles-canvas"></canvas>
+
+    <div class="main-container">
+        <!-- Card 1: Progressive Input Form -->
+        <div class="card" id="card1">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">🎨 Artist Information</h2>
+                <button type="button" id="test-fill-btn"
+                    style="background: #4fc3f7; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.9rem; cursor: pointer;">Test</button>
+                <button type="button" id="test-fill-4-btn"
+                    style="background: #28a745; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.9rem; cursor: pointer; margin-left: 5px;">Test
+                    4 Orders</button>
+            </div>
+            <div class="progress-indicator">
+                <div class="progress-dot active" data-step="1"></div>
+                <div class="progress-dot" data-step="2"></div>
+                <div class="progress-dot" data-step="3"></div>
+                <div class="progress-dot" data-step="4"></div>
+                <div class="progress-dot" data-step="5"></div>
+            </div>
+
+            <div class="input-group active" id="input-group-1">
+                <input type="text" id="input1" placeholder="Enter song name or release" maxlength="50">
+            </div>
+
+            <div class="input-group" id="input-group-2">
+                <label>Artist IDs (up to 3 digits or Spotify links)</label>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <div style="flex: 1;">
+                        <label for="input2-1" style="font-size: 0.85rem; opacity: 0.8;">ID 1</label>
+                        <input type="text" id="input2-1" placeholder="Artist ID or link" maxlength="100">
+                    </div>
+                    <div style="flex: 1; visibility: hidden;" id="artist-id-2-group">
+                        <label for="input2-2" style="font-size: 0.85rem; opacity: 0.8;">ID 2</label>
+                        <input type="text" id="input2-2" placeholder="Artist ID or link" maxlength="100">
+                    </div>
+                    <div style="flex: 1; visibility: hidden;" id="artist-id-3-group">
+                        <label for="input2-3" style="font-size: 0.85rem; opacity: 0.8;">ID 3</label>
+                        <input type="text" id="input2-3" placeholder="Artist ID or link" maxlength="100">
+                    </div>
+                    <!-- Test 4 Orders button removed -->
+                </div>
+            </div>
+
+            <div class="input-group" id="input-group-3">
+                <label for="input3">Order</label>
+
+                <div id="order-clusters">
+                    <div class="order-cluster" data-cluster-id="1">
+                        <div class="hierarchical-dropdown" id="order-dropdown">
+                            <div class="dropdown-group" style="flex: 1;">
+                                <label class="dropdown-label">Service Category</label>
+                                <select class="service-select" id="service-category-1">
+                                    <option value="">Select Service...</option>
+                                    <option value="spotify">Spotify Campaign</option>
+                                    <option value="press-in">In‑Network Press</option>
+                                    <option value="press-standard">Standard Press</option>
+                                    <option value="press-premium">Premium Press</option>
+                                    <option value="youtube">YouTube Music</option>
+                                    <option value="soundcloud">SoundCloud</option>
+                                    <option value="subscription">Subscription Plan</option>
+                                    <option value="other">Other / Custom</option>
+                                </select>
+                            </div>
+                            <div class="dropdown-group" style="flex: 1; visibility: hidden;" id="service-type-group-1">
+                                <label class="dropdown-label">Service Type</label>
+                                <select class="type-select" id="service-type-1">
+                                    <option value="">Select Type...</option>
+                                </select>
+                            </div>
+                            <div class="dropdown-group" style="flex: 1; display: none;" id="custom-price-group-1">
+                                <label class="dropdown-label">Custom Price ($)</label>
+                                <input type="text" class="custom-price-input" id="custom-price-1"
+                                    placeholder="e.g. 50.00"
+                                    style="padding: 0.75rem; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #ffffff; width: 100%;">
+                            </div>
+                            <div class="dropdown-group" style="flex: 1; visibility: hidden;" id="selected-group-1">
+                                <label class="dropdown-label">Selected</label>
+                                <div class="selection-summary" id="selection-summary-1"
+                                    style="padding: 0.5rem; min-height: 38px; display: flex; align-items: center;">
+                                    <span id="selected-service-1">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="input3" placeholder="Order details" maxlength="20">
+            </div>
+
+            <div class="input-group" id="input-group-4">
+                <label for="input4">Discount</label>
+                <input type="text" id="input4" placeholder="Enter discount" maxlength="30">
+            </div>
+
+            <div class="input-group" id="input-group-5">
+                <label for="input5">Payment Link</label>
+                <input type="text" id="input5" placeholder="Enter payment link" maxlength="100">
+            </div>
+        </div>
+
+        <!-- Card 2: Real-time Data Display -->
+        <div class="card" id="card2">
+            <h2>📊 Real-time Data Display</h2>
+            <div id="results-display">Waiting for input data...</div>
+        </div>
+
+        <!-- Card 3: Trigger System -->
+        <div class="card" id="card3">
+            <h2>🚀 Trigger Visualization</h2>
+            <button class="go-button" id="go-button" disabled="">Go</button>
+            <p style="text-align: center; color: rgba(255,255,255,0.7); margin-top: 1rem;">
+                Click "Go" to generate visualization (missing fields will be marked)
+            </p>
+        </div>
+
+        <!-- Card 4: Professional Visualization -->
+        <div class="card" id="card4" style="margin-bottom: 3rem;">
+            <h2>💼 Professional Artist Card</h2>
+            <div class="asset-grid" id="professional-visualization">
+                <!-- 3D Asset Cards will be injected here -->
+            </div>
+        </div>
+
+
+    </div>
+
+    <script>
+        // Particle Animation System
+        class ParticleSystem {
+            constructor() {
+                this.canvas = document.getElementById('particles-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.particleCount = 50;
+                this.init();
+                this.animate();
+            }
+
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+
+                for (let i = 0; i < this.particleCount; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 3 + 1,
+                        speedX: (Math.random() - 0.5) * 0.5,
+                        speedY: (Math.random() - 0.5) * 0.5,
+                        opacity: Math.random() * 0.5 + 0.2
+                    });
+                }
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.particles.forEach(particle => {
+                    particle.x += particle.speedX;
+                    particle.y += particle.speedY;
+
+                    if (particle.x < 0 || particle.x > this.canvas.width) particle.speedX *= -1;
+                    if (particle.y < 0 || particle.y > this.canvas.height) particle.speedY *= -1;
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                    this.ctx.fill();
+                });
+
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Progressive Form Management
+        class ProgressiveForm {
+            constructor() {
+                this.currentStep = 1;
+                this.totalSteps = 5;
+                this.formData = {};
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateProgressIndicator();
+
+                // Also listen to the hidden order field for changes from dropdown
+                const hiddenOrderInput = document.getElementById('input3');
+                hiddenOrderInput.addEventListener('input', () => {
+                    this.updateResultsDisplay();
+                    this.validateForm();
+                });
+            }
+
+            setupEventListeners() {
+                // Artist name (input1)
+                this.setupInputListener('input1', 1);
+
+                // Artist IDs (input2-1, input2-2, input2-3)
+                this.setupArtistIdListeners();
+
+                // Other inputs (3, 4, 5)
+                this.setupInputListener('input4', 4);
+                this.setupInputListener('input5', 5);
+            }
+
+            setupInputListener(inputId, step) {
+                const input = document.getElementById(inputId);
+
+                input.addEventListener('input', (e) => {
+                    this.formData[`field${step}`] = e.target.value;
+                    this.updateResultsDisplay();
+
+                    if (e.target.value.trim().length > 0 && step < this.totalSteps) {
+                        setTimeout(() => this.nextStep(), 300);
+                    }
+                });
+
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && e.target.value.trim().length > 0) {
+                        if (step < this.totalSteps) {
+                            this.nextStep();
+                        } else {
+                            this.validateForm();
+                        }
+                    }
+                });
+            }
+
+            setupArtistIdListeners() {
+                for (let j = 1; j <= 3; j++) {
+                    const input = document.getElementById(`input2-${j}`);
+
+                    input.addEventListener('input', async (e) => {
+                        this.formData[`field2-${j}`] = e.target.value;
+                        this.updateResultsDisplay();
+
+                        // Spotify image fetching logic
+                        if (this.isLink(e.target.value.trim())) {
+                            const artistData = await this.fetchSpotifyArtistData(e.target.value.trim());
+                            if (artistData && artistData.imageUrl) {
+                                // Update results display with profile image
+                                this.updateResultsDisplayWithImage(artistData, j);
+                            }
+                        } else {
+                            this.updateResultsDisplay();
+                        }
+
+                        // Progressive reveal logic
+                        if (j === 1 && e.target.value.trim().length > 0) {
+                            document.getElementById('artist-id-2-group').style.visibility = 'visible';
+                        } else if (j === 2 && e.target.value.trim().length > 0) {
+                            document.getElementById('artist-id-3-group').style.visibility = 'visible';
+                        }
+
+                        // Check if any ID field has content to proceed
+                        const allIds = this.collectArtistIds();
+                        if (allIds.some(id => id.trim().length > 0)) {
+                            setTimeout(() => this.nextStep(), 300);
+                        }
+                    });
+
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' && e.target.value.trim().length > 0) {
+                            this.nextStep();
+                        }
+                    });
+                }
+            }
+
+            updateResultsDisplayWithImage(artistData, fieldIndex) {
+                const display = document.getElementById('results-display');
+                const data = this.collectFormData();
+
+                // Create enhanced display with profile images
+                const artistIdSection = data.id.split(', ').map((id, index) => {
+                    if (id.includes('LINK') && index + 1 === fieldIndex) {
+                        return `${id}\n  <img src="${artistData.imageUrl}" alt="${artistData.artistName}" style="width: 40px; height: 40px; border-radius: 50%; margin-top: 5px; object-fit: cover;">`;
+                    }
+                    return id;
+                }).join('\n');
+
+                display.innerHTML = `Song/Release: ${data.name}
+ Artist IDs:
+${artistIdSection}
+
+ Order: ${data.order}
+ Discount: ${data.discount}
+ Payment Link: ${data.paymentLink}
+
+ Completion: ${this.getCompletionPercentage()}%`;
+            }
+
+            nextStep() {
+                if (this.currentStep < this.totalSteps) {
+                    // Mark current step as completed
+                    document.querySelector(`[data-step="${this.currentStep}"]`).classList.add('completed');
+                    document.querySelector(`[data-step="${this.currentStep}"]`).classList.remove('active');
+
+                    // Show next step (keeping current visible)
+                    this.currentStep++;
+                    document.getElementById(`input-group-${this.currentStep}`).classList.add('active');
+                    document.querySelector(`[data-step="${this.currentStep}"]`).classList.add('active');
+
+                    // Special handling for artist IDs and order field
+                    if (this.currentStep === 2) {
+                        document.getElementById('input2-1').focus();
+                    } else if (this.currentStep === 3) {
+                        document.getElementById('order-dropdown').classList.add('active');
+                        document.getElementById('service-category-1').focus();
+                    } else {
+                        // Focus on new input
+                        document.getElementById(`input${this.currentStep}`).focus();
+                    }
+
+                    this.updateProgressIndicator();
+                    this.validateForm();
+                }
+            }
+
+            updateProgressIndicator() {
+                const dots = document.querySelectorAll('.progress-dot');
+                dots.forEach((dot, index) => {
+                    dot.classList.remove('active', 'completed');
+                    if (index < this.currentStep - 1) {
+                        dot.classList.add('completed');
+                    } else if (index === this.currentStep - 1) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
+
+            updateResultsDisplay() {
+                const display = document.getElementById('results-display');
+                const data = this.collectFormData();
+                display.textContent = `Song/Release: ${data.name}
+ Artist ID: ${data.id}
+ Order: ${data.order}
+ Discount: ${data.discount}
+ Payment Link: ${data.paymentLink}
+
+ Completion: ${this.getCompletionPercentage()}%`;
+            }
+
+            getCompletionPercentage() {
+                let completed = 0;
+
+                // Check input 1 (artist name)
+                if (document.getElementById('input1').value.trim()) completed++;
+
+                // Check at least one artist ID field (input 2)
+                const artistIds = this.collectArtistIds();
+                if (artistIds.some(id => id.trim().length > 0)) completed++;
+
+                // Check order field (input 3) - check if it has valid JSON data
+                const orderValue = document.getElementById('input3').value.trim();
+                if (orderValue && orderValue !== '') {
+                    try {
+                        const orderData = JSON.parse(orderValue);
+                        if ((Array.isArray(orderData) && orderData.length > 0) ||
+                            (orderData.name && orderData.amount)) {
+                            completed++;
+                        }
+                    } catch (e) {
+                        // Invalid JSON, don't count as completed
+                    }
+                }
+
+                // Check inputs 4, 5
+                if (document.getElementById('input4').value.trim()) completed++;
+                if (document.getElementById('input5').value.trim()) completed++;
+
+                return Math.round((completed / this.totalSteps) * 100);
+            }
+
+            collectArtistIds() {
+                const ids = [];
+                for (let i = 1; i <= 3; i++) {
+                    const value = document.getElementById(`input2-${i}`).value.trim();
+                    ids.push(value);
+                }
+                return ids;
+            }
+
+            isLink(text) {
+                return text.startsWith('http://') || text.startsWith('https://') || text.startsWith('www.');
+            }
+
+            extractSpotifyId(link) {
+                // Extract Spotify ID from various URL formats
+                const patterns = [
+                    /spotify\.com\/artist\/([a-zA-Z0-9]+)/,
+                    /open\.spotify\.com\/artist\/([a-zA-Z0-9]+)/
+                ];
+
+                for (const pattern of patterns) {
+                    const match = link.match(pattern);
+                    if (match) return match[1];
+                }
+                return null;
+            }
+
+            async fetchSpotifyArtistImage(spotifyId) {
+                try {
+                    // First try the oEmbed API for better quality image
+                    const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/artist/${spotifyId}`;
+                    const oEmbedResponse = await fetch(oEmbedUrl);
+                    const oEmbedData = await oEmbedResponse.json();
+
+                    if (oEmbedData.thumbnail_url) {
+                        return oEmbedData.thumbnail_url;
+                    }
+
+                    // Fallback: fetch artist embed page
+                    const embedResponse = await fetch(`https://open.spotify.com/embed/artist/${spotifyId}`);
+                    const embedHtml = await embedResponse.text();
+
+                    // Extract high-quality image URL from embed HTML
+                    const imageMatch = embedHtml.match(/<img[^>]+src="([^"]+)"[^>]*class="entity-banner-image"[^>]*>/);
+                    if (imageMatch) {
+                        return imageMatch[1];
+                    }
+
+                    // Fallback to largest image found
+                    const allImages = embedHtml.match(/<img[^>]+src="([^"]+)"[^>]*>/g);
+                    if (allImages) {
+                        // Look for larger images (typically have higher dimensions in URL)
+                        for (const imgTag of allImages) {
+                            const srcMatch = imgTag.match(/src="([^"]+)"/);
+                            if (srcMatch && srcMatch[1].includes('640') || srcMatch[1].includes('300')) {
+                                return srcMatch[1];
+                            }
+                        }
+                        // Return first image as last resort
+                        const fallbackMatch = allImages[0].match(/src="([^"]+)"/);
+                        if (fallbackMatch) {
+                            return fallbackMatch[1];
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch Spotify artist image:', error);
+                }
+                return null;
+            }
+
+            async fetchSpotifyArtistData(url) {
+                try {
+                    let artistId = null;
+
+                    // Extract artist ID from various URL formats
+                    const patterns = [
+                        /spotify\.com\/artist\/([a-zA-Z0-9]+)/,
+                        /open\.spotify\.com\/artist\/([a-zA-Z0-9]+)/,
+                        /artists\.spotify\.com\/c\/artist\/([a-zA-Z0-9]+)/
+                    ];
+
+                    for (const pattern of patterns) {
+                        const match = url.match(pattern);
+                        if (match) {
+                            artistId = match[1];
+                            break;
+                        }
+                    }
+
+                    if (!artistId) return null;
+
+                    // Fetch artist metadata from oEmbed API
+                    const oEmbedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/artist/${artistId}`;
+                    const response = await fetch(oEmbedUrl);
+                    const data = await response.json();
+
+                    let artistName = data.title || '';
+                    let imageUrl = data.thumbnail_url || '';
+
+                    // If no image from oEmbed, try embed page
+                    if (!imageUrl) {
+                        imageUrl = await this.fetchSpotifyArtistImage(artistId);
+                    }
+
+                    return {
+                        artistName: artistName,
+                        artistId: artistId,
+                        imageUrl: imageUrl
+                    };
+                } catch (error) {
+                    console.error('Error fetching Spotify artist data:', error);
+                    return null;
+                }
+            }
+
+            collectFormData() {
+                const getValue = (id) => {
+                    const value = document.getElementById(id).value.trim();
+                    return value || 'MISSING';
+                };
+
+                // Collect and format artist IDs
+                const artistIds = this.collectArtistIds();
+                const formattedIds = artistIds.map((id, index) => {
+                    if (id.trim().length === 0) return '';
+                    if (this.isLink(id)) {
+                        return `ID${index + 1}: ${id} (LINK)`;
+                    }
+                    return `ID${index + 1}: ${id}`;
+                }).filter(id => id.length > 0).join(', ');
+
+                // Special handling for order field
+                let orderValue = getValue('input3');
+                if (orderValue !== 'MISSING' && orderValue.trim() !== '') {
+                    try {
+                        const orderData = JSON.parse(orderValue);
+                        if (Array.isArray(orderData) && orderData.length > 0) {
+                            orderValue = orderData.map(order => `${order.name} - ${order.amount}`).join(' | ');
+                        } else if (orderData.name && orderData.amount) {
+                            // Handle single order object
+                            orderValue = `${orderData.name} - ${orderData.amount}`;
+                        } else {
+                            orderValue = 'MISSING';
+                        }
+                    } catch (e) {
+                        orderValue = 'Invalid selection';
+                    }
+                }
+
+                return {
+                    name: getValue('input1'),
+                    id: formattedIds || 'MISSING',
+                    order: orderValue,
+                    discount: getValue('input4'),
+                    paymentLink: getValue('input5')
+                };
+            }
+
+            validateForm() {
+                const goButton = document.getElementById('go-button');
+                goButton.disabled = false; // Always enable the button
+                goButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                return true; // Always return true
+            }
+        }
+
+        // Visualization System
+        class VisualizationSystem {
+            constructor(formSystem) {
+                this.formSystem = formSystem;
+                this.init();
+            }
+
+            init() {
+                const goButton = document.getElementById('go-button');
+                goButton.addEventListener('click', () => this.triggerVisualization());
+            }
+
+            async triggerVisualization() {
+                const data = this.formSystem.collectFormData();
+
+                // Fetch real-time Spotify data for all artist ID links before rendering
+                const artistIds = this.formSystem.collectArtistIds();
+                const enrichedData = { ...data, artistProfiles: [] };
+
+                for (let i = 0; i < artistIds.length; i++) {
+                    const id = artistIds[i];
+                    if (this.formSystem.isLink(id) && id.trim().length > 0) {
+                        const artistData = await this.formSystem.fetchSpotifyArtistData(id);
+                        enrichedData.artistProfiles[i] = artistData;
+                    } else {
+                        enrichedData.artistProfiles[i] = null;
+                    }
+                }
+
+                await this.renderVisualization(enrichedData);
+
+                // Show the cards with animation
+                setTimeout(() => {
+                    document.getElementById('professional-visualization').classList.add('active');
+                }, 100);
+            }
+
+            async renderVisualization(data) {
+                const grid = document.getElementById('professional-visualization');
+                grid.innerHTML = '';
+
+                // Use pre-fetched artist profiles from enriched data
+                const artistProfiles = data.artistProfiles || [];
+
+
+
+                // Parse order data to extract service information
+                let orderServices = [];
+                let totalCost = 0;
+                if (data.order !== 'MISSING' && data.order !== 'Invalid selection') {
+                    try {
+                        // Try to parse JSON if it's stored as JSON
+                        if (data.order.includes('[') || data.order.includes('{')) {
+                            const orderData = JSON.parse(data.order);
+                            orderServices = Array.isArray(orderData) ? orderData : [orderData];
+                        } else {
+                            // Parse from formatted string (fallback)
+                            const orderParts = data.order.split(' | ');
+                            orderServices = orderParts.map(part => {
+                                const match = part.match(/(.+) - (\$\d+,?\d*\.?\d*)/);
+                                if (match) {
+                                    let serviceName = match[1].trim();
+                                    // Strip "order X - " or "order X: " if present
+                                    serviceName = serviceName.replace(/^order\s*\d+\s*[-:]\s*/i, '');
+                                    return { name: serviceName, amount: match[2].trim(), type: 'Service' };
+                                }
+                                return { name: part.trim(), amount: 'N/A', type: 'Service' };
+                            });
+                        }
+
+                        // Calculate total cost
+                        totalCost = orderServices.reduce((sum, service) => {
+                            const amountStr = service.amount.replace(/[^0-9.]/g, '');
+                            return sum + parseFloat(amountStr || '0');
+                        }, 0);
+                    } catch (e) {
+                        console.error('Failed to parse order data:', e);
+                    }
+                }
+
+                // Helper function to truncate links
+                const truncateLink = (link, maxLength = 30) => {
+                    if (!link || link === 'MISSING') return 'Not Provided';
+                    if (link.length <= maxLength) return link;
+                    return link.substring(0, maxLength) + '...';
+                };
+
+                // Helper function to truncate artist IDs and links
+                const truncateArtistIds = (artistIdString, maxLength = 40) => {
+                    if (!artistIdString || artistIdString === 'MISSING') return 'Not Specified';
+
+                    const ids = artistIdString.split(', ');
+                    const truncatedIds = ids.map(id => {
+                        if (id.includes('(LINK)')) {
+                            const parts = id.split(' ');
+                            const link = parts.slice(1).join(' ');
+                            const truncatedLink = truncateLink(link, 25);
+                            return `${parts[0]} ${truncatedLink}`;
+                        }
+                        return id;
+                    });
+
+                    const result = truncatedIds.join(', ');
+                    return result.length > maxLength ? result.substring(0, maxLength) + '...' : result;
+                };
+
+                // Create profile images HTML for upper left of card
+                let profileImagesHtml = '';
+                const validProfiles = artistProfiles.filter(profile => profile && profile.imageUrl);
+                if (validProfiles.length > 0) {
+                    const imagesContainer = validProfiles.map((profile, index) => `
+                        <div style="text-align: center;">
+                            <img src="${profile.imageUrl}" alt="${profile.artistName || `Artist ${index + 1}`}" 
+                                 style="width: 88px; height: 88px; border-radius: 50%; object-fit: cover; 
+                                        border: 3px solid rgba(79, 195, 247, 0.6); box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+                                        background: linear-gradient(135deg, #4FC3F7 0%, #0077BE 100%); padding: 3px;">
+                        </div>
+                    `).join('');
+
+                    // Optimized header component with asymmetrical layout - Corrected Field Labels
+                    profileImagesHtml = `
+                        <div style="display: flex; align-items: flex-start; gap: 24px; width: 100%; margin-bottom: 35px;">
+                            <div style="flex-shrink: 0; padding-top: 5px;">
+                                ${imagesContainer}
+                            </div>
+                            <div style="display: flex; flex-direction: column; text-align: left; gap: 18px; flex: 1;">
+                                <div>
+                                    <span style="color: rgba(79, 195, 247, 0.7); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12rem; display: block; margin-bottom: 6px;">Spotify ID Name</span>
+                                    <div style="color: #ffffff; font-size: 1.1rem; font-weight: 500; font-family: 'Inter', sans-serif;">${validProfiles[0].artistName || 'Artist'}</div>
+                                </div>
+                                <div>
+                                    <span style="color: rgba(79, 195, 247, 0.7); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12rem; display: block; margin-bottom: 6px;">Song Name</span>
+                                    <div style="color: #ffffff; font-size: 1.3rem; font-weight: 600; font-family: 'Inter', sans-serif;">${data.name === 'MISSING' ? 'Untitled Release' : data.name}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Process artist data to hide everything (including Spotify links)
+                const processArtistIds = (artistIdString) => {
+                    return ''; // Return empty string to hide all artist data
+                };
+
+                // Create single comprehensive card with all data
+                const allPoints = []; // Removed song name from data stack as it is the main title
+
+                // Add individual order services to the same card
+                if (orderServices.length > 0) {
+                    allPoints.push({ l: "order1", v: `${orderServices[0].name} - ${orderServices[0].amount}` });
+                    if (orderServices[1]) {
+                        allPoints.push({ l: "order2", v: `${orderServices[1].name} - ${orderServices[1].amount}` });
+                    }
+                    if (orderServices[2]) {
+                        allPoints.push({ l: "order3", v: `${orderServices[2].name} - ${orderServices[2].amount}` });
+                    }
+                    if (orderServices[3]) {
+                        allPoints.push({ l: "order4", v: `${orderServices[3].name} - ${orderServices[3].amount}` });
+                    }
+                }
+
+                // Add payment details to same card
+                allPoints.push(
+                    { l: "pay here", v: data.paymentLink && data.paymentLink !== 'MISSING' ? '✓' : '✗' }
+                );
+
+                const singleAsset = {
+                    tag: "Campaign Summary",
+                    title: data.name === 'MISSING' ? 'Untitled Release' : data.name,
+                    points: allPoints,
+                    cost: totalCost > 0 ? `$${totalCost.toFixed(2)}` : "$0.00",
+                    isMain: true,
+                    customContent: profileImagesHtml
+                };
+
+                // Pruning logic: Filter out redundant points and keep only the bottom 4 items
+                const filteredPoints = allPoints.filter(p => !['pay here', 'song name'].includes(p.l.toLowerCase()));
+                const finalPoints = filteredPoints.slice(-4); // Keep the bottom 4 after filtering
+
+                // Generate single card
+                const card = document.createElement('div');
+                card.className = 'asset-card is-main';
+                card.style.animation = `cardIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0s backwards`;
+
+                card.innerHTML = `
+                    <div class="card-inner" style="padding-top: 30px; align-items: center; text-align: center;">
+                        ${singleAsset.customContent || ''}
+                        <div class="data-stack" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+                            ${finalPoints.map(p => `
+                                <div class="data-point" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 4px; padding: 18px; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); backdrop-filter: blur(5px);">
+                                    <span style="color: #ffffff; font-size: 1rem; font-weight: 500; letter-spacing: 0.02rem;">${p.v}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="price-footer" style="margin-top: 35px; width: 100%; display: flex; justify-content: center; transform: translateZ(30px);">
+                            <div style="background: rgba(15, 23, 42, 0.8); border: 1.5px solid rgba(14, 165, 233, 0.4); border-radius: 4px; padding: 12px 40px; display: flex; align-items: center; gap: 25px; backdrop-filter: blur(20px); box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);">
+                                <div style="display: flex; align-items: center; gap: 12px; cursor: default;">
+                                    <span style="color: #ffffff; font-weight: 600; font-size: 1.2rem; letter-spacing: 0.05rem;">${singleAsset.cost}</span>
+                                </div>
+                                <div style="width: 1px; height: 20px; background: rgba(255, 255, 255, 0.2);"></div>
+                                <button onclick="window.open('${data.paymentLink}', '_blank')" style="background: transparent; border: none; color: #4FC3F7; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;">
+                                    ${data.paymentLink && data.paymentLink !== 'MISSING' ? 'Pay Now' : 'No Link'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+
+                // Create a wrapper for the card and button
+                const cardWrapper = document.createElement('div');
+                cardWrapper.style.cssText = 'display: flex; flex-direction: column; align-items: center; width: 100%;';
+
+                cardWrapper.appendChild(card);
+
+                // Add reveal code button
+                const revealCodeBtn = document.createElement('button');
+                revealCodeBtn.className = 'reveal-code-btn';
+                revealCodeBtn.textContent = 'Reveal Code';
+                revealCodeBtn.onclick = () => this.revealCardCode(card, singleAsset, data);
+                cardWrapper.appendChild(revealCodeBtn);
+
+                // Add code display container
+                const cardCodeDisplay = document.createElement('div');
+                cardCodeDisplay.className = 'card-code-display';
+                cardCodeDisplay.id = 'card-code-display';
+                cardWrapper.appendChild(cardCodeDisplay);
+
+                grid.appendChild(cardWrapper);
+
+                // Add 3D physics to new cards
+                setTimeout(() => {
+                    document.querySelectorAll('#professional-visualization .asset-card').forEach(card => {
+                        card.addEventListener('mousemove', (e) => {
+                            // Removing transition during manual transform update for smoothness
+                            card.style.transition = 'none';
+
+                            const rect = card.getBoundingClientRect();
+                            const x = e.clientX - rect.left;
+                            const y = e.clientY - rect.top;
+                            const xc = rect.width / 2;
+                            const yc = rect.height / 2;
+                            const dx = x - xc;
+                            const dy = y - yc;
+
+                            card.style.transform = `perspective(1000px) rotateX(${-dy / 20}deg) rotateY(${dx / 20}deg) scale(1.03)`;
+                        });
+
+                        card.addEventListener('mouseleave', () => {
+                            // Re-adding transition for smooth snap-back
+                            card.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease';
+                            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)`;
+                        });
+                    });
+                }, 100);
+
+            }
+
+            revealCardCode(cardElement, cardData, formData) {
+                const codeDisplay = document.getElementById('card-code-display');
+
+                // Get the card's HTML content
+                const cardHTML = this.extractCardHTML(cardElement, cardData, formData);
+
+                // Generate the code display with syntax highlighting
+                codeDisplay.innerHTML = this.formatCodeDisplay(cardHTML, cardData, formData);
+                codeDisplay.classList.add('active');
+
+                // Scroll to the code display
+                codeDisplay.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            extractCardHTML(cardElement, cardData, formData) {
+                // Return the HTML structure of the card
+                return `<div class="asset-card is-main">
+    <div class="card-inner" style="padding-top: 30px; align-items: center; text-align: center;">
+        ${cardData.customContent || ''}
+        <div class="data-stack" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+            ${cardData.points ? cardData.points.map(p => `
+                <div class="data-point" style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 4px; padding: 18px; display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); backdrop-filter: blur(5px);">
+                    <span style="color: #ffffff; font-size: 1rem; font-weight: 500; letter-spacing: 0.02rem;">${p.v}</span>
+                </div>
+            `).join('') : ''}
+        </div>
+        <div class="price-footer" style="margin-top: 35px; width: 100%; display: flex; justify-content: center; transform: translateZ(30px);">
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1.5px solid rgba(14, 165, 233, 0.4); border-radius: 4px; padding: 12px 40px; display: flex; align-items: center; gap: 25px; backdrop-filter: blur(20px); box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);">
+                <div style="display: flex; align-items: center; gap: 12px; cursor: default;">
+                    <span style="color: #ffffff; font-weight: 600; font-size: 1.2rem; letter-spacing: 0.05rem;">${cardData.cost}</span>
+                </div>
+                <div style="width: 1px; height: 20px; background: rgba(255, 255, 255, 0.2);"></div>
+                <button onclick="window.open('${formData.paymentLink}', '_blank')" style="background: transparent; border: none; color: #4FC3F7; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease;">
+                    ${formData.paymentLink && formData.paymentLink !== 'MISSING' ? 'Pay Now' : 'No Link'}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>`;
+            }
+
+            formatCodeDisplay(htmlCode, cardData, formData) {
+                // Create a formatted display with syntax highlighting
+                const timestamp = new Date().toISOString();
+
+                return `<button class="copy-code-btn" onclick="this.copyCode()">Copy</button>
+<span class="comment">// Generated Card Code - ${timestamp}</span>
+<span class="comment">// Card Data Structure:</span>
+<span class="keyword">const</span> <span class="variable">cardData</span> = {
+    <span class="variable">tag</span>: <span class="string">"${cardData.tag}"</span>,
+    <span class="variable">title</span>: <span class="string">"${cardData.title}"</span>,
+    <span class="variable">cost</span>: <span class="string">"${cardData.cost}"</span>,
+    <span class="variable">points</span>: <span class="variable">${JSON.stringify(cardData.points, null, 2)}</span>
+};
+
+<span class="comment">// HTML Structure:</span>
+<span class="keyword">const</span> <span class="variable">cardHTML</span> = \`
+${this.escapeHtml(htmlCode)}\`;
+
+<span class="comment">// Form Data:</span>
+<span class="keyword">const</span> <span class="variable">formData</span> = {
+    <span class="variable">name</span>: <span class="string">"${formData.name}"</span>,
+    <span class="variable">order</span>: <span class="string">"${formData.order}"</span>,
+    <span class="variable">discount</span>: <span class="string">"${formData.discount}"</span>,
+    <span class="variable">paymentLink</span>: <span class="string">"${formData.paymentLink}"</span>
+};
+
+<span class="comment">// To render this card:</span>
+<span class="keyword">function</span> <span class="function">renderCard</span>(<span class="variable">data</span>, <span class="variable">html</span>) {
+    <span class="keyword">const</span> <span class="variable">container</span> = document.<span class="function">getElementById</span>(<span class="string">'card-container'</span>);
+    <span class="variable">container</span>.<span class="variable">innerHTML</span> = <span class="variable">html</span>;
+    <span class="comment">// Add 3D physics and event listeners here</span>
+}
+
+<script>
+document.querySelector('.copy-code-btn').copyCode = function() {
+    const codeDisplay = this.parentElement;
+    const codeText = codeDisplay.textContent.replace('Copy', '');
+    
+    navigator.clipboard.writeText(codeText).then(() => {
+        this.textContent = 'Copied!';
+        this.classList.add('copied');
+        
+        setTimeout(() => {
+            this.textContent = 'Copy';
+            this.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy code:', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = codeText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        this.textContent = 'Copied!';
+        this.classList.add('copied');
+        
+        setTimeout(() => {
+            this.textContent = 'Copy';
+            this.classList.remove('copied');
+        }, 2000);
+    });
+};
+<\/script>`;
+            }
+
+            escapeHtml(text) {
+                // Escape HTML special characters for display
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Add click handler for pay here field after visualization
+
+            getServiceCategory(serviceName) {
+                const categoryMap = {
+                    'Spotify': 'Spotify Campaign',
+                    'Press': 'Press Campaign',
+                    'YouTube': 'YouTube Marketing',
+                    'SoundCloud': 'SoundCloud Campaign',
+                    'Weekly': 'Subscription Plan',
+                    'Bi-Weekly': 'Subscription Plan'
+                };
+
+                for (const [key, category] of Object.entries(categoryMap)) {
+                    if (serviceName.includes(key)) {
+                        return category;
+                    }
+                }
+                return 'Marketing Service';
+            }
+
+
+        }
+
+        // Service Database
+        const serviceDatabase = {
+            spotify: [
+                { name: '10K Spotify', amount: '$325', type: 'Stream Package' },
+                { name: '15K Spotify', amount: '$390', type: 'Stream Package' },
+                { name: '20K Spotify', amount: '$490', type: 'Stream Package' },
+                { name: '25K Spotify', amount: '$590', type: 'Stream Package' },
+                { name: '30K Spotify', amount: '$690', type: 'Stream Package' },
+                { name: '40K Spotify', amount: '$790', type: 'Stream Package' },
+                { name: '50K Spotify', amount: '$890', type: 'Stream Package' },
+                { name: '60K Spotify', amount: '$990', type: 'Stream Package' },
+                { name: '75K Spotify', amount: '$1,200', type: 'Stream Package' },
+                { name: '100K Spotify', amount: '$1,500', type: 'Stream Package' },
+                { name: '125K Spotify', amount: '$1,875', type: 'Stream Package' },
+                { name: '150K Spotify', amount: '$2,250', type: 'Stream Package' },
+                { name: '200K Spotify', amount: '$3,000', type: 'Stream Package' },
+                { name: '250K Spotify', amount: '$3,550', type: 'Stream Package' },
+                { name: '500K Spotify', amount: '$6,500', type: 'Stream Package' }
+            ],
+            'press-in': [
+                { name: '3 Articles', amount: '$200', type: 'In‑Network Press' },
+                { name: '4 Articles', amount: '$250', type: 'In‑Network Press' },
+                { name: '5 Articles', amount: '$300', type: 'In‑Network Press' },
+                { name: '6 Articles', amount: '$350', type: 'In‑Network Press' }
+            ],
+            'press-standard': [
+                { name: '4–7 Articles', amount: '$550', type: 'Standard Press' },
+                { name: '6–10 Articles', amount: '$700', type: 'Standard Press' },
+                { name: '10–15 Articles', amount: '$900', type: 'Standard Press' }
+            ],
+            'press-premium': [
+                { name: '3 Articles', amount: '$500', type: 'Premium Press' },
+                { name: '4 Articles', amount: '$650', type: 'Premium Press' },
+                { name: '6 Articles', amount: '$750', type: 'Premium Press' }
+            ],
+            youtube: [
+                { name: '10K YouTube', amount: '$375', type: 'YouTube Music Marketing' },
+                { name: '20K YouTube', amount: '$650', type: 'YouTube Music Marketing' },
+                { name: '30K YouTube', amount: '$925', type: 'YouTube Music Marketing' },
+                { name: '40K YouTube', amount: '$1,050', type: 'YouTube Music Marketing' },
+                { name: '50K YouTube', amount: '$1,200', type: 'YouTube Music Marketing' },
+                { name: '75K YouTube', amount: '$1,350', type: 'YouTube Music Marketing' },
+                { name: '100K YouTube', amount: '$1,500', type: 'YouTube Music Marketing' }
+            ],
+            soundcloud: [
+                { name: '4K Streams', amount: '$180', type: 'SoundCloud Campaign' },
+                { name: '8K Streams', amount: '$240', type: 'SoundCloud Campaign' },
+                { name: '12K Streams', amount: '$300', type: 'SoundCloud Campaign' },
+                { name: '16K Streams', amount: '$350', type: 'SoundCloud Campaign' }
+            ],
+            subscription: [
+                { name: 'Weekly Plan', amount: '$100', type: 'Subscription' },
+                { name: 'Weekly Plus', amount: '$200', type: 'Subscription' },
+                { name: 'Bi-Weekly Plan', amount: '$100', type: 'Subscription' },
+                { name: 'Bi-Weekly Plus', amount: '$200', type: 'Subscription' }
+            ],
+            other: [
+                { name: 'Custom Service', amount: 'variable', type: 'Other' }
+            ]
+        };
+
+        // Hierarchical Dropdown Manager
+        class HierarchicalDropdown {
+            constructor() {
+                this.hiddenInput = document.getElementById('input3');
+                this.orderClusters = [];
+                this.clusterCount = 1;
+                this.init();
+            }
+
+            init() {
+                // Initialize first cluster
+                this.setupCluster(1);
+            }
+
+            setupCluster(clusterId) {
+                // Wait a moment for DOM to be updated before setting up cluster
+                setTimeout(() => {
+                    const serviceCategory = document.getElementById(`service-category-${clusterId}`);
+                    const serviceType = document.getElementById(`service-type-${clusterId}`);
+                    const selectionSummary = document.getElementById(`selection-summary-${clusterId}`);
+                    const selectedService = document.getElementById(`selected-service-${clusterId}`);
+                    const customPriceInput = document.getElementById(`custom-price-${clusterId}`);
+
+                    // Only setup if elements exist
+                    if (serviceCategory && serviceType && selectionSummary && selectedService) {
+                        this.orderClusters[clusterId] = {
+                            serviceCategory,
+                            serviceType,
+                            selectionSummary,
+                            selectedService,
+                            customPriceInput
+                        };
+
+                        serviceCategory.addEventListener('change', () => this.handleServiceChange(clusterId));
+                        serviceType.addEventListener('change', () => this.handleTypeChange(clusterId));
+                        if (customPriceInput) {
+                            customPriceInput.addEventListener('input', () => this.updateHiddenInput());
+                        }
+                    } else {
+                        console.warn(`Cluster ${clusterId} elements not found`);
+                    }
+                }, 50);
+            }
+
+            addOrderCluster() {
+                this.clusterCount++;
+                const clusterId = this.clusterCount;
+
+                const newCluster = document.createElement('div');
+                newCluster.className = 'order-cluster';
+                newCluster.setAttribute('data-cluster-id', clusterId);
+                newCluster.innerHTML = `
+                    <div class="hierarchical-dropdown active" style="margin-top: 0.5rem;">
+                        <div class="dropdown-group" style="flex: 1;">
+                            <label class="dropdown-label">Service Category</label>
+                            <select class="service-select" id="service-category-${clusterId}">
+                                <option value="">Select Service...</option>
+                                <option value="spotify">Spotify Campaign</option>
+                                <option value="press-in">In‑Network Press</option>
+                                <option value="press-standard">Standard Press</option>
+                                <option value="press-premium">Premium Press</option>
+                                <option value="youtube">YouTube Music</option>
+                                <option value="soundcloud">SoundCloud</option>
+                                <option value="subscription">Subscription Plan</option>
+                            </select>
+                        </div>
+                        <div class="dropdown-group" style="flex: 1; visibility: hidden;" id="service-type-group-${clusterId}">
+                            <label class="dropdown-label">Service Type</label>
+                            <select class="type-select" id="service-type-${clusterId}">
+                                <option value="">Select Type...</option>
+                            </select>
+                        </div>
+                        <div class="dropdown-group" style="flex: 1; display: none;" id="custom-price-group-${clusterId}">
+                            <label class="dropdown-label">Custom Price ($)</label>
+                            <input type="text" class="custom-price-input" id="custom-price-${clusterId}" placeholder="e.g. 50.00" style="padding: 0.75rem; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.1); color: #ffffff; width: 100%;">
+                        </div>
+                        <div class="dropdown-group" style="flex: 1; visibility: hidden;" id="selected-group-${clusterId}">
+                            <label class="dropdown-label">Selected</label>
+                            <div class="selection-summary" id="selection-summary-${clusterId}" style="padding: 0.5rem; min-height: 38px; display: flex; align-items: center;">
+                                <span id="selected-service-${clusterId}">-</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('order-clusters').appendChild(newCluster);
+
+                // Wait a moment for the DOM to be updated before setting up the cluster
+                setTimeout(() => {
+                    this.setupCluster(clusterId);
+                }, 10);
+            }
+
+            handleServiceChange(clusterId) {
+                const cluster = this.orderClusters[clusterId];
+                const category = cluster.serviceCategory.value;
+
+                // Clear previous options
+                cluster.serviceType.innerHTML = '<option value="">Select Type...</option>';
+                cluster.selectionSummary.classList.remove('active');
+
+                if (category && serviceDatabase[category]) {
+                    // Show service type dropdown
+                    document.getElementById(`service-type-group-${clusterId}`).style.visibility = 'visible';
+
+                    const services = serviceDatabase[category];
+                    services.forEach((service, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `${service.name}${service.amount !== 'variable' ? ` - ${service.amount}` : ''}`;
+                        cluster.serviceType.appendChild(option);
+                    });
+
+                    // Add "Other" option to the type dropdown as well
+                    const otherOption = document.createElement('option');
+                    otherOption.value = 'other';
+                    otherOption.textContent = 'Other (Custom Price)';
+                    cluster.serviceType.appendChild(otherOption);
+
+                } else {
+                    // Hide service type dropdown if no category selected
+                    document.getElementById(`service-type-group-${clusterId}`).style.visibility = 'hidden';
+                }
+
+                // Close custom price if category changes
+                if (document.getElementById(`custom-price-group-${clusterId}`)) {
+                    document.getElementById(`custom-price-group-${clusterId}`).style.display = 'none';
+                }
+
+                this.updateHiddenInput();
+            }
+
+            handleTypeChange(clusterId) {
+                const cluster = this.orderClusters[clusterId];
+                const category = cluster.serviceCategory.value;
+                const typeIndex = cluster.serviceType.value;
+
+                if (category && typeIndex) {
+                    let service;
+                    let selectedText;
+
+                    if (typeIndex === 'other') {
+                        if (document.getElementById(`custom-price-group-${clusterId}`)) {
+                            document.getElementById(`custom-price-group-${clusterId}`).style.display = 'block';
+                        }
+                        selectedText = 'Custom Service';
+                    } else {
+                        if (document.getElementById(`custom-price-group-${clusterId}`)) {
+                            document.getElementById(`custom-price-group-${clusterId}`).style.display = 'none';
+                        }
+                        service = serviceDatabase[category][typeIndex];
+                        selectedText = `${service.name} - ${service.amount} (${service.type})`;
+                    }
+
+                    cluster.selectedService.textContent = selectedText;
+                    cluster.selectionSummary.classList.add('active');
+                    document.getElementById(`selected-group-${clusterId}`).style.visibility = 'visible';
+
+                    // Prompt for another order after a short delay
+                    setTimeout(() => {
+                        this.promptForAnotherOrder();
+                    }, 500);
+                } else {
+                    cluster.selectionSummary.classList.remove('active');
+                    document.getElementById(`selected-group-${clusterId}`).style.visibility = 'hidden';
+                    if (document.getElementById(`custom-price-group-${clusterId}`)) {
+                        document.getElementById(`custom-price-group-${clusterId}`).style.display = 'none';
+                    }
+                }
+
+                this.updateHiddenInput();
+            }
+
+            promptForAnotherOrder() {
+                // Check if we already have too many orders (limit to 5 for UI reasons)
+                if (this.clusterCount >= 5) {
+                    return;
+                }
+
+                // Automatically add new order cluster after first order is completed
+                this.addOrderCluster();
+            }
+
+            updateHiddenInput() {
+                const orders = [];
+
+                for (let clusterId in this.orderClusters) {
+                    const cluster = this.orderClusters[clusterId];
+                    const category = cluster.serviceCategory.value;
+                    const typeIndex = cluster.serviceType.value;
+
+                    if (category && typeIndex) {
+                        if (typeIndex === 'other') {
+                            const customPrice = cluster.customPriceInput ? cluster.customPriceInput.value : '0';
+                            orders.push({
+                                category: category,
+                                name: 'Custom Service',
+                                amount: `$${customPrice}`,
+                                type: 'Custom'
+                            });
+                        } else if (serviceDatabase[category]) {
+                            const service = serviceDatabase[category][typeIndex];
+                            orders.push({
+                                category: category,
+                                name: service.name,
+                                amount: service.amount,
+                                type: service.type
+                            });
+                        }
+                    }
+                }
+
+                if (orders.length > 0) {
+                    this.hiddenInput.value = JSON.stringify(orders);
+                } else {
+                    this.hiddenInput.value = '';
+                }
+
+                // Trigger the form's input event
+                this.hiddenInput.dispatchEvent(new Event('input'));
+            }
+        }
+
+        // Test data filler
+        document.getElementById('test-fill-btn').addEventListener('click', () => {
+            // Fill artist name
+            document.getElementById('input1').value = 'Test Song Name';
+            document.getElementById('input1').dispatchEvent(new Event('input'));
+
+            // Fill artist IDs (mix of text and Spotify link) - reduced gaps
+            setTimeout(() => {
+                document.getElementById('input2-1').value = 'https://open.spotify.com/artist/4q3ewBCX7sLwd24euuV69X'; // Example: Billie Eilish
+                document.getElementById('input2-1').dispatchEvent(new Event('input'));
+
+                setTimeout(() => {
+                    document.getElementById('input2-2').value = '456'; // Regular ID
+                    document.getElementById('input2-2').dispatchEvent(new Event('input'));
+
+                    setTimeout(() => {
+                        document.getElementById('input2-3').value = '789'; // Regular ID
+                        document.getElementById('input2-3').dispatchEvent(new Event('input'));
+                    }, 200);
+                }, 200);
+            }, 300);
+
+            // Fill order (select Spotify service) - reduced gaps
+            setTimeout(() => {
+                const serviceCategory = document.getElementById('service-category-1');
+                serviceCategory.value = 'spotify';
+                serviceCategory.dispatchEvent(new Event('change'));
+
+                setTimeout(() => {
+                    const serviceType = document.getElementById('service-type-1');
+                    serviceType.value = '2'; // Select 20K Spotify
+                    serviceType.dispatchEvent(new Event('change'));
+                }, 300);
+            }, 800);
+
+            // Fill discount - reduced delay
+            setTimeout(() => {
+                document.getElementById('input4').value = '10%';
+                document.getElementById('input4').dispatchEvent(new Event('input'));
+            }, 1500);
+
+            // Fill payment link - reduced delay
+            setTimeout(() => {
+                document.getElementById('input5').value = 'https://example.com/payment';
+                document.getElementById('input5').dispatchEvent(new Event('input'));
+            }, 1800);
+        });
+
+        // Initialize all systems when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const particleSystem = new ParticleSystem();
+            const formSystem = new ProgressiveForm();
+            const visualizationSystem = new VisualizationSystem(formSystem);
+            const hierarchicalDropdown = new HierarchicalDropdown();
+
+            // Focus on first input
+            setTimeout(() => {
+                document.getElementById('input1').focus();
+            }, 500);
+        });
+    </script>
+
+
+</body>
+
+</html>

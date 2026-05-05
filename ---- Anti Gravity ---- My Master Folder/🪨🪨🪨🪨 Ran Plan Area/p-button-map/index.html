@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>P Button — Presentation Overlay Map</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #07050f;
+    --surface:   #0f0b1e;
+    --card:      #14102a;
+    --border:    rgba(139, 92, 246, 0.18);
+    --border2:   rgba(139, 92, 246, 0.35);
+    --purple:    #8b5cf6;
+    --purple-lt: #c4b5fd;
+    --purple-dim:#4c1d95;
+    --cyan:      #22d3ee;
+    --green:     #34d399;
+    --amber:     #fbbf24;
+    --red:       #f87171;
+    --text:      #e2d9f3;
+    --text-dim:  rgba(226, 217, 243, 0.45);
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Outfit', sans-serif;
+    --glow:      0 0 24px rgba(139, 92, 246, 0.25);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 32px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Page wrapper ── */
+  .page {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* ── Top label ── */
+  .page-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  /* ── Hero trigger ── */
+  .trigger-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 16px 20px;
+    box-shadow: var(--glow);
+  }
+
+  .notch-sim {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .notch-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: 0.2s;
+  }
+
+  .notch-btn.active {
+    background: linear-gradient(145deg, #6d28d9, #4c1d95);
+    border-color: rgba(139, 92, 246, 0.6);
+    color: #fff;
+    box-shadow: 0 0 14px rgba(139,92,246,0.4), 0 0 4px rgba(139,92,246,0.6);
+  }
+
+  .trigger-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .trigger-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--purple-lt);
+  }
+
+  .trigger-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  /* ── Section blocks ── */
+  .block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .block:hover {
+    border-color: var(--border2);
+  }
+
+  .block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(139,92,246,0.05);
+  }
+
+  .block-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--purple);
+    flex-shrink: 0;
+    box-shadow: 0 0 6px var(--purple);
+  }
+
+  .block-dot.cyan  { background: var(--cyan);  box-shadow: 0 0 6px var(--cyan); }
+  .block-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .block-dot.amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .block-dot.red   { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+
+  .block-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--purple-lt);
+    font-family: var(--mono);
+  }
+
+  .block-badge {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 2px 8px;
+  }
+
+  .block-body {
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── Slider tabs preview ── */
+  .tab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 14px 18px;
+  }
+
+  .tab-chip {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 5px 11px;
+    border-radius: 20px;
+    border: 1px solid rgba(139,92,246,0.25);
+    background: rgba(139,92,246,0.08);
+    color: var(--purple-lt);
+    letter-spacing: 0.04em;
+  }
+
+  .tab-chip.active {
+    background: rgba(139,92,246,0.22);
+    border-color: rgba(139,92,246,0.5);
+    color: #fff;
+  }
+
+  .tab-chip.trends {
+    background: rgba(34,211,238,0.08);
+    border-color: rgba(34,211,238,0.25);
+    color: var(--cyan);
+  }
+
+  /* ── Field rows ── */
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .field-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    min-width: 80px;
+    letter-spacing: 0.06em;
+  }
+
+  .field-bar {
+    flex: 1;
+    height: 28px;
+    border-radius: 7px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+  }
+
+  .field-placeholder {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: rgba(255,255,255,0.18);
+  }
+
+  .field-bar.textarea-sim {
+    height: 52px;
+    align-items: flex-start;
+    padding-top: 8px;
+  }
+
+  .start-btn-sim {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #6d28d9, #4c1d95);
+    border: 1px solid rgba(139,92,246,0.4);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    align-self: flex-start;
+    box-shadow: 0 4px 16px rgba(109,40,217,0.35);
+  }
+
+  .arrow-note {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    padding-left: 4px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Metric cards ── */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 14px 18px;
+  }
+
+  .metric-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .metric-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .metric-name {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    letter-spacing: 0.06em;
+  }
+
+  .metric-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .badge-up   { background: rgba(52,211,153,0.15); color: var(--green); }
+  .badge-down { background: rgba(248,113,113,0.15); color: var(--red); }
+
+  .metric-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .metric-sub {
+    font-size: 9px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  .mini-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 22px;
+    margin-top: 6px;
+  }
+
+  .mini-bar {
+    flex: 1;
+    border-radius: 2px;
+    background: rgba(139,92,246,0.35);
+    min-height: 2px;
+  }
+
+  /* ── Panel list ── */
+  .panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .panel-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .panel-row:last-child { border-bottom: none; }
+
+  .panel-num {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    min-width: 18px;
+  }
+
+  .panel-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .panel-id {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: rgba(139,92,246,0.6);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Connection note ── */
+  .conn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 18px;
+  }
+
+  .conn-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .conn-arrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--amber);
+    margin-top: 1px;
+  }
+
+  .conn-text {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .conn-text strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ── Randy plan block ── */
+  .randy-block {
+    background: rgba(139,92,246,0.06);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 0 32px rgba(139,92,246,0.1);
+  }
+
+  .randy-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(139,92,246,0.2);
+    background: rgba(139,92,246,0.1);
+  }
+
+  .randy-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .randy-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .randy-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 11px 18px;
+    border-bottom: 1px solid rgba(139,92,246,0.1);
+  }
+
+  .randy-step:last-child { border-bottom: none; }
+
+  .step-n {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--purple);
+    min-width: 18px;
+    margin-top: 1px;
+    font-weight: 700;
+  }
+
+  .step-text {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .step-text span {
+    color: var(--purple-lt);
+    font-weight: 600;
+  }
+
+  /* ── Footer ── */
+  .footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .footer-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--purple);
+    opacity: 0.4;
+  }
+
+  .footer-text {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-label">Wing Dashboard · P Button · Presentation Overlay</div>
+
+  <!-- TRIGGER -->
+  <div class="trigger-row">
+    <div class="notch-sim">
+      <div class="notch-btn">B</div>
+      <div class="notch-btn active">P</div>
+      <div class="notch-btn">R</div>
+    </div>
+    <div class="trigger-meta">
+      <div class="trigger-name">presNotchBtn — Presentation Overlay</div>
+      <div class="trigger-sub">.pres-btn-notch · fixed top-center · purple accent · #presOverlayBackdrop</div>
+    </div>
+  </div>
+
+  <!-- SLIDER BAR -->
+  <div class="block">
+    <div class="block-header">
+      <div class="block-dot"></div>
+      <div class="block-title">Slider Bar — Tab Row</div>
+      <div class="block-badge">#presSliderBar</div>
+    </div>
+    <div class="tab-row">
+      <div class="tab-chip active">✦ Input</div>
+      <div class="tab-chip">Social &amp; Streaming</div>
+      <div class="tab-chip">Collaborations</div>
+      <div class="tab-chip">Finance</div>
+      <div class="tab-chip">The Brand</div>
+      <div class="tab-chip">Freeform</div>
+      <div class="tab-chip trends">📊 Trends</div>
+    </div>
+  </div>
+
+  <!-- VIEW 1 — INPUT -->
+  <div class="block">
+    <div class="block-header">
+      <div class="block-dot amber"></div>
+      <div class="block-title">View 1 · Input Panel</div>
+      <div class="block-badge">opens here every time</div>
+    </div>
+    <div class="block-body">
+      <div class="field-row">
+        <div class="field-label">Artist Name</div>
+        <div class="field-bar"><span class="field-placeholder">e.g. Randy Engineerski</span></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Genre</div>
+        <div class="field-bar"><span class="field-placeholder">e.g. Bass / Electronic</span></div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">Notes</div>
+        <div class="field-bar textarea-sim"><span class="field-placeholder">Key context, goals, campaign focus...</span></div>
+      </div>
+      <div class="start-btn-sim">→ Start Build</div>
+      <div class="arrow-note">↓ stores window.presArtistContext · switches to Trends view</div>
+    </div>
+  </div>
+
+  <!-- VIEW 2 — TRENDS -->
+  <div class="block">
+    <div class="block-header">
+      <div class="block-dot cyan"></div>
+      <div class="block-title">View 2 · Trends &amp; Analysis</div>
+      <div class="block-badge">#presTrendsPanel · default after build</div>
+    </div>
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-top">
+          <span class="metric-name">Streams</span>
+          <span class="metric-badge badge-up">↑ 12.4%</span>
+        </div>
+        <div class="metric-val">1.24M</div>
+        <div class="metric-sub">vs 1.10M last period</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:35%"></div><div class="mini-bar" style="height:50%"></div>
+          <div class="mini-bar" style="height:40%"></div><div class="mini-bar" style="height:65%"></div>
+          <div class="mini-bar" style="height:55%"></div><div class="mini-bar" style="height:80%"></div>
+          <div class="mini-bar" style="height:60%"></div><div class="mini-bar" style="height:75%"></div>
+          <div class="mini-bar" style="height:85%"></div><div class="mini-bar" style="height:70%"></div>
+          <div class="mini-bar" style="height:90%"></div><div class="mini-bar" style="height:95%"></div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <span class="metric-name">Engagement</span>
+          <span class="metric-badge badge-up">↑ 8.7%</span>
+        </div>
+        <div class="metric-val">47.2K</div>
+        <div class="metric-sub">interactions this week</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:60%"></div><div class="mini-bar" style="height:45%"></div>
+          <div class="mini-bar" style="height:70%"></div><div class="mini-bar" style="height:55%"></div>
+          <div class="mini-bar" style="height:75%"></div><div class="mini-bar" style="height:50%"></div>
+          <div class="mini-bar" style="height:80%"></div><div class="mini-bar" style="height:65%"></div>
+          <div class="mini-bar" style="height:72%"></div><div class="mini-bar" style="height:85%"></div>
+          <div class="mini-bar" style="height:78%"></div><div class="mini-bar" style="height:88%"></div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <span class="metric-name">Revenue</span>
+          <span class="metric-badge badge-down">↓ 3.1%</span>
+        </div>
+        <div class="metric-val">$18.6K</div>
+        <div class="metric-sub">vs $19.2K last period</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:80%"></div><div class="mini-bar" style="height:85%"></div>
+          <div class="mini-bar" style="height:75%"></div><div class="mini-bar" style="height:70%"></div>
+          <div class="mini-bar" style="height:65%"></div><div class="mini-bar" style="height:72%"></div>
+          <div class="mini-bar" style="height:60%"></div><div class="mini-bar" style="height:68%"></div>
+          <div class="mini-bar" style="height:55%"></div><div class="mini-bar" style="height:62%"></div>
+          <div class="mini-bar" style="height:58%"></div><div class="mini-bar" style="height:52%"></div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <span class="metric-name">Growth</span>
+          <span class="metric-badge badge-up">↑ 22.1%</span>
+        </div>
+        <div class="metric-val">+3,841</div>
+        <div class="metric-sub">new followers this month</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:30%"></div><div class="mini-bar" style="height:38%"></div>
+          <div class="mini-bar" style="height:45%"></div><div class="mini-bar" style="height:50%"></div>
+          <div class="mini-bar" style="height:55%"></div><div class="mini-bar" style="height:60%"></div>
+          <div class="mini-bar" style="height:65%"></div><div class="mini-bar" style="height:72%"></div>
+          <div class="mini-bar" style="height:78%"></div><div class="mini-bar" style="height:84%"></div>
+          <div class="mini-bar" style="height:90%"></div><div class="mini-bar" style="height:96%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEWS 3-7 — INLINE PANELS -->
+  <div class="block">
+    <div class="block-header">
+      <div class="block-dot green"></div>
+      <div class="block-title">Views 3–7 · Inline Panels</div>
+      <div class="block-badge">one per tab · pres-inline-panel</div>
+    </div>
+    <div class="panel-list">
+      <div class="panel-row">
+        <div class="panel-num">01</div>
+        <div class="panel-name">Social &amp; Streaming</div>
+        <div class="panel-id">#presPanel1</div>
+      </div>
+      <div class="panel-row">
+        <div class="panel-num">02</div>
+        <div class="panel-name">Collaborations</div>
+        <div class="panel-id">#presPanel3</div>
+      </div>
+      <div class="panel-row">
+        <div class="panel-num">03</div>
+        <div class="panel-name">Finance</div>
+        <div class="panel-id">#presPanel4</div>
+      </div>
+      <div class="panel-row">
+        <div class="panel-num">04</div>
+        <div class="panel-name">The Brand</div>
+        <div class="panel-id">#presPanel-brand</div>
+      </div>
+      <div class="panel-row">
+        <div class="panel-num">05</div>
+        <div class="panel-name">Freeform</div>
+        <div class="panel-id">#presPanel-freeform</div>
+      </div>
+      <div class="panel-row">
+        <div class="panel-num">06</div>
+        <div class="panel-name">Game Plan</div>
+        <div class="panel-id">#presGamePlanView</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALSO CONNECTED -->
+  <div class="block">
+    <div class="block-header">
+      <div class="block-dot red"></div>
+      <div class="block-title">Also Connected</div>
+      <div class="block-badge">notch action buttons</div>
+    </div>
+    <div class="conn-row">
+      <div class="conn-item">
+        <div class="conn-arrow">→</div>
+        <div class="conn-text"><strong>Button 5 — F Client, Generate Presentation</strong><br>data-action="create-presentation" · fires inline create-pres-prompt inside the QA notch · separate from P overlay · client-side flow</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANDY PLAN -->
+  <div class="randy-block">
+    <div class="randy-header">
+      <div class="block-dot" style="background:#fff;box-shadow:0 0 6px rgba(255,255,255,0.4)"></div>
+      <div class="randy-title">Randy Engineerski — Presentation Plan</div>
+    </div>
+    <div class="randy-steps">
+      <div class="randy-step">
+        <div class="step-n">01</div>
+        <div class="step-text">Open <span>P overlay</span> → lands on Input tab</div>
+      </div>
+      <div class="randy-step">
+        <div class="step-n">02</div>
+        <div class="step-text">Fill: <span>Randy Engineerski</span> · Genre · Notes / campaign goals</div>
+      </div>
+      <div class="randy-step">
+        <div class="step-n">03</div>
+        <div class="step-text">Hit <span>→ Start Build</span> · data stored in presArtistContext</div>
+      </div>
+      <div class="randy-step">
+        <div class="step-n">04</div>
+        <div class="step-text">Navigate each tab — <span>each panel = one slide</span> of the presentation</div>
+      </div>
+      <div class="randy-step">
+        <div class="step-n">05</div>
+        <div class="step-text">Goal: <span>one-click experience</span> — push-of-a-button simple, or it's not ready</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-row">
+    <div class="footer-dot"></div>
+    <div class="footer-text">WING DASHBOARD · P BUTTON · REFERENCE MAP</div>
+    <div class="footer-dot"></div>
+  </div>
+
+</div>
+</body>
+</html>

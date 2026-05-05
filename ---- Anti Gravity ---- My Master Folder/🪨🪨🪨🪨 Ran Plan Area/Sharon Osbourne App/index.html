@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sharon — A Daily Companion</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="parts/medicine.css">
+<link rel="stylesheet" href="parts/personal.css">
+<link rel="stylesheet" href="parts/work.css">
+<link rel="stylesheet" href="parts/extra.css">
+<link rel="stylesheet" href="parts/notes.css">
+
+<!-- Memorial layer stylesheet (owned by memorial sub-agent) -->
+<link rel="stylesheet" href="parts/memorial.css">
+
+<style>
+  :root{
+    --plum-deep:#3a1f2b;
+    --plum-wine:#5a2a3f;
+    --rose-muted:#c9929f;
+    --blush:#f5e6e8;
+    --cream:#fbf6f0;
+    --cream-deep:#f2ead9;
+    --gold-soft:#c9a56e;
+    --gold-deep:#8a6a3b;
+    --ink:#2b1e23;
+    --ink-soft:#5b4852;
+    --sage:#a5b3a0;
+    --line:rgba(138,106,59,0.22);
+    --shadow-soft:0 10px 30px rgba(58,31,43,0.12);
+    --shadow-lift:0 18px 50px rgba(58,31,43,0.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(ellipse at 15% 10%, rgba(201,146,159,0.18), transparent 55%),
+      radial-gradient(ellipse at 85% 90%, rgba(201,165,110,0.14), transparent 60%),
+      linear-gradient(165deg, var(--cream) 0%, var(--blush) 60%, var(--cream-deep) 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    line-height:1.6;
+    font-weight:400;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1"/></filter><rect width="100%" height="100%" filter="url(%23g)" opacity="0.25"/></svg>');
+    opacity:0.35;mix-blend-mode:multiply;
+  }
+
+  /* ── Header ──────────────────────────────── */
+  header.app-header{
+    position:relative;z-index:2;
+    padding:48px 24px 28px;
+    text-align:center;
+    max-width:1100px;margin:0 auto;
+  }
+  .app-eyebrow{
+    font-family:'Cormorant Garamond',serif;
+    font-style:italic;
+    font-size:14px;letter-spacing:0.25em;
+    text-transform:uppercase;
+    color:var(--gold-deep);
+    margin-bottom:10px;
+    opacity:0.85;
+  }
+  .app-title{
+    font-family:'Cormorant Garamond',serif;
+    font-weight:500;
+    font-size:52px;
+    color:var(--plum-deep);
+    letter-spacing:0.01em;
+    line-height:1;
+  }
+  .app-title .amp{color:var(--gold-deep);font-style:italic;font-weight:400;margin:0 6px;}
+  .app-sub{
+    margin-top:14px;
+    font-size:13px;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    opacity:0.75;
+  }
+  .app-date{
+    margin-top:6px;
+    font-family:'Cormorant Garamond',serif;
+    font-style:italic;
+    font-size:17px;
+    color:var(--plum-wine);
+  }
+  .app-rule{
+    display:block;
+    width:70px;height:1px;
+    background:var(--gold-soft);
+    margin:22px auto 0;
+    opacity:0.6;
+  }
+
+  /* ── Tab navigation ──────────────────────── */
+  nav.tab-bar{
+    position:relative;z-index:2;
+    max-width:1100px;
+    margin:6px auto 0;
+    padding:0 24px;
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .tab-btn{
+    background:transparent;
+    border:1px solid transparent;
+    color:var(--ink-soft);
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    padding:14px 22px;
+    cursor:pointer;
+    transition:all 0.25s ease;
+    border-radius:2px;
+    position:relative;
+  }
+  .tab-btn .tab-icon{
+    display:inline-block;
+    margin-right:8px;
+    font-size:15px;
+    opacity:0.7;
+    transition:opacity 0.25s ease;
+  }
+  .tab-btn:hover{
+    color:var(--plum-deep);
+  }
+  .tab-btn:hover .tab-icon{opacity:1;}
+  .tab-btn.active{
+    color:var(--plum-deep);
+    border-color:var(--line);
+    background:rgba(255,255,255,0.55);
+    box-shadow:var(--shadow-soft);
+  }
+  .tab-btn.active .tab-icon{opacity:1;}
+  .tab-btn.active::after{
+    content:'';
+    position:absolute;
+    left:50%;transform:translateX(-50%);
+    bottom:-9px;
+    width:28px;height:2px;
+    background:var(--gold-soft);
+  }
+
+  /* ── Main content stage ──────────────────── */
+  main.stage{
+    position:relative;z-index:1;
+    max-width:1100px;
+    margin:40px auto 0;
+    padding:0 24px 160px;
+  }
+  .section-panel{
+    display:none;
+    animation:fadeIn 0.45s ease;
+  }
+  .section-panel.active{display:block;}
+  @keyframes fadeIn{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .loading-note{
+    text-align:center;
+    padding:60px 20px;
+    font-family:'Cormorant Garamond',serif;
+    font-style:italic;
+    color:var(--ink-soft);
+    opacity:0.7;
+  }
+
+  /* ── Footer ──────────────────────────────── */
+  footer.app-footer{
+    position:relative;z-index:2;
+    text-align:center;
+    padding:30px 20px 48px;
+    font-family:'Cormorant Garamond',serif;
+    font-style:italic;
+    font-size:14px;
+    color:var(--ink-soft);
+    opacity:0.7;
+  }
+  footer .dot{color:var(--gold-soft);margin:0 10px;}
+
+  @media (max-width:640px){
+    .app-title{font-size:38px;}
+    .tab-btn{padding:10px 12px;font-size:11px;letter-spacing:0.14em;}
+    .tab-btn .tab-icon{margin-right:5px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-eyebrow">A Daily Companion</div>
+  <h1 class="app-title">Sharon<span class="amp">&amp;</span>Her&nbsp;Day</h1>
+  <div class="app-sub">Carried with care</div>
+  <div class="app-date" id="today-date"></div>
+  <span class="app-rule"></span>
+</header>
+
+<nav class="tab-bar" role="tablist" aria-label="Daily sections">
+  <button class="tab-btn active" data-tab="medicine" role="tab" aria-selected="true">
+    <span class="tab-icon">&#10070;</span>Medicine
+  </button>
+  <button class="tab-btn" data-tab="personal" role="tab" aria-selected="false">
+    <span class="tab-icon">&#10084;</span>Personal
+  </button>
+  <button class="tab-btn" data-tab="work" role="tab" aria-selected="false">
+    <span class="tab-icon">&#9998;</span>Work
+  </button>
+  <button class="tab-btn" data-tab="extra" role="tab" aria-selected="false">
+    <span class="tab-icon">&#10029;</span>Extra
+  </button>
+  <button class="tab-btn" data-tab="notes" role="tab" aria-selected="false">
+    <span class="tab-icon">&#9997;</span>Notes
+  </button>
+</nav>
+
+<main class="stage">
+  <section class="section-panel active" id="panel-medicine" data-panel="medicine">
+    <div class="loading-note">Opening your medicine book&hellip;</div>
+  </section>
+  <section class="section-panel" id="panel-personal" data-panel="personal">
+    <div class="loading-note">Gathering the day&hellip;</div>
+  </section>
+  <section class="section-panel" id="panel-work" data-panel="work">
+    <div class="loading-note">Pulling the work page&hellip;</div>
+  </section>
+  <section class="section-panel" id="panel-extra" data-panel="extra">
+    <div class="loading-note">Laying out the little things&hellip;</div>
+  </section>
+  <section class="section-panel" id="panel-notes" data-panel="notes">
+    <div class="loading-note">Turning to the notes page&hellip;</div>
+  </section>
+</main>
+
+<footer class="app-footer">
+  Quiet days<span class="dot">&bull;</span>small joys<span class="dot">&bull;</span>one page at a time
+</footer>
+
+<!-- ── Memorial layer DOM slots (owned by memorial sub-agent) ── -->
+<div id="gesture-heart"></div>
+<div id="memorial-overlay"></div>
+
+<!-- Section logic -->
+<script src="parts/medicine.js" defer></script>
+<script src="parts/personal.js" defer></script>
+<script src="parts/work.js" defer></script>
+<script src="parts/extra.js" defer></script>
+<script src="parts/notes.js" defer></script>
+
+<!-- Memorial layer script (owned by memorial sub-agent) -->
+<script src="parts/memorial.js" defer></script>
+
+<script>
+(function(){
+  // Today's date pretty-printed
+  const d = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  const el = document.getElementById('today-date');
+  if(el) el.textContent = d.toLocaleDateString(undefined, opts);
+
+  // Tab switching
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.section-panel');
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const name = btn.dataset.tab;
+      tabs.forEach(b=>{
+        const on = b === btn;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      panels.forEach(p=>{
+        p.classList.toggle('active', p.dataset.panel === name);
+      });
+    });
+  });
+
+  // Load each section's HTML into its panel
+  const sections = ['medicine','personal','work','extra','notes'];
+  Promise.all(sections.map(name =>
+    fetch('parts/'+name+'.html')
+      .then(r => r.ok ? r.text() : Promise.reject(new Error('missing '+name)))
+      .then(html => ({name, html}))
+      .catch(err => ({name, html:'<div class="loading-note">Could not load '+name+': '+err.message+'</div>'}))
+  )).then(results=>{
+    results.forEach(({name, html})=>{
+      const panel = document.getElementById('panel-'+name);
+      if(panel) panel.innerHTML = html;
+    });
+    // Let each section wire itself up now that its DOM exists
+    document.dispatchEvent(new CustomEvent('sharon:sections-ready'));
+  });
+})();
+</script>
+
+</body>
+</html>

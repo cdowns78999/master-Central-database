@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Army Recruiter — Every MOS Option</title>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/army-modern.css" />
+</head>
+<body class="subpage">
+  <header class="topbar">
+    <a class="back-link" href="index.html">&larr; Back to Index</a>
+    <h1 class="page-title">Army Recruiter — Every MOS Option</h1>
+  </header>
+
+  <main class="page-main">
+    <div class="page-note">
+      Each card lists a Military Occupational Specialty (MOS) with the verbatim description as a recruiter would frame it. Use arrow keys, swipe, or the buttons to flip through.
+    </div>
+
+    <div id="carousel-mount">
+      <div class="loading">Loading MOS list…</div>
+    </div>
+
+    <section class="sources-foot" id="sources-foot" hidden>
+      <h4>Sources</h4>
+      <ul id="sources-list"></ul>
+    </section>
+  </main>
+
+  <script type="module">
+    import { mountCarousel } from './js/carousel.js';
+
+    const mountEl = document.getElementById('carousel-mount');
+    const footEl = document.getElementById('sources-foot');
+    const sourcesList = document.getElementById('sources-list');
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function renderMosCard(item) {
+      const card = document.createElement('div');
+      card.className = 'mos-card';
+      const code = escapeHtml(item.code || item.mos || '—');
+      const name = escapeHtml(item.name || item.title || 'Untitled');
+      const cat  = escapeHtml(item.category || 'General');
+      const desc = escapeHtml(item.description || item.desc || 'No description available.');
+      const src  = item.source || item.source_url || '';
+      const srcLabel = item.source_name || src;
+      card.innerHTML = `
+        <span class="mos-code">${code}</span>
+        <h2 class="mos-name">${name}</h2>
+        <div class="mos-cat">${cat}</div>
+        <p class="mos-desc">${desc}</p>
+        ${src ? `<div class="mos-source">Source: <a href="${escapeHtml(src)}" target="_blank" rel="noopener">${escapeHtml(srcLabel)}</a></div>` : ''}
+      `;
+      return card;
+    }
+
+    function renderSources(list) {
+      const urls = new Set();
+      (list || []).forEach(it => { if (it.source) urls.add(it.source); });
+      if (urls.size === 0) return;
+      sourcesList.innerHTML = '';
+      [...urls].forEach(u => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${u}" target="_blank" rel="noopener">${u}</a>`;
+        sourcesList.appendChild(li);
+      });
+      footEl.hidden = false;
+    }
+
+    fetch('data/mos-classifications.json')
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(json => {
+        const list = Array.isArray(json) ? json : (json.items || json.mos || []);
+        mountCarousel({ container: mountEl, data: list, renderCard: renderMosCard });
+        renderSources(list);
+      })
+      .catch(() => {
+        mountEl.innerHTML = `
+          <div class="empty-state">
+            <strong>Data not yet loaded</strong>
+            data/mos-classifications.json is missing or empty. Drop it in to populate this page.
+          </div>`;
+      });
+  </script>
+</body>
+</html>

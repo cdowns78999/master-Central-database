@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Report | Library ↔ MAPPER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --border: #2a2a2a;
+            --text: #f0f0f0;
+            --text-dim: rgba(240,240,240,0.5);
+            --green: #10b981;
+            --orange: #f59e0b;
+            --blue: #0ea5e9;
+            --purple: #6366f1;
+            --red: #ef4444;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .header .dots {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Stats bar */
+        .stats {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem 1.5rem;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .stat-card .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            margin-top: 0.25rem;
+        }
+
+        .stat-card.synced .number { color: var(--green); }
+        .stat-card.mapper-only .number { color: var(--orange); }
+        .stat-card.library-only .number { color: var(--blue); }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .dot.green { background: var(--green); box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+        .dot.orange { background: var(--orange); box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+        .dot.blue { background: var(--blue); box-shadow: 0 0 8px rgba(14,165,233,0.4); }
+
+        /* Table */
+        .table-wrap {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            background: #111;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+        td {
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        td:first-child {
+            width: 40px;
+            text-align: center;
+        }
+
+        .mapper-col {
+            font-weight: 600;
+        }
+
+        .library-col {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .section-row td {
+            background: rgba(255,255,255,0.02);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 100px;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tag.folder {
+            background: rgba(99,102,241,0.15);
+            color: var(--purple);
+        }
+
+        .tag.html {
+            background: rgba(14,165,233,0.15);
+            color: var(--blue);
+        }
+
+        .tag.missing {
+            background: rgba(239,68,68,0.15);
+            color: var(--red);
+        }
+
+        .empty-cell {
+            color: rgba(255,255,255,0.15);
+            font-style: italic;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="dots">🔵🟢🟣🔴🟠</div>
+        <h1>Sync Report</h1>
+        <div class="subtitle">📙 Library ↔ 💲💲 MAPPER UPDATE &nbsp;·&nbsp; March 2, 2026</div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card synced">
+            <div class="number">16</div>
+            <div class="label">Synced</div>
+        </div>
+        <div class="stat-card mapper-only">
+            <div class="number">5</div>
+            <div class="label">Mapper Only</div>
+        </div>
+        <div class="stat-card library-only">
+            <div class="number">13</div>
+            <div class="label">Library Only</div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><span class="dot green"></span> Synced — both sides</div>
+        <div class="legend-item"><span class="dot orange"></span> Mapper only — no library file</div>
+        <div class="legend-item"><span class="dot blue"></span> Library only — not in Mapper</div>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>MAPPER Node</th>
+                    <th>Library File</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- SYNCED -->
+                <tr class="section-row"><td></td><td colspan="3">🟢 Synced — 16 matches</td></tr>
+
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">1 — ⭐ Task Manager</td>
+                    <td class="library-col">chad1-task-manager</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">2 — Artist Matrix</td>
+                    <td class="library-col">chad20-artist-matrix</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">3 — Presentation Card</td>
+                    <td class="library-col">chad23-presentation card</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">4 — Pricing Matrix</td>
+                    <td class="library-col">chad25-Pricing Matrix</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">5 — Proposal Generator</td>
+                    <td class="library-col">chad22-proposal generator</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">6 — ID Signer</td>
+                    <td class="library-col">chad31-spotify-signoff-official</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">7 — Railroader / MAPPER</td>
+                    <td class="library-col">chad7a-MAPPER</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">8 — Campaign Dashboard</td>
+                    <td class="library-col">chad24-campaign dashboard</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">9 — Dashboard</td>
+                    <td class="library-col">chad3-dashboard</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">A — Spotify Cataloger</td>
+                    <td class="library-col">chad10-spotify tracker</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">B — Data Dump</td>
+                    <td class="library-col">chad23-data dump client</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">C — Spotify Ads</td>
+                    <td class="library-col">chad31-master-spotify-ads-gen</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">Call Card</td>
+                    <td class="library-col">chad14-the call card</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">On The Move</td>
+                    <td class="library-col">chad21-onthemove super final</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">On-the-Go</td>
+                    <td class="library-col">chad15-On-theGo-Handy</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot green"></span></td>
+                    <td class="mapper-col">Playlist Organizer</td>
+                    <td class="library-col">chad19-miramar-playlist tracker</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+
+                <!-- MAPPER ONLY -->
+                <tr class="section-row"><td></td><td colspan="3">🟠 Mapper Only — 5 gaps</td></tr>
+
+                <tr>
+                    <td><span class="dot orange"></span></td>
+                    <td class="mapper-col">chad13 — Client Call Card</td>
+                    <td class="library-col"><span class="empty-cell">— no file —</span></td>
+                    <td><span class="tag missing">missing</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot orange"></span></td>
+                    <td class="mapper-col">chad27 — Price Deck</td>
+                    <td class="library-col"><span class="empty-cell">— no file —</span></td>
+                    <td><span class="tag missing">missing</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot orange"></span></td>
+                    <td class="mapper-col">chad40 — Spotify Ads Manager</td>
+                    <td class="library-col"><span class="empty-cell">— no file —</span></td>
+                    <td><span class="tag missing">missing</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot orange"></span></td>
+                    <td class="mapper-col">chad41 — Map</td>
+                    <td class="library-col"><span class="empty-cell">— no file —</span></td>
+                    <td><span class="tag missing">missing</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot orange"></span></td>
+                    <td class="mapper-col">chad43 — Quick Access</td>
+                    <td class="library-col"><span class="empty-cell">— no file —</span></td>
+                    <td><span class="tag missing">missing</span></td>
+                </tr>
+
+                <!-- LIBRARY ONLY -->
+                <tr class="section-row"><td></td><td colspan="3">🔵 Library Only — 13 orphans</td></tr>
+
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad4-clients</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad6a-client-price</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad8-band-file</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad9-better-than-ramsey (all)</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad9b-better-than-ramsey (me)</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad11-pr dashboard</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad12-artist-dashboard</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad12-offboarding report</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad16-Best Deck Ever</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad17-spotify-master-weaver</td>
+                    <td><span class="tag html">.html</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad18-miramar-spotify-ads-mgr</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad-nighttime-ai-routines</td>
+                    <td><span class="tag folder">📁 folder</span></td>
+                </tr>
+                <tr>
+                    <td><span class="dot blue"></span></td>
+                    <td class="mapper-col"><span class="empty-cell">— not in mapper —</span></td>
+                    <td class="library-col">chad-marc-antonix-curriculum</td>
+                    <td><span class="tag html">.zip</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        Ahead Artist Solutions &nbsp;·&nbsp; Sync Report &nbsp;·&nbsp; Generated 2026-03-02
+    </div>
+
+</body>
+</html>
